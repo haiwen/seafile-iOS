@@ -106,8 +106,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// The connection to use for API requests
 @property (nonatomic, strong) SeafConnection *connection;
 
-/// The info dictionary for this photo
-@property (nonatomic, strong) NSDictionary *infoModel;
 
 /// Whether the info view is visible
 @property (nonatomic, assign) BOOL infoVisible;
@@ -153,6 +151,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// Method to toggle the info view
 - (void)toggleInfoView:(BOOL)show animated:(BOOL)animated;
 
+/// Lightweight info state sync for page transitions.
+/// Sets info visibility, positions frames, and loads data for the current file.
+/// Unlike toggleInfoView:animated:, this does NOT touch gallery-level chrome
+/// (nav bar, thumbnail strip, toolbar) — those are already in the correct
+/// state managed by the gallery during swipe.
+- (void)syncInfoStateForPageTransition:(BOOL)show;
+
 /// Shows the loading indicator and resets progress.
 - (void)showLoadingIndicator;
 
@@ -168,8 +173,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Prepare the view controller for reuse, clearing state and cached data
 - (void)prepareForReuse;
 
-/// Info section related methods
-- (void)updateInfoView;
 
 - (void)loadImage;
 

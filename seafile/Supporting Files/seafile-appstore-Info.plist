@@ -97,6 +97,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>This lets you take photos to insert into Seafile documents</string>
 	<key>NSContactsUsageDescription</key>
 	<string>This lets you backup contacts to Seafile</string>
 	<key>NSFaceIDUsageDescription</key>

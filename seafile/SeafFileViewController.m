@@ -10,6 +10,9 @@
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
 #import "SeafSdocWebViewController.h"
+#import "SeafSdocService.h"
+#import "SeafSdocProfileAssembler.h"
+#import "SeafSdocProfileSheetViewController.h"
 #import "SeafDirViewController.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
@@ -2055,8 +2058,65 @@ enum {
         [self addPhotos:nil];
     } else if ([S_UPLOAD_FILE isEqualToString:title]) {
         [self selectFileToUpload];
+    } else if ([S_PROFILE isEqualToString:title]) {
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        [self showFileProfileSheetForFile:file];
     }
 
+}
+
+#pragma mark - File Profile Sheet (Android-aligned read-only viewer)
+
+- (void)showFileProfileSheetForFile:(SeafFile *)file
+{
+    if (!file || !file.connection || !file.repoId || !file.path) {
+        return;
+    }
+
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Loading...", @"Seafile")];
+
+    SeafSdocService *service = [[SeafSdocService alloc] initWithConnection:file.connection];
+    __weak typeof(self) wself = self;
+    [service fetchFileProfileAggregateWithRepoId:file.repoId
+                                            path:file.path
+                                      completion:^(id agg, NSError *error) {
+        __strong typeof(wself) sself = wself;
+        if (!sself) return;
+
+        NSArray *rows = agg ? [SeafSdocProfileAssembler buildRowsFromProfileAggregate:agg] : @[];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD dismiss];
+
+            if (!agg) {
+                // Real network/API error
+                NSString *msg = error.localizedDescription
+                                ?: NSLocalizedString(@"Failed to load file profile", @"Seafile");
+                [SVProgressHUD showErrorWithStatus:msg];
+                return;
+            }
+            if (rows.count == 0) {
+                // API succeeded but no displayable data
+                [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"No file profile data", @"Seafile")];
+                return;
+            }
+
+            SeafSdocProfileSheetViewController *vc =
+                [[SeafSdocProfileSheetViewController alloc] initWithRows:rows];
+            vc.modalPresentationStyle = UIModalPresentationPageSheet;
+            if (@available(iOS 15.0, *)) {
+                UISheetPresentationController *sheet = vc.sheetPresentationController;
+                sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent,
+                                  UISheetPresentationControllerDetent.largeDetent];
+                sheet.prefersGrabberVisible = YES;
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = YES;
+                sheet.largestUndimmedDetentIdentifier = nil;
+            } else {
+                vc.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+            }
+            [sself presentViewController:vc animated:YES completion:nil];
+        });
+    }];
 }
 
 #pragma mark - File Picker
@@ -3258,15 +3318,17 @@ enum {
         @"action_share"
     ];
     
-    // Second row buttons - 2 buttons
+    // Second row buttons - 3 buttons
     NSArray *secondRowTitles = @[
         NSLocalizedString(@"Move", @"Seafile"),
-        NSLocalizedString(@"Delete", @"Seafile")
+        NSLocalizedString(@"Delete", @"Seafile"),
+        NSLocalizedString(@"Profile", @"Seafile")
     ];
     
     NSArray *secondRowIcons = @[
         @"action_move",
-        @"action_delete"
+        @"action_delete",
+        @"detail_information"
     ];
     
     // Set button sizes and spacing
@@ -3361,9 +3423,9 @@ enum {
             NSInteger index = tag - 1001;
             CGFloat x = firstRowSpacing + index * (buttonWidth + firstRowSpacing);
             subview.frame = CGRectMake(x, firstRowTop, buttonWidth, buttonHeight);
-        } else if (tag >= 1001 + firstRowButtonCount && tag < 1001 + firstRowButtonCount + 2) {
-            // Second row (2 buttons) aligned to the first two columns of first row
-            NSInteger index = tag - (1001 + firstRowButtonCount); // 0 or 1
+        } else if (tag >= 1001 + firstRowButtonCount && tag < 1001 + firstRowButtonCount + 3) {
+            // Second row (3 buttons: Move, Delete, Profile) aligned to the first three columns of first row
+            NSInteger index = tag - (1001 + firstRowButtonCount); // 0, 1, or 2
             CGFloat x = firstRowSpacing + index * (buttonWidth + firstRowSpacing);
             subview.frame = CGRectMake(x, secondRowTop, buttonWidth, buttonHeight);
         }
@@ -3438,7 +3500,8 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     ToolButtonCopy = 1004,
     ToolButtonShare = 1005,
     ToolButtonMove = 1006,
-    ToolButtonDelete = 1007
+    ToolButtonDelete = 1007,
+    ToolButtonProfile = 1008
 };
 
 // Handle button tap events
@@ -3593,6 +3656,16 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
             [self popupDirChooseView:nil];
             break;
         }
+        case ToolButtonProfile: {
+            if (selectedItems.count == 1) {
+                id item = selectedItems.firstObject;
+                if ([item isKindOfClass:[SeafFile class]]) {
+                    [self editDone:nil];
+                    [self showFileProfileSheetForFile:(SeafFile *)item];
+                }
+            }
+            break;
+        }
         case ToolButtonDelete: {
             NSMutableArray *entries = [[NSMutableArray alloc] init];
             for (SeafBase *item in selectedItems) {
@@ -3639,6 +3712,10 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     } else if (selectedItems.count == 1) {
         _selectedindex = selectedIndexPaths.firstObject;
         [self setAllToolButtonEnable:YES];
+        // Profile button: only enabled for SeafFile (not dir, not upload, not repo)
+        id singleItem = selectedItems.firstObject;
+        BOOL isFile = [singleItem isKindOfClass:[SeafFile class]];
+        [self updateToolButton:ToolButtonProfile enabled:isFile];
     } else {
         //redownload
         [self updateToolButton:ToolButtonDownload enabled:YES];
@@ -3657,6 +3734,9 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
         
         //delete
         [self updateToolButton:ToolButtonDelete enabled:YES];
+        
+        //profile: disabled for multi-select
+        [self updateToolButton:ToolButtonProfile enabled:NO];
         
         //share
         [self updateExportBarItem:selectedItems];
@@ -3679,8 +3759,8 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 }
 
 - (void)setAllToolButtonEnable:(BOOL)enable{
-    for (int i = 1;i < 8 ;i++) {
-        [self updateToolButton:i + 1000 enabled:enable];
+    for (NSInteger tag = ToolButtonDownload; tag <= ToolButtonProfile; tag++) {
+        [self updateToolButton:tag enabled:enable];
     }
 }
 

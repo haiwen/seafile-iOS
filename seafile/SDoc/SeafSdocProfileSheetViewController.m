@@ -226,6 +226,12 @@ static NSSet *SeafChipTypes(void)
 
     [self renderRows];
 
+    // Bottom spacer to leave blank area between content and sheet bottom (safe area)
+    UIView *bottomSpacer = [UIView new];
+    bottomSpacer.translatesAutoresizingMaskIntoConstraints = NO;
+    [bottomSpacer.heightAnchor constraintEqualToConstant:16.0].active = YES;
+    [_stack addArrangedSubview:bottomSpacer];
+
     // Pre-compute content height for dynamic sheet detent selection
     [self.view layoutIfNeeded];
     // Measure against a fixed width equal to frameLayoutGuide width minus horizontal padding
@@ -446,6 +452,27 @@ static NSSet *SeafChipTypes(void)
             BOOL isEmpty = [[first objectForKey:@"isEmpty"] boolValue];
             NSString *t = first[@"text"];
             if (isEmpty || ([t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"])) {
+                UIStackView *sv = [UIStackView new];
+                sv.axis = UILayoutConstraintAxisVertical;
+                sv.spacing = 4;
+                sv.alignment = UIStackViewAlignmentTrailing;
+                UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"] isEmpty:YES];
+                lab.numberOfLines = 1;
+                [sv addArrangedSubview:lab];
+                return sv;
+            }
+        }
+        // Special case: link (e.g. _tags) empty -> show localized empty text (align Android)
+        if ([type isEqualToString:@"link"]) {
+            BOOL isEmptyOnly = YES;
+            for (NSDictionary *v in values) {
+                BOOL vIsEmpty = [[v objectForKey:@"isEmpty"] boolValue];
+                NSString *tx = v[@"text"];
+                if (!(vIsEmpty || ([tx isKindOfClass:[NSString class]] && [tx isEqualToString:@"empty"]))) {
+                    isEmptyOnly = NO; break;
+                }
+            }
+            if (isEmptyOnly) {
                 UIStackView *sv = [UIStackView new];
                 sv.axis = UILayoutConstraintAxisVertical;
                 sv.spacing = 4;

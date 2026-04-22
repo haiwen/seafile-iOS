@@ -4,14 +4,6 @@
 #import "SeafConnection.h"
 #import "ExtentedString.h"
 
-@interface SeafFileProfileAggregate : NSObject
-@property (nonatomic, strong, nullable) NSDictionary *fileDetail;
-@property (nonatomic, strong, nullable) NSDictionary *metadataConfig;
-@property (nonatomic, strong, nullable) NSDictionary *recordWrapper;
-@property (nonatomic, strong, nullable) NSDictionary *relatedUsers;
-@property (nonatomic, strong, nullable) NSDictionary *tagWrapper;
-@end
-
 @implementation SeafFileProfileAggregate
 @end
 
@@ -85,6 +77,9 @@
                                        path:(NSString *)path
                                  completion:(void(^)(SeafFileProfileAggregate * _Nullable agg, NSError * _Nullable error))completion
 {
+    // Serial queue to protect concurrent writes to __block variables from parallel callbacks
+    dispatch_queue_t guardQueue = dispatch_queue_create("com.seafile.profileAggregate", DISPATCH_QUEUE_SERIAL);
+
     __block NSDictionary *detail = nil;
     __block NSDictionary *meta = nil;
     __block NSError *stage1Error = nil;
@@ -93,12 +88,20 @@
 
     dispatch_group_enter(g1);
     [self getFileDetailWithRepoId:repoId path:path completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-        detail = resp; if (error && !stage1Error) stage1Error = error; dispatch_group_leave(g1);
+        dispatch_sync(guardQueue, ^{
+            detail = resp;
+            if (error && !stage1Error) stage1Error = error;
+        });
+        dispatch_group_leave(g1);
     }];
 
     dispatch_group_enter(g1);
     [self getMetadataWithRepoId:repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-        meta = resp ?: @{}; if (error && !stage1Error) stage1Error = error; dispatch_group_leave(g1);
+        dispatch_sync(guardQueue, ^{
+            meta = resp ?: @{};
+            if (error && !stage1Error) stage1Error = error;
+        });
+        dispatch_group_leave(g1);
     }];
 
     dispatch_group_notify(g1, dispatch_get_main_queue(), ^{
@@ -136,19 +139,31 @@
         if (metaEnabled) {
             dispatch_group_enter(g2);
             [self getRecordsWithRepoId:repoId parentDir:parentDir name:name fileName:name completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-                record = resp; if (error && !stage2Error) stage2Error = error; dispatch_group_leave(g2);
+                dispatch_sync(guardQueue, ^{
+                    record = resp;
+                    if (error && !stage2Error) stage2Error = error;
+                });
+                dispatch_group_leave(g2);
             }];
 
             dispatch_group_enter(g2);
             [self getRelatedUsersWithRepoId:repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-                users = resp; if (error && !stage2Error) stage2Error = error; dispatch_group_leave(g2);
+                dispatch_sync(guardQueue, ^{
+                    users = resp;
+                    if (error && !stage2Error) stage2Error = error;
+                });
+                dispatch_group_leave(g2);
             }];
         }
 
         if (tagsEnabled) {
             dispatch_group_enter(g2);
             [self getTagsWithRepoId:repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-                tags = resp; if (error && !stage2Error) stage2Error = error; dispatch_group_leave(g2);
+                dispatch_sync(guardQueue, ^{
+                    tags = resp;
+                    if (error && !stage2Error) stage2Error = error;
+                });
+                dispatch_group_leave(g2);
             }];
         }
 

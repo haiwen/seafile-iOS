@@ -14,12 +14,14 @@ static const CGFloat kBaseWidth = 414.0;
 @property (nonatomic, strong) UIButton *btnUnordered;
 @property (nonatomic, strong) UIButton *btnOrdered;
 @property (nonatomic, strong) UIButton *btnCheck;
+@property (nonatomic, strong) UIButton *btnImage;
 @property (nonatomic, strong) UIButton *btnKeyboard;
 @property (nonatomic, strong) UIImageView *styleArrowView;
 
 // StackViews for dynamic margin adjustment
 @property (nonatomic, strong) UIStackView *undoRedoStack;
 @property (nonatomic, strong) UIStackView *listStack;
+@property (nonatomic, strong) UIStackView *imageStack;
 @property (nonatomic, strong) UIStackView *kbStack;
 
 // Constraints for dynamic adjustment
@@ -176,6 +178,24 @@ static const CGFloat kBaseWidth = 414.0;
     [self.listStack addArrangedSubview:self.btnOrdered];
     [self.listStack addArrangedSubview:self.btnCheck];
     
+    self.imageStack = [self createGroupStack];
+    self.imageStack.layoutMargins = UIEdgeInsetsMake(0, 5, 0, 5);
+    self.imageStack.layoutMarginsRelativeArrangement = YES;
+    
+    self.btnImage = [self createButtonWithImageName:@"local-image-nomal" action:@selector(onImageTapped:)];
+    UIImage *imageIcon = [UIImage imageNamed:@"local-image-nomal"];
+    if (!imageIcon) {
+        if (@available(iOS 13.0, *)) {
+            imageIcon = [UIImage systemImageNamed:@"photo.on.rectangle"];
+        }
+    }
+    if (imageIcon) {
+        UIImage *templateImg = [imageIcon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        [self.btnImage setImage:templateImg forState:UIControlStateNormal];
+        [self.btnImage setImage:templateImg forState:UIControlStateDisabled];
+    }
+    [self.imageStack addArrangedSubview:self.btnImage];
+    
     self.kbStack = [self createGroupStack];
     self.kbStack.layoutMargins = UIEdgeInsetsMake(0, 5, 0, 5);
     self.kbStack.layoutMarginsRelativeArrangement = YES;
@@ -188,6 +208,8 @@ static const CGFloat kBaseWidth = 414.0;
     [stack addArrangedSubview:styleContainer];
     [stack addArrangedSubview:[self createVerticalSeparatorWithOffset:-4]];
     [stack addArrangedSubview:self.listStack];
+    [stack addArrangedSubview:[self createVerticalSeparatorWithOffset:0]];
+    [stack addArrangedSubview:self.imageStack];
     [stack addArrangedSubview:[self createVerticalSeparatorWithOffset:4]];
     [stack addArrangedSubview:self.kbStack];
     
@@ -196,6 +218,7 @@ static const CGFloat kBaseWidth = 414.0;
     [self.undoRedoStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [self.kbStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [self.listStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [self.imageStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [styleContainer setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
     [styleContainer setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     
@@ -232,6 +255,9 @@ static const CGFloat kBaseWidth = 414.0;
     self.listStack.layoutMargins = UIEdgeInsetsMake(0, 8 * scale, 0, 8 * scale);
     self.listStack.spacing = 8.0 * scale;
     
+    // imageStack: base margins (5, 5)
+    self.imageStack.layoutMargins = UIEdgeInsetsMake(0, 5 * scale, 0, 5 * scale);
+    
     // kbStack: base margins (5, 5)
     self.kbStack.layoutMargins = UIEdgeInsetsMake(0, 5 * scale, 0, 5 * scale);
     
@@ -248,7 +274,7 @@ static const CGFloat kBaseWidth = 414.0;
         constraint.constant = buttonWidth;
     }
     
-    NSArray<UIButton *> *allButtons = @[self.btnUndo, self.btnRedo, self.btnUnordered, self.btnOrdered, self.btnCheck, self.btnKeyboard];
+    NSArray<UIButton *> *allButtons = @[self.btnUndo, self.btnRedo, self.btnUnordered, self.btnOrdered, self.btnCheck, self.btnImage, self.btnKeyboard];
     for (UIButton *btn in allButtons) {
         btn.imageEdgeInsets = UIEdgeInsetsMake(inset, inset, inset, inset);
     }
@@ -377,6 +403,13 @@ static const CGFloat kBaseWidth = 414.0;
     }
 }
 
+- (void)onImageTapped:(UIButton *)sender
+{
+    if ([self.delegate respondsToSelector:@selector(editorToolbarDidTapInsertImage:)]) {
+        [self.delegate editorToolbarDidTapInsertImage:sender];
+    }
+}
+
 #pragma mark - Public Methods
 
 - (void)updateWithStyleModel:(NSDictionary *)model
@@ -442,6 +475,19 @@ static const CGFloat kBaseWidth = 414.0;
 - (UIButton *)styleButton
 {
     return self.btnStyle;
+}
+
+- (UIButton *)imageButton
+{
+    return self.btnImage;
+}
+
+- (void)setInsertImageEnabled:(BOOL)enabled
+{
+    self.btnImage.enabled = enabled;
+    UIColor *normalTint = [UIColor colorWithRed:0x67/255.0 green:0x67/255.0 blue:0x67/255.0 alpha:1.0];
+    UIColor *disabledTint = [UIColor colorWithWhite:0.75 alpha:1.0];
+    self.btnImage.tintColor = enabled ? normalTint : disabledTint;
 }
 
 - (void)updateUndoRedoTint

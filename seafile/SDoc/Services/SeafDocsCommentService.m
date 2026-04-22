@@ -238,6 +238,83 @@ static NSString * const kSeafDocsCommentServiceErrorDomain = @"SeafDocsCommentSe
     [q addCommentImageUploadOperation:op];
 }
 
+- (void)uploadImagesForDocUUID:(NSString *)uuid
+                   seadocServer:(NSString *)server
+                          token:(NSString *)token
+                          items:(NSArray<NSDictionary *> *)items
+                     completion:(void(^)(NSArray<NSString *> * _Nonnull relativePaths,
+                                          NSUInteger failedCount,
+                                          NSError * _Nullable lastError))completion
+{
+    if (items.count == 0) {
+        if (completion) dispatch_async(dispatch_get_main_queue(), ^{ completion(@[], 0, nil); });
+        return;
+    }
+    // Pre-allocate result slots to preserve original order even though uploads are concurrent.
+    NSUInteger total = items.count;
+    NSMutableArray<NSArray<NSString *> *> *slots = [NSMutableArray arrayWithCapacity:total];
+    for (NSUInteger i = 0; i < total; i++) {
+        [slots addObject:@[]];
+    }
+    __block NSUInteger remaining = total;
+    __block NSUInteger failedCount = 0;
+    __block NSError *lastError = nil;
+    NSObject *lock = [NSObject new];
+    
+    void (^maybeFinish)(void) = ^{
+        @synchronized (lock) {
+            if (remaining > 0) return;
+        }
+        NSMutableArray<NSString *> *flat = [NSMutableArray array];
+        for (NSArray<NSString *> *paths in slots) {
+            if (paths.count > 0) [flat addObjectsFromArray:paths];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (completion) completion(flat.copy, failedCount, lastError);
+        });
+    };
+    
+    for (NSUInteger idx = 0; idx < total; idx++) {
+        NSDictionary *it = items[idx];
+        NSData *data = [it[@"data"] isKindOfClass:[NSData class]] ? (NSData *)it[@"data"] : nil;
+        NSString *fileName = [it[@"fileName"] isKindOfClass:[NSString class]] ? (NSString *)it[@"fileName"] : nil;
+        NSString *mime = [it[@"mime"] isKindOfClass:[NSString class]] ? (NSString *)it[@"mime"] : nil;
+        if (data.length == 0 || fileName.length == 0 || mime.length == 0) {
+            @synchronized (lock) {
+                failedCount += 1;
+                remaining -= 1;
+                if (!lastError) {
+                    lastError = [NSError errorWithDomain:kSeafDocsCommentServiceErrorDomain code:-1 userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"invalid params", nil)}];
+                }
+            }
+            maybeFinish();
+            continue;
+        }
+        NSUInteger captureIdx = idx;
+        [self uploadImageForDocUUID:uuid
+                        seadocServer:server
+                               token:token
+                            fileData:data
+                            mimeType:mime
+                            fileName:fileName
+                          completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
+            @synchronized (lock) {
+                if (error || !resp) {
+                    failedCount += 1;
+                    if (error) lastError = error;
+                } else {
+                    id paths = resp[@"relative_path"];
+                    if ([paths isKindOfClass:[NSArray class]]) {
+                        slots[captureIdx] = (NSArray *)paths;
+                    }
+                }
+                remaining -= 1;
+            }
+            maybeFinish();
+        }];
+    }
+}
+
 - (void)getParticipantsWithDocUUID:(NSString *)uuid
                          completion:(void(^)(NSArray<NSDictionary *> * _Nullable participants, NSError * _Nullable error))completion
 {

@@ -395,7 +395,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
    UIScrollViewDelegate,
    SeafDentryDelegate>
 
-@property (nonatomic, strong) NSArray<NSDictionary *>  *infoModels;
+
 @property (nonatomic, assign) NSUInteger                currentIndex;
 
 // UI Components
@@ -535,20 +535,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         // Initialize loading range to the current index and its neighbors
         [self updateLoadedImagesRangeForIndex:_currentIndex];
         
-        // Initialize data
-        NSMutableArray *infos = [NSMutableArray arrayWithCapacity:files.count];
-        
-        // First prepare basic information, the files will actually be loaded in viewDidLoad
-        for (id<SeafPreView> file in files) {
-            // Prepare basic information for display
-            NSMutableDictionary *info = [NSMutableDictionary dictionary];
-            [info setObject:file.name forKey:@"Name"];
-            [info setObject:[NSString stringWithFormat:@"%lld", file.filesize] forKey:@"Size"];
-            [infos addObject:info];
-        }
-        
-        // Save information for compatibility with the old implementation
-        _infoModels = infos;
+
         
         // Initialize download progress and loading status dictionaries
         _downloadProgressDict = [NSMutableDictionary dictionary];
@@ -570,7 +557,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // Update loading range
     _loadedImagesRange = NSMakeRange(startIndex, length);
     
-    Debug(@"Updated loaded range to %@ around index %ld", NSStringFromRange(_loadedImagesRange), (long)index);
 }
 
 // Check if an image at a specific index should be loaded
@@ -581,7 +567,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 // Load the image at the specified index (only when needed)
 - (void)loadImageAtIndex:(NSUInteger)index {
     if (![self shouldLoadImageAtIndex:index]) {
-        Debug(@"Skipping loading image at index %ld (not in load range)", (long)index);
         return;
     }
     
@@ -594,14 +579,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
             SeafFile *seafFile = (SeafFile *)file;
             // Check if we need to set the delegate
             if (seafFile.delegate != self) {
-                Debug(@"[Gallery] Setting self as delegate for file %@", seafFile.name);
                 seafFile.delegate = self;
             }
         }
         
         // If file doesn't have cache and URL is not set, load it
         if (!file.hasCache && file.previewItemURL == nil) {
-            Debug(@"[Gallery] Starting to load image at index %ld: %@", (long)index, file.name);
             [file load:self force:NO];
         } else {
             // File is available, update the content view controller with seafFile
@@ -613,7 +596,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
                 if ([file isKindOfClass:[SeafFile class]]) {
                     SeafFile *specificFile = (SeafFile *)file;
-                    Debug(@"[Gallery] Updating VC with SeafFile: %@, ooid: %@", specificFile.name, specificFile.ooid ? specificFile.ooid : @"nil");
                     vc.connection = specificFile.connection;
                 }
             }
@@ -960,7 +942,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 - (void)updateSelectedIndex:(NSUInteger)index {
     // Check if index is valid
     if (index >= self.preViewItems.count) {
-        Debug(@"[Gallery] WARNING: Trying to update to invalid index: %ld", (long)index);
         return;
     }
     
@@ -988,7 +969,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // Cancel downloads outside the range
     [self cancelDownloadsExceptForIndex:index withRange:2];
     
-    Debug(@"[Gallery] Updated selected index from %ld to %ld", (long)oldIndex, (long)index);
 }
 
 - (void)collectionView:(UICollectionView *)cv didSelectItemAtIndexPath:(NSIndexPath *)ip {
@@ -1021,8 +1001,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     if (!vc) {
         // Should not happen — paging view always attaches alive ± 1 around
         // the new current index before firing settle.
-        Debug(@"[Gallery] applyPageSettleAtIndex:%lu — no cached VC, recreating",
-              (unsigned long)newIdx);
         vc = [self viewControllerAtIndex:newIdx];
     }
 
@@ -1048,6 +1026,15 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
             previousVC.isConfiguringLayout = NO;
         }
     }
+
+    // Sync info panel state: the new page may have been attached when
+    // infoVisible was NO (pre-attached as alive ± 1), but the user
+    // opened the info panel on the previous page afterwards. Ensure
+    // the newly settled page matches the gallery's current info state.
+    if (vc.infoVisible != self.infoVisible) {
+        [vc syncInfoStateForPageTransition:self.infoVisible];
+    }
+
     [vc didBecomeCurrentVisiblePage];
 
     // Sync thumbnail strip — settle the fractional model to the integer
@@ -1101,9 +1088,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // `photoContentViewControllerDidBeginZooming:` if the user re-zooms.
     self.pagingView.scrollEnabled = YES;
 
-    Debug(@"[Gallery] Page settled %lu→%lu (byUser=%d), loaded range: %@",
-          (unsigned long)oldIndex, (unsigned long)newIdx, byUser,
-          NSStringFromRange(self.loadedImagesRange));
 }
 
 #pragma mark - SeafPhotoPagingView DataSource & content VC factory
@@ -1155,12 +1139,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     }
 
     // Patch §3.11.4: pre-sync infoVisible + immersive background to match
-    // the gallery state BEFORE the page becomes visible. Migrated from the
-    // old UIPageViewController willTransitionToViewControllers: callback.
-    if (contentVC.infoVisible != self.infoVisible) {
-        [contentVC toggleInfoView:self.infoVisible animated:NO];
-    }
-    if (self.isChromeHidden) {
+    // the gallery state BEFORE the page becomes visible. Uses the
+    // lightweight sync method that only sets frames and loads data —
+    // gallery chrome (nav bar, thumbnails, toolbar) is already correct
+    // and must not be re-manipulated on every page transition.
+    [contentVC syncInfoStateForPageTransition:self.infoVisible];
+    if (self.isChromeHidden && !self.infoVisible) {
         contentVC.view.backgroundColor = [UIColor blackColor];
         contentVC.scrollView.backgroundColor = [UIColor blackColor];
     }
@@ -1267,11 +1251,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     SeafPhotoContentViewController *cachedController = [self.contentVCCache objectForKey:key];
     if (cachedController) {
         // Call prepareForReuse to clean up any existing state
-        DebugZoom(@"[EdgeDebug] viewControllerAtIndex:%ld — calling prepareForReuse on cached VC, current bg=%@",
-              (long)index, cachedController.view.backgroundColor);
         [cachedController prepareForReuse];
-        DebugZoom(@"[EdgeDebug] viewControllerAtIndex:%ld — after prepareForReuse, bg=%@",
-              (long)index, cachedController.view.backgroundColor);
         
         // If we already have a cached VC, check loading status
         NSNumber *needsLoading = [self.loadingStatusDict objectForKey:key];
@@ -1294,7 +1274,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
             }
         }
         
-        Debug(@"Retrieved content VC for index %ld from cache", (long)index);
         return cachedController;
     }
     
@@ -1330,10 +1309,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         }
     }
     
-    // Set info model if available
-    if (index < self.infoModels.count) {
-        contentController.infoModel = self.infoModels[index];
-    }
+
     
     // Patch §3.11.4: prefer explicit pageIndex over view.tag.
     contentController.pageIndex = index;
@@ -1349,7 +1325,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         contentController.scrollView.backgroundColor = [UIColor blackColor];
     }
     
-    Debug(@"Created content VC for index %ld, immersive=%d", (long)index, self.isChromeHidden);
     
     return contentController;
 }
@@ -1417,7 +1392,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                 // New logic: Save file to album
                 [self saveCurrentPhotoToAlbum:file];
             } else {
-                Debug(@"Download feature only supports SeafFile objects");
             }
             break;
             
@@ -1425,7 +1399,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
             if (currentFile && [currentFile isKindOfClass:[SeafFile class]]) {
                 [self deleteFile:(SeafFile *)currentFile];
             } else {
-                Debug(@"Delete feature only supports SeafFile objects");
             }
             break;
             
@@ -1449,7 +1422,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                     [self starFile:file];
                 }
             } else {
-                Debug(@"Star feature only supports SeafFile objects");
             }
             break;
             
@@ -1457,7 +1429,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
             if (currentFile && [currentFile isKindOfClass:[SeafFile class]]) {
                 [self shareFile:(SeafFile *)currentFile];
             } else {
-                Debug(@"Share feature only supports SeafFile objects");
             }
             break;
     }
@@ -1596,7 +1567,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
             NSUInteger deletedItemIndex = [self.preViewItems indexOfObject:file]; // Get index before potential async operation
             if (deletedItemIndex == NSNotFound) {
-                Debug(@"[Gallery] Error: File to delete '%@' not found in preViewItems before calling masterVc. Aborting deletion.", file.name);
                 // Show an error to the user or simply return.
                 [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Error preparing to delete '%@'", @"Seafile"), file.name]];
                 return;
@@ -1611,14 +1581,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                         [self handleSuccessfulDeletionOfFile:file atOriginalIndex:deletedItemIndex];
                     } else {
                         // Handle deletion failure reported by masterVc
-                        Debug(@"[Gallery] MasterVc reported failure to delete file: %@, error: %@", file.name, error);
                         NSString *errMsg = error.localizedDescription ?: [NSString stringWithFormat:NSLocalizedString(@"Failed to delete '%@'", @"Seafile"), file.name];
                         [SVProgressHUD showErrorWithStatus:errMsg];
                     }
                 }];
             } else {
                 // Fallback or error handling if masterVc is not the expected type
-                Debug(@"[Gallery] Error: masterVc is not of type SeafFileViewController. Cannot call deleteFile:completion:. Perform selector as fallback if available, or show error.");
                 // This part of the fallback might be removed if strict typing is enforced and SeafFileViewController is always expected.
                 if ([self.masterVc respondsToSelector:@selector(deleteFile:)]) {
                      // Perform selector without completion, UI will update optimistically as before this series of changes.
@@ -1645,18 +1613,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     if (deletedItemIndex < mutablePreViewItems.count) {
         [mutablePreViewItems removeObjectAtIndex:deletedItemIndex];
     } else {
-        Debug(@"[Gallery] Error: deletedItemIndex %lu is out of bounds for preViewItems (count %lu) during UI update.", (unsigned long)deletedItemIndex, (unsigned long)mutablePreViewItems.count);
         // This case should be rare if logic is correct up to this point.
         return;
     }
     self.preViewItems = [mutablePreViewItems copy];
 
-    // Also update infoModels if it corresponds by index and is in use
-    if (self.infoModels.count > deletedItemIndex) {
-        NSMutableArray *mutableInfoModels = [self.infoModels mutableCopy];
-        [mutableInfoModels removeObjectAtIndex:deletedItemIndex];
-        self.infoModels = [mutableInfoModels copy];
-    }
+
     
     // Clean up caches related to the deleted item's original index. If the
     // deleted VC is currently attached to the paging view, detach it first
@@ -1706,7 +1668,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     if (newCurrentIndex < self.preViewItems.count) {
         self.preViewItem = self.preViewItems[newCurrentIndex];
     } else {
-        Debug(@"[Gallery] Critical Error: newCurrentIndex %lu is out of bounds for preViewItems after deletion. Dismissing.", (unsigned long)newCurrentIndex);
         [self dismissGallery];
         return;
     }
@@ -1720,15 +1681,13 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         if (deletedItemIndex < [weakSelf.thumbnailCollection numberOfItemsInSection:0]) {
              [weakSelf.thumbnailCollection deleteItemsAtIndexPaths:@[indexPathOfDeletedItem]];
         } else {
-            Debug(@"[Gallery] Thumbnail deletion skipped: indexPath for deleted item (%@) seems invalid for current collection state.", indexPathOfDeletedItem);
             // Calling [self.thumbnailCollection reloadData] might be a safer fallback in the completion,
         }
     } completion:^(BOOL finished) {
         __strong typeof(weakSelf) strongSelf = weakSelf; // Re-strongify self for use inside the block
         if (!strongSelf || !finished) {
             // If animation didn't finish or self is deallocated, abort further UI updates.
-            if (!finished) Debug(@"[Gallery] Thumbnail deletion animation did not complete.");
-            return;
+            if (!finished)            return;
         }
 
         // 5. Re-flow the paging view around the new current index. After the
@@ -1882,13 +1841,11 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 #pragma mark - Actions
 
 - (void)cancelAllPendingFileOperations {
-    Debug(@"[Gallery] Cancelling all pending file operations (images and thumbnails).");
 
     // Cancel operations for VCs in cache
     for (NSNumber *key in [self.contentVCCache allKeys]) {
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
         if (vc) {
-            Debug(@"[Gallery] Requesting VC (index %@, file: %@) to cancel image loading.", key, vc.seafFile.name ? vc.seafFile.name : @"N/A");
             [vc cancelImageLoading]; // This will call [self.seafFile cancelDownload] and clear seafFile.delegate
         }
     }
@@ -1901,7 +1858,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
                 // Cancel main file download if ongoing.
                 if (file.isDownloading) { // Assuming isDownloading property exists or method
-                    Debug(@"[Gallery] Directly cancelling download for file from preViewItems: %@", file.name);
                     [file cancelDownload];
                 }
                
@@ -1909,7 +1865,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
                 // If the gallery itself is a direct delegate for file loading (e.g., via [file load:self...])
                 if (file.delegate == self) {
-                    Debug(@"[Gallery] Clearing self as delegate for file: %@", file.name);
                     file.delegate = nil;
                 }
             }
@@ -2040,14 +1995,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
     if (vc) {
         vc.seafFile = seafFile; // Update the file object
-        Debug(@"[Gallery] Updated cached VC at index %ld with new file data: %@", (long)index, seafFile.name);
     }
     
     // If it's the current content VC, update it directly
     if (index == self.currentIndex && self.currentContentVC) {
         self.currentContentVC.seafFile = seafFile; // Update the file object
         // Trigger image loading if needed, or let the delegate methods handle it
-        Debug(@"[Gallery] Updated current VC at index %ld with new file data: %@", (long)index, seafFile.name);
     }
 }
 
@@ -2058,7 +2011,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // Find the index of this file in preViewItems
     NSUInteger fileIndex = [self.preViewItems indexOfObject:file];
     if (fileIndex == NSNotFound) {
-        Debug(@"[Gallery] WARNING: File '%@' not found in preViewItems during update.", file.name);
         return;
     }
 
@@ -2069,7 +2021,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     SeafPhotoContentViewController *cachedController = [self.contentVCCache objectForKey:key];
     if (cachedController) {
         vc = cachedController;
-        Debug(@"[Gallery] Applying update to cached VC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
         // Ensure the cached VC has the latest file object, especially if 'file' instance from delegate might be newer
         vc.seafFile = file;
         vc.connection = file.connection;
@@ -2080,12 +2031,10 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         // Ensure the currentContentVC actually corresponds to this file's index
         if (self.currentContentVC.pageIndex == fileIndex) {
              vc = self.currentContentVC;
-             Debug(@"[Gallery] Applying update to currentContentVC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
              // Ensure currentContentVC also has the latest file object
              vc.seafFile = file;
              vc.connection = file.connection;
         } else {
-            Debug(@"[Gallery] WARNING: currentContentVC pageIndex (%lu) does not match expected index (%lu) for file '%@'. Cannot apply update via currentContentVC.", (unsigned long)self.currentContentVC.pageIndex, (unsigned long)fileIndex, file.name);
         }
     }
 
@@ -2101,7 +2050,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         }
 
         if (isKeyController) {
-            Debug(@"[Gallery] VC for key index %lu (current or neighbor) not found initially. Attempting to get/create.", (unsigned long)fileIndex);
             // viewControllerAtIndex: will create if not cached and assign the SeafFile from preViewItems.
             // It will also update an existing cached VC's seafFile property.
             SeafPhotoContentViewController *potentialVC = [self viewControllerAtIndex:fileIndex];
@@ -2111,9 +2059,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                 potentialVC.seafFile = file;
                 potentialVC.connection = file.connection;
                 vc = potentialVC; // Use this VC for the updateBlock
-                Debug(@"[Gallery] Obtained/created VC for key index %lu. Will use for update block.", (unsigned long)fileIndex);
             } else {
-                Debug(@"[Gallery] Failed to obtain/create VC for key index %lu even after trying.", (unsigned long)fileIndex);
             }
         }
     }
@@ -2122,7 +2068,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     if (vc && updateBlock) {
         updateBlock(vc, fileIndex);
     } else if (updateBlock) { // vc is nil, but updateBlock was provided
-         Debug(@"[Gallery] No active VC found for file '%@' at index %lu. Update block will not run.", file.name, (unsigned long)fileIndex);
          // vc is nil, updateBlock won't be called
     }
 }
@@ -2139,7 +2084,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
         // Update progress in the content view controller
         [vc updateLoadingProgress:progress];
-        Debug(@"Updating download progress for %@ to %.2f%%", file.name, progress * 100);
     }];
 }
 
@@ -2148,12 +2092,10 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     if (![entry isKindOfClass:[SeafFile class]]) return;
     SeafFile *file = (SeafFile *)entry;
 
-    Debug(@"[Gallery] Download complete callback for file %@, ooid: %@, success: %d", file.name, file.ooid, success);
 
     // Find index first, needed for state updates even if no VC is found
     NSUInteger fileIndex = [self.preViewItems indexOfObject:file];
     if (fileIndex == NSNotFound) {
-        Debug(@"[Gallery] WARNING: Completed/failed file not found in preViewItems: %@", file.name);
         return;
     }
     NSNumber *key = @(fileIndex);
@@ -2164,17 +2106,13 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
     [self _findAndUpdateContentViewControllerForFile:file updateBlock:^(SeafPhotoContentViewController *vc, NSUInteger index) {
         if (success) {
-            Debug(@"[Gallery] Updating content VC with completed file: %@", file.name);
             // Update the content view controller with the seafFile that has completed downloading
             vc.seafFile = file; // Ensure VC has the latest file object
             // Make sure the VC loads the image, which will hide its loading indicator when done
             [vc loadImage];
-            Debug(@"[Gallery] File download complete for index %ld: %@", (long)index, file.name);
         } else {
             // Handle failure case within the callback for the specific VC
-            Debug(@"[Gallery] Showing error image for failed file: %@", file.name);
             [vc showErrorImage]; // Show error if success is false
-            Debug(@"[Gallery] File download failed for index %ld: %@", (long)index, file.name);
         }
     }];
 
@@ -2184,13 +2122,11 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // If this is the current page, ensure the image is reloaded *even if* the helper didn't find the VC initially
     if (fileIndex == self.currentIndex) {
         if (success) {
-            Debug(@"[Gallery] This is the current page (%lu), ensuring image is loaded for completed file %@", (unsigned long)fileIndex, file.name);
             if (self.currentContentVC) {
                 // Double ensure the seafFile is up to date and trigger load
                 self.currentContentVC.seafFile = file;
                 [self.currentContentVC loadImage];
             } else {
-                Debug(@"[Gallery] WARNING: currentContentVC is nil on completion, attempting to recreate/set for index %lu", (unsigned long)fileIndex);
                 // Re-route through the centralized programmatic page change so
                 // the paging view re-attaches the container if needed.
                 [self goToIndex:fileIndex animated:NO];
@@ -2203,12 +2139,10 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         } else {
             // If download failed for the current item, show the alert (if helper didn't handle it)
              if (!vcFoundOrHandled) {
-                 Debug(@"[Gallery] Download failed for current item (%lu), showing alert.", (unsigned long)fileIndex);
                  [self showDownloadError:file.name]; // Use helper for alert
              }
         }
     } else if (!success && !vcFoundOrHandled) {
-         Debug(@"[Gallery] Download failed for non-visible item (%lu), no VC to update.", (unsigned long)fileIndex);
     }
 }
 
@@ -2217,7 +2151,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     if (![entry isKindOfClass:[SeafFile class]]) return;
     SeafFile *file = (SeafFile *)entry;
 
-    Debug(@"[Gallery] Received FAILED signal via download:failed: for file %@, error: %@", file.name, error);
 
     [self download:entry complete:NO];
 }
@@ -2272,22 +2205,16 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
     _loadedImagesRange = NSMakeRange(currentIdx, 1);
 
-    Debug(@"Memory warning: cleared %lu non-current cache entries, load range: %@",
-          (unsigned long)keysToRemove.count,
-          NSStringFromRange(_loadedImagesRange));
 }
 
 - (void)dealloc {
     // Release all views and memory
     [self clearViews];
-    
-    // Clear data cache
-    self.infoModels = nil;
+
     self.preViewItems = nil;
     self.preViewItem = nil;
     self.contentVCCache = nil;
     
-    Debug(@"SeafPhotoGalleryViewController deallocated");
 }
 
 // Ensure the current item is scrolled to the center position
@@ -2586,6 +2513,25 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
 #pragma mark - Swipe Gesture Handlers
 
+/// Pre-sync info panel state on all cached adjacent pages so the info panel
+/// is already visible/hidden when the user swipes — not just after settle.
+- (void)syncAdjacentPagesInfoState {
+    NSUInteger idx = self.currentIndex;
+    NSArray *adjacentKeys = @[];
+    if (idx > 0) {
+        adjacentKeys = [adjacentKeys arrayByAddingObject:@(idx - 1)];
+    }
+    if (idx + 1 < self.preViewItems.count) {
+        adjacentKeys = [adjacentKeys arrayByAddingObject:@(idx + 1)];
+    }
+    for (NSNumber *key in adjacentKeys) {
+        SeafPhotoContentViewController *adjVC = [self.contentVCCache objectForKey:key];
+        if (adjVC && adjVC.infoVisible != self.infoVisible) {
+            [adjVC syncInfoStateForPageTransition:self.infoVisible];
+        }
+    }
+}
+
 // Handle up swipe gesture - show info view
 - (void)handleSwipeUp:(UISwipeGestureRecognizer *)sender {
     if (self.infoVisible) return;
@@ -2595,6 +2541,9 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     
     // Update current content view controller's info view display state
     [self.currentContentVC toggleInfoView:YES animated:YES];
+    
+    // Pre-sync adjacent pages so info panel is visible during swipe
+    [self syncAdjacentPagesInfoState];
     
     // Update info button icon to selected state
     [self updateInfoButtonIcon:YES];
@@ -2645,6 +2594,9 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     
     // Update current content view controller's info view display state
     [self.currentContentVC toggleInfoView:NO animated:YES];
+    
+    // Pre-sync adjacent pages so info panel is hidden during swipe
+    [self syncAdjacentPagesInfoState];
     
     // Update info button icon to non-selected state
     [self updateInfoButtonIcon:NO];
@@ -2831,7 +2783,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     if (nearest < 0) nearest = 0;
     if (nearest > maxIdx) nearest = maxIdx;
 
-    Debug(@"[Gallery] thumbDrive settle: f=%.3f → nearest=%ld", f, (long)nearest);
 
     // Drag is over — clear the scrub tracker so a fresh drag re-seeds it.
     self.stripScrubDisplayedIndex = NSNotFound;
@@ -2996,8 +2947,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     self.activeControllers = newActiveControllers;
 
     if (releasedCount > 0) {
-        Debug(@"[Gallery] Released image memory for %lu inactive VC(s); active=%@",
-              (unsigned long)releasedCount, self.activeControllers);
     }
 }
 
@@ -3060,7 +3009,6 @@ static const NSUInteger kEvictMaxDistance   = 5;  // evict VCs further than ± 5
         return;
     }
     
-    Debug(@"[Gallery] Canceling downloads outside index %ld range, keeping range: %ld", (long)currentIndex, (long)range);
     
     // Calculate the range to keep
     NSInteger startIndex = MAX(0, currentIndex - range);
@@ -3079,7 +3027,6 @@ static const NSUInteger kEvictMaxDistance   = 5;  // evict VCs further than ± 5
         
         // Cancel download if the view controller exists
         if (vc) {
-            Debug(@"[Gallery] Canceling download for index %ld", (long)i);
             [vc cancelImageLoading];
             continue;
         }
@@ -3089,7 +3036,6 @@ static const NSUInteger kEvictMaxDistance   = 5;  // evict VCs further than ± 5
         if ([item isKindOfClass:[SeafFile class]]) {
             SeafFile *file = (SeafFile *)item;
             [file cancelDownload];
-            Debug(@"[Gallery] Directly canceled file download: %@", file.name);
         }
     }
 }
@@ -3128,7 +3074,6 @@ static const NSUInteger kEvictMaxDistance   = 5;  // evict VCs further than ± 5
             if (!isCurrentOrNeighbor) {
                 SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
                 if (vc) {
-                    Debug(@"[Gallery] viewWillDisappear: Canceling image loading for non-visible/non-neighbor VC at index %lu", (unsigned long)controllerIndex);
                     [vc cancelImageLoading];
                 }
             }
@@ -3479,8 +3424,6 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
 
 - (void)photoContentViewControllerDidEnterZoomedState:(SeafPhotoContentViewController *)viewController {
     if (![self isZoomCallbackFromCurrentVC:viewController selector:_cmd]) return;
-    DebugZoom(@"[EdgeDebug] DidEnterZoomedState — updating %lu cached VCs to immersive",
-          (unsigned long)[self.contentVCCache allKeys].count);
     // This callback now fires from `scrollViewDidEndZooming:` (after the
     // user releases the pinch / the double-tap zoom animation finishes),
     // not from `scrollViewDidZoom:`. So `setChromeHidden:` is free to
@@ -3560,9 +3503,6 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
     for (NSNumber *key in [self.contentVCCache allKeys]) {
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
         if (vc != self.currentContentVC) {
-            DebugZoom(@"[EdgeDebug] updateCachedVCs: index=%@, immersive=%d, oldBg=%@, hasImage=%d",
-                  key, immersive, vc.view.backgroundColor,
-                  vc.scrollView.subviews.firstObject != nil);
             vc.view.backgroundColor = bgColor;
             vc.scrollView.backgroundColor = bgColor;
         }
@@ -3754,10 +3694,8 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
 }
 
 - (void)photoContentViewControllerRequestsRetryForFile:(id<SeafPreView>)file atIndex:(NSUInteger)index {
-    Debug(@"[Gallery] Received retry request for file: %@ at index: %lu", file.name, (unsigned long)index);
     
     if (!file || index >= self.preViewItems.count || self.preViewItems[index] != file) {
-        Debug(@"[Gallery] Invalid retry request: File mismatch or index out of bounds.");
         // Optionally, inform the specific content VC that retry cannot proceed.
         SeafPhotoContentViewController *contentVC = [self.contentVCCache objectForKey:@(index)];
         if (contentVC) {
@@ -3783,7 +3721,6 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
         // Reset any previous error state for the file if necessary, e.g. if it had a specific error property.
         // seafFile.lastError = nil; // Example if SeafFile tracks errors
 
-        Debug(@"[Gallery] Retrying load for file: %@", seafFile.name);
         // Setting the delegate again is important if it was cleared on a previous failure/cancel
         if (seafFile.delegate != self) {
              seafFile.delegate = self;
@@ -3793,7 +3730,6 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
     // If it's an UploadFile, its getImageWithCompletion is usually self-contained for retries or reflects its current state.
     // However, if there was a more fundamental load issue, this is where you might handle it.
     else if ([file isKindOfClass:[SeafUploadFile class]]) {
-        Debug(@"[Gallery] Retrying for SeafUploadFile: %@. This typically involves its internal retry or re-fetching logic via getImageWithCompletion.", file.name);
         if (contentVC) {
             [contentVC loadImage]; // Ask the content view controller to attempt loading again.
         } else {

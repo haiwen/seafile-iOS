@@ -10,7 +10,7 @@
 #import "SeafPhotoGalleryViewController.h"
 #import "SeafZoomableScrollView.h"
 #import <ImageIO/ImageIO.h>
-#import "FileSizeFormatter.h"
+
 #import "Debug.h"
 #import "ExtentedString.h"
 #import "SeafConnection.h"
@@ -23,6 +23,8 @@
 #import "SeafErrorPlaceholderView.h"
 #import "SeafLivePhotoPlayerView.h"
 #import "SeafMotionPhotoExtractor.h"
+#import "SeafSdocService.h"
+#import "SeafSdocProfileAssembler.h"
 
 @interface SeafPhotoContentViewController ()<UIScrollViewDelegate, SeafLivePhotoPlayerViewDelegate>
 @property (nonatomic, strong, readwrite) UIScrollView  *scrollView;
@@ -62,6 +64,26 @@
 // -Wundeclared-selector. This is the SOLE entry point for re-centering the
 // image — every caller must supply a `reason` tag (used in [ZoomBug] logs).
 - (void)centerImageInScrollViewForReason:(NSString *)reason;
+
+/// Lazily loaded metadata profile rows (from aggregate API)
+@property (nonatomic, strong) NSArray<NSDictionary *> *profileRows;
+/// Prevents duplicate aggregate API requests
+@property (nonatomic, assign) BOOL isLoadingProfile;
+
+/// Records the infoScrollView's contentOffset.y at drag start, so we can
+/// distinguish "user pulled down from top" (dismiss intent) from "user
+/// scrolled content back to top and bounced" (no dismiss intent).
+/// Aligns with iOS Photos' two-phase gesture: scroll-to-top → then pull-to-dismiss.
+@property (nonatomic, assign) CGFloat infoScrollStartOffsetY;
+
+/// Records a `syncInfoStateForPageTransition:` request that arrived before
+/// the VC's view had a non-empty bounds (typical when the gallery's paging
+/// view attaches a cached page container during alive-window expansion —
+/// UIKit hasn't laid the container out yet at that callback point). Replayed
+/// in `viewDidLayoutSubviews` once real bounds become available, otherwise
+/// the entire info-panel + EXIF layout pass runs against CGRectZero and
+/// produces garbage frames (e.g. EXIF container at {{-16, 174}, {32, 110}}).
+@property (nonatomic, strong, nullable) NSNumber *pendingInfoSyncShow;
 
 @end
 
@@ -314,11 +336,7 @@
     }
 }
 
-// Update the info view with data from the info model
-- (void)updateInfoView {
-    self.infoView.infoModel = self.infoModel;
-    [self.infoView updateInfoView];
-}
+
 
 // Toggle the info view visibility
 - (void)toggleInfoView:(BOOL)show animated:(BOOL)animated {
@@ -349,74 +367,28 @@
         
         // When showing info panel
         if (show) {
-            // Check if gallery controller has special methods
-            BOOL hasSpecialGalleryHandling = NO;
-            if ([galleryVC respondsToSelector:@selector(disableScrolling)]) {
-                @try {
-                    [galleryVC performSelector:@selector(disableScrolling)];
-                    hasSpecialGalleryHandling = YES;
-                } @catch (NSException *exception) {
-                    Debug(@"Exception when calling disableScrolling: %@", exception);
-                }
-            }
-            
-            // Special case handling for SeafPhotoGalleryViewController - hide navigation bar with animation
-            if (hasSpecialGalleryHandling) {
-                // First move thumbnails out of the way immediately
-                @try {
-                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
-                    UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
-                    UIView *toolbarView = specificGalleryVC.toolbarView;
-                    
-                    // Hide thumbnail view immediately
-                    if (thumbnailCollection) {
-                        thumbnailCollection.hidden = YES;
-                        thumbnailCollection.alpha = 0.0;
-                    }
-                    
-                    // Keep toolbar visible
-                    if (toolbarView) {
-                        toolbarView.hidden = NO;
-                        toolbarView.alpha = 1.0;
-                    }
-                } @catch (NSException *exception) {
-                    Debug(@"Exception when accessing gallery properties: %@", exception);
-                }
-                
-                // Hide navigation bar with fade
-                    [UIView animateWithDuration:0.15 animations:^{
-                        navController.navigationBar.alpha = 0.0;
-                    } completion:^(BOOL finished) {
-                        [navController setNavigationBarHidden:YES animated:NO];
-                }];
-            } else {
-                // Normal behavior - add fade transition for hiding navigation bar
-                [UIView animateWithDuration:0.15 animations:^{
-                    navController.navigationBar.alpha = 0.0;
-                } completion:^(BOOL finished) {
-                    [navController setNavigationBarHidden:YES animated:NO];
-                }];
-            }
+            // Hide navigation bar with fade
+            [UIView animateWithDuration:0.15 animations:^{
+                navController.navigationBar.alpha = 0.0;
+            } completion:^(BOOL finished) {
+                [navController setNavigationBarHidden:YES animated:NO];
+            }];
             
             if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
-                @try {
-                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
-                    UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
-                    UIView *toolbarView = specificGalleryVC.toolbarView;
-                    
-                    // Hide thumbnails immediately without animation
-                    if (thumbnailCollection) {
-                        thumbnailCollection.hidden = YES;
-                        thumbnailCollection.alpha = 0.0;
-                    }
-                    
-                    // Keep toolbar visible
-                    if (toolbarView) {
-                        toolbarView.hidden = NO;
-                        toolbarView.alpha = 1.0;
-                    }
-                } @catch (NSException *exception) {
-                    Debug(@"Exception when accessing gallery properties: %@", exception);
+                SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
+                UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
+                UIView *toolbarView = specificGalleryVC.toolbarView;
+                
+                // Hide thumbnails immediately without animation
+                if (thumbnailCollection) {
+                    thumbnailCollection.hidden = YES;
+                    thumbnailCollection.alpha = 0.0;
+                }
+                
+                // Keep toolbar visible
+                if (toolbarView) {
+                    toolbarView.hidden = NO;
+                    toolbarView.alpha = 1.0;
                 }
             }
         }
@@ -430,24 +402,20 @@
             }];
             
             if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
-                @try {
-                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
-                    UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
-                    UIView *toolbarView = specificGalleryVC.toolbarView;
-                    
-                    // Keep toolbar visible
-                    if (toolbarView) {
-                        toolbarView.hidden = NO;
-                        toolbarView.alpha = 1.0;
-                    }
-                    
-                    // Keep thumbnails hidden until info panel animation completes
-                    if (thumbnailCollection) {
-                        thumbnailCollection.hidden = YES;
-                        thumbnailCollection.alpha = 0.0;
-                    }
-                } @catch (NSException *exception) {
-                    Debug(@"Exception when accessing gallery properties: %@", exception);
+                SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
+                UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
+                UIView *toolbarView = specificGalleryVC.toolbarView;
+                
+                // Keep toolbar visible
+                if (toolbarView) {
+                    toolbarView.hidden = NO;
+                    toolbarView.alpha = 1.0;
+                }
+                
+                // Keep thumbnails hidden until info panel animation completes
+                if (thumbnailCollection) {
+                    thumbnailCollection.hidden = YES;
+                    thumbnailCollection.alpha = 0.0;
                 }
             }
         }
@@ -464,8 +432,11 @@
             self.livePhotoPlayerView.backgroundColor = normalBgColor;
         }
         
-        [self updateInfoView];
+
         self.infoView.hidden = NO;
+        
+        // Lazy-load full metadata profile (only on first open, only for SeafFile)
+        [self loadProfileDataIfNeeded];
         
         // Also display EXIF data if we have an image
         if (self.seafFile) {
@@ -715,7 +686,6 @@
         UIViewController *galleryVC = navController.topViewController;
         
         if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
-            @try {
                 SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
                 UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
                 if (thumbnailCollection) {
@@ -730,9 +700,109 @@
                         thumbnailCollection.alpha = 1.0;
                     } completion:nil];
                 }
-            } @catch (NSException *exception) {
-                Debug(@"Exception when accessing gallery properties: %@", exception);
+        }
+    }
+}
+
+// Lightweight info state sync for page transitions.
+// Only sets frames + loads data. Does NOT touch gallery chrome (nav bar,
+// thumbnail strip, toolbar) — those are already positioned by the gallery.
+- (void)syncInfoStateForPageTransition:(BOOL)show {
+    // Defer when bounds are zero; layout would be computed against garbage
+    // and re-done later. Replayed from viewDidLayoutSubviews.
+    if (CGRectIsEmpty(self.view.bounds)) {
+        // Flip logical state + gesture flags now — other code reads infoVisible
+        // synchronously (deferred-spinner check, gallery settle path).
+        self.infoVisible = show;
+        [self updateGestureRecognizersForInfoVisibility:show];
+        self.pendingInfoSyncShow = @(show);
+        return;
+    }
+
+    self.pendingInfoSyncShow = nil;
+    self.infoVisible = show;
+    [self updateGestureRecognizersForInfoVisibility:show];
+
+    CGRect bounds = self.view.bounds;
+    CGFloat infoHeight = roundf(bounds.size.height * 0.6);
+    CGFloat scrollHeight = roundf(bounds.size.height * 0.4);
+
+    if (show) {
+        // Background: normal (not immersive black)
+        UIColor *normalBgColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0];
+        self.view.backgroundColor = normalBgColor;
+        self.scrollView.backgroundColor = normalBgColor;
+        self.imageView.backgroundColor = [UIColor clearColor];
+        if (self.livePhotoPlayerView) {
+            self.livePhotoPlayerView.backgroundColor = normalBgColor;
+        }
+
+        // Position info view in lower 3/5
+        self.infoView.frame = CGRectMake(0, scrollHeight, bounds.size.width, infoHeight);
+        self.infoView.hidden = NO;
+
+        // Reset info scroll to top for the new photo
+        [self.infoView.infoScrollView setContentOffset:CGPointZero animated:NO];
+
+        // Position scroll view so its center aligns with center of upper 2/5
+        CGFloat visibleAreaCenterY = scrollHeight / 2.0;
+        CGFloat yOffset = visibleAreaCenterY - (bounds.size.height / 2.0);
+        self.scrollView.frame = CGRectMake(0, yOffset, bounds.size.width, bounds.size.height);
+
+        // Reposition error placeholder if visible
+        if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
+            CGRect placeholderFrame = self.scrollView.frame;
+            placeholderFrame.origin.y += 30.0;
+            self.errorPlaceholderView.frame = placeholderFrame;
+        }
+
+        // Reconfigure image layout for the new frame
+        [self configureForImage:self.imageView.image];
+
+        // Hide LIVE badge (info panel replaces it)
+        [self hideLivePhotoIcon];
+
+        // Clear old data and load new
+        [self.infoView clearExifDataView];
+        [self loadProfileDataIfNeeded];
+
+        // Load EXIF for current file
+        if (self.seafFile) {
+            if ([self.seafFile isKindOfClass:[SeafFile class]]) {
+                if (((SeafFile *)self.seafFile).ooid) {
+                    NSString *path = [SeafStorage.sharedObject documentPath:((SeafFile *)self.seafFile).ooid];
+                    NSData *data = [NSData dataWithContentsOfFile:path];
+                    if (data) {
+                        [self displayExifData:data];
+                    }
+                }
+            } else if ([self.seafFile isKindOfClass:[SeafUploadFile class]]) {
+                [((SeafUploadFile *)self.seafFile) getDataForAssociatedAssetWithCompletion:^(NSData * _Nullable data, NSError * _Nullable error) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        if (data) {
+                            [self displayExifData:data];
+                        }
+                    });
+                }];
             }
+        }
+    } else {
+        // Hide info and restore full-screen scroll view
+        self.infoView.hidden = YES;
+        self.infoView.frame = CGRectMake(0, bounds.size.height, bounds.size.width, infoHeight);
+        self.scrollView.frame = bounds;
+
+        // Reposition error placeholder
+        if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
+            self.errorPlaceholderView.frame = bounds;
+        }
+
+        // Reconfigure image layout
+        [self configureForImage:self.imageView.image];
+
+        // Show LIVE badge if applicable
+        if (self.isMotionPhoto) {
+            [self showLivePhotoIcon];
         }
     }
 }
@@ -779,38 +849,38 @@
     self.imageView.image = nil; // Clear previous image before loading new one
     // If seafFile is available, use it to load the image
     if (self.seafFile && [self.seafFile isKindOfClass:[SeafFile class]]) {
-        Debug(@"[PhotoContent] loadImage called for %@, seafFile: %@, has ooid: %@", self.photoURL, self.seafFile.name, ((SeafFile *)self.seafFile).ooid ? @"YES" : @"NO");
 
         // Only show indicator if the file is NOT yet downloaded/cached (ooid is nil)
         if (![self.seafFile hasCache]) {
             [self showLoadingIndicator];
-            Debug(@"[PhotoContent] File needs download, showing indicator: %@", self.seafFile.name);
-            // If we have repoId and filePath, fetch file metadata from API (can happen concurrently)
-            if (self.repoId && self.filePath) {
-                [self fetchFileMetadata];
-            }
+
             return;
         } else {
-            // Add a loading indicator while we load the image (might be large)
-            [self showLoadingIndicator];
-            
-            // File exists, proceed with loading
-            NSString *expectedName = self.seafFile.name; // Capture for recycling check
-            @weakify(self);
+            // Cached: decode/resize typically finishes in <150ms, so showing
+            // the spinner immediately just produces a one-frame flash on
+            // every cached swipe. Defer it; the completion always calls
+            // hideLoadingIndicator, so a fast load is naturally a no-op.
+            NSString *expectedName = self.seafFile.name;
+            __block BOOL imageLoadResolved = NO;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                if (imageLoadResolved) return;
+                if (!self.seafFile || ![self.seafFile.name isEqualToString:expectedName]) return;
+                if (self.imageView.image) return;
+                [self showLoadingIndicator];
+            });
+
             [((SeafFile *)self.seafFile) getImageWithCompletion:^(UIImage *image) {
-                @strongify(self);
-                if (!self) return;
-                Debug(@"[PhotoContent] getImageWithCompletion callback for %@, image: %@", self.seafFile.name, image ? @"SUCCESS" : @"FAILED");
-                
+
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    @strongify(self);
-                    if (!self) return;
+                    // Mark resolved on main queue so the deferred-show closure
+                    // sees this write before it runs.
+                    imageLoadResolved = YES;
                     // Allow image loading even when view isn't visible — adjacent
                     // pages pre-fetched by UIPageViewController need their images
                     // set before becoming visible during a page transition.
                     // Only skip if the seafFile has changed (VC was recycled).
                     if (!self.seafFile || ![self.seafFile.name isEqualToString:expectedName]) {
-                        Debug(@"[PhotoContent] VC recycled, skipping image for %@", expectedName);
                         [self hideLoadingIndicator];
                         return;
                     }
@@ -820,7 +890,6 @@
                         self.imageView.image = image;
                         self.isDisplayingPlaceholderOrErrorImage = NO; // Clear flag when setting real image
                         [self updateScrollViewContentSize];
-                        Debug(@"[PhotoContent] Image set successfully for %@", self.seafFile.name);
                         
                         // Ensure error view is removed if it was somehow still there
                         if (self.errorPlaceholderView) {
@@ -839,14 +908,11 @@
                                 // Check if this is a Motion Photo and setup player
                                 [self checkAndSetupMotionPhotoWithData:data];
                             } else {
-                                Debug(@"[PhotoContent] WARNING: Could not read file data for EXIF from path: %@", path);
                             }
                         }
                         // Explicitly hide indicator AFTER image is set
                         [self hideLoadingIndicator];
-                        Debug(@"[PhotoContent] Image loading complete, indicator hidden for %@", self.seafFile.name);
                     } else {
-                        Debug(@"[PhotoContent] Image loading failed for %@", self.seafFile.name);
                         // self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
                         // self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
                         [self showErrorImage];
@@ -857,10 +923,7 @@
                 });
             }];
             
-            // Fetch metadata if needed (can happen concurrently)
-            if (self.repoId && self.filePath) {
-                [self fetchFileMetadata];
-            }
+
             return;
         }
     }
@@ -872,7 +935,6 @@
                 if (!self) return;
                 // Check if this view controller is still active and valid
                 if (!self.view.window) {
-                    Debug(@"[PhotoContent] View is no longer visible, skipping image update for %@", self.seafFile.name);
                     [self hideLoadingIndicator];
                     return;
                 }
@@ -882,7 +944,6 @@
                     self.imageView.image = image;
                     self.isDisplayingPlaceholderOrErrorImage = NO; // Clear flag when setting real image
                     [self updateScrollViewContentSize];
-                    Debug(@"[PhotoContent] Image set successfully for %@", self.seafFile.name);
                     
                     // Ensure error view is removed if it was somehow still there
                     if (self.errorPlaceholderView) {
@@ -902,16 +963,13 @@
                                 // Check if this is a Motion Photo and setup player
                                 [self checkAndSetupMotionPhotoWithData:data];
                             } else {
-                                Debug(@"[PhotoContent] WARNING: Could not read file data for EXIF from uploadImage: %@", self.seafFile.name);
                             }
                             // Explicitly hide indicator AFTER image is set
                             [self hideLoadingIndicator];
                         });
                     }];
                    
-                    Debug(@"[PhotoContent] Image loading complete, indicator hidden for %@", self.seafFile.name);
                 } else {
-                    Debug(@"[PhotoContent] Image loading failed for %@", self.seafFile.name);
                     [self showErrorImage];
                     [self clearExifDataView];
                     // Explicitly hide indicator even on failure
@@ -923,89 +981,68 @@
         return;
     }
     else {
-        Debug(@"[PhotoContent] No SeafFile available to show image");
         [self showErrorImage];
         [self hideLoadingIndicator];
     }
 }
 
-// Add method to fetch file metadata from API
-- (void)fetchFileMetadata {
-    if (!self.repoId || !self.filePath) {
-        Debug(@"Cannot fetch file metadata: repoId or filePath is missing");
+
+
+// Lazy-load full metadata profile from aggregate API
+- (void)loadProfileDataIfNeeded {
+    // Only load for SeafFile with valid connection/repo/path
+    if (![self.seafFile isKindOfClass:[SeafFile class]]) return;
+    if (!self.connection || !self.repoId || !self.filePath) return;
+
+    // If already loaded, just render
+    if (self.profileRows) {
+        [self.infoView renderProfileRows:self.profileRows];
         return;
     }
-    
-    // Use the connection property instead of getting it from app delegate
-    if (!self.connection || !self.connection.authorized) {
-        Debug(@"No valid connection available for API request");
-        return;
+
+    // If already loading, skip
+    if (self.isLoadingProfile) return;
+
+    self.isLoadingProfile = YES;
+
+    // Show loading spinner in the info view while fetching profile data
+    if (self.infoVisible) {
+        [self.infoView showProfileLoading];
     }
-    
-    // Build the API URL
-    NSString *requestUrl = [NSString stringWithFormat:@"%@/repos/%@/file/detail/?p=%%2F%@", API_URL, self.repoId, [self.filePath escapedUrl]];
-    Debug(@"Fetching file metadata from URL: %@", requestUrl);
-    
-    // Use SeafConnection's sendRequest method
-    @weakify(self);
-    [self.connection sendRequest:requestUrl
-                    success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        // Handle success response
-        if (!JSON) {
-            Debug(@"No data received from file metadata API");
+
+    SeafSdocService *service = [[SeafSdocService alloc] initWithConnection:self.connection];
+
+    // Capture the file path at request time for identity verification
+    NSString *requestedPath = self.filePath;
+
+    __weak typeof(self) wself = self;
+    [service fetchFileProfileAggregateWithRepoId:self.repoId
+                                            path:self.filePath
+                                      completion:^(id _Nullable agg, NSError * _Nullable error) {
+        __strong typeof(wself) sself = wself;
+        if (!sself) return;
+        sself.isLoadingProfile = NO;
+
+        // VC may have been reused for a different file during the async fetch
+        if (![sself.filePath isEqualToString:requestedPath]) {
             return;
         }
-        
-        // Log the response for debugging
-        Debug(@"File metadata response: %@", JSON);
-        
-        // Extract the needed information
-        NSNumber *fileSize = JSON[@"size"];
-        NSString *lastModified = JSON[@"last_modified"];
-        NSString *lastModifierName = JSON[@"last_modifier_name"];
-        NSString *lastModifierAvatar = JSON[@"last_modifier_avatar"]; // Avatar URL field
-        
-        // Create info model dictionary with the extracted data
-        NSMutableDictionary *infoDict = [NSMutableDictionary dictionary];
-        
-        if (fileSize) {
-            [infoDict setObject:[fileSize stringValue] forKey:@"Size"];
+
+        if (!agg) {
+            [sself.infoView hideProfileLoading];
+            return;
         }
-        
-        if (lastModified) {
-            [infoDict setObject:lastModified forKey:@"Modified"];
+
+        NSArray *rows = [SeafSdocProfileAssembler buildRowsFromProfileAggregate:agg];
+        // completion is already on main queue (dispatch_group_notify → main_queue)
+        sself.profileRows = rows;
+        if (sself.infoVisible && rows.count > 0) {
+            [sself.infoView renderProfileRows:rows];
+        } else {
+            // No rows or info not visible — just hide loading
+            [sself.infoView hideProfileLoading];
         }
-        
-        if (lastModifierName) {
-            [infoDict setObject:lastModifierName forKey:@"Owner"];
-        }
-        
-        // If avatar URL exists, add it to the data model
-        if (lastModifierAvatar) {
-            [infoDict setObject:lastModifierAvatar forKey:@"OwnerAvatar"];
-        }
-        
-        // Update the infoModel on the main thread
-        dispatch_async(dispatch_get_main_queue(), ^{
-            @strongify(self);
-            if (!self) return;
-            self.infoModel = infoDict;
-            
-            // Update the info view if it's visible
-            if (self.infoVisible) {
-                [self updateInfoView];
-            }
-        });
-    }
-    failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        Debug(@"Error fetching file metadata: %@", error);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            @strongify(self);
-            if (!self) return;
-            if (!self.imageView.image && !self.isDisplayingPlaceholderOrErrorImage) {
-                 // for metadata failure, we just log it. The user experience is primarily driven by image display.
-            }
-        });
+
     }];
 }
 
@@ -1070,9 +1107,9 @@
 
         [self centerImageInScrollViewForReason:@"viewWillTransitionToSize"];
         
-        // Refresh info view to adapt to new width
+        // Refresh profile rows to adapt to new width
         if (self.infoVisible) {
-            [self updateInfoView];
+            [self loadProfileDataIfNeeded];
         }
     } completion:nil];
 }
@@ -1223,13 +1260,6 @@
         UIEdgeInsets insets = scrollView.contentInset;
         CGPoint centeredOffset = CGPointMake(-insets.left, -insets.top);
         if (!CGPointEqualToPoint(scrollView.contentOffset, centeredOffset)) {
-            DebugZoom(@"[ZoomDebug] scrollViewDidEndZooming: re-centering at min zoom, "
-                  @"oldOffset=%@, newOffset=%@, contentInset=%@, contentSize=%@, bounds=%@",
-                  NSStringFromCGPoint(scrollView.contentOffset),
-                  NSStringFromCGPoint(centeredOffset),
-                  NSStringFromUIEdgeInsets(insets),
-                  NSStringFromCGSize(scrollView.contentSize),
-                  NSStringFromCGRect(scrollView.bounds));
             scrollView.contentOffset = centeredOffset;
         }
     }
@@ -1470,13 +1500,18 @@
     if (_infoVisible != infoVisible) {
         _infoVisible = infoVisible;
         [self updateGestureRecognizersForInfoVisibility:infoVisible];
+        // Spinner anchor depends on infoVisible. If it's already animating
+        // (e.g. cache-miss showed it before infoVisible flipped to YES),
+        // re-center now so it doesn't get hidden inside the info panel.
+        if (self.activityIndicator && self.activityIndicator.isAnimating) {
+            [self repositionLoadingIndicator];
+        }
     }
 }
 
 #pragma mark - Loading Indicator Methods
 
 - (void)showLoadingIndicator {
-    Debug(@"[PhotoContent] showLoadingIndicator called for %@", self.seafFile ? self.seafFile.name : self.photoURL);
     
     // Ensure this runs on the main thread
     if (![NSThread isMainThread]) {
@@ -1488,23 +1523,23 @@
     
     // Ensure indicator exists and is created if needed
     if (!self.activityIndicator || !self.progressLabel) {
-        Debug(@"[PhotoContent] Creating loading indicators that were not initialized for %@", self.seafFile ? self.seafFile.name : @"unknown");
         [self setupLoadingIndicator];
     }
     
     // Only start animating if not already animating
     if (!self.activityIndicator.isAnimating) {
+        // Anchor before unhiding — otherwise the spinner flashes at the
+        // previously-cached center for one frame.
+        [self repositionLoadingIndicator];
         [self.activityIndicator startAnimating];
         self.progressLabel.text = @"0%";
         self.progressLabel.hidden = NO;
         [self.view bringSubviewToFront:self.activityIndicator];
         [self.view bringSubviewToFront:self.progressLabel];
-        Debug(@"[PhotoContent] Loading indicator now visible for %@", self.seafFile ? self.seafFile.name : self.photoURL);
     }
 }
 
 - (void)hideLoadingIndicator {
-    Debug(@"[PhotoContent] hideLoadingIndicator called for %@", self.seafFile ? self.seafFile.name : self.photoURL);
     
     // Ensure this runs on the main thread
     if (![NSThread isMainThread]) {
@@ -1517,7 +1552,6 @@
     // Remove all indicators to ensure none are left behind
     [self cleanupAllLoadingIndicators];
     
-    Debug(@"[PhotoContent] Loading indicators hidden and cleaned up for %@", self.seafFile ? self.seafFile.name : self.photoURL);
 }
 
 // More thorough cleanup of all loading indicators
@@ -1541,7 +1575,6 @@
             
             // If it's not our main indicator, remove it
             if (indicator != self.activityIndicator) {
-                Debug(@"[PhotoContent] Removing extra indicator: %@", indicator);
                 [indicator removeFromSuperview];
             }
         }
@@ -1552,7 +1585,6 @@
             
             // If it's a percentage label and not our main one, remove it
             if (text && ([text hasSuffix:@"%"] || label.tag == 1002) && label != self.progressLabel) {
-                Debug(@"[PhotoContent] Removing extra progress label: %@", label);
                 [label removeFromSuperview];
             }
         }
@@ -1570,7 +1602,6 @@
     
     // Ensure we have loading indicators
     if (!self.activityIndicator || !self.progressLabel) {
-        Debug(@"[PhotoContent] Creating loading indicators before updating progress for %@", self.seafFile ? self.seafFile.name : @"unknown");
         [self setupLoadingIndicator];
     }
     
@@ -1578,6 +1609,7 @@
     if (self.activityIndicator && self.progressLabel) {
         // Start animating if not already
         if (!self.activityIndicator.isAnimating) {
+            [self repositionLoadingIndicator];
             [self.activityIndicator startAnimating];
             [self.view bringSubviewToFront:self.activityIndicator];
         }
@@ -1587,13 +1619,11 @@
         self.progressLabel.hidden = NO;
         [self.view bringSubviewToFront:self.progressLabel];
         
-        Debug(@"[PhotoContent] Updated progress to %.0f%% for %@", progress * 100, self.seafFile ? self.seafFile.name : self.photoURL);
     }
 }
 
 // Sets an error image to display when loading fails
 - (void)showErrorImage {
-    Debug(@"[PhotoContent] Showing error image for %@", self.seafFile ? self.seafFile.name : self.photoURL);
 
     // Ensure this runs on the main thread
     if (![NSThread isMainThread]) {
@@ -1606,13 +1636,11 @@
     // IMPORTANT: Don't show error if we already have a valid image displayed
     // This prevents thumbnail download failure from overwriting a successfully loaded full image
     if (self.imageView.image != nil && !self.isDisplayingPlaceholderOrErrorImage) {
-        Debug(@"[PhotoContent] Skipping error image - already have valid image displayed for %@", self.seafFile.name);
         return;
     }
     
     // Also check if we have a live photo player view with content
     if (self.livePhotoPlayerView && self.livePhotoPlayerView.hasMotionPhotoContent) {
-        Debug(@"[PhotoContent] Skipping error image - live photo player has content for %@", self.seafFile.name);
         return;
     }
 
@@ -1654,12 +1682,10 @@
     // Make sure the loading indicator is hidden
     [self hideLoadingIndicator];
 
-    Debug(@"[PhotoContent] Error placeholder view set and loading indicator hidden for %@", self.seafFile ? self.seafFile.name : self.photoURL);
 }
 
 // Method to handle the retry tap
 - (void)handleRetryTap:(UITapGestureRecognizer *)gesture {
-    Debug(@"[PhotoContent] Retry tapped for %@", self.seafFile ? self.seafFile.name : self.photoURL);
     // Remove the error view before retrying
     if (self.errorPlaceholderView) {
         [self.errorPlaceholderView removeFromSuperview];
@@ -1678,12 +1704,10 @@
             [self.delegate photoContentViewControllerRequestsRetryForFile:self.seafFile atIndex:currentIndex];
             [self showLoadingIndicator]; // Show loading indicator immediately in the content view
         } else {
-            Debug(@"[PhotoContent] Cannot retry: seafFile is nil.");
             // Optionally, show error again if seafFile is nil, as retry isn't possible
             [self showErrorImage]; 
         }
     } else {
-        Debug(@"[PhotoContent] Delegate not set or does not respond to retry selector. Cannot retry.");
         // Fallback or error handling if delegate is not correctly set up
         // For example, re-show the error image as retry is not possible through delegate
         [self showErrorImage];
@@ -1694,8 +1718,15 @@
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
-    self.activityIndicator.center = self.view.center;
-    self.progressLabel.center = CGPointMake(self.view.center.x, self.view.center.y + self.activityIndicator.bounds.size.height / 2 + 25);
+    [self repositionLoadingIndicator];
+
+    // Replay any deferred info-state sync now that bounds are valid.
+    // Clear the flag before re-entering so the bounds-empty guard cannot loop.
+    if (self.pendingInfoSyncShow && !CGRectIsEmpty(self.view.bounds)) {
+        BOOL show = self.pendingInfoSyncShow.boolValue;
+        self.pendingInfoSyncShow = nil;
+        [self syncInfoStateForPageTransition:show];
+    }
     
     // Position Live Photo badge below navigation bar
     if (self.livePhotoBadge) {
@@ -1755,13 +1786,6 @@
     */
 
     // Update frames based on current state
-    DebugZoom(@"[ZoomDebug] viewDidLayoutSubviews: file=%@, view.bounds=%@, scrollView.frame=%@, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f",
-          self.seafFile ? self.seafFile.name : @"nil",
-          NSStringFromCGRect(self.view.bounds),
-          NSStringFromCGRect(self.scrollView.frame),
-          NSStringFromCGRect(self.scrollView.bounds),
-          NSStringFromCGRect(self.imageView.frame),
-          self.scrollView.zoomScale);
 
     // CRITICAL — only run the heavy reconfigure chain (which calls
     // configureForImage: and force-resets zoomScale) when the scrollView's
@@ -1778,28 +1802,7 @@
     // only fires on actual layout changes (orientation, info-panel toggle,
     // first appearance, etc.).
     CGRect targetScrollFrame = [self targetScrollViewFrameForInfoVisibility:self.infoVisible];
-    BOOL frameChanged = !CGRectEqualToRect(self.scrollView.frame, targetScrollFrame);
-    UIEdgeInsets safeArea = UIEdgeInsetsZero;
-    if (@available(iOS 11.0, *)) {
-        safeArea = self.view.safeAreaInsets;
-    }
-    Debug(@"[ZoomBug] viewDidLayoutSubviews isZooming=%d frameChanged=%d "
-          @"view.bounds=%@ safeArea=%@ scrollView.frame=%@ target=%@ "
-          @"zoom=%.4f contentInset=%@ contentOffset=%@",
-          self.isZooming, frameChanged,
-          NSStringFromCGRect(self.view.bounds),
-          NSStringFromUIEdgeInsets(safeArea),
-          NSStringFromCGRect(self.scrollView.frame),
-          NSStringFromCGRect(targetScrollFrame),
-          self.scrollView.zoomScale,
-          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
-          NSStringFromCGPoint(self.scrollView.contentOffset));
-
-    if (frameChanged) {
-        DebugZoom(@"[ZoomDebug] viewDidLayoutSubviews: scrollView frame change detected, "
-              @"current=%@, target=%@, running full reconfigure",
-              NSStringFromCGRect(self.scrollView.frame),
-              NSStringFromCGRect(targetScrollFrame));
+    if (!CGRectEqualToRect(self.scrollView.frame, targetScrollFrame)) {
         [self updateViewFramesForInfoVisibility:self.infoVisible];
     } else if (!self.isZooming) {
         // Frames already correct — just keep contentInset centered. This is
@@ -1835,6 +1838,29 @@
     return bounds;
 }
 
+// Anchor the loading spinner + progress label to the center of the *visible*
+// image area. When `infoVisible == NO` that's the full view; when the info
+// panel is open the visible image area is the upper 2/5 of the view (the
+// lower 3/5 is covered by `infoView`), so anchoring at `self.view.center`
+// would drop the spinner inside the info panel.
+- (void)repositionLoadingIndicator {
+    if (!self.activityIndicator || !self.progressLabel) return;
+    CGRect bounds = self.view.bounds;
+    if (CGRectIsEmpty(bounds)) return;
+
+    CGFloat centerX = bounds.size.width / 2.0;
+    CGFloat centerY;
+    if (self.infoVisible) {
+        CGFloat scrollHeight = roundf(bounds.size.height * 0.4); // mirrors targetScrollViewFrameForInfoVisibility:
+        centerY = scrollHeight / 2.0;
+    } else {
+        centerY = bounds.size.height / 2.0;
+    }
+    self.activityIndicator.center = CGPointMake(centerX, centerY);
+    CGFloat labelOffset = self.activityIndicator.bounds.size.height / 2.0 + 25.0;
+    self.progressLabel.center = CGPointMake(centerX, centerY + labelOffset);
+}
+
 // New method to setup the loading indicator and progress label
 - (void)setupLoadingIndicator {
     // First, remove any existing indicators to prevent duplicates
@@ -1862,7 +1888,6 @@
     self.progressLabel.tag = 1002; // Tag for identification
     [self.view addSubview:self.progressLabel];
     
-    Debug(@"[PhotoContent] Setup new loading indicators for %@", self.seafFile ? self.seafFile.name : @"unknown");
 }
 
 // Helper method to remove any existing loading indicators
@@ -1873,7 +1898,6 @@
             ([subview isKindOfClass:[UILabel class]] &&
              (subview.tag == 1002 || [[(UILabel *)subview text] hasSuffix:@"%"]))) {
             
-            Debug(@"[PhotoContent] Removing existing indicator/label: %@", subview);
             [subview removeFromSuperview];
         }
     }
@@ -1883,26 +1907,28 @@
     self.progressLabel = nil;
 }
 
-// Detect scroll position for info scroll view
+// Detect scroll position for info scroll view.
+// iOS Photos two-phase model: the scroll view must already be at the top
+// when the drag STARTS for a pull-down to count as a dismiss gesture.
+// If the user scrolled content back to the top from the middle, the
+// rubber-band bounce must NOT trigger a dismiss.
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     // Check if it's the info scroll view
     if (scrollView == self.infoView.infoScrollView) {
         // If at the top and being pulled down, track the dragging progress
         if (scrollView.contentOffset.y < 0) {
-            // The more negative the content offset, the more it's being pulled down
             CGFloat pullDistance = -scrollView.contentOffset.y;
             
             // Check if we're actively dragging (not just bouncing back)
             if (scrollView.isDragging) {
-                // Get the drag direction using the translation of the pan gesture
-                CGPoint translation = [scrollView.panGestureRecognizer translationInView:self.view];
+                // Key condition: the drag must have started at the top.
+                // This prevents "scroll from middle → bounce at top" from
+                // being misinterpreted as a dismiss gesture.
+                BOOL startedAtTop = (self.infoScrollStartOffsetY <= 0);
                 
-                // If pulled down more than a threshold and gesture is moving downward
-                if (pullDistance > 40 && translation.y > 0) {
-                    if (!self.draggedBeyondTopEdge) {
-                        self.draggedBeyondTopEdge = YES;
-                        [self notifyGalleryViewControllerToHideInfoPanel];
-                    }
+                if (startedAtTop && pullDistance > 60 && !self.draggedBeyondTopEdge) {
+                    self.draggedBeyondTopEdge = YES;
+                    [self notifyGalleryViewControllerToHideInfoPanel];
                 }
             }
         }
@@ -1911,25 +1937,37 @@
     // view; no edge tracking required here anymore.
 }
 
-// Detect when user finishes dragging the info scroll view down
+// Detect when user finishes dragging the info scroll view down.
+// iOS Photos dismiss semantics: only dismiss when the drag started at the
+// top AND the release has sufficient velocity or pull distance.
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
     // Check if this is the info scroll view
     if (scrollView == self.infoView.infoScrollView) {
-        // If at the top and being pulled down, hide the info panel
-        if (scrollView.contentOffset.y <= 0 && [scrollView.panGestureRecognizer translationInView:self.view].y > 10) {
-            // Find the gallery view controller and notify it to hide the info panel
-            [self notifyGalleryViewControllerToHideInfoPanel];
+        BOOL startedAtTop = (self.infoScrollStartOffsetY <= 0);
+        
+        if (startedAtTop && scrollView.contentOffset.y < 0 && !self.draggedBeyondTopEdge) {
+            CGFloat pullDistance = -scrollView.contentOffset.y;
+            CGPoint velocity = [scrollView.panGestureRecognizer velocityInView:self.view];
+            
+            // Dismiss on fast flick (velocity) or sufficient pull distance
+            if (velocity.y > 500 || pullDistance > 80) {
+                [self notifyGalleryViewControllerToHideInfoPanel];
+            }
         }
     }
     // Edge-driven paging handoff is now handled inside SeafZoomableScrollView
     // by observing its own pan gesture; no per-drag edge bookkeeping here.
 }
 
-// Track start of drag operation
+// Track start of drag operation — record the scroll view's contentOffset
+// at drag start so we can distinguish intentional pull-from-top vs.
+// bounce-from-middle (iOS Photos alignment).
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
     if (scrollView == self.infoView.infoScrollView) {
         // Reset the tracking flag at the start of each drag operation
         self.draggedBeyondTopEdge = NO;
+        // Record starting offset to detect "started at top" condition
+        self.infoScrollStartOffsetY = scrollView.contentOffset.y;
     }
 }
 
@@ -1948,7 +1986,6 @@
                 [parentVC performSelector:handleSwipeDownSelector withObject:nil];
             }
         } @catch (NSException *exception) {
-            Debug(@"Exception when trying to call handleSwipeDown: %@", exception);
         }
     }
 }
@@ -1959,35 +1996,28 @@
 }
 
 // Add setter method for seafFile
-- (void)setSeafFile:(id<SeafPreView>)seafFile {    // If the same file, ignore
+- (void)setSeafFile:(id<SeafPreView>)seafFile {
     if (_seafFile == seafFile) {
         return;
     }
-    // Update the stored file
     _seafFile = seafFile;
-    
+
     if ([self.seafFile isKindOfClass:[SeafFile class]]) {
         // Store previous loading state to determine if we need to update UI
         BOOL wasLoading = _seafFile && [_seafFile hasCache];
         BOOL willBeLoading = seafFile && ![seafFile hasCache];
-        
+
         SeafFile *f = seafFile;
-        Debug(@"[PhotoContent] Setting seafFile: %@, ooid: %@",
-              seafFile.name,
-              f.ooid ? f.ooid : @"nil (needs download)");
-        
+
         // Update loading indicator based on new file state
         if (wasLoading && !willBeLoading) {
-            // File was loading but now has loaded - hide indicator
-            Debug(@"[PhotoContent] File now loaded, hiding indicator");
             [self hideLoadingIndicator];
         }
         else if (!wasLoading && willBeLoading) {
-            Debug(@"[PhotoContent] New file needs download/processing, showing indicator");
             [self showLoadingIndicator];
         }
     }
-    
+
     // If view is loaded, reload image with the new file
     if (self.isViewLoaded) {
         [self loadImage];
@@ -1999,22 +2029,12 @@
     [super viewWillDisappear:animated];
     
     if (self.activityIndicator) {
-        Debug(@"[PhotoContent] Cleaning up indicators in viewWillDisappear for %@", self.seafFile ? self.seafFile.name : self.photoURL);
         [self cleanupAllLoadingIndicators];
     }
 }
 
 // Method to prepare the view controller for reuse (called from gallery when recycling)
 - (void)prepareForReuse {
-    Debug(@"[PhotoContent] Preparing for reuse %@", self.seafFile ? self.seafFile.name : @"unknown");
-    DebugZoom(@"[ZoomDebug] prepareForReuse BEFORE: file=%@, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f, contentInset=%@, contentSize=%@, hasImage=%d",
-          self.seafFile ? self.seafFile.name : @"nil",
-          NSStringFromCGRect(self.scrollView.bounds),
-          NSStringFromCGRect(self.imageView.frame),
-          self.scrollView.zoomScale,
-          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
-          NSStringFromCGSize(self.scrollView.contentSize),
-          self.imageView.image != nil);
     
     // Remove error view if it exists
     if (self.errorPlaceholderView) {
@@ -2051,32 +2071,30 @@
     self.wasInZoomedState = NO;
     self.wasImmersiveBeforeZoom = NO;
     
-    // Reset info view if needed
-    if (self.infoVisible) {
-        self.infoVisible = NO;
-        self.infoView.hidden = YES;
-    }
+    // NOTE: info view layout/visibility is NOT reset here. The gallery's
+    // pageContainerForIndex: calls syncInfoStateForPageTransition: after
+    // prepareForReuse to set the correct state without triggering chrome
+    // manipulation or visual flicker.
+    
+    // Clear cached profile data (file identity changes across reuse)
+    self.profileRows = nil;
+    self.isLoadingProfile = NO;
+    [self.infoView clearProfileRows];
+    // Drop any unhandled deferred sync — the gallery will issue a fresh
+    // `syncInfoStateForPageTransition:` for the new page right after this
+    // method returns (see `viewControllerAtIndex:` → `pageContainerForIndex:`).
+    self.pendingInfoSyncShow = nil;
     
     // Reset placeholder/error image flag
     self.isDisplayingPlaceholderOrErrorImage = NO;
     
-    DebugZoom(@"[ZoomDebug] prepareForReuse AFTER: file=%@, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f, contentInset=%@, contentSize=%@",
-          self.seafFile ? self.seafFile.name : @"nil",
-          NSStringFromCGRect(self.scrollView.bounds),
-          NSStringFromCGRect(self.imageView.frame),
-          self.scrollView.zoomScale,
-          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
-          NSStringFromCGSize(self.scrollView.contentSize));
-    Debug(@"[PhotoContent] View controller reset and ready for reuse");
 }
 
 // Cancel any ongoing image loading or download requests
 - (void)cancelImageLoading {
-    Debug(@"[PhotoContent] Canceling image loading for %@", self.seafFile ? self.seafFile.name : @"unknown");
     
     // Don't cancel if the image is already loaded and displayed
     if (self.imageView.image != nil && self.seafFile && [self.seafFile hasCache]) {
-        Debug(@"[PhotoContent] Not canceling - image already displayed: %@", self.seafFile.name);
         // Still clean up any loading indicators
         [self cleanupAllLoadingIndicators];
         return;
@@ -2093,12 +2111,10 @@
     // Clean up loading indicators
     [self cleanupAllLoadingIndicators];
     
-    Debug(@"[PhotoContent] Image loading canceled for %@", self.seafFile ? self.seafFile.name : @"unknown");
 }
 
 // Release the memory of the loaded image
 - (void)releaseImageMemory {
-    Debug(@"[PhotoContent] Releasing image memory for %@", self.seafFile ? self.seafFile.name : @"unknown");
     
     // Clear the error placeholder view if it exists
     if (self.errorPlaceholderView) {
@@ -2113,7 +2129,6 @@
         self.isDisplayingPlaceholderOrErrorImage = NO;
     }
         
-    Debug(@"[PhotoContent] Image memory released for %@", self.seafFile ? self.seafFile.name : @"unknown");
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -2131,26 +2146,19 @@
             NSUInteger currentPhotoIndex = gallery.currentIndex;
             NSUInteger thisIndex = self.pageIndex;
             if (thisIndex == NSNotFound) {
-                Debug(@"[PhotoContent] viewDidDisappear with no pageIndex; canceling loads for %@", self.seafFile.name);
                 [self cancelImageLoading];
                 return;
             }
             NSInteger delta = labs((NSInteger)thisIndex - (NSInteger)currentPhotoIndex);
             if (delta > 1) {
-                Debug(@"[PhotoContent] View far from current page (delta=%ld), canceling loads: %@",
-                      (long)delta, self.seafFile.name);
                 [self cancelImageLoading];
             } else {
-                Debug(@"[PhotoContent] View still near current page (delta=%ld), keeping loads: %@",
-                      (long)delta, self.seafFile.name);
             }
         } @catch (NSException *exception) {
-            Debug(@"[PhotoContent] Exception when accessing gallery properties: %@", exception);
             [self cancelImageLoading];
         }
     } else {
         // Not currently in the gallery (e.g. being torn down) — cancel any downloads.
-        Debug(@"[PhotoContent] View disappeared (no gallery parent): %@", self.seafFile.name);
         [self cancelImageLoading];
     }
 }
@@ -2160,7 +2168,6 @@
     // Only preload if we have a valid seafFile with an ooid
     if ([self.seafFile isKindOfClass:[SeafFile class]] && self.seafFile && [self.seafFile hasCache]) {
         if (!self.imageView.image) {
-            Debug(@"[PhotoContent] Preloading image for %@", self.seafFile.name);
             
             // Load in background without affecting UI
             @weakify(self);
@@ -2175,7 +2182,6 @@
                             if (!self) return;
                             if (!self.imageView.image) {
                                 self.imageView.image = image;
-                                Debug(@"[PhotoContent] Image preloaded for %@", self.seafFile.name);
                             }
                         });
                     }
@@ -2234,7 +2240,7 @@
     // Update info view if it's supposed to be visible
     if (self.infoVisible) {
         self.infoView.hidden = NO;
-        [self updateInfoView];
+        [self loadProfileDataIfNeeded];
     }
 
     // Make sure the image is loaded
@@ -2248,19 +2254,8 @@
         needsImageLoad = YES;
     }
     
-    DebugZoom(@"[ZoomDebug] viewWillAppear: file=%@, needsImageLoad=%d, hasImage=%d, isPlaceholder=%d, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f",
-          self.seafFile ? self.seafFile.name : @"nil",
-          needsImageLoad,
-          self.imageView.image != nil,
-          self.isDisplayingPlaceholderOrErrorImage,
-          NSStringFromCGRect(self.scrollView.bounds),
-          NSStringFromCGRect(self.imageView.frame),
-          self.scrollView.zoomScale);
     
     if (needsImageLoad && self.seafFile) {
-        Debug(@"[PhotoContent] Image needs loading in viewWillAppear (placeholder: %@), loading now: %@", 
-              self.isDisplayingPlaceholderOrErrorImage ? @"YES" : @"NO", 
-              self.seafFile.name);
         // If currently displaying an error, remove it before attempting to load again
         if (self.isDisplayingPlaceholderOrErrorImage && self.errorPlaceholderView) {
             [self.errorPlaceholderView removeFromSuperview];
@@ -2270,7 +2265,6 @@
         [self loadImage];
     } else if (self.imageView.image) {
         // Image already loaded — ensure layout is correct by reconfiguring
-        DebugZoom(@"[ZoomDebug] viewWillAppear: image already loaded, calling configureForImage to ensure correct layout");
         [self configureForImage:self.imageView.image];
     }
     
@@ -2436,21 +2430,14 @@
 // the old updateScrollViewContentSize and updateZoomScalesForSize: methods.
 - (void)configureForImage:(UIImage *)image {
     if (!image) {
-        DebugZoom(@"[ZoomDebug] configureForImage: SKIPPED (image is nil), file=%@", self.seafFile ? self.seafFile.name : @"nil");
         return;
     }
     
     CGSize imageSize  = image.size;  // Logical point size (e.g. 4032×3024)
     CGSize boundsSize = self.scrollView.bounds.size;
     
-    DebugZoom(@"[ZoomDebug] configureForImage: file=%@, imageSize=%@, scrollView.bounds=%@, scrollView.frame=%@",
-          self.seafFile ? self.seafFile.name : @"nil",
-          NSStringFromCGSize(imageSize),
-          NSStringFromCGSize(boundsSize),
-          NSStringFromCGRect(self.scrollView.frame));
     
     if (imageSize.width == 0 || imageSize.height == 0 || boundsSize.width == 0 || boundsSize.height == 0) {
-        DebugZoom(@"[ZoomDebug] configureForImage: SKIPPED (zero dimensions)");
         return;
     }
     
@@ -2507,14 +2494,6 @@
     
     // ⑦ Center the image using contentInset
     [self centerImageInScrollViewForReason:@"configureForImage"];
-
-    DebugZoom(@"[ZoomDebug] configureForImage DONE: fitScale=%.4f, imageView.frame=%@, contentSize=%@, contentInset=%@, zoomRange=[%.2f, %.2f]",
-          fitScale,
-          NSStringFromCGRect(self.imageView.frame),
-          NSStringFromCGSize(self.scrollView.contentSize),
-          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
-          self.scrollView.minimumZoomScale,
-          self.scrollView.maximumZoomScale);
 }
 
 // Center the imageView within the scrollView using contentInset.
@@ -2595,7 +2574,6 @@
     
     // Only analyze HEIC/HEIF files that might be Motion Photos
     if ([fileExt isEqualToString:@"heic"] || [fileExt isEqualToString:@"heif"]) {
-        Debug(@"[PhotoContent] Running Motion Photo analysis for: %@", fileName);
         [SeafMotionPhotoExtractor analyzeAndLogMotionPhotoIssues:data fileName:fileName];
     }
     
@@ -2607,11 +2585,9 @@
         // Remove any existing live photo player view
         [self removeLivePhotoPlayerView];
         [self hideLivePhotoIcon];
-        Debug(@"[PhotoContent] Not a Motion Photo: %@", self.seafFile.name);
         return;
     }
     
-    Debug(@"[PhotoContent] Motion Photo detected: %@", self.seafFile.name);
     
     // Show Live Photo icon
     [self showLivePhotoIcon];
@@ -2653,7 +2629,6 @@
     // Ensure badge is visible and on top
     [self showLivePhotoIcon];
     
-    Debug(@"[PhotoContent] Live Photo Player View setup complete for: %@", self.seafFile.name);
     
     // If this page is the gallery's current visible page and a silent
     // auto-preview was queued before the player was ready, trigger it now.
@@ -2689,17 +2664,14 @@
 #pragma mark - SeafLivePhotoPlayerViewDelegate
 
 - (void)livePhotoPlayerViewDidStartPlaying:(SeafLivePhotoPlayerView *)playerView {
-    Debug(@"[PhotoContent] Live Photo started playing: %@", self.seafFile.name);
     // Badge remains visible during playback - no action needed
 }
 
 - (void)livePhotoPlayerViewDidFinishPlaying:(SeafLivePhotoPlayerView *)playerView {
-    Debug(@"[PhotoContent] Live Photo finished playing: %@", self.seafFile.name);
     // Badge remains visible - no action needed
 }
 
 - (void)livePhotoPlayerView:(SeafLivePhotoPlayerView *)playerView didFailWithError:(NSError *)error {
-    Debug(@"[PhotoContent] Live Photo playback failed: %@, error: %@", self.seafFile.name, error);
     // Badge remains visible - no action needed
 }
 

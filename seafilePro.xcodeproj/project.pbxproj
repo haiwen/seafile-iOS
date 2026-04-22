@@ -1644,13 +1644,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F5AD6AD824C42D140067F9AF /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F5C648F3210A0B4E00842687 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -2369,6 +2362,16 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		9E2F4AEC96F8B824B4949796 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		571D8CA91677881400F1A22C /* seafileApp */ = {
 			isa = PBXNativeTarget;
@@ -2380,6 +2383,7 @@
 				571D8CE51677881400F1A22C /* Resources */,
 				57E228E51A0F4EE700C92330 /* Embed App Extensions */,
 				DBA7E67946E92470596B2A9A /* [CP] Copy Pods Resources */,
+				9E2F4AEC96F8B824B4949796 /* Headers */,
 			);
 			buildRules = (
 				57E22B341A126D6A00C92330 /* PBXBuildRule */,
@@ -2461,7 +2465,6 @@
 			buildConfigurationList = F5AD6AE724C42D140067F9AF /* Build configuration list for PBXNativeTarget "SeafFileProviderActionsUI" */;
 			buildPhases = (
 				F5AD6AD724C42D140067F9AF /* Sources */,
-				F5AD6AD824C42D140067F9AF /* Frameworks */,
 				F5AD6AD924C42D140067F9AF /* Resources */,
 			);
 			buildRules = (
@@ -4112,7 +4115,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.0.2;
+				MARKETING_VERSION = 4.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
@@ -4148,7 +4151,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.0.2;
+				MARKETING_VERSION = 4.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";

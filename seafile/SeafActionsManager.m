@@ -94,9 +94,9 @@
         
         NSString *star = file.isStarred ? S_UNSTAR : S_STAR;
         if (file.mpath)
-            titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_RE_UPLOAD_FILE, nil];
+            titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_RE_UPLOAD_FILE, S_PROFILE, nil];
         else
-            titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
+            titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_PROFILE, nil];
         
     } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
         [titles addObjectsFromArray:@[S_DOWNLOAD, S_DELETE, S_RENAME]];
