@@ -157,64 +157,44 @@ static const NSTimeInterval kSeafLivePhotoHintPreviewDuration = 1.2;
 - (void)loadMotionPhotoFromData:(NSData *)data {
     [self cleanup];
     
-    Debug(@"[LivePhotoPlayer] loadMotionPhotoFromData called, data size: %lu bytes", (unsigned long)data.length);
     
     if (!data || data.length == 0) {
-        Debug(@"[LivePhotoPlayer] ERROR: No data provided");
         return;
     }
     
     // Check if this is a Motion Photo
     BOOL isMotionPhoto = [SeafMotionPhotoExtractor isMotionPhoto:data];
-    Debug(@"[LivePhotoPlayer] isMotionPhoto detection result: %@", isMotionPhoto ? @"YES" : @"NO");
     
     if (!isMotionPhoto) {
         // Not a Motion Photo, just display as static image
-        Debug(@"[LivePhotoPlayer] Not a Motion Photo, loading as static image");
         UIImage *image = [UIImage imageWithData:data];
-        Debug(@"[LivePhotoPlayer] Static image created: %@, size: %@",
-              image ? @"SUCCESS" : @"FAILED",
-              image ? NSStringFromCGSize(image.size) : @"N/A");
         [self loadStaticImage:image];
         return;
     }
     
     _hasMotionPhotoContent = YES;
-    Debug(@"[LivePhotoPlayer] Motion Photo detected, extracting components...");
     
     // Extract static image
     NSData *imageData = [SeafMotionPhotoExtractor extractImageFromMotionPhoto:data];
-    Debug(@"[LivePhotoPlayer] Extracted image data: %@",
-          imageData ? [NSString stringWithFormat:@"%lu bytes", (unsigned long)imageData.length] : @"FAILED");
     
     if (imageData) {
         _staticImage = [UIImage imageWithData:imageData];
-        Debug(@"[LivePhotoPlayer] Created UIImage from extracted data: %@, size: %@",
-              _staticImage ? @"SUCCESS" : @"FAILED",
-              _staticImage ? NSStringFromCGSize(_staticImage.size) : @"N/A");
     } else {
         // Fallback: try to load the whole data as image
-        Debug(@"[LivePhotoPlayer] FALLBACK: Trying to create image from full data");
         _staticImage = [UIImage imageWithData:data];
-        Debug(@"[LivePhotoPlayer] Fallback image creation: %@, size: %@",
-              _staticImage ? @"SUCCESS" : @"FAILED",
-              _staticImage ? NSStringFromCGSize(_staticImage.size) : @"N/A");
     }
     
     _imageView.image = _staticImage;
     
     // Extract video to temp file
-    Debug(@"[LivePhotoPlayer] Extracting video to temp file...");
     _tempVideoPath = [SeafMotionPhotoExtractor extractVideoToTempFileFromMotionPhoto:data];
     
     if (_tempVideoPath) {
         _videoURL = [NSURL fileURLWithPath:_tempVideoPath];
-        Debug(@"[LivePhotoPlayer] Video extracted successfully: %@", _tempVideoPath);
         
         // Verify the video file
         NSFileManager *fm = [NSFileManager defaultManager];
         NSDictionary *attrs = [fm attributesOfItemAtPath:_tempVideoPath error:nil];
-        Debug(@"[LivePhotoPlayer] Video file size: %llu bytes", [attrs fileSize]);
         
         // Check video format
         NSData *videoHeader = [NSData dataWithContentsOfFile:_tempVideoPath options:NSDataReadingMappedIfSafe error:nil];
@@ -223,26 +203,17 @@ static const NSTimeInterval kSeafLivePhotoHintPreviewDuration = 1.2;
             char brand[5] = {0};
             [videoHeader getBytes:type range:NSMakeRange(4, 4)];
             [videoHeader getBytes:brand range:NSMakeRange(8, 4)];
-            Debug(@"[LivePhotoPlayer] Video format: type='%s', brand='%s'", type, brand);
         }
     } else {
-        Debug(@"[LivePhotoPlayer] ERROR: Failed to extract video to temp file!");
         
         // Additional debug: try to get video data directly
         NSData *videoData = [SeafMotionPhotoExtractor extractVideoFromMotionPhoto:data];
         if (videoData) {
-            Debug(@"[LivePhotoPlayer] Video data exists (%lu bytes) but failed to write to temp file",
-                  (unsigned long)videoData.length);
         } else {
-            Debug(@"[LivePhotoPlayer] Video extraction also failed - no video data found");
         }
     }
     
     [self updateLiveBadgeVisibility];
-    Debug(@"[LivePhotoPlayer] Load complete. hasMotionPhotoContent=%@, hasVideo=%@, hasImage=%@",
-          _hasMotionPhotoContent ? @"YES" : @"NO",
-          _videoURL ? @"YES" : @"NO",
-          _staticImage ? @"YES" : @"NO");
 }
 
 - (void)loadMotionPhotoFromPath:(NSString *)path {
@@ -409,7 +380,6 @@ static const NSTimeInterval kSeafLivePhotoHintPreviewDuration = 1.2;
             [_player.currentItem removeObserver:self forKeyPath:@"status"];
         }
     } @catch (NSException *exception) {
-        Debug(@"[LivePhoto] Exception removing KVO: %@", exception);
     }
     
     // Destroy player
@@ -420,7 +390,6 @@ static const NSTimeInterval kSeafLivePhotoHintPreviewDuration = 1.2;
     [_playerLayer removeFromSuperlayer];
     _playerLayer = nil;
     
-    Debug(@"[LivePhoto] Player destroyed for clean state");
 }
 
 - (void)togglePlayback {
@@ -498,7 +467,6 @@ static const NSTimeInterval kSeafLivePhotoHintPreviewDuration = 1.2;
     } else if ([keyPath isEqualToString:@"status"]) {
         AVPlayerItemStatus status = [change[NSKeyValueChangeNewKey] integerValue];
         if (status == AVPlayerItemStatusFailed) {
-            Debug(@"[LivePhoto] AVPlayerItem failed: %@", _player.currentItem.error);
         }
     }
 }

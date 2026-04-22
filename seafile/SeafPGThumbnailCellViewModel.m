@@ -102,12 +102,10 @@
                             strongSelf.isLoading = NO;
                         } else {
                             // Treat this as a failure to prevent a loop.
-                            Debug(@"[VM] Thumb task for %@ reported success, but image is not loadable. Displaying error.", seafFile.name);
                             strongSelf.thumbnailImage = [UIImage imageNamed:@"gallery_failed.png"];
                             strongSelf.isLoading = NO;
                         }
                     } else {
-                        Debug(@"[VM] Thumb task for %@ failed.", seafFile.name);
                         strongSelf.thumbnailImage = [UIImage imageNamed:@"gallery_failed.png"];
                         strongSelf.isLoading = NO;
                     }
@@ -152,7 +150,6 @@
         [self.currentSeafFileForThumbLoading setThumbCompleteBlock:nil];
         // We don't directly remove from SeafDataTaskManager here, as tasks are typically identified by more than just the SeafFile object.
         // The SeafPhotoThumb task itself might not be easily removable without more complex tracking.
-        Debug(@"[VM] Cleared thumbCompleteBlock for %@ during cancel.", self.currentSeafFileForThumbLoading.name);
         self.currentSeafFileForThumbLoading = nil;
     }
     // If we were in a loading state, and it's cancelled, we might want to revert to a placeholder or stop the indicator

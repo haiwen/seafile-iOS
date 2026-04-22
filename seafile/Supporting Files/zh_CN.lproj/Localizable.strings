@@ -1070,3 +1070,15 @@
 
 /* Seafile */
 "Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
+
+
+/* SDoc Insert Image */
+"Take Photo" = "拍照";
+"Photo Library" = "相册";
+"From Files" = "从文件选择";
+"Settings" = "设置";
+"Failed to read image" = "读取图片失败";
+"Upload failed" = "上传失败";
+"Camera permission is required." = "需要相机权限。";
+"Photo library permission is required." = "需要相册权限。";
+"%lu image(s) failed to upload" = "%lu 张图片上传失败";

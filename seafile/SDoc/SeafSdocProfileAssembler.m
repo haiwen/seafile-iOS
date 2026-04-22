@@ -2,8 +2,22 @@
 
 #import "SeafSdocProfileAssembler.h"
 #import "SeafSdocUserMapper.h"
+#import "Services/SeafSdocService.h"
 
 @implementation SeafSdocProfileAssembler
+
++ (NSArray<NSDictionary *> *)buildRowsFromProfileAggregate:(SeafFileProfileAggregate *)agg
+{
+    if (!agg) return @[];
+    NSDictionary *aggregate = @{
+        @"fileDetail":     agg.fileDetail     ?: @{},
+        @"metadataConfig": agg.metadataConfig ?: @{},
+        @"recordWrapper":  agg.recordWrapper  ?: @{},
+        @"relatedUsers":   agg.relatedUsers   ?: @{},
+        @"tagWrapper":     agg.tagWrapper     ?: @{}
+    };
+    return [self buildRowsFromAggregate:aggregate];
+}
 
 // MARK: - Shared formatters (performance)
 
@@ -74,6 +88,9 @@
 
     BOOL metaEnabled = [metadataConfig[@"enabled"] boolValue];
 
+    // Build detailsSettingsMap (align Android FileProfileConfigModel.getDetailsSettingsMap)
+    NSDictionary *detailsSettingsMap = [self buildDetailsSettingsMapFromConfig:metadataConfig metaEnabled:metaEnabled];
+
     
     // Prepare metadata/results (fallback if needed)
     NSArray *metadata = [recordWrapper objectForKey:@"metadata"];
@@ -128,7 +145,7 @@
         [orderedMetadata insertObject:sizeMeta atIndex:0];
     }
 
-    // whitelist for underscore fields
+    // whitelist for underscore fields (align Android MetadataViewUtils.getSupportedFieldMap)
     NSSet *fixedKeys = [self fixedUnderscoreKeys];
 
     NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
@@ -139,6 +156,20 @@
         NSString *rawType = [m objectForKey:@"type"] ?: @"text";
         NSString *type = [self normalizeType:rawType key:key];
 
+        // Layer 1: details_settings visibility control (server-side)
+        if ([key isKindOfClass:[NSString class]]) {
+            NSNumber *isShown = detailsSettingsMap[key];
+            if (isShown != nil && ![isShown boolValue]) {
+                continue; // explicitly hidden by details_settings
+            }
+            // If key is not in detailsSettingsMap at all, also skip
+            // (only fields with shown=true should be displayed)
+            if (isShown == nil) {
+                continue;
+            }
+        }
+
+        // Layer 2: client-side whitelist for underscore fields
         if ([key isKindOfClass:[NSString class]] && [key hasPrefix:@"_"]) {
             if (![fixedKeys containsObject:key]) {
                 continue; // skip non-whitelisted underscore fields
@@ -167,10 +198,29 @@
             icon = @"tag-filled"; // use dedicated tag icon per design
         }
 
-        // Fallback: for geolocation, if _location is empty, try _location_translated
-        if ((rawValue == nil || rawValue == (id)[NSNull null]) && [key isEqualToString:@"_location"]) {
-            id alt = singleResult[@"_location_translated"];
-            if (alt) rawValue = alt;
+        // Merge _location_translated into _location for geolocation rendering
+        // (align Android: _location_translated provides address/city/province etc.)
+        if ([key isEqualToString:@"_location"]) {
+            id translated = singleResult[@"_location_translated"];
+            if ([translated isKindOfClass:[NSDictionary class]]) {
+                if (rawValue == nil || rawValue == (id)[NSNull null]) {
+                    // _location absent — use translated as primary
+                    rawValue = translated;
+                } else if ([rawValue isKindOfClass:[NSDictionary class]]) {
+                    // Merge: translated fields supplement _location fields
+                    NSMutableDictionary *merged = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary *)rawValue];
+                    NSDictionary *trans = (NSDictionary *)translated;
+                    // Copy translated fields that _location doesn't have
+                    for (NSString *tk in trans) {
+                        if (!merged[tk] || merged[tk] == [NSNull null]) {
+                            merged[tk] = trans[tk];
+                        }
+                    }
+                    rawValue = [merged copy];
+                }
+            } else if (rawValue == nil || rawValue == (id)[NSNull null]) {
+                if (translated) rawValue = translated;
+            }
         }
         NSArray *valueCells = [self renderValueCellsForType:type metadata:m key:key value:rawValue metadataConfig:metadataConfig tagWrapper:tagWrapper relatedUsers:effectiveRelatedUsers];
         if (valueCells.count == 0) {
@@ -193,13 +243,62 @@
 
 #pragma mark - Helpers
 
-// Shared fixed underscore keys
+// Shared fixed underscore keys (align Android MetadataViewUtils.getSupportedFieldMap)
 + (NSSet *)fixedUnderscoreKeys
 {
     static NSSet *s; static dispatch_once_t onceToken; dispatch_once(&onceToken, ^{
-        s = [NSSet setWithArray:@[@"_size", @"_file_modifier", @"_file_mtime", @"_owner", @"_description", @"_collaborators", @"_reviewer", @"_status", @"_rate", @"_tags", @"_location"]];
+        s = [NSSet setWithArray:@[@"_size", @"_file_modifier", @"_file_mtime", @"_owner", @"_description", @"_collaborators", @"_reviewer", @"_status", @"_rate", @"_tags", @"_location", @"_expire_time"]];
     });
     return s;
+}
+
+// Build detailsSettingsMap from metadataConfig (align Android FileProfileConfigModel.getDetailsSettingsMap)
+// Returns: { key(NSString) : shown(NSNumber/BOOL) }
++ (NSDictionary *)buildDetailsSettingsMapFromConfig:(NSDictionary *)metadataConfig metaEnabled:(BOOL)metaEnabled
+{
+    NSMutableDictionary *map = [NSMutableDictionary dictionary];
+
+    // Layer 1: Default fields (always shown)
+    map[@"_size"] = @YES;
+    map[@"_file_modifier"] = @YES;
+    map[@"_file_mtime"] = @YES;
+
+    // Layer 2: Conditional defaults (only when metadata enabled)
+    if (metaEnabled) {
+        map[@"_location"] = @YES;
+        map[@"_description"] = @YES;
+        map[@"_tags"] = @YES;
+    }
+
+    // Layer 3: Server-side overrides from details_settings
+    id detailsSettingsRaw = metadataConfig[@"details_settings"];
+    NSDictionary *parsed = nil;
+    if ([detailsSettingsRaw isKindOfClass:[NSDictionary class]]) {
+        parsed = (NSDictionary *)detailsSettingsRaw;
+    } else if ([detailsSettingsRaw isKindOfClass:[NSString class]]) {
+        NSString *jsonStr = (NSString *)detailsSettingsRaw;
+        if (jsonStr.length > 0 && ![jsonStr isEqualToString:@"{}"]) {
+            NSData *data = [jsonStr dataUsingEncoding:NSUTF8StringEncoding];
+            if (data) {
+                id obj = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+                if ([obj isKindOfClass:[NSDictionary class]]) parsed = obj;
+            }
+        }
+    }
+    if ([parsed isKindOfClass:[NSDictionary class]]) {
+        NSArray *columns = parsed[@"columns"];
+        if ([columns isKindOfClass:[NSArray class]]) {
+            for (NSDictionary *col in columns) {
+                if (![col isKindOfClass:[NSDictionary class]]) continue;
+                NSString *key = col[@"key"];
+                if (![key isKindOfClass:[NSString class]] || key.length == 0) continue;
+                BOOL shown = [col[@"shown"] boolValue];
+                map[key] = @(shown); // override or add
+            }
+        }
+    }
+
+    return [map copy];
 }
 
 + (NSString *)titleForKey:(NSString *)key fallback:(NSString *)fallback
@@ -222,7 +321,8 @@
             @"_tags": @"_tags",
             @"_owner": @"_owner",
             @"_rate": @"_file_rate",
-            @"_location": @"_location"
+            @"_location": @"_location",
+            @"_expire_time": @"_expire_time"
         };
     });
     NSString *v = map[key];
@@ -272,7 +372,7 @@
         return @[];
     }
 
-        if ([type isEqualToString:@"number"]) {
+    if ([type isEqualToString:@"number"]) {
         if ([key isEqualToString:@"_size"]) {
             long long sz = 0;
             if ([value isKindOfClass:[NSNumber class]]) sz = [(NSNumber *)value longLongValue];
@@ -281,8 +381,7 @@
         }
         if ([value isKindOfClass:[NSNumber class]]) {
             NSNumber *n = (NSNumber *)value;
-            BOOL isInteger = (llabs(n.longLongValue) == llabs((long long)llround(n.doubleValue)));
-            NSString *t = isInteger ? [NSString stringWithFormat:@"%lld", n.longLongValue] : [NSString stringWithFormat:@"%g", n.doubleValue];
+            NSString *t = [self formatNumber:n withMetadata:metadata];
             return @[ @{ @"text": t } ];
         }
         return @[];
@@ -306,6 +405,9 @@
                     NSString *name = norm[@"name"] ?: @"";
                     NSString *avatar = norm[@"avatarURL"] ?: @"";
                     [cells addObject:@{ @"user_name": name, @"avatar": avatar }];
+                } else if ([email isKindOfClass:[NSString class]] && [(NSString *)email length] > 0) {
+                    // Fallback: relatedUsers unavailable or user not found — show email directly
+                    [cells addObject:@{ @"user_name": (NSString *)email, @"avatar": @"" }];
                 }
             }
             return cells;
@@ -432,21 +534,53 @@
 
     if ([type isEqualToString:@"geolocation"]) {
         if ([value isKindOfClass:[NSDictionary class]]) {
+            // Helper block: safely coerce any value to NSString
+            // (API may return NSNumber for lat/lng, NSNull, etc.)
+            NSString *(^safeStr)(id) = ^NSString *(id v) {
+                if ([v isKindOfClass:[NSString class]]) return (NSString *)v;
+                if ([v isKindOfClass:[NSNumber class]]) return [(NSNumber *)v stringValue];
+                return @"";
+            };
+
+            // Priority aligned with Android GeoLocationModel.getText():
+            // 1. address (from _location_translated)
+            // 2. concat: country + province + city + district + street
+            // 3. lat/lng as last resort
+
+            // Priority 1: address field (populated by _location_translated merge)
+            NSString *address = safeStr(value[@"address"]);
+            if (address.length > 0) return @[ @{ @"text": address } ];
+
+            // Priority 2: concat fields (country/country_region + province + city + district + street/detail)
+            NSString *country = safeStr(value[@"country"]);
+            if (country.length == 0) country = safeStr(value[@"country_region"]);
+            if (country.length == 0) country = safeStr(value[@"countryRegion"]);
+            NSString *province = safeStr(value[@"province"]);
+            NSString *city = safeStr(value[@"city"]);
+            NSString *district = safeStr(value[@"district"]);
+            NSString *street = safeStr(value[@"street"]);
+            if (street.length == 0) street = safeStr(value[@"detail"]);
+
+            NSMutableString *concat = [NSMutableString string];
+            if (country.length) [concat appendString:country];
+            if (province.length) [concat appendString:province];
+            if (city.length) [concat appendString:city];
+            if (district.length) [concat appendString:district];
+            if (street.length) [concat appendString:street];
+            if (concat.length > 0) return @[ @{ @"text": [concat copy] } ];
+
+            // Priority 3: lat/lng coordinates as last resort
+            // Android shows coords whenever geo_format is non-empty and lat/lng are valid
             NSDictionary *cfg = [self firstConfigFromMetadata:metadata];
             NSString *geo = [cfg isKindOfClass:[NSDictionary class]] ? (cfg[@"geo_format"] ?: cfg[@"geoFormat"]) : nil;
-            NSString *lat = value[@"lat"] ?: @"";
-            NSString *lng = value[@"lng"] ?: @"";
-            if (geo && [geo isKindOfClass:[NSString class]] && [geo isEqualToString:@"lng_lat"]) {
-                if (lat.length && lng.length) return @[ @{ @"text": [NSString stringWithFormat:@"%@, %@", lat, lng] } ];
+            if ([geo isKindOfClass:[NSString class]] && geo.length > 0) {
+                NSString *lat = safeStr(value[@"lat"]);
+                NSString *lng = safeStr(value[@"lng"]);
+                if (lat.length && lng.length && ![lat isEqualToString:@"0"] && ![lng isEqualToString:@"0"]) {
+                    // Use "lng, lat" order to align with Android GeoLocationModel.getLngLat()
+                    return @[ @{ @"text": [NSString stringWithFormat:@"%@, %@", lng, lat] } ];
+                }
             }
-            NSString *province = value[@"province"] ?: @"";
-            NSString *city = value[@"city"] ?: @"";
-            NSString *district = value[@"district"] ?: @"";
-            NSString *detail = value[@"detail"] ?: @"";
-            NSString *country_region = value[@"country_region"] ?: value[@"countryRegion"] ?: @"";
-            if (country_region.length) return @[ @{ @"text": country_region } ];
-            NSString *joined = [@[province, city, district, detail] componentsJoinedByString:@""];
-            if (joined.length) return @[ @{ @"text": joined } ];
         }
         return @[];
     }
@@ -578,7 +712,7 @@
     if ([t isEqualToString:@"single select"]) t = @"single_select";
     if ([t isEqualToString:@"multiple select"]) t = @"multiple_select";
     if ([t isEqualToString:@"geo"]) t = @"geolocation";
-    if ([key isEqualToString:@"_file_modifier"]) return @"collaborator";
+    // Note: _file_modifier type override is handled in the main loop (buildRowsFromAggregate:)
     return t;
 }
 
@@ -602,6 +736,98 @@
     }
 
     return [NSString stringWithFormat:@"%@ %@", numStr, units[idx]];
+}
+
+// Format number using metadata config (align Android MetadataViewUtils.getFormattedNumber)
+// Supports: format (percent, yuan, dollar, euro), precision, thousands, decimal
++ (NSString *)formatNumber:(NSNumber *)number withMetadata:(NSDictionary *)metadata
+{
+    if (!number) return @"";
+
+    NSDictionary *cfg = [self firstConfigFromMetadata:metadata];
+    NSString *format = nil;
+    NSString *thousands = nil;
+    NSString *decimal = nil;
+    NSInteger precision = -1; // -1 means unset
+    BOOL enablePrecision = NO;
+
+    if ([cfg isKindOfClass:[NSDictionary class]]) {
+        format = cfg[@"format"];
+        thousands = cfg[@"thousands"];
+        decimal = cfg[@"decimal"];
+        id precisionVal = cfg[@"precision"];
+        id enablePrecisionVal = cfg[@"enable_precision"];
+        if ([precisionVal respondsToSelector:@selector(integerValue)]) {
+            precision = [precisionVal integerValue];
+        }
+        if ([enablePrecisionVal respondsToSelector:@selector(boolValue)]) {
+            enablePrecision = [enablePrecisionVal boolValue];
+        }
+    }
+
+    // Base formatting
+    NSNumberFormatter *fmt = [NSNumberFormatter new];
+    fmt.numberStyle = NSNumberFormatterDecimalStyle;
+    fmt.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+
+    // Thousands separator
+    if ([thousands isKindOfClass:[NSString class]]) {
+        if ([thousands isEqualToString:@"comma"]) {
+            fmt.groupingSeparator = @",";
+            fmt.usesGroupingSeparator = YES;
+        } else if ([thousands isEqualToString:@"space"]) {
+            fmt.groupingSeparator = @" ";
+            fmt.usesGroupingSeparator = YES;
+        } else if ([thousands isEqualToString:@"no"]) {
+            fmt.usesGroupingSeparator = NO;
+        } else {
+            fmt.usesGroupingSeparator = NO;
+        }
+    } else {
+        fmt.usesGroupingSeparator = NO;
+    }
+
+    // Decimal point style
+    if ([decimal isKindOfClass:[NSString class]] && [decimal isEqualToString:@"comma"]) {
+        fmt.decimalSeparator = @",";
+    } else {
+        fmt.decimalSeparator = @".";
+    }
+
+    // Precision
+    if (enablePrecision && precision >= 0) {
+        fmt.minimumFractionDigits = precision;
+        fmt.maximumFractionDigits = precision;
+    } else {
+        // Auto: detect if integer or floating point
+        double val = number.doubleValue;
+        BOOL isInteger = (llabs(number.longLongValue) == llabs((long long)llround(val)));
+        if (isInteger) {
+            fmt.minimumFractionDigits = 0;
+            fmt.maximumFractionDigits = 0;
+        } else {
+            fmt.minimumFractionDigits = 0;
+            fmt.maximumFractionDigits = 8; // reasonable default
+        }
+    }
+
+    NSString *result = [fmt stringFromNumber:number] ?: @"";
+
+    // Format suffix/prefix (align Android MetadataViewUtils)
+    if ([format isKindOfClass:[NSString class]] && format.length > 0) {
+        if ([format isEqualToString:@"percent"]) {
+            // percent: the raw value is already 0-100 range from server
+            result = [result stringByAppendingString:@"%"];
+        } else if ([format isEqualToString:@"yuan"]) {
+            result = [result stringByAppendingString:@"¥"];
+        } else if ([format isEqualToString:@"dollar"]) {
+            result = [@"$" stringByAppendingString:result];
+        } else if ([format isEqualToString:@"euro"]) {
+            result = [@"€" stringByAppendingString:result];
+        }
+    }
+
+    return result;
 }
 
 #pragma mark - Option Resolve Fallback from metadataConfig
@@ -733,6 +959,12 @@
 // Recursive search for option by name in arbitrary metadataConfig structure
 + (NSDictionary *)findOptionByName:(NSString *)name inAnyObject:(id)obj forFieldKey:(NSString *)fieldKey
 {
+    return [self findOptionByName:name inAnyObject:obj forFieldKey:fieldKey depth:0];
+}
+
++ (NSDictionary *)findOptionByName:(NSString *)name inAnyObject:(id)obj forFieldKey:(NSString *)fieldKey depth:(NSInteger)depth
+{
+    if (depth > 5) return nil;
     if (!obj) return nil;
     if ([obj isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = (NSDictionary *)obj;
@@ -776,12 +1008,12 @@
         }
         // Recurse into children
         for (id child in dict.allValues) {
-            NSDictionary *res = [self findOptionByName:name inAnyObject:child forFieldKey:fieldKey];
+            NSDictionary *res = [self findOptionByName:name inAnyObject:child forFieldKey:fieldKey depth:depth + 1];
             if (res) return res;
         }
     } else if ([obj isKindOfClass:[NSArray class]]) {
         for (id child in (NSArray *)obj) {
-            NSDictionary *res = [self findOptionByName:name inAnyObject:child forFieldKey:fieldKey];
+            NSDictionary *res = [self findOptionByName:name inAnyObject:child forFieldKey:fieldKey depth:depth + 1];
             if (res) return res;
         }
     }
@@ -791,6 +1023,13 @@
 // Scan any 'options' arrays in the metadataConfig and try to match by name/id/value/code/key (ignoring field key)
 + (NSDictionary *)findOptionByNameAnywhere:(NSString *)value inAnyObject:(id)obj
 {
+    return [self findOptionByNameAnywhere:value inAnyObject:obj depth:0];
+}
+
++ (NSDictionary *)findOptionByNameAnywhere:(NSString *)value inAnyObject:(id)obj depth:(NSInteger)depth
+{
+    // Limit recursion depth to avoid performance issues and cross-field mismatches
+    if (depth > 5) return nil;
     if (!obj || ![value isKindOfClass:[NSString class]]) return nil;
     if ([obj isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = (NSDictionary *)obj;
@@ -830,12 +1069,12 @@
         }
         // recurse children
         for (id child in dict.allValues) {
-            NSDictionary *res = [self findOptionByNameAnywhere:value inAnyObject:child];
+            NSDictionary *res = [self findOptionByNameAnywhere:value inAnyObject:child depth:depth + 1];
             if (res) return res;
         }
     } else if ([obj isKindOfClass:[NSArray class]]) {
         for (id child in (NSArray *)obj) {
-            NSDictionary *res = [self findOptionByNameAnywhere:value inAnyObject:child];
+            NSDictionary *res = [self findOptionByNameAnywhere:value inAnyObject:child depth:depth + 1];
             if (res) return res;
         }
     }

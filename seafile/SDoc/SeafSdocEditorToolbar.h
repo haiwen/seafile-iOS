@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)editorToolbarDidTapOrderedList;
 - (void)editorToolbarDidTapCheckList;
 - (void)editorToolbarDidTapKeyboard;
+- (void)editorToolbarDidTapInsertImage:(UIButton *)sender;
 
 @end
 
@@ -36,6 +37,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Get the style button for popover anchor
 - (UIButton *)styleButton;
+
+/// Get the insert-image button for popover anchor / debounce control
+- (UIButton *)imageButton;
+
+/// Set the enabled state of the insert-image button (e.g. while uploading)
+- (void)setInsertImageEnabled:(BOOL)enabled;
 
 @end
 

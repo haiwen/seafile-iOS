@@ -5,7 +5,14 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class SeafConnection;
-@class SeafFileProfileAggregate;
+
+@interface SeafFileProfileAggregate : NSObject
+@property (nonatomic, strong, nullable) NSDictionary *fileDetail;
+@property (nonatomic, strong, nullable) NSDictionary *metadataConfig;
+@property (nonatomic, strong, nullable) NSDictionary *recordWrapper;
+@property (nonatomic, strong, nullable) NSDictionary *relatedUsers;
+@property (nonatomic, strong, nullable) NSDictionary *tagWrapper;
+@end
 
 @interface SeafSdocService : NSObject
 

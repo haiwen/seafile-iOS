@@ -97,17 +97,21 @@ static const CGFloat kSeafEdgeBounceDetectionPx = 1.0;
     return self;
 }
 
-- (void)setZoomScale:(CGFloat)zoomScale animated:(BOOL)animated {
-    [super setZoomScale:zoomScale animated:animated];
-    // Zooming back to natural size invalidates any primed handoff state
-    // captured at a previous zoom level — both for double-tap reset and
-    // for `prepareForReuse` (which sets zoomScale = 1.0). Without this,
-    // a primed flag on photo A could leak into the very first pan on
-    // photo B and skip the required first-bounce.
+- (void)clearPrimedHandoffStateIfNeededForZoomScale:(CGFloat)zoomScale {
     if (zoomScale <= self.minimumZoomScale + 0.01) {
         self.primedForEdgeHandoff = NO;
         self.primedEdge           = 0;
     }
+}
+
+- (void)setZoomScale:(CGFloat)zoomScale {
+    [super setZoomScale:zoomScale];
+    [self clearPrimedHandoffStateIfNeededForZoomScale:zoomScale];
+}
+
+- (void)setZoomScale:(CGFloat)zoomScale animated:(BOOL)animated {
+    [super setZoomScale:zoomScale animated:animated];
+    [self clearPrimedHandoffStateIfNeededForZoomScale:zoomScale];
 }
 
 #pragma mark - Helpers

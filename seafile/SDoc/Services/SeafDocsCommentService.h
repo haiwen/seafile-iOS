@@ -47,6 +47,20 @@ NS_ASSUME_NONNULL_BEGIN
                         fileName:(NSString *)fileName
                       completion:(void(^)(NSDictionary * _Nullable resp, NSError * _Nullable error))completion;
 
+// Batch upload N images for SDoc editor "insert image" action.
+// Each item dictionary requires keys: "data" (NSData), "fileName" (NSString), "mime" (NSString).
+// Completion is called once after all uploads finish (concurrent), with:
+//   - relativePaths: flattened, in original input order, of every uploaded relative_path
+//   - failedCount:   number of items that failed to upload
+//   - error:         the last underlying error, if any (for diagnostic / toast)
+- (void)uploadImagesForDocUUID:(NSString *)uuid
+                   seadocServer:(NSString *)server
+                          token:(NSString *)token
+                          items:(NSArray<NSDictionary *> *)items
+                     completion:(void(^)(NSArray<NSString *> * _Nonnull relativePaths,
+                                          NSUInteger failedCount,
+                                          NSError * _Nullable lastError))completion;
+
 // Get participants (users who have been mentioned in this doc)
 // API: /api/v2.1/seadoc/participants/{docUuid}/
 // Uses seahub server (via SeafConnection), not seadoc server
