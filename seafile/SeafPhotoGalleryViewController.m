@@ -1032,6 +1032,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     [self updateLoadedImagesRangeForIndex:newIdx];
     [self loadImagesInCurrentRange];
     [self updateActiveControllersForIndex:newIdx];
+    [self evictDistantCachedControllers];
     [self cancelDownloadsExceptForIndex:newIdx withRange:2];
 
     SeafPhotoContentViewController *previousVC = self.currentContentVC;
@@ -2999,6 +3000,55 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
               (unsigned long)releasedCount, self.activeControllers);
     }
 }
+
+/// Evict cached VCs far from the current page to bound memory usage.
+/// The "safe zone" (current ± kEvictSafeRadius) is never evicted, which
+/// strictly guarantees the adjacent-page-preload requirement (current ± 1).
+/// VCs beyond current ± kEvictMaxDistance are removed from the dictionary
+/// entirely — a subsequent visit recreates them on demand.
+static const NSUInteger kEvictSafeRadius   = 1;  // current ± 1 is never evicted
+static const NSUInteger kEvictMaxDistance   = 5;  // evict VCs further than ± 5
+
+- (void)evictDistantCachedControllers {
+    NSUInteger cur = self.currentIndex;
+    NSMutableArray<NSNumber *> *keysToEvict = [NSMutableArray array];
+
+    for (NSNumber *key in [self.contentVCCache.allKeys copy]) {
+        NSUInteger idx = key.unsignedIntegerValue;
+        NSUInteger distance = (idx > cur) ? (idx - cur) : (cur - idx);
+
+        // Never evict current ± safe radius (strict preload guarantee)
+        if (distance <= kEvictSafeRadius) continue;
+        // Keep entries within max distance as warm cache
+        if (distance <= kEvictMaxDistance) continue;
+
+        [keysToEvict addObject:key];
+    }
+
+    if (keysToEvict.count == 0) return;
+
+    for (NSNumber *key in keysToEvict) {
+        SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
+        if (vc) {
+            [vc cancelImageLoading];
+            [vc releaseImageMemory];
+            // Tear down child VC relationship if still parented
+            if (vc.parentViewController == self) {
+                [vc willMoveToParentViewController:nil];
+                [vc.view removeFromSuperview];
+                [vc removeFromParentViewController];
+            }
+        }
+        [self.contentVCCache removeObjectForKey:key];
+        [self.loadingStatusDict removeObjectForKey:key];
+        [self.downloadProgressDict removeObjectForKey:key];
+    }
+
+    Debug(@"[Gallery] Evicted %lu distant cached VC(s), cache size: %lu",
+          (unsigned long)keysToEvict.count,
+          (unsigned long)self.contentVCCache.count);
+}
+
 
 /**
  * Cancel file downloads outside the specified index range

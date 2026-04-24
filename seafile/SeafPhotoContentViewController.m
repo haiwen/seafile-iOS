@@ -796,10 +796,15 @@
             
             // File exists, proceed with loading
             NSString *expectedName = self.seafFile.name; // Capture for recycling check
+            @weakify(self);
             [((SeafFile *)self.seafFile) getImageWithCompletion:^(UIImage *image) {
+                @strongify(self);
+                if (!self) return;
                 Debug(@"[PhotoContent] getImageWithCompletion callback for %@, image: %@", self.seafFile.name, image ? @"SUCCESS" : @"FAILED");
                 
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    @strongify(self);
+                    if (!self) return;
                     // Allow image loading even when view isn't visible — adjacent
                     // pages pre-fetched by UIPageViewController need their images
                     // set before becoming visible during a page transition.
@@ -860,8 +865,11 @@
         }
     }
     else if ([self.seafFile isKindOfClass:[SeafUploadFile class]]) {
+        @weakify(self);
         [((SeafUploadFile *)self.seafFile) getImageWithCompletion:^(UIImage *image) {
             dispatch_async(dispatch_get_main_queue(), ^{
+                @strongify(self);
+                if (!self) return;
                 // Check if this view controller is still active and valid
                 if (!self.view.window) {
                     Debug(@"[PhotoContent] View is no longer visible, skipping image update for %@", self.seafFile.name);
@@ -884,8 +892,11 @@
                     self.isDisplayingPlaceholderOrErrorImage = NO; // Ensure flag is cleared on success
 
                     // If we have the file path, get the data to display EXIF info and check for Motion Photo
+                    @weakify(self);
                     [((SeafUploadFile *)self.seafFile) getDataForAssociatedAssetWithCompletion:^(NSData * _Nullable data, NSError * _Nullable error) {
                         dispatch_async(dispatch_get_main_queue(), ^{
+                            @strongify(self);
+                            if (!self) return;
                             if (data) {
                                 [self displayExifData:data];
                                 // Check if this is a Motion Photo and setup player
@@ -936,6 +947,7 @@
     Debug(@"Fetching file metadata from URL: %@", requestUrl);
     
     // Use SeafConnection's sendRequest method
+    @weakify(self);
     [self.connection sendRequest:requestUrl
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         // Handle success response
@@ -975,6 +987,8 @@
         
         // Update the infoModel on the main thread
         dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
+            if (!self) return;
             self.infoModel = infoDict;
             
             // Update the info view if it's visible
@@ -986,6 +1000,8 @@
     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         Debug(@"Error fetching file metadata: %@", error);
         dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
+            if (!self) return;
             if (!self.imageView.image && !self.isDisplayingPlaceholderOrErrorImage) {
                  // for metadata failure, we just log it. The user experience is primarily driven by image display.
             }
@@ -2147,11 +2163,16 @@
             Debug(@"[PhotoContent] Preloading image for %@", self.seafFile.name);
             
             // Load in background without affecting UI
+            @weakify(self);
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                [(SeafFile *)self.seafFile getImageWithCompletion:^(UIImage *image) { // Assumes getImageWithCompletion exists on id<SeafPreView>
+                @strongify(self);
+                if (!self) return;
+                [(SeafFile *)self.seafFile getImageWithCompletion:^(UIImage *image) {
                     if (image) {
                         // Store in memory but don't display yet
                         dispatch_async(dispatch_get_main_queue(), ^{
+                            @strongify(self);
+                            if (!self) return;
                             if (!self.imageView.image) {
                                 self.imageView.image = image;
                                 Debug(@"[PhotoContent] Image preloaded for %@", self.seafFile.name);
