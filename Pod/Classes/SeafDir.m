@@ -41,13 +41,17 @@ static BOOL seafIsLetterOrNumber(NSString *str) {
 }
 
 /// Check if every character falls in the CJK Unified Ideographs range (U+4E00–U+9FA5).
+/// NOTE: The upper bound 0x9FA5 intentionally matches the web frontend's isAllChineseStr()
+/// regex (/^[\u4E00-\u9FA5]+$/) to keep sorting behaviour consistent across platforms.
 static BOOL seafIsAllChinese(NSString *str) {
     if (str.length == 0) return NO;
-    for (NSUInteger i = 0; i < str.length; i++) {
-        unichar c = [str characterAtIndex:i];
-        if (c < 0x4E00 || c > 0x9FA5) return NO;
-    }
-    return YES;
+    static NSCharacterSet *nonChinese = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSCharacterSet *chinese = [NSCharacterSet characterSetWithRange:NSMakeRange(0x4E00, 0x9FA5 - 0x4E00 + 1)];
+        nonChinese = [chinese invertedSet];
+    });
+    return [str rangeOfCharacterFromSet:nonChinese].location == NSNotFound;
 }
 
 /// Split a string into an array where consecutive digits are kept as one element
