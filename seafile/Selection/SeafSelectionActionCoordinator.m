@@ -4,6 +4,7 @@
 //
 
 #import "SeafSelectionActionCoordinator.h"
+#import "SeafTheme.h"
 
 #import "SeafGlobal.h"
 #import "SeafActionsManager.h"
@@ -353,23 +354,23 @@ typedef NS_ENUM(NSInteger, SeafSelectionMediaClass) {
                 CGRect frame = CGRectMake((containerWidth - overlayWidth) / 2.0, 0, overlayWidth, overlayHeight);
                 
                 UIView *overlay = [[UIView alloc] initWithFrame:frame];
-                overlay.backgroundColor = [UIColor blackColor]; // fully opaque panel
+                overlay.backgroundColor = [SeafTheme elevatedSurface];
                 overlay.layer.cornerRadius = 14.0;
                 overlay.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
                 overlay.center = CGPointMake(CGRectGetMidX(self.aggregateBackdropView.bounds), CGRectGetMidY(self.aggregateBackdropView.bounds));
-                
+
                 UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(16, 12, overlay.bounds.size.width - 32, 22)];
                 label.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
-                label.textColor = [UIColor colorWithWhite:1.0 alpha:0.95];
+                label.textColor = [SeafTheme primaryText];
                 label.textAlignment = NSTextAlignmentCenter;
                 label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
                 label.text = NSLocalizedString(@"Downloading file", @"Seafile");
                 [overlay addSubview:label];
-                
+
                 UIProgressView *pv = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
                 pv.frame = CGRectMake(16, CGRectGetMaxY(label.frame) + 12, overlay.bounds.size.width - 32, 6);
-                pv.progressTintColor = [UIColor colorWithWhite:1.0 alpha:0.95];
-                pv.trackTintColor = [UIColor colorWithWhite:1.0 alpha:0.25];
+                pv.progressTintColor = [SeafTheme accentOrange];
+                pv.trackTintColor = [SeafTheme fill];
                 pv.layer.cornerRadius = 3.0;
                 pv.clipsToBounds = YES;
                 pv.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -378,17 +379,17 @@ typedef NS_ENUM(NSInteger, SeafSelectionMediaClass) {
 
                 UILabel *detail = [[UILabel alloc] initWithFrame:CGRectMake(16, CGRectGetMaxY(pv.frame) + 10, overlay.bounds.size.width - 32, 18)];
                 detail.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
-                detail.textColor = [UIColor colorWithWhite:1.0 alpha:0.85];
+                detail.textColor = [SeafTheme secondaryText];
                 detail.textAlignment = NSTextAlignmentCenter;
                 detail.autoresizingMask = UIViewAutoresizingFlexibleWidth;
                 detail.text = [self aggregateProgressDetailString];
                 [overlay addSubview:detail];
-                
+
                 UIButton *cancel = [UIButton buttonWithType:UIButtonTypeSystem];
                 cancel.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
                 [cancel setTitle:STR_CANCEL forState:UIControlStateNormal];
-                [cancel setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-                cancel.backgroundColor = [[UIColor whiteColor] colorWithAlphaComponent:0.15];
+                [cancel setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
+                cancel.backgroundColor = [SeafTheme secondarySurface];
                 cancel.layer.cornerRadius = 10.0;
                 cancel.clipsToBounds = YES;
                 CGFloat btnH = 36.0;
@@ -936,23 +937,23 @@ typedef NS_ENUM(NSInteger, SeafSelectionMediaClass) {
             CGRect frame = CGRectMake((containerWidth - overlayWidth) / 2.0, 0, overlayWidth, overlayHeight);
             
             UIView *overlay = [[UIView alloc] initWithFrame:frame];
-            overlay.backgroundColor = [UIColor blackColor]; // fully opaque panel
+            overlay.backgroundColor = [SeafTheme elevatedSurface];
             overlay.layer.cornerRadius = 14.0;
             overlay.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
             overlay.center = CGPointMake(CGRectGetMidX(self.aggregateBackdropView.bounds), CGRectGetMidY(self.aggregateBackdropView.bounds));
-            
+
             UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(16, 12, overlay.bounds.size.width - 32, 22)];
             label.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
-            label.textColor = [UIColor colorWithWhite:1.0 alpha:0.95];
+            label.textColor = [SeafTheme primaryText];
             label.textAlignment = NSTextAlignmentCenter;
             label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
             label.text = status ?: NSLocalizedString(@"Downloading file", @"Seafile");
             [overlay addSubview:label];
-            
+
             UIProgressView *pv = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
             pv.frame = CGRectMake(16, CGRectGetMaxY(label.frame) + 12, overlay.bounds.size.width - 32, 6);
-            pv.progressTintColor = [UIColor colorWithWhite:1.0 alpha:0.95];
-            pv.trackTintColor = [UIColor colorWithWhite:1.0 alpha:0.25];
+            pv.progressTintColor = [SeafTheme accentOrange];
+            pv.trackTintColor = [SeafTheme fill];
             pv.layer.cornerRadius = 3.0;
             pv.clipsToBounds = YES;
             pv.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -962,17 +963,17 @@ typedef NS_ENUM(NSInteger, SeafSelectionMediaClass) {
 
             UILabel *detail = [[UILabel alloc] initWithFrame:CGRectMake(16, CGRectGetMaxY(pv.frame) + 10, overlay.bounds.size.width - 32, 18)];
             detail.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
-            detail.textColor = [UIColor colorWithWhite:1.0 alpha:0.85];
+            detail.textColor = [SeafTheme secondaryText];
             detail.textAlignment = NSTextAlignmentCenter;
             detail.autoresizingMask = UIViewAutoresizingFlexibleWidth;
             detail.text = [self aggregateProgressDetailString];
             [overlay addSubview:detail];
-            
+
             UIButton *cancel = [UIButton buttonWithType:UIButtonTypeSystem];
             cancel.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
             [cancel setTitle:STR_CANCEL forState:UIControlStateNormal];
-            [cancel setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            cancel.backgroundColor = [[UIColor whiteColor] colorWithAlphaComponent:0.15];
+            [cancel setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
+            cancel.backgroundColor = [SeafTheme secondarySurface];
             cancel.layer.cornerRadius = 10.0;
             cancel.clipsToBounds = YES;
             CGFloat btnH = 36.0;

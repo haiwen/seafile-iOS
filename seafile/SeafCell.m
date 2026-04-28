@@ -7,6 +7,7 @@
 //
 
 #import "SeafCell.h"
+#import "SeafTheme.h"
 
 @implementation SeafCell
 @synthesize imageView;
@@ -67,7 +68,7 @@
     }
     
     // Set basic properties for cellBackgroundView
-    self.cellBackgroundView.backgroundColor = [UIColor whiteColor];
+    self.cellBackgroundView.backgroundColor = [SeafTheme primarySurface];
     self.cellBackgroundView.clipsToBounds = YES;
 
     // Add rounded corners to the imageView

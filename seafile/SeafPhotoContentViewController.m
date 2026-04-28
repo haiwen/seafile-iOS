@@ -112,7 +112,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
     [self setupScrollView];
     [self setupInfoView];
     [self setupLoadingIndicator];
@@ -132,7 +132,7 @@
     self.scrollView = [[SeafZoomableScrollView alloc] initWithFrame:self.view.bounds];
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     self.scrollView.delegate = self;
-    self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    self.scrollView.backgroundColor = [SeafTheme primaryBackgroundColor];
     // Initial zoom scales — will be updated by configureForImage: when image loads
     self.scrollView.minimumZoomScale = 1.0;
     self.scrollView.maximumZoomScale = 1.0;
@@ -223,34 +223,41 @@
     self.livePhotoBadge.backgroundColor = [UIColor clearColor];
     self.livePhotoBadge.layer.masksToBounds = NO;
     
-    // Background: #F2F2F9 75%, border: #C7C7C7 75%
+    UIColor *badgeBgLight = [[UIColor colorWithRed:242/255.0 green:242/255.0 blue:249/255.0 alpha:1.0] colorWithAlphaComponent:0.75];
+    UIColor *badgeBg;
+    if (@available(iOS 13.0, *)) {
+        UIColor *badgeBgDark = [[UIColor colorWithRed: 44/255.0 green: 44/255.0 blue: 46/255.0 alpha:1.0] colorWithAlphaComponent:0.75];
+        badgeBg = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
+            return traits.userInterfaceStyle == UIUserInterfaceStyleDark ? badgeBgDark : badgeBgLight;
+        }];
+    } else {
+        badgeBg = badgeBgLight;
+    }
     UIView *contentView = [[UIView alloc] initWithFrame:self.livePhotoBadge.bounds];
-    contentView.backgroundColor = [[UIColor colorWithRed:242/255.0 green:242/255.0 blue:249/255.0 alpha:1.0] colorWithAlphaComponent:0.75];
+    contentView.backgroundColor = badgeBg;
     contentView.layer.cornerRadius = badgeHeight / 2.0;
     contentView.layer.masksToBounds = YES;
     contentView.layer.borderWidth = 0.5;
-    contentView.layer.borderColor = [UIColor colorWithRed:199/255.0 green:199/255.0 blue:199/255.0 alpha:0.75].CGColor;
+    contentView.layer.borderColor = [SeafTheme separator].CGColor;
     contentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     contentView.tag = 100;
     [self.livePhotoBadge addSubview:contentView];
-    
-    // Icon: #1C1C1C 60%
+
     UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake(leftPadding, (badgeHeight - iconSize) / 2.0, iconSize, iconSize)];
     if (@available(iOS 13.0, *)) {
         UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:iconSize weight:UIImageSymbolWeightRegular];
         UIImage *livePhotoSymbol = [UIImage systemImageNamed:@"livephoto" withConfiguration:config];
         iconView.image = livePhotoSymbol;
-        iconView.tintColor = [UIColor colorWithRed:28/255.0 green:28/255.0 blue:28/255.0 alpha:0.6];
+        iconView.tintColor = [SeafTheme secondaryText];
     }
     iconView.contentMode = UIViewContentModeScaleAspectFit;
     iconView.tag = 101;
     [contentView addSubview:iconView];
-    
-    // Text: #1C1C1C 60%
+
     UILabel *liveLabel = [[UILabel alloc] init];
     liveLabel.text = NSLocalizedString(@"LIVE", @"Live Photo badge text");
     liveLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
-    liveLabel.textColor = [UIColor colorWithRed:28/255.0 green:28/255.0 blue:28/255.0 alpha:0.6];
+    liveLabel.textColor = [SeafTheme secondaryText];
     liveLabel.tag = 102;
     [liveLabel sizeToFit];
     liveLabel.frame = CGRectMake(leftPadding + iconSize + spacing, 
@@ -268,6 +275,14 @@
     self.livePhotoBadge.hidden = YES;
     self.livePhotoBadge.alpha = 1.0;
     [self.view addSubview:self.livePhotoBadge];
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
+{
+    [super traitCollectionDidChange:previousTraitCollection];
+    // CGColor is a static snapshot; re-resolve the dynamic separator color on appearance change.
+    UIView *badgeContent = [self.livePhotoBadge viewWithTag:100];
+    badgeContent.layer.borderColor = [SeafTheme separator].CGColor;
 }
 
 - (void)showLivePhotoIcon {
@@ -455,8 +470,8 @@
     
     // If we need to show the info view, make sure it's updated and visible
     if (show) {
-        // Restore background color from view mode (black) to normal mode (#F9F9F9)
-        UIColor *normalBgColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        // Restore normal-mode background (theme-aware) from fullscreen black
+        UIColor *normalBgColor = [SeafTheme primaryBackgroundColor];
         self.view.backgroundColor = normalBgColor;
         self.scrollView.backgroundColor = normalBgColor;
         self.imageView.backgroundColor = [UIColor clearColor];
@@ -1852,7 +1867,7 @@
     self.progressLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 100, 40)];
     self.progressLabel.center = CGPointMake(self.view.center.x, self.view.center.y + self.activityIndicator.bounds.size.height / 2 + 25); // Position below indicator
     self.progressLabel.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    self.progressLabel.textColor = [UIColor grayColor]; // Changed text color to gray
+    self.progressLabel.textColor = [SeafTheme secondaryText];
     self.progressLabel.backgroundColor = [UIColor clearColor]; // Removed background color
     self.progressLabel.textAlignment = NSTextAlignmentCenter;
     self.progressLabel.font = [UIFont systemFontOfSize:14];
@@ -2219,13 +2234,14 @@
             self.livePhotoPlayerView.backgroundColor = [UIColor blackColor];
         }
     } else {
-        // Restore background to light mode - must explicitly set because VC may be reused
+        // Restore normal-mode theme background — must explicitly set because VC may be reused
         // after being in view mode (black background), and viewDidLoad won't be called again
-        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
-        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        UIColor *normalBgColor = [SeafTheme primaryBackgroundColor];
+        self.view.backgroundColor = normalBgColor;
+        self.scrollView.backgroundColor = normalBgColor;
         self.imageView.backgroundColor = [UIColor clearColor];
         if (self.livePhotoPlayerView) {
-            self.livePhotoPlayerView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+            self.livePhotoPlayerView.backgroundColor = normalBgColor;
         }
     }
     // When a new view is about to appear during a transition, make sure layout is correct
@@ -2410,7 +2426,7 @@
 /// Transitions ContentVC's own appearance back to normal mode (light backgrounds, show Live badge).
 /// Called when zoom returns to minimum scale.
 - (void)exitImmersiveAppearanceAnimated:(BOOL)animated {
-    UIColor *normalBgColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    UIColor *normalBgColor = [SeafTheme primaryBackgroundColor];
     void (^changes)(void) = ^{
         self.view.backgroundColor = normalBgColor;
         self.scrollView.backgroundColor = normalBgColor;

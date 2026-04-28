@@ -192,6 +192,12 @@
 		BA83DEB52DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */ = {isa = PBXBuildFile; fileRef = BA83DEB12DB560520073EAA8 /* SeafNavigationBarStyler.m */; };
 		BA83DEB62DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */ = {isa = PBXBuildFile; fileRef = BA83DEB12DB560520073EAA8 /* SeafNavigationBarStyler.m */; };
 		BA83DEB72DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */ = {isa = PBXBuildFile; fileRef = BA83DEB12DB560520073EAA8 /* SeafNavigationBarStyler.m */; };
+		BADA7E0100000000DA7E0101 /* SeafTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = BADA7E0100000000DA7E0002 /* SeafTheme.m */; };
+		BADA7E0100000000DA7E0102 /* SeafTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = BADA7E0100000000DA7E0002 /* SeafTheme.m */; };
+		BADA7E0100000000DA7E0103 /* SeafTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = BADA7E0100000000DA7E0002 /* SeafTheme.m */; };
+		BADA7E0100000000DA7E0104 /* SeafTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = BADA7E0100000000DA7E0002 /* SeafTheme.m */; };
+		BADA7E0100000000DA7E0105 /* SeafTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = BADA7E0100000000DA7E0002 /* SeafTheme.m */; };
+		BADA7E0100000000DA7E0106 /* SeafTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = BADA7E0100000000DA7E0002 /* SeafTheme.m */; };
 		BA83DEBC2DB5C80F0073EAA8 /* detail_photo_describe.png in Resources */ = {isa = PBXBuildFile; fileRef = BA83DEB92DB5C80F0073EAA8 /* detail_photo_describe.png */; };
 		BA83DEBD2DB5C80F0073EAA8 /* detail_photo_size.png in Resources */ = {isa = PBXBuildFile; fileRef = BA83DEBA2DB5C80F0073EAA8 /* detail_photo_size.png */; };
 		BA83DEBE2DB5C80F0073EAA8 /* detail_photo_user.png in Resources */ = {isa = PBXBuildFile; fileRef = BA83DEBB2DB5C80F0073EAA8 /* detail_photo_user.png */; };
@@ -1306,6 +1312,8 @@
 		BA83A4762DA67E01005712EA /* tab-star@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star@2x.png"; sourceTree = "<group>"; };
 		BA83DEB02DB560520073EAA8 /* SeafNavigationBarStyler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafNavigationBarStyler.h; sourceTree = "<group>"; };
 		BA83DEB12DB560520073EAA8 /* SeafNavigationBarStyler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafNavigationBarStyler.m; sourceTree = "<group>"; };
+		BADA7E0100000000DA7E0001 /* SeafTheme.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafTheme.h; sourceTree = "<group>"; };
+		BADA7E0100000000DA7E0002 /* SeafTheme.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafTheme.m; sourceTree = "<group>"; };
 		BA83DEB82DB5C80F0073EAA8 /* detail_photo_calendar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = detail_photo_calendar.png; sourceTree = "<group>"; };
 		BA83DEB92DB5C80F0073EAA8 /* detail_photo_describe.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = detail_photo_describe.png; sourceTree = "<group>"; };
 		BA83DEBA2DB5C80F0073EAA8 /* detail_photo_size.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = detail_photo_size.png; sourceTree = "<group>"; };
@@ -1721,6 +1729,8 @@
 				BA8DC9592D9A6A030027EC46 /* SeafLoadingView.h */,
 				BA83DEB02DB560520073EAA8 /* SeafNavigationBarStyler.h */,
 				BA83DEB12DB560520073EAA8 /* SeafNavigationBarStyler.m */,
+				BADA7E0100000000DA7E0001 /* SeafTheme.h */,
+				BADA7E0100000000DA7E0002 /* SeafTheme.m */,
 				BA2188C32DF1758B00D862BD /* SeafErrorPlaceholderView.h */,
 				BA2188C42DF1758B00D862BD /* SeafErrorPlaceholderView.m */,
 				BAA7CFE02DB0D32200D26ED3 /* SeafPhotoContentViewController.h */,
@@ -3881,6 +3891,7 @@
 				58D40A691E9AF72200A68BEF /* SeafGlobal.m in Sources */,
 				F5ADEA042081B69C00FB6451 /* SeafMkLibAlertController.m in Sources */,
 				BA83DEB32DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
+				BADA7E0100000000DA7E0101 /* SeafTheme.m in Sources */,
 				BAF436AB2EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m in Sources */,
 				BAF436AC2EA9D5A70002ECD1 /* SeafTagChipCell.m in Sources */,
 			);
@@ -3897,6 +3908,7 @@
 				BA8DC9602D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 				58D40A721E9AF81B00A68BEF /* SeafAccountCell.m in Sources */,
 				BA83DEB22DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
+				BADA7E0100000000DA7E0102 /* SeafTheme.m in Sources */,
 				57A029A41A170147009C9D7B /* SeafProviderFileViewController.m in Sources */,
 				BA2188C02DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */,
 				57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */,
@@ -3914,6 +3926,7 @@
 				5857E9CB1FAFCAD5004F124D /* SeafProviderItem.m in Sources */,
 				58D40A741E9AF82900A68BEF /* SeafDbCacheProvider.m in Sources */,
 				BA83DEB42DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
+				BADA7E0100000000DA7E0103 /* SeafTheme.m in Sources */,
 				5857EA2A1FB03F2C004F124D /* SeafItem.m in Sources */,
 				57A0298E1A16F935009C9D7B /* FileProvider.m in Sources */,
 				F5D753B928A14C1F00A6CAD6 /* SeafFileProviderUtility.m in Sources */,
@@ -3933,6 +3946,7 @@
 				58D40A761E9AF83200A68BEF /* SeafGlobal.m in Sources */,
 				BACC56592E1D221800E1014F /* SeafCell.m in Sources */,
 				BA83DEB62DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
+				BADA7E0100000000DA7E0104 /* SeafTheme.m in Sources */,
 				58D40A771E9AF83200A68BEF /* SeafDbCacheProvider.m in Sources */,
 				58D40A781E9AF83200A68BEF /* SeafAccountCell.m in Sources */,
 				574D3DC81DFA88CF0093C18C /* SeafActionDirViewController.m in Sources */,
@@ -3947,6 +3961,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BA83DEB52DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
+				BADA7E0100000000DA7E0105 /* SeafTheme.m in Sources */,
 				BA8DC95E2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 				F5AD6ADF24C42D140067F9AF /* DocumentActionViewController.m in Sources */,
 			);
@@ -3961,6 +3976,7 @@
 				F5C64909210A291100842687 /* SeafDbCacheProvider.m in Sources */,
 				F5C64910210DFF4B00842687 /* SeafShareNavigatioController.m in Sources */,
 				BA83DEB72DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
+				BADA7E0100000000DA7E0106 /* SeafTheme.m in Sources */,
 				F5C6490B210AC90200842687 /* seafile.xcdatamodeld in Sources */,
 				F5C649182110BE5700842687 /* SeafCell.m in Sources */,
 				F5C64908210A25EB00842687 /* SeafAccountCell.m in Sources */,

@@ -11,6 +11,7 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 #import "SeafGlobal.h"
+#import "SeafTheme.h"
 
 // Define the custom UITextField subclass here
 @interface PaddedRightViewTextField : UITextField
@@ -149,18 +150,26 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     }
 }
 
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    // CGColor is a snapshot; re-apply so the cancel button border tracks the theme.
+    if (self.cancelButton) {
+        self.cancelButton.layer.borderColor = [SeafTheme primaryText].CGColor;
+    }
+}
+
 - (void)setupViews {
     self.view.backgroundColor = [UIColor clearColor];
 
     if (!IsIpad()) {
         self.backgroundDimmingView = [[UIView alloc] initWithFrame:self.view.bounds];
-        self.backgroundDimmingView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
+        self.backgroundDimmingView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5]; // modal scrim (both modes)
         self.backgroundDimmingView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self.view addSubview:self.backgroundDimmingView];
     }
 
     self.alertView = [[UIView alloc] init];
-    self.alertView.backgroundColor = [UIColor whiteColor];
+    self.alertView.backgroundColor = [SeafTheme primarySurface];
     self.alertView.layer.masksToBounds = YES;
     self.alertView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.alertView];
@@ -177,7 +186,7 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     self.titleLabel = [[UILabel alloc] init];
     self.titleLabel.text = NSLocalizedString(@"New Library", @"New Library Title");
     self.titleLabel.font = [UIFont systemFontOfSize:17.0];
-    self.titleLabel.textColor = [UIColor blackColor];
+    self.titleLabel.textColor = [SeafTheme primaryText];
     self.titleLabel.textAlignment = NSTextAlignmentLeft;
     self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.alertView addSubview:self.titleLabel];
@@ -189,7 +198,7 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     self.encryptLabel = [[UILabel alloc] init];
     self.encryptLabel.text = NSLocalizedString(@"Encrypted", @"Encrypt Label");
     self.encryptLabel.font = [UIFont systemFontOfSize:16.0];
-    self.encryptLabel.textColor = [UIColor blackColor];
+    self.encryptLabel.textColor = [SeafTheme primaryText];
     self.encryptLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.alertView addSubview:self.encryptLabel];
 
@@ -217,11 +226,11 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     
     self.cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.cancelButton setTitle:NSLocalizedString(@"Cancel", @"Cancel Button Title") forState:UIControlStateNormal];
-    [self.cancelButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [self.cancelButton setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
     self.cancelButton.titleLabel.font = [UIFont systemFontOfSize:17.0];
-    self.cancelButton.backgroundColor = [UIColor whiteColor];
+    self.cancelButton.backgroundColor = [SeafTheme primarySurface];
     self.cancelButton.layer.cornerRadius = 8.0;
-    self.cancelButton.layer.borderColor = [UIColor blackColor].CGColor;
+    self.cancelButton.layer.borderColor = [SeafTheme primaryText].CGColor;
     self.cancelButton.layer.borderWidth = 1.0;
     [self.cancelButton addTarget:self action:@selector(cancelButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     self.cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
@@ -251,7 +260,7 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     textField.autocorrectionType = UITextAutocorrectionTypeNo;
     textField.delegate = self;
     textField.layer.cornerRadius = 8.0;
-    textField.backgroundColor = [UIColor colorWithWhite:0.96 alpha:1.0]; // Adjusted light gray
+    textField.backgroundColor = [SeafTheme fill];
     
     UIView *leftPaddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 10)]; // Increased left padding
     textField.leftView = leftPaddingView;
@@ -276,7 +285,7 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     button.imageView.contentMode = UIViewContentModeScaleAspectFit;
     button.imageView.clipsToBounds = YES; // Ensure image stays within the imageView bounds
 
-    button.tintColor = [UIColor grayColor];
+    button.tintColor = [SeafTheme secondaryText];
     
     if (textField == self.passwordTextField) {
         [button addTarget:self action:@selector(togglePasswordVisibility:) forControlEvents:UIControlEventTouchUpInside];

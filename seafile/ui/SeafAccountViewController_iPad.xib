@@ -68,26 +68,26 @@
                                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="50" id="OQ0-wb-Mr0"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <color key="textColor" systemColor="labelColor"/>
                             <nil key="highlightedColor"/>
                         </label>
                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="1qz-sJ-qg2">
                             <rect key="frame" x="0.0" y="88" width="370" height="0.5"/>
-                            <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                            <color key="backgroundColor" systemColor="separatorColor"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="0.5" id="w7T-1D-sMp"/>
                             </constraints>
                         </view>
                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="sS8-66-Hle">
                             <rect key="frame" x="0.0" y="132" width="370" height="0.5"/>
-                            <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                            <color key="backgroundColor" systemColor="separatorColor"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="0.5" id="SZI-yK-Gx6"/>
                             </constraints>
                         </view>
                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="jXE-I6-QKZ">
                             <rect key="frame" x="0.0" y="176.5" width="370" height="0.5"/>
-                            <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                            <color key="backgroundColor" systemColor="separatorColor"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="0.5" id="lN3-YC-7vJ"/>
                             </constraints>
@@ -100,7 +100,7 @@
                         </switch>
                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="aS6-hv-X0x">
                             <rect key="frame" x="0.0" y="221" width="370" height="0.5"/>
-                            <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                            <color key="backgroundColor" systemColor="separatorColor"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="0.5" id="iUn-Tl-QxC"/>
                             </constraints>
@@ -127,7 +127,7 @@
                                 <constraint firstAttribute="height" constant="35" id="x8L-pK-jxj"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                            <color key="textColor" red="0.33333333333333331" green="0.33333333333333331" blue="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <color key="textColor" systemColor="labelColor"/>
                             <nil key="highlightedColor"/>
                         </label>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="https://" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Vpc-8f-gSf">
@@ -196,7 +196,7 @@
                     </constraints>
                 </view>
             </subviews>
-            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <color key="tintColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
                 <constraint firstAttribute="centerX" secondItem="4" secondAttribute="centerX" id="6sR-1r-cja"/>

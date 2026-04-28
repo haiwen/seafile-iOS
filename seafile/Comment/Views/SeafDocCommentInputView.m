@@ -1,6 +1,7 @@
 //  SeafDocCommentInputView.m
 
 #import "SeafDocCommentInputView.h"
+#import "SeafTheme.h"
 
 @interface SeafDocCommentInputView () <UITextViewDelegate>
 
@@ -18,21 +19,17 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor systemBackgroundColor];
+        self.backgroundColor = [SeafTheme primarySurface];
 
         _separator = [[UIView alloc] initWithFrame:CGRectZero];
-        _separator.backgroundColor = [UIColor separatorColor];
+        _separator.backgroundColor = [SeafTheme separator];
         [self addSubview:_separator];
 
         _photoButton = [UIButton buttonWithType:UIButtonTypeSystem];
         UIImage *img = [[UIImage imageNamed:@"gallery"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         if (img) [_photoButton setImage:img forState:UIControlStateNormal];
         _photoButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-        if (@available(iOS 13.0, *)) {
-            _photoButton.tintColor = [UIColor systemGrayColor];
-        } else {
-            _photoButton.tintColor = [UIColor lightGrayColor];
-        }
+        _photoButton.tintColor = [SeafTheme secondaryText];
         [_photoButton addTarget:self action:@selector(onTapPhotoButton) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_photoButton];
 
@@ -41,7 +38,7 @@
         _textView.layer.cornerRadius = 8.0;
         _textView.layer.borderColor = UIColor.clearColor.CGColor;
         _textView.layer.borderWidth = 0;
-        _textView.backgroundColor = [UIColor secondarySystemBackgroundColor];
+        _textView.backgroundColor = [SeafTheme secondarySurface];
         _textView.textContainerInset = UIEdgeInsetsMake(4, 8, 4, 8);
         _textView.tintColor = [UIColor colorWithRed:255.0/255.0 green:102.0/255.0 blue:0.0/255.0 alpha:1.0];
         _textView.delegate = self;
@@ -60,7 +57,7 @@
 
         _placeholderLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _placeholderLabel.text = NSLocalizedString(@"Write a comment...", nil);
-        _placeholderLabel.textColor = [UIColor secondaryLabelColor];
+        _placeholderLabel.textColor = [SeafTheme placeholderText];
         _placeholderLabel.font = [UIFont systemFontOfSize:15];
         _placeholderLabel.userInteractionEnabled = NO;
         _placeholderLabel.hidden = YES; // always hidden to remove placeholder from UI

@@ -1067,3 +1067,9 @@
 
 /* Seafile */
 "Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
+
+/* Appearance settings */
+"Appearance" = "Appearance";
+"System" = "System";
+"Light" = "Light";
+"Dark" = "Dark";

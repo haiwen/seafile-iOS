@@ -7,6 +7,7 @@
 //
 
 #import "SeafHeaderView.h"
+#import "SeafTheme.h"
 
 #define kHeaderHeight 45.0
 #define kLeftPadding 24.0
@@ -31,7 +32,7 @@
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
         _titleLabel.text = title;
-        _titleLabel.textColor = [UIColor blackColor];
+        _titleLabel.textColor = [SeafTheme primaryText];
         _titleLabel.backgroundColor = [UIColor clearColor];
         _titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         [self addSubview:_titleLabel];
@@ -41,8 +42,7 @@
         _toggleButton.frame = CGRectZero;
         UIImage *arrowImage = [[UIImage imageNamed:@"arrowDown_black"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [_toggleButton setImage:arrowImage forState:UIControlStateNormal];
-        // Set gray color to match other navigation icons (#666666)
-        _toggleButton.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+        _toggleButton.tintColor = [SeafTheme secondaryText];
         _toggleButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
         _toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
         _toggleButton.tag = section;

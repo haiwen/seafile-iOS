@@ -19,6 +19,7 @@
 #import "SeafInputItemsProvider.h"
 #import "SeafUploadFileModel.h"
 #import "SeafRepos.h"
+#import "SeafTheme.h"
 
 @interface SeafShareFileViewController ()<UITableViewDataSource, UITableViewDelegate, SeafUploadDelegate>
 
@@ -47,12 +48,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    // Force Light appearance
-    if (@available(iOS 13.0, *)) {
-        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-    }
+    [SeafTheme applyPreferenceToViewController:self];
     
     if (IsIpad()) {
         CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
@@ -63,7 +59,7 @@
     self.navigationItem.title = NSLocalizedString(@"Save to Seafile", @"Seafile");
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor systemBackgroundColor];
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
         
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
@@ -145,11 +141,7 @@
     SeafUploadFile *file = self.ufiles[indexPath.row];
     file.delegate = self;
     cell.textLabel.text = file.name;
-    if (@available(iOS 13.0, *)) {
-        cell.textLabel.textColor = [UIColor labelColor];
-    } else {
-        cell.textLabel.textColor = [UIColor whiteColor];
-    }
+    cell.textLabel.textColor = [SeafTheme primaryText];
     cell.imageView.image = file.previewImage;
     cell.moreButton.hidden = true;
     [self updateCell:cell file:file];
@@ -280,7 +272,7 @@
 - (UIActivityIndicatorView *)loadingView {
     if (!_loadingView) {
         _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        _loadingView.color = [UIColor darkTextColor];
+        _loadingView.color = [SeafTheme primaryText];
         _loadingView.hidesWhenStopped = YES;
     }
     return _loadingView;

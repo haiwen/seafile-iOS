@@ -7,39 +7,39 @@
 //
 
 #import "SeafNavigationBarStyler.h"
+#import "SeafTheme.h"
 
 @implementation SeafNavigationBarStyler
 
 #pragma mark - Navigation Bar Appearance
 
 + (void)applyStandardAppearanceToNavigationController:(UINavigationController *)navigationController {
-    // Set navigation bar title text attributes
-    NSDictionary *titleAttributes = @{NSForegroundColorAttributeName: [UIColor blackColor]};
+    NSDictionary *titleAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
     navigationController.navigationBar.titleTextAttributes = titleAttributes;
-    
-    // Set navigation bar style
+    if (@available(iOS 11.0, *)) {
+        navigationController.navigationBar.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
+    }
+
     navigationController.navigationBar.barStyle = UIBarStyleDefault;
-    
-    // Configure navigation bar appearance based on iOS version
+
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
         [appearance configureWithOpaqueBackground];
-        appearance.backgroundColor = [UIColor whiteColor];
-        appearance.shadowColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.1]; // Subtle shadow
-        
+        appearance.backgroundColor = [SeafTheme primarySurface];
+        appearance.shadowColor = [SeafTheme separator];
+        appearance.titleTextAttributes = titleAttributes;
+        appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
+
         navigationController.navigationBar.standardAppearance = appearance;
         navigationController.navigationBar.scrollEdgeAppearance = appearance;
-        
-        // Ensure navigation bar buttons are dark to contrast with white background
-        navigationController.navigationBar.tintColor = [UIColor blackColor];
+
+        navigationController.navigationBar.tintColor = [SeafTheme primaryText];
     } else {
-        // Handle styling for iOS versions below 15
-        navigationController.navigationBar.barTintColor = [UIColor whiteColor];
+        navigationController.navigationBar.barTintColor = [SeafTheme primarySurface];
         navigationController.navigationBar.translucent = NO;
-        navigationController.navigationBar.tintColor = [UIColor blackColor];
-        
-        // Add bottom hairline
-        navigationController.navigationBar.shadowImage = [self createSinglePixelImageWithColor:[UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.1]];
+        navigationController.navigationBar.tintColor = [SeafTheme primaryText];
+
+        navigationController.navigationBar.shadowImage = [self createSinglePixelImageWithColor:[SeafTheme separator]];
     }
 }
 
@@ -50,7 +50,7 @@
     UILabel *titleLabel = [[UILabel alloc] init];
     titleLabel.text = title ?: @"";
     titleLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold]; // Use system font
-    titleLabel.textColor = [UIColor blackColor];
+    titleLabel.textColor = [SeafTheme primaryText];
     titleLabel.textAlignment = NSTextAlignmentCenter;
     
     // Calculate maximum width - specified percentage of screen width

@@ -16,6 +16,7 @@
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "SeafDestCell.h"
+#import "SeafTheme.h"
 
 @interface SeafDirViewController ()<SeafDentryDelegate>
 @property (strong) UIBarButtonItem *chooseItem;
@@ -85,7 +86,7 @@
     if (self.useDestinationStyle) {
         [self.tableView registerClass:[SeafDestCell class] forCellReuseIdentifier:@"SeafDestCell"];
         // Apply rounded corners directly on the tableView
-        self.tableView.backgroundColor = [UIColor whiteColor];
+        self.tableView.backgroundColor = [SeafTheme primarySurface];
         self.tableView.opaque = NO;
         [self applyRoundedCornersIfNeeded];
     }
@@ -207,11 +208,11 @@
     // Build compact header with no top padding
     NSString *text = [self repoGroupTitleForSection:section] ?: @"";
     UIView *header = [[UIView alloc] initWithFrame:CGRectZero];
-    header.backgroundColor = [UIColor systemBackgroundColor];
+    header.backgroundColor = [SeafTheme primarySurface];
     UILabel *label = [[UILabel alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = text;
-    label.textColor = [UIColor secondaryLabelColor];
+    label.textColor = [SeafTheme secondaryText];
     label.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
     [header addSubview:label];
     [NSLayoutConstraint activateConstraints:@[
@@ -324,18 +325,18 @@
     }
     CGFloat height = 48.0;
     UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.bounds.size.width, height)];
-    header.backgroundColor = [UIColor systemBackgroundColor];
+    header.backgroundColor = [SeafTheme primarySurface];
     header.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 
     UIImageView *icon = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"return"]];
     icon.translatesAutoresizingMaskIntoConstraints = NO;
-    icon.tintColor = [UIColor systemGrayColor];
+    icon.tintColor = [SeafTheme secondaryText];
     [header addSubview:icon];
 
     UILabel *label = [[UILabel alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = NSLocalizedString(@"Return to previous level", @"Seafile");
-    label.textColor = [UIColor secondaryLabelColor];
+    label.textColor = [SeafTheme secondaryText];
     label.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     [header addSubview:label];
 

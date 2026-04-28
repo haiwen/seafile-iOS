@@ -160,7 +160,7 @@ static NSSet *SeafChipTypes(void)
 {
     [super viewDidLoad];
     if (@available(iOS 15.0, *)) {
-        self.view.backgroundColor = [UIColor systemBackgroundColor];
+        self.view.backgroundColor = [SeafTheme primarySurface];
     } else {
         // Dim background and host a bottom panel
         self.view.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
@@ -172,7 +172,7 @@ static NSSet *SeafChipTypes(void)
     } else {
         UIView *panel = [UIView new];
         panel.translatesAutoresizingMaskIntoConstraints = NO;
-        panel.backgroundColor = [UIColor systemBackgroundColor];
+        panel.backgroundColor = [SeafTheme primarySurface];
         panel.layer.cornerRadius = 12.0;
         panel.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
         panel.clipsToBounds = YES;
@@ -392,7 +392,7 @@ static NSSet *SeafChipTypes(void)
     img = [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     UIImageView *icon = [[UIImageView alloc] initWithImage:img];
     icon.contentMode = UIViewContentModeScaleAspectFit;
-    icon.tintColor = [UIColor colorWithRed:0x99/255.0 green:0x99/255.0 blue:0x99/255.0 alpha:1.0]; // #999999
+    icon.tintColor = [SeafTheme tertiaryText];
     icon.translatesAutoresizingMaskIntoConstraints = NO;
     [icon.widthAnchor constraintEqualToConstant:14].active = YES;
     [icon.heightAnchor constraintEqualToConstant:14].active = YES;
@@ -400,7 +400,7 @@ static NSSet *SeafChipTypes(void)
 
     UILabel *title = [UILabel new];
     title.text = NSLocalizedString(row[@"title"] ?: @"", nil);
-    title.textColor = [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0]; // #666666
+    title.textColor = [SeafTheme secondaryText];
     title.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     title.numberOfLines = 0;
     title.lineBreakMode = NSLineBreakByWordWrapping;
@@ -647,9 +647,9 @@ static NSSet *SeafChipTypes(void)
     lab.text = text ?: @"";
     // Text color: #212529 for data, #666666 for empty
     if (isEmpty) {
-        lab.textColor = [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0]; // #666666
+        lab.textColor = [SeafTheme secondaryText];
     } else {
-        lab.textColor = [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0]; // #212529
+        lab.textColor = [SeafTheme primaryText];
     }
     lab.font = [UIFont systemFontOfSize:16];
     lab.numberOfLines = 0;

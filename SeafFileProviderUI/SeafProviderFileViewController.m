@@ -18,6 +18,7 @@
 #import "Debug.h"
 #import "SeafDataTaskManager.h"
 #import "SeafUploadFileModel.h"
+#import "SeafTheme.h"
 
 @interface SeafProviderFileViewController ()<SeafDentryDelegate, SeafUploadDelegate, UIScrollViewDelegate>
 @property (strong, nonatomic) IBOutlet UIButton *chooseButton;
@@ -105,7 +106,7 @@
 {
     if (!self.loadingView) {
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        self.loadingView.color = [UIColor darkTextColor];
+        self.loadingView.color = [SeafTheme primaryText];
         self.loadingView.hidesWhenStopped = YES;
         [self.view addSubview:self.loadingView];
     }
@@ -253,13 +254,13 @@
 {
     if (self.chooseButton.hidden) {
         UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 0.5f)];
-        [lineView setBackgroundColor:[UIColor lightGrayColor]];
+        [lineView setBackgroundColor:[SeafTheme separator]];
         return lineView;
     } else {
         UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 6, tableView.bounds.size.width - 10, 18)];
         label.text = NSLocalizedString(@"Save Destination", @"Seafile");
-        label.textColor = [UIColor darkTextColor];
+        label.textColor = [SeafTheme primaryText];
         label.backgroundColor = [UIColor clearColor];
         label.font = [UIFont systemFontOfSize:16];
         [headerView setBackgroundColor:HEADER_COLOR];
@@ -299,7 +300,7 @@
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     cell.imageView.image = [Utils reSizeImage:entry.icon toSquare:32];
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
-    cell.detailTextLabel.textColor = [UIColor lightGrayColor];
+    cell.detailTextLabel.textColor = [SeafTheme secondaryText];
 
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *repo = (SeafRepo *)entry;

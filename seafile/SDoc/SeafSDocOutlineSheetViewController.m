@@ -2,6 +2,7 @@
 
 #import "SeafSDocOutlineSheetViewController.h"
 #import "OutlineItemModel.h"
+#import "SeafTheme.h"
 
 @interface SeafSDocOutlineCell : UITableViewCell
 @property (nonatomic, strong) UILabel *titleLabel;
@@ -21,11 +22,7 @@
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
         label.translatesAutoresizingMaskIntoConstraints = NO;
         label.numberOfLines = 2;
-        if (@available(iOS 13.0, *)) {
-            label.textColor = [UIColor labelColor];
-        } else {
-            label.textColor = [UIColor blackColor];
-        }
+        label.textColor = [SeafTheme primaryText];
         label.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
         [self.contentView addSubview:label];
         self.titleLabel = label;
@@ -41,11 +38,7 @@
         ]];
 
         UIView *selBg = [[UIView alloc] initWithFrame:CGRectZero];
-        if (@available(iOS 13.0, *)) {
-            selBg.backgroundColor = [UIColor tertiarySystemFillColor];
-        } else {
-            selBg.backgroundColor = [[UIColor lightGrayColor] colorWithAlphaComponent:0.2];
-        }
+        selBg.backgroundColor = [SeafTheme fill];
         self.selectedBackgroundView = selBg;
     }
     return self;
@@ -99,7 +92,7 @@
 {
     [super viewDidLoad];
     if (@available(iOS 15.0, *)) {
-        self.view.backgroundColor = [UIColor systemBackgroundColor];
+        self.view.backgroundColor = [SeafTheme primarySurface];
         [self buildTableIntoView:self.view edgeInsets:UIEdgeInsetsZero];
     } else {
         [self buildCustomSheet];
@@ -123,9 +116,7 @@
     tv.separatorStyle = UITableViewCellSeparatorStyleNone;
     tv.estimatedRowHeight = 48;
     tv.rowHeight = UITableViewAutomaticDimension;
-    if (@available(iOS 13.0, *)) {
-        tv.backgroundColor = [UIColor systemBackgroundColor];
-    }
+    tv.backgroundColor = [SeafTheme primarySurface];
     [tv registerClass:[SeafSDocOutlineCell class] forCellReuseIdentifier:@"cell"];
     [host addSubview:tv];
     self.tableView = tv;
@@ -158,7 +149,7 @@
     CGFloat sheetHeight = MIN(480.0, self.view.bounds.size.height * 0.7);
     UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, self.view.bounds.size.height, self.view.bounds.size.width, sheetHeight + safeBottom)];
     container.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-    container.backgroundColor = [UIColor whiteColor];
+    container.backgroundColor = [SeafTheme primarySurface];
     container.layer.cornerRadius = 12.0;
     container.layer.masksToBounds = YES;
     [self.view addSubview:container];
@@ -166,7 +157,7 @@
 
     UIView *grabber = [[UIView alloc] initWithFrame:CGRectMake((container.bounds.size.width-36)/2.0, 8, 36, 4)];
     grabber.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    grabber.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1.0];
+    grabber.backgroundColor = [SeafTheme separator];
     grabber.layer.cornerRadius = 2.0;
     [container addSubview:grabber];
 
@@ -316,7 +307,7 @@
         img.image = tipImage;
     } else if (@available(iOS 13.0, *)) {
         img.image = [UIImage systemImageNamed:@"tray"];
-        img.tintColor = [UIColor tertiaryLabelColor];
+        img.tintColor = [SeafTheme tertiaryText];
     }
     img.contentMode = UIViewContentModeScaleAspectFit;
     img.translatesAutoresizingMaskIntoConstraints = NO;
@@ -327,9 +318,7 @@
     // Outline empty text: use localized "No data" (Chinese locale uses an equivalent string)
     NSString *emptyText = NSLocalizedString(@"No data", nil);
     lab.text = emptyText;
-    if (@available(iOS 13.0, *)) {
-        lab.textColor = [UIColor labelColor];
-    }
+    lab.textColor = [SeafTheme primaryText];
     lab.textAlignment = NSTextAlignmentCenter;
     lab.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     lab.numberOfLines = 0;

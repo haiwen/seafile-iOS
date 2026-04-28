@@ -5,6 +5,7 @@
 
 #import "SeafCustomInputAlertViewController.h"
 #import "Debug.h"
+#import "SeafTheme.h"
 
 @interface SeafCustomInputAlertViewController () <UITextFieldDelegate>
 
@@ -45,7 +46,7 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 - (UIView *)alertView {
     if (!_alertView) {
         _alertView = [[UIView alloc] init];
-        _alertView.backgroundColor = [UIColor whiteColor];
+        _alertView.backgroundColor = [SeafTheme primarySurface];
         _alertView.layer.masksToBounds = YES;
         _alertView.translatesAutoresizingMaskIntoConstraints = NO;
         if (IsIpad()) {
@@ -65,7 +66,7 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
         _titleLabel = [[UILabel alloc] init];
         _titleLabel.text = self.alertTitle; // Assumes self.alertTitle is set during init
         _titleLabel.font = [UIFont systemFontOfSize:17.0];
-        _titleLabel.textColor = [UIColor blackColor];
+        _titleLabel.textColor = [SeafTheme primaryText];
         _titleLabel.textAlignment = NSTextAlignmentLeft;
         _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     }
@@ -85,7 +86,7 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
         _inputTextField.returnKeyType = UIReturnKeyDone;
         _inputTextField.layer.borderWidth = 0;
         _inputTextField.layer.cornerRadius = 6.0;
-        _inputTextField.backgroundColor = [UIColor colorWithWhite:0.97 alpha:1.0];
+        _inputTextField.backgroundColor = [SeafTheme fill];
         UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 10)];
         _inputTextField.leftView = paddingView;
         _inputTextField.leftViewMode = UITextFieldViewModeAlways;
@@ -101,11 +102,11 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
     if (!_cancelButton) {
         _cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
         [_cancelButton setTitle:NSLocalizedString(@"Cancel", @"Cancel button title") forState:UIControlStateNormal];
-        [_cancelButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [_cancelButton setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
         _cancelButton.titleLabel.font = [UIFont systemFontOfSize:17.0];
-        _cancelButton.backgroundColor = [UIColor whiteColor];
+        _cancelButton.backgroundColor = [SeafTheme primarySurface];
         _cancelButton.layer.cornerRadius = 8.0;
-        _cancelButton.layer.borderColor = [UIColor blackColor].CGColor;
+        _cancelButton.layer.borderColor = [SeafTheme primaryText].CGColor;
         _cancelButton.layer.borderWidth = 1.0;
         [_cancelButton addTarget:self action:@selector(cancelButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         _cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
@@ -198,6 +199,14 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 
 - (void)dealloc {
     [self unregisterForKeyboardNotifications]; // Ensure removed for all device types
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    // CGColor is a snapshot; re-apply so the cancel button border tracks the theme.
+    if (_cancelButton) {
+        _cancelButton.layer.borderColor = [SeafTheme primaryText].CGColor;
+    }
 }
 
 - (void)setupViews {

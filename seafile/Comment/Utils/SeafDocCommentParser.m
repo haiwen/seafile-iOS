@@ -2,6 +2,7 @@
 
 #import "SeafDocCommentParser.h"
 #import "SeafDocCommentContentItem.h"
+#import "SeafTheme.h"
 
 @implementation SeafDocCommentParser
 
@@ -11,9 +12,9 @@
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     NSArray<NSString *> *paras = [comment componentsSeparatedByString:@"\n\n"];
     // textSize="14sp", textColor="#212529"
-    NSDictionary *textAttrs = @{ 
-        NSFontAttributeName: [UIFont systemFontOfSize:14], 
-        NSForegroundColorAttributeName: [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0]
+    NSDictionary *textAttrs = @{
+        NSFontAttributeName: [UIFont systemFontOfSize:14],
+        NSForegroundColorAttributeName: [SeafTheme primaryText]
     };
 
     NSRegularExpression *mdImg = [NSRegularExpression regularExpressionWithPattern:@"!\\\\?\\\\[\\\\]\\\\(([^\\\\)]+)\\\\)" options:0 error:nil];

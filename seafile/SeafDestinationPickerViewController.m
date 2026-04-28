@@ -101,6 +101,15 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     [self logListContainerLayoutWithTag:@"viewDidLayoutSubviews"];
     [self applyRoundedCornersForRecentIfNeeded];
 }
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
+{
+    [super traitCollectionDidChange:previousTraitCollection];
+    // CGColor is a snapshot; re-apply so the outlined cancel button border tracks the theme.
+    if (self.cancelButton) {
+        self.cancelButton.layer.borderColor = [SeafTheme separator].CGColor;
+    }
+}
 - (void)setupFixedTopReturnHeader
 {
     // Build a fixed header pinned above the embedded table views
@@ -112,13 +121,13 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
 
     UIImageView *icon = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"return"]];
     icon.translatesAutoresizingMaskIntoConstraints = NO;
-    icon.tintColor = [UIColor systemGrayColor];
+    icon.tintColor = [SeafTheme secondaryText];
     [self.fixedReturnHeaderView addSubview:icon];
 
     UILabel *label = [[UILabel alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = NSLocalizedString(@"Return to previous level", @"Seafile");
-    if (@available(iOS 13.0, *)) label.textColor = [UIColor secondaryLabelColor]; else label.textColor = [UIColor grayColor];
+    label.textColor = [SeafTheme secondaryText];
     label.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     [self.fixedReturnHeaderView addSubview:label];
 
@@ -148,7 +157,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     // Bottom separator for visual separation from list
     UIView *sep = [[UIView alloc] init];
     sep.translatesAutoresizingMaskIntoConstraints = NO;
-    if (@available(iOS 13.0, *)) sep.backgroundColor = [UIColor separatorColor]; else sep.backgroundColor = [UIColor lightGrayColor];
+    sep.backgroundColor = [SeafTheme separator];
     [self.fixedReturnHeaderView addSubview:sep];
     [NSLayoutConstraint activateConstraints:@[
         [sep.leadingAnchor constraintEqualToAnchor:self.fixedReturnHeaderView.leadingAnchor],
@@ -212,11 +221,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
         [plusBtn setImage:addIcon forState:UIControlStateNormal];
         // Slightly larger icon while keeping tap area (32x32) unchanged
         plusBtn.imageEdgeInsets = UIEdgeInsetsMake(4, 4, 4, 4);
-        if (@available(iOS 13.0, *)) {
-            plusBtn.tintColor = [UIColor labelColor];
-        } else {
-            plusBtn.tintColor = [UIColor blackColor];
-        }
+        plusBtn.tintColor = [SeafTheme primaryText];
     }
     // Remove outlined style (no border)
     plusBtn.layer.borderWidth = 0.0;
@@ -231,20 +236,20 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     pw.active = YES; ph.active = YES;
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:plusBtn];
 
-    // Make navigation bar opaque with white background so the status bar area is also white
+    // Make navigation bar opaque using the theme's primary surface
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
     if (@available(iOS 13.0, *)) {
         UINavigationBarAppearance *navAp = [UINavigationBarAppearance new];
         [navAp configureWithOpaqueBackground];
-        navAp.backgroundColor = [UIColor whiteColor];
+        navAp.backgroundColor = [SeafTheme primarySurface];
         self.navigationController.navigationBar.standardAppearance = navAp;
         self.navigationController.navigationBar.scrollEdgeAppearance = navAp;
     } else {
-        self.navigationController.navigationBar.barTintColor = [UIColor whiteColor];
+        self.navigationController.navigationBar.barTintColor = [SeafTheme primarySurface];
         self.navigationController.navigationBar.translucent = NO;
     }
 #else
-    self.navigationController.navigationBar.barTintColor = [UIColor whiteColor];
+    self.navigationController.navigationBar.barTintColor = [SeafTheme primarySurface];
     self.navigationController.navigationBar.translucent = NO;
 #endif
 }
@@ -254,20 +259,21 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     NSString *action = self.operationState == OPERATION_STATE_MOVE ? NSLocalizedString(@"Move", @"Seafile") : NSLocalizedString(@"Copy", @"Seafile");
     UIColor *primary = BAR_COLOR_ORANGE ?: [UIColor systemOrangeColor];
 
+    UIColor *titleColor = [SeafTheme primaryText];
     NSMutableAttributedString *attr;
     if (self.fileNames.count == 1 && self.fileNames.firstObject.length > 0) {
         NSString *fileName = self.fileNames.firstObject;
         NSString *full = [NSString stringWithFormat:@"%@ %@", action, fileName];
-        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: UIColor.labelColor }];
+        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: titleColor }];
         NSRange nameRange = [full rangeOfString:fileName options:NSBackwardsSearch];
         if (nameRange.location != NSNotFound) {
             [attr addAttributes:@{ NSForegroundColorAttributeName: primary } range:nameRange];
         }
     } else if (self.fileNames.count > 1) {
         NSString *full = [NSString stringWithFormat:@"%@ %lu %@", action, (unsigned long)self.fileNames.count, NSLocalizedString(@"items", @"Seafile")];
-        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: UIColor.labelColor }];
+        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: titleColor }];
     } else {
-        attr = [[NSMutableAttributedString alloc] initWithString:action attributes:@{ NSForegroundColorAttributeName: UIColor.labelColor }];
+        attr = [[NSMutableAttributedString alloc] initWithString:action attributes:@{ NSForegroundColorAttributeName: titleColor }];
     }
 
     if (!self.titleLabel) {
@@ -296,9 +302,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     btn.titleLabel.adjustsFontSizeToFitWidth = YES;
     btn.titleLabel.minimumScaleFactor = 0.85;
     btn.titleLabel.textAlignment = NSTextAlignmentCenter;
-    UIColor *normalColor = nil;
-    if (@available(iOS 13.0, *)) normalColor = [UIColor secondaryLabelColor]; else normalColor = [UIColor grayColor];
-    [btn setTitleColor:normalColor forState:UIControlStateNormal];
+    [btn setTitleColor:[SeafTheme secondaryText] forState:UIControlStateNormal];
     [btn addTarget:self action:@selector(onTabTapped:) forControlEvents:UIControlEventTouchUpInside];
     btn.tag = tag;
     return btn;
@@ -308,7 +312,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
 {
     self.tabsBar = [[UIView alloc] init];
     self.tabsBar.translatesAutoresizingMaskIntoConstraints = NO;
-    self.tabsBar.backgroundColor = [UIColor whiteColor];
+    self.tabsBar.backgroundColor = [SeafTheme primarySurface];
     [self.view addSubview:self.tabsBar];
 
     UILayoutGuide *guide = self.view.safeAreaLayoutGuide;
@@ -388,8 +392,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     self.underlineLeadingConstraint.active = YES;
     self.underlineWidthConstraint.active = YES;
     UIColor *primaryColor = BAR_COLOR_ORANGE ?: [UIColor systemOrangeColor];
-    UIColor *normalColor = nil;
-    if (@available(iOS 13.0, *)) normalColor = [UIColor secondaryLabelColor]; else normalColor = [UIColor grayColor];
+    UIColor *normalColor = [SeafTheme secondaryText];
     [self.tabButtons enumerateObjectsUsingBlock:^(UIButton * _Nonnull b, NSUInteger i, BOOL * _Nonnull stop) {
         BOOL selected = (i == (NSUInteger)idx);
         [b setTitleColor:(selected ? primaryColor : normalColor) forState:UIControlStateNormal];
@@ -472,15 +475,14 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
 
     UIColor *primaryColor = BAR_COLOR_ORANGE ?: [UIColor systemOrangeColor];
     self.cancelButton = [self buildActionButtonWithTitle:NSLocalizedString(@"Cancel", @"Seafile")
-                                              background:[UIColor whiteColor]
-                                              titleColor:[UIColor labelColor]
+                                              background:[SeafTheme primarySurface]
+                                              titleColor:[SeafTheme primaryText]
                                                 selector:@selector(onCancel:)];
     self.cancelButton.isAccessibilityElement = YES;
     self.cancelButton.accessibilityLabel = NSLocalizedString(@"Cancel", @"Seafile");
     // outline style
     self.cancelButton.layer.borderWidth = 1.0 / UIScreen.mainScreen.scale;
-    UIColor *deepGray = [UIColor colorWithWhite:0.15 alpha:1.0]; // slightly lighter than pure black
-    self.cancelButton.layer.borderColor = deepGray.CGColor;
+    self.cancelButton.layer.borderColor = [SeafTheme separator].CGColor;
 
     NSString *confirmTitle = self.operationState == OPERATION_STATE_MOVE ? NSLocalizedString(@"Move here", @"Seafile") : NSLocalizedString(@"Copy here", @"Seafile");
     self.confirmButton = [self buildActionButtonWithTitle:confirmTitle
@@ -678,7 +680,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     self.recentTableView.dataSource = self;
     self.recentTableView.delegate = self;
     // Rounded corners on the table directly
-    self.recentTableView.backgroundColor = [UIColor whiteColor];
+    self.recentTableView.backgroundColor = [SeafTheme primarySurface];
     [self applyRoundedCornersForRecentIfNeeded];
     // Register destination style cell class for consistent visuals
     [self.recentTableView registerClass:[SeafDestCell class] forCellReuseIdentifier:@"SeafDestCell"];

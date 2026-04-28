@@ -57,7 +57,7 @@ static const CGFloat kBaseWidth = 414.0;
 
 - (void)setupUI
 {
-    self.backgroundColor = [UIColor colorWithRed:242.0/255.0 green:242.0/255.0 blue:242.0/255.0 alpha:1.0];
+    self.backgroundColor = [SeafTheme groupedSurface];
     self.buttonWidthConstraints = [NSMutableArray array];
     self.lastAppliedScale = 1.0;
     
@@ -93,8 +93,8 @@ static const CGFloat kBaseWidth = 414.0;
     UIView *styleContainer = [[UIView alloc] init];
     styleContainer.translatesAutoresizingMaskIntoConstraints = NO;
     
-    UIColor *iconColor = [UIColor colorWithRed:0x67/255.0 green:0x67/255.0 blue:0x67/255.0 alpha:1.0];
-    
+    UIColor *iconColor = [SeafTheme secondaryText];
+
     self.btnStyle = [UIButton buttonWithType:UIButtonTypeSystem];
     UIImage *paraImg = [[UIImage imageNamed:@"sdoc-text"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.btnStyle setImage:paraImg forState:UIControlStateNormal];
@@ -117,7 +117,7 @@ static const CGFloat kBaseWidth = 414.0;
     self.styleArrowView.translatesAutoresizingMaskIntoConstraints = NO;
     self.styleArrowView.contentMode = UIViewContentModeScaleAspectFit;
     self.styleArrowView.userInteractionEnabled = NO;
-    self.styleArrowView.tintColor = [UIColor colorWithRed:0x99/255.0 green:0x99/255.0 blue:0x99/255.0 alpha:1.0];
+    self.styleArrowView.tintColor = [SeafTheme tertiaryText];
     [styleContainer addSubview:self.styleArrowView];
     
     // Store constraint for dynamic adjustment
@@ -151,7 +151,13 @@ static const CGFloat kBaseWidth = 414.0;
     self.listStack.layoutMarginsRelativeArrangement = YES;
     self.listStack.spacing = 8.0;
     
-    UIColor *selectedBgColor = [UIColor colorWithRed:0.933 green:0.886 blue:0.816 alpha:1.0];
+    UIColor *selectedBgLight = [UIColor colorWithRed:0.933 green:0.886 blue:0.816 alpha:1.0];
+    UIColor *selectedBgColor = selectedBgLight;
+    if (@available(iOS 13.0, *)) {
+        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+            selectedBgColor = [[SeafTheme accentOrange] colorWithAlphaComponent:0.25];
+        }
+    }
     UIImage *selectedBgImg = [self createResizableRoundedImageWithColor:selectedBgColor cornerRadius:6.0 inset:6.0];
     
     self.btnUnordered = [self createButtonWithImageName:@"unordered list-nomal" action:@selector(onUnorderedTapped)];
@@ -272,7 +278,7 @@ static const CGFloat kBaseWidth = 414.0;
     [container.widthAnchor constraintEqualToConstant:1].active = YES;
     
     UIView *line = [[UIView alloc] init];
-    line.backgroundColor = [UIColor colorWithRed:0.75 green:0.75 blue:0.75 alpha:1.0];
+    line.backgroundColor = [SeafTheme separator];
     line.translatesAutoresizingMaskIntoConstraints = NO;
     [container addSubview:line];
     
@@ -294,7 +300,7 @@ static const CGFloat kBaseWidth = 414.0;
     btn.contentVerticalAlignment = UIControlContentVerticalAlignmentFill;
     btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentFill;
     btn.imageEdgeInsets = UIEdgeInsetsMake(11, 11, 11, 11);
-    btn.tintColor = [UIColor colorWithRed:0x67/255.0 green:0x67/255.0 blue:0x67/255.0 alpha:1.0];
+    btn.tintColor = [SeafTheme secondaryText];
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
     
     // Store width constraint for dynamic adjustment
@@ -410,8 +416,8 @@ static const CGFloat kBaseWidth = 414.0;
     
     BOOL isCheck = [type isEqualToString:@"check_list_item"];
     
-    UIColor *disabledTint = [UIColor lightGrayColor];
-    UIColor *styleNormalColor = [UIColor colorWithRed:0x67/255.0 green:0x67/255.0 blue:0x67/255.0 alpha:1.0];
+    UIColor *disabledTint = [SeafTheme tertiaryText];
+    UIColor *styleNormalColor = [SeafTheme secondaryText];
     
     if (isCheck) {
         self.btnStyle.enabled = NO;
@@ -424,7 +430,7 @@ static const CGFloat kBaseWidth = 414.0;
         self.btnStyle.enabled = YES;
         [self.btnStyle setTitleColor:styleNormalColor forState:UIControlStateNormal];
         self.btnStyle.tintColor = styleNormalColor;
-        self.styleArrowView.tintColor = [UIColor colorWithRed:0x99/255.0 green:0x99/255.0 blue:0x99/255.0 alpha:1.0];
+        self.styleArrowView.tintColor = [SeafTheme tertiaryText];
         self.btnUnordered.enabled = YES;
         self.btnOrdered.enabled = YES;
     }
@@ -446,17 +452,17 @@ static const CGFloat kBaseWidth = 414.0;
 
 - (void)updateUndoRedoTint
 {
-    UIColor *normalTint = [UIColor colorWithRed:0x67/255.0 green:0x67/255.0 blue:0x67/255.0 alpha:1.0];
-    UIColor *disabledTint = [UIColor colorWithWhite:0.75 alpha:1.0];
+    UIColor *normalTint = [SeafTheme secondaryText];
+    UIColor *disabledTint = [SeafTheme tertiaryText];
     self.btnUndo.tintColor = self.btnUndo.enabled ? normalTint : disabledTint;
     self.btnRedo.tintColor = self.btnRedo.enabled ? normalTint : disabledTint;
 }
 
 - (void)updateListSelectionTint
 {
-    UIColor *normalTint = [UIColor colorWithRed:0x67/255.0 green:0x67/255.0 blue:0x67/255.0 alpha:1.0];
+    UIColor *normalTint = [SeafTheme secondaryText];
     UIColor *selectedTint = BAR_COLOR_ORANGE ?: [UIColor colorWithRed:240.0/256 green:128.0/256 blue:48.0/256 alpha:1.0];
-    UIColor *disabledTint = [UIColor colorWithWhite:0.75 alpha:1.0];
+    UIColor *disabledTint = [SeafTheme tertiaryText];
     
     NSArray<UIButton *> *buttons = @[self.btnUnordered, self.btnOrdered, self.btnCheck];
     for (UIButton *btn in buttons) {

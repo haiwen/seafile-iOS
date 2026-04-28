@@ -9,6 +9,7 @@
 #import "SeafActionSheet.h"
 #import "SeafCell.h"
 #import "SeafAppDelegate.h"
+#import "SeafTheme.h"
 
 #define kHostsCornerRadius 12.0f
 
@@ -161,12 +162,18 @@ static BOOL disableCustomEasing = NO;
     self.layer.shadowOpacity = kShadowOpacity;
     
     self.layer.contentsScale = [UIScreen mainScreen].scale;
-    ((CAShapeLayer *)self.layer).fillColor = [UIColor whiteColor].CGColor;
+    ((CAShapeLayer *)self.layer).fillColor = [SeafTheme elevatedSurface].CGColor;
     ((CAShapeLayer *)self.layer).strokeColor = [UIColor clearColor].CGColor;
 }
 
 + (Class)layerClass {
     return [SeafActionSheetLayer class];
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    // CAShapeLayer.fillColor is a CGColor snapshot; re-resolve against the current theme.
+    ((CAShapeLayer *)self.layer).fillColor = [SeafTheme elevatedSurface].CGColor;
 }
 
 @end
@@ -262,11 +269,11 @@ static BOOL disableCustomEasing = NO;
     }
 
     [b setTitle:displayTitle forState:UIControlStateNormal];
-    [b setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [b setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
     [b setTitleEdgeInsets:titleInsets];
     [b addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
-    [b setBackgroundImage:[self pixelImageWithColor:[UIColor colorWithWhite:1.0 alpha:1.0]] forState:UIControlStateNormal];
-    [b setBackgroundImage:[self pixelImageWithColor:[UIColor colorWithWhite:0.8 alpha:1.0]] forState:UIControlStateHighlighted];
+    [b setBackgroundImage:[self pixelImageWithColor:[SeafTheme elevatedSurface]] forState:UIControlStateNormal];
+    [b setBackgroundImage:[self pixelImageWithColor:[SeafTheme fill]] forState:UIControlStateHighlighted];
     
     // Configure adaptive font size
     b.titleLabel.adjustsFontSizeToFitWidth = YES;
@@ -282,7 +289,7 @@ static BOOL disableCustomEasing = NO;
     
     if (!enabled) {
         b.enabled = NO;
-        [b setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        [b setTitleColor:[SeafTheme tertiaryText] forState:UIControlStateNormal];
     }
     
     b.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
@@ -596,7 +603,7 @@ static BOOL disableCustomEasing = NO;
 - (void)layoutSheetInitial:(BOOL)initial {
     self.frame = [self topWindow].bounds;
     
-    _scrollViewHost.backgroundColor = [UIColor whiteColor]; // White background
+    _scrollViewHost.backgroundColor = [SeafTheme elevatedSurface];
 
     CGRect frame = self.frame;
     // Use fixed width of 200
@@ -842,7 +849,7 @@ static BOOL disableCustomEasing = NO;
             @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Invalid arrow direction" userInfo:nil];
         }
 
-        _scrollViewHost.backgroundColor = [UIColor whiteColor]; // Maintain white background
+        _scrollViewHost.backgroundColor = [SeafTheme elevatedSurface];
         
         // Let layoutSheetForFrame calculate exact content height
         [self layoutSheetForFrame:finalFrame fitToRect:NO initialSetUp:YES];

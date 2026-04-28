@@ -8,20 +8,20 @@
 
 #import "SeafActivitiesCell.h"
 #import <SDWebImage/UIImageView+WebCache.h>
+#import "SeafTheme.h"
 
 @implementation SeafActivitiesCell
 
 - (void)awakeFromNib {
     [super awakeFromNib];
     // Set text colors
-    self.authorLabel.textColor = [UIColor blackColor];
+    self.authorLabel.textColor = [SeafTheme primaryText];
     self.desLabel.textColor = BAR_COLOR_ORANGE;
-    self.timeLabel.textColor = [UIColor grayColor];
+    self.timeLabel.textColor = [SeafTheme secondaryText];
     self.repoNameLabel.textColor = BAR_COLOR_ORANGE;
-    
-    // Set operation label and container colors
-    self.operationLabel.textColor = [UIColor darkGrayColor];
-    self.operationContainer.backgroundColor = [[UIColor lightGrayColor] colorWithAlphaComponent:0.2];
+
+    self.operationLabel.textColor = [SeafTheme secondaryText];
+    self.operationContainer.backgroundColor = [SeafTheme fill];
 }
 
 - (void)showWithImage:(NSURL *)imageURL author:(NSString *)author operation:(NSString *)operation time:(NSString *)time detail:(NSString *)detail repoName:(NSString *)repoName {
