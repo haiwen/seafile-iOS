@@ -17,7 +17,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="350" height="400"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <animations/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <connections>
                             <outlet property="dataSource" destination="J6p-g8-CHO" id="miS-Tv-az4"/>
                             <outlet property="delegate" destination="J6p-g8-CHO" id="oVU-pc-VOs"/>

@@ -9,6 +9,7 @@
 #import "SeafNavLeftItem.h"
 #import "SeafDir.h"
 #import "SeafRepos.h" // Used to determine directory type
+#import "SeafTheme.h"
 
 @implementation SeafNavLeftItem
 
@@ -33,7 +34,7 @@
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     titleLabel.text = title ?: directory.name;
     titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
-    titleLabel.textColor = [UIColor blackColor];
+    titleLabel.textColor = [SeafTheme primaryText];
     titleLabel.numberOfLines = 1;
     titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
     // Auto-fit: allow shrinking up to 2pt (20 -> 18)

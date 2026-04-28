@@ -14,6 +14,7 @@
 #import "SeafAppDelegate.h"
 #import "Utils.h"
 #import "SVProgressHUD.h"
+#import "SeafTheme.h"
 
 typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     SeafBackupButtonTypePhotos = 0,
@@ -79,7 +80,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor whiteColor];
+    self.view.backgroundColor = [SeafTheme primarySurface];
 
     [self setupTitleLabel];
     [self setupScrollView];
@@ -117,14 +118,14 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     ]];
 
     self.titleLabel.text = NSLocalizedString(@"Select Backup Location", @"Seafile");
-    self.titleLabel.textColor = [UIColor blackColor];
+    self.titleLabel.textColor = [SeafTheme primaryText];
 }
 
 - (void)setupPageControl {
     self.pageControl = [[UIPageControl alloc] init];
     self.pageControl.numberOfPages = 3;
     self.pageControl.currentPage = 0;
-    self.pageControl.pageIndicatorTintColor = [UIColor lightGrayColor];
+    self.pageControl.pageIndicatorTintColor = [SeafTheme tertiaryText];
     self.pageControl.currentPageIndicatorTintColor = [UIColor orangeColor];
     self.pageControl.userInteractionEnabled = NO;
     [self.view addSubview:self.pageControl];
@@ -189,7 +190,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     self.subtitleLabel = [[UILabel alloc] init];
     self.subtitleLabel.text = NSLocalizedString(@"Select a directory", @"Seafile");
     self.subtitleLabel.font = [UIFont systemFontOfSize:14];
-    self.subtitleLabel.textColor = [UIColor darkGrayColor];
+    self.subtitleLabel.textColor = [SeafTheme secondaryText];
     [self.view addSubview:self.subtitleLabel];
     self.subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
@@ -218,12 +219,12 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     ]];
 
     self.topSeparatorLine = [[UIView alloc] init];
-    self.topSeparatorLine.backgroundColor = [UIColor colorWithWhite:0.85 alpha:1.0];
+    self.topSeparatorLine.backgroundColor = [SeafTheme separator];
     self.topSeparatorLine.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.topSeparatorLine];
 
     self.bottomSeparatorLine = [[UIView alloc] init];
-    self.bottomSeparatorLine.backgroundColor = [UIColor colorWithWhite:0.85 alpha:1.0];
+    self.bottomSeparatorLine.backgroundColor = [SeafTheme separator];
     self.bottomSeparatorLine.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.bottomSeparatorLine];
 
@@ -391,54 +392,16 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     UIImage *unselectedImage;
     UIImage *selectedImage;
 
+    UIColor *unselectedTint = [SeafTheme tertiaryText];
     if (@available(iOS 13.0, *)) {
-        if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
-            unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
-            selectedImage = [[UIImage systemImageNamed:@"checkmark.circle.fill"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
-        } else {
-            unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
-            selectedImage = [[UIImage systemImageNamed:@"circle.inset.filled"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
-        }
+        unselectedTint = [unselectedTint resolvedColorWithTraitCollection:self.traitCollection];
+    }
+    if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
+        unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:unselectedTint renderingMode:UIImageRenderingModeAlwaysOriginal];
+        selectedImage = [[UIImage systemImageNamed:@"checkmark.circle.fill"] imageWithTintColor:[SeafTheme accentOrange] renderingMode:UIImageRenderingModeAlwaysOriginal];
     } else {
-        // Fallback for iOS 12: programmatically draw simple circle images
-        CGFloat size = 24.0;
-        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(size, size)];
-        unselectedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull ctx) {
-            [[UIColor grayColor] setStroke];
-            CGRect circleRect = CGRectInset(CGRectMake(0, 0, size, size), 1.5, 1.5);
-            [[UIBezierPath bezierPathWithOvalInRect:circleRect] stroke];
-        }];
-        if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
-            // Checkbox style: filled circle with checkmark
-            selectedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull ctx) {
-                [[UIColor orangeColor] setFill];
-                CGRect circleRect = CGRectInset(CGRectMake(0, 0, size, size), 1.5, 1.5);
-                [[UIBezierPath bezierPathWithOvalInRect:circleRect] fill];
-                // Draw a simple checkmark in white
-                [[UIColor whiteColor] setStroke];
-                UIBezierPath *check = [UIBezierPath bezierPath];
-                check.lineWidth = 2.0;
-                check.lineCapStyle = kCGLineCapRound;
-                check.lineJoinStyle = kCGLineJoinRound;
-                [check moveToPoint:CGPointMake(size * 0.28, size * 0.50)];
-                [check addLineToPoint:CGPointMake(size * 0.44, size * 0.66)];
-                [check addLineToPoint:CGPointMake(size * 0.72, size * 0.36)];
-                [check stroke];
-            }];
-        } else {
-            // Radio style: filled inner circle
-            selectedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull ctx) {
-                [[UIColor orangeColor] setStroke];
-                [[UIColor orangeColor] setFill];
-                CGRect outerRect = CGRectInset(CGRectMake(0, 0, size, size), 1.5, 1.5);
-                UIBezierPath *outer = [UIBezierPath bezierPathWithOvalInRect:outerRect];
-                outer.lineWidth = 1.5;
-                [outer stroke];
-                CGFloat inset = size * 0.3;
-                CGRect innerRect = CGRectInset(CGRectMake(0, 0, size, size), inset, inset);
-                [[UIBezierPath bezierPathWithOvalInRect:innerRect] fill];
-            }];
-        }
+        unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:unselectedTint renderingMode:UIImageRenderingModeAlwaysOriginal];
+        selectedImage = [[UIImage systemImageNamed:@"circle.inset.filled"] imageWithTintColor:[SeafTheme accentOrange] renderingMode:UIImageRenderingModeAlwaysOriginal];
     }
     [button setImage:unselectedImage forState:UIControlStateNormal];
     [button setImage:selectedImage forState:UIControlStateSelected];

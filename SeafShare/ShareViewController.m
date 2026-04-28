@@ -36,12 +36,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    // Force Light mode for share extension UI
-    if (@available(iOS 13.0, *)) {
-        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-    }
+    [SeafTheme applyPreferenceToViewController:self];
     // Custom navigation layout: arrow + title aligned to the left
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:NSLocalizedString(@"Select an account", @"Seafile") target:self action:@selector(cancel:)]];
     self.navigationItem.title = @"";
@@ -71,7 +66,7 @@
     
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor systemBackgroundColor];
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
         
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;

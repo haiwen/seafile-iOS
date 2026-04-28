@@ -12,6 +12,7 @@
 #import "SeafConnection.h"
 #import "SeafAccountCell.h"
 #import "SeafGlobal.h"
+#import "SeafTheme.h"
 #import "Utils.h"
 #import "Debug.h"
 
@@ -25,6 +26,7 @@
 
 -(void)prepareForPresentationInMode:(UIDocumentPickerMode)mode
 {
+    [SeafTheme applyPreferenceToViewController:self];
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;

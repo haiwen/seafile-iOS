@@ -7,6 +7,7 @@
 //
 
 #import "SeafErrorPlaceholderView.h"
+#import "SeafTheme.h"
 
 @interface SeafErrorPlaceholderView ()
 
@@ -39,7 +40,7 @@
         NSRange retryTapRange = [fullText rangeOfString:retryText];
 
         UIFont *defaultFont = [UIFont systemFontOfSize:14.0 weight:UIFontWeightRegular];
-        UIColor *defaultTextColor = [UIColor colorWithRed:0.4 green:0.4 blue:0.4 alpha:1.0]; // A medium gray
+        UIColor *defaultTextColor = [SeafTheme secondaryText];
 
         [attributedString addAttribute:NSFontAttributeName value:defaultFont range:fullRange];
         [attributedString addAttribute:NSForegroundColorAttributeName value:defaultTextColor range:fullRange];

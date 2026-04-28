@@ -4,6 +4,7 @@
 //
 
 #import "SeafDestCell.h"
+#import "SeafTheme.h"
 
 @implementation SeafDestCell
 
@@ -28,7 +29,7 @@
     UILabel *title = [[UILabel alloc] init];
     title.translatesAutoresizingMaskIntoConstraints = NO;
     title.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
-    title.textColor = [UIColor colorWithWhite:0.2 alpha:1.0];
+    title.textColor = [SeafTheme primaryText];
     title.lineBreakMode = NSLineBreakByTruncatingMiddle;
     [self.contentView addSubview:title];
     self.textLabel = title;
@@ -36,7 +37,7 @@
     UILabel *sub = [[UILabel alloc] init];
     sub.translatesAutoresizingMaskIntoConstraints = NO;
     sub.font = [UIFont systemFontOfSize:11];
-    sub.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+    sub.textColor = [SeafTheme secondaryText];
     [self.contentView addSubview:sub];
     self.detailTextLabel = sub;
 
