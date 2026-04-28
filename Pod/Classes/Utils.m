@@ -869,12 +869,10 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 }
 
 + (UIColor *)cellDetailTextTextColor {
-    static UIColor *defaultTextColor = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        defaultTextColor = [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
-    });
-    return defaultTextColor;
+    if (@available(iOS 13.0, *)) {
+        return [UIColor secondaryLabelColor];
+    }
+    return [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
 }
 
 + (NSDictionary *)checkNetworkReachability {

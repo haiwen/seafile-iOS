@@ -18,6 +18,7 @@
 #import "SeafCell.h"
 #import "SeafActionSheet.h"
 #import "SeafLoadingView.h"
+#import "SeafTheme.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -105,13 +106,15 @@
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
+    self.tableView.backgroundColor = [SeafTheme primarySurface];
+    self.view.backgroundColor = [SeafTheme primarySurface];
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil] forCellReuseIdentifier:@"SeafCell"];
     
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor whiteColor];
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
         
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;

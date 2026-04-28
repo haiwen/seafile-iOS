@@ -49,12 +49,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // Always display in Light mode
-    if (@available(iOS 13.0, *)) {
-        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-    }
+    [SeafTheme applyPreferenceToViewController:self];
     
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
@@ -77,16 +72,16 @@
     [self.view addSubview:self.tableView];
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor systemBackgroundColor];
-        
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
+
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-        
+
         UIToolbarAppearance *toolbarAppearance = [UIToolbarAppearance new];
-        toolbarAppearance.backgroundColor = [UIColor systemBackgroundColor];
+        toolbarAppearance.backgroundColor = [SeafTheme primarySurface];
         self.navigationController.toolbar.standardAppearance = toolbarAppearance;
         self.navigationController.toolbar.scrollEdgeAppearance = toolbarAppearance;
-        
+
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
@@ -99,7 +94,7 @@
         UIImage *addFolderIcon = [[UIImage imageNamed:@"share_addFile"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         UIButton *addBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         [addBtn setImage:addFolderIcon forState:UIControlStateNormal];
-        addBtn.tintColor = [UIColor labelColor];
+        addBtn.tintColor = [SeafTheme primaryText];
         // Use Auto Layout constraints to enforce size so it does not stretch
         addBtn.translatesAutoresizingMaskIntoConstraints = NO;
         [addBtn.widthAnchor constraintEqualToConstant:24].active = YES;
@@ -112,7 +107,7 @@
         UIButton *saveBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         [saveBtn setTitle:NSLocalizedString(@"OK", @"Seafile") forState:UIControlStateNormal];
         saveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
-        [saveBtn setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
+        [saveBtn setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
         saveBtn.translatesAutoresizingMaskIntoConstraints = NO;
         [saveBtn.widthAnchor constraintEqualToConstant:80].active = YES;
         [saveBtn.heightAnchor constraintEqualToConstant:50].active = YES;
@@ -123,16 +118,15 @@
         UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
         [self setToolbarItems:@[flexItem, self.saveButton, flexItem] animated:true];
         
-        // Customize toolbar background color (light gray like primary background)
+        // Customize toolbar background color (adapts to light/dark via grouped surface token)
         if (@available(iOS 15.0, *)) {
-            UIColor *bg = [UIColor colorWithRed:242/255.0 green:242/255.0 blue:242/255.0 alpha:1.0];
             UIToolbarAppearance *toolAppear = [UIToolbarAppearance new];
             [toolAppear configureWithOpaqueBackground];
-            toolAppear.backgroundColor = bg;
+            toolAppear.backgroundColor = [SeafTheme groupedSurface];
             self.navigationController.toolbar.standardAppearance = toolAppear;
             self.navigationController.toolbar.scrollEdgeAppearance = toolAppear;
         } else {
-            self.navigationController.toolbar.barTintColor = [UIColor colorWithRed:242/255.0 green:242/255.0 blue:242/255.0 alpha:1.0];
+            self.navigationController.toolbar.barTintColor = [SeafTheme groupedSurface];
         }
         
         // Navigation bar right contains New Folder
@@ -388,7 +382,7 @@
 - (UIActivityIndicatorView *)loadingView {
     if (!_loadingView) {
         _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        _loadingView.color = [UIColor darkTextColor];
+        _loadingView.color = [SeafTheme primaryText];
         _loadingView.hidesWhenStopped = YES;
     }
     return _loadingView;

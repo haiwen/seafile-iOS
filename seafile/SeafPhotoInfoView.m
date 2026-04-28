@@ -3,6 +3,7 @@
 #import "Debug.h"
 #import <ImageIO/ImageIO.h>
 #import <SDWebImage/UIImageView+WebCache.h>
+#import "SeafTheme.h"
 
 @interface SeafPhotoInfoView()
 
@@ -15,7 +16,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor colorWithWhite:0.98 alpha:1.0];
+        self.backgroundColor = [SeafTheme secondarySurface];
         self.layer.cornerRadius = 8.0;
         self.layer.masksToBounds = YES;
         
@@ -49,8 +50,8 @@
 
     UIFont *keyLabelFont = [UIFont systemFontOfSize:14];
     UIFont *valueLabelFont = [UIFont systemFontOfSize:14];
-    UIColor *keyLabelColor = [UIColor darkGrayColor];
-    UIColor *valueLabelColor = [UIColor blackColor];
+    UIColor *keyLabelColor = [SeafTheme secondaryText];
+    UIColor *valueLabelColor = [SeafTheme primaryText];
 
     // Keep track of the last standard row's bottom position
     CGFloat lastStandardRowBottomY = currentY;
@@ -169,7 +170,7 @@
 
 - (UIView *)createOwnerTagViewWithValue:(NSString *)value availableWidth:(CGFloat)availableWidth standardRowHeight:(CGFloat)standardRowHeight {
     UIView *ownerTagView = [[UIView alloc] init];
-    ownerTagView.backgroundColor = [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
+    ownerTagView.backgroundColor = [SeafTheme fill];
     ownerTagView.layer.cornerRadius = 13.0;
     ownerTagView.layer.masksToBounds = YES;
 
@@ -177,7 +178,7 @@
     avatarView.contentMode = UIViewContentModeScaleAspectFill;
     avatarView.layer.cornerRadius = 11.0;
     avatarView.layer.masksToBounds = YES;
-    avatarView.backgroundColor = [UIColor lightGrayColor];
+    avatarView.backgroundColor = [SeafTheme fill];
     
     NSString *avatarURL = [self.infoModel objectForKey:@"OwnerAvatar"];
     if (avatarURL) {
@@ -191,7 +192,7 @@
 
     UILabel *nameLabel = [[UILabel alloc] init];
     nameLabel.font = [UIFont systemFontOfSize:14];
-    nameLabel.textColor = [UIColor darkGrayColor];
+    nameLabel.textColor = [SeafTheme secondaryText];
     nameLabel.text = value;
     [nameLabel sizeToFit];
 
@@ -293,10 +294,10 @@
     UIFont *modelFont = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
     UIFont *mediumFont = [UIFont systemFontOfSize:13];
     UIFont *smallFont = [UIFont systemFontOfSize:12];
-    UIColor *textColor = [UIColor darkGrayColor];
-    UIColor *lightGrayColor = [UIColor lightGrayColor];
-    UIColor *cardBackgroundColor = [UIColor colorWithWhite:0.96 alpha:1.0]; // Light gray background for card
-    UIColor *modelBackgroundColor = [UIColor colorWithWhite:0.92 alpha:1.0]; // Slightly darker for model row
+    UIColor *textColor = [SeafTheme secondaryText];
+    UIColor *lightGrayColor = [SeafTheme separator];
+    UIColor *cardBackgroundColor = [SeafTheme secondarySurface];
+    UIColor *modelBackgroundColor = [SeafTheme fill];
 
     // --- Find Position ---
     UIView *lastStandardRowView = nil;
@@ -335,7 +336,7 @@
     if (model && model.length > 0) {
         UILabel *modelLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardPadding, currentModelY, availableWidth - 2 * cardPadding, 0)];
         modelLabel.font = modelFont;
-        modelLabel.textColor = [UIColor blackColor]; // Use black for model
+        modelLabel.textColor = [SeafTheme primaryText];
         modelLabel.text = model;
         [modelLabel sizeToFit]; // Adjust height
         CGRect modelFrame = modelLabel.frame;

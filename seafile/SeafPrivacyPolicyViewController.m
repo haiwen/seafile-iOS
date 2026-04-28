@@ -9,6 +9,7 @@
 #import "SeafPrivacyPolicyViewController.h"
 #import <WebKit/WebKit.h>
 #import "Debug.h"
+#import "SeafTheme.h"
 
 @interface SeafPrivacyPolicyViewController ()<WKNavigationDelegate>
 
@@ -60,7 +61,7 @@
         CGFloat y = [[UIApplication sharedApplication] statusBarFrame].size.height + self.navigationController.navigationBar.frame.size.height;
         _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, y, self.view.bounds.size.width, 2)];
         _progressView.progressTintColor = BAR_COLOR_ORANGE;
-        _progressView.trackTintColor = [UIColor whiteColor];
+        _progressView.trackTintColor = [SeafTheme primarySurface];
         _progressView.progress  = 0.005;
     }
     return _progressView;

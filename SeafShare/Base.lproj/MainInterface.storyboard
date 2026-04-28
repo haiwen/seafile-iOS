@@ -83,7 +83,7 @@
                         <subviews>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="cM7-WV-PoN">
                                 <rect key="frame" x="0.0" y="44" width="375" height="579"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                             </tableView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="jUF-jD-tfV">
                                 <rect key="frame" x="0.0" y="623" width="375" height="44"/>
@@ -115,7 +115,7 @@
                                 </constraints>
                             </view>
                         </subviews>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="cM7-WV-PoN" firstAttribute="trailing" secondItem="Dcz-ki-YzP" secondAttribute="trailing" id="3lG-Mu-Jft"/>
                             <constraint firstItem="jUF-jD-tfV" firstAttribute="top" secondItem="cM7-WV-PoN" secondAttribute="bottom" id="KoU-Iq-iG4"/>

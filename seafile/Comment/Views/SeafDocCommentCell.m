@@ -7,6 +7,7 @@
 #import "Version.h"
 #import "SeafDataTaskManager.h"
 #import "SeafCacheManager.h"
+#import "SeafTheme.h"
 #import <CommonCrypto/CommonDigest.h>
 
 //  IMAGE_WIDTH = (SCREEN_WIDTH - 120dp) / 3
@@ -146,12 +147,12 @@ static NSString *commentImageCacheDir()
 
         _nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _nameLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
-        _nameLabel.textColor = [UIColor labelColor];
+        _nameLabel.textColor = [SeafTheme primaryText];
         [self.contentView addSubview:_nameLabel];
 
         _timeLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _timeLabel.font = [UIFont systemFontOfSize:12];
-        _timeLabel.textColor = [UIColor secondaryLabelColor];
+        _timeLabel.textColor = [SeafTheme secondaryText];
         [self.contentView addSubview:_timeLabel];
 
         _resolvedLabel = [[UILabel alloc] initWithFrame:CGRectZero];
@@ -188,11 +189,7 @@ static NSString *commentImageCacheDir()
         } else {
             [_moreButton setTitle:@"⋮" forState:UIControlStateNormal];
             _moreButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightRegular];
-            if (@available(iOS 13.0, *)) {
-                [_moreButton setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
-            } else {
-                [_moreButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-            }
+            [_moreButton setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
         }
         _moreButton.showsTouchWhenHighlighted = YES;
         _moreButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
@@ -473,8 +470,7 @@ static NSString *commentImageCacheDir()
     
     // Set background color according to resolved state
     if (item.resolved) {
-        // comment_resolved_color = material_grey_50 = #FAFAFA
-        self.contentView.backgroundColor = [UIColor colorWithRed:250.0/255.0 green:250.0/255.0 blue:250.0/255.0 alpha:1.0];
+        self.contentView.backgroundColor = [SeafTheme secondarySurface];
         
         // Prefer using the icon
         if (@available(iOS 13.0, *)) {
@@ -485,8 +481,7 @@ static NSString *commentImageCacheDir()
             self.resolvedLabel.hidden = NO;
         }
     } else {
-        // window_background_color = material_grey_100 = #F5F5F5
-        self.contentView.backgroundColor = [UIColor colorWithRed:245.0/255.0 green:245.0/255.0 blue:245.0/255.0 alpha:1.0];
+        self.contentView.backgroundColor = [SeafTheme groupedSurface];
         
         // Hide resolved indicator
         self.resolvedImageView.hidden = YES;
@@ -576,7 +571,7 @@ static NSString *commentImageCacheDir()
     
     // Base text style
     NSDictionary *baseAttrs = @{ NSFontAttributeName: [UIFont systemFontOfSize:14],
-                                 NSForegroundColorAttributeName: [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0] };
+                                 NSForegroundColorAttributeName: [SeafTheme primaryText] };
     
     // Lightweight Markdown link parsing: convert [text](url) to clickable links
     NSAttributedString *attr = [self attributedStringByParsingMarkdownLinks:text baseAttributes:baseAttrs];
@@ -659,7 +654,7 @@ static NSString *commentImageCacheDir()
     imageView.layer.cornerRadius = 4.0; // ShapeCorner4Style
     imageView.bounds = CGRectMake(0, 0, imageSize, imageSize);
     imageView.userInteractionEnabled = YES;
-    imageView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0]; // placeholder background
+    imageView.backgroundColor = [SeafTheme fill];
     
     // Use SeafDataTaskManager's thumb queue to download (reachability/pause-resume/batch cancel)
     if (imageURL.length > 0) {

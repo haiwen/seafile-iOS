@@ -149,7 +149,7 @@ static NSString * const kSeafBridgeHelperScript =
     if ([self respondsToSelector:@selector(setEdgesForExtendedLayout:)]) {
         self.edgesForExtendedLayout = UIRectEdgeNone;
     }
-    self.view.backgroundColor = [UIColor whiteColor];
+    self.view.backgroundColor = [SeafTheme primarySurface];
 }
 
 - (void)configureNavigationItems
@@ -171,12 +171,12 @@ static NSString * const kSeafBridgeHelperScript =
     self.titleLabel = [[UILabel alloc] init];
     self.titleLabel.text = self.fileName ?: self.file.name;
     self.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold]; // Matches SeafNavLeftItem
-    self.titleLabel.textColor = [UIColor blackColor];
-    
+    self.titleLabel.textColor = [SeafTheme primaryText];
+
     // Status Label
     self.statusLabel = [[UILabel alloc] init];
     self.statusLabel.font = [UIFont systemFontOfSize:12];
-    self.statusLabel.textColor = [UIColor grayColor];
+    self.statusLabel.textColor = [SeafTheme secondaryText];
     self.statusLabel.text = @"";
 
     // Title and Status aligned by baseline
@@ -218,7 +218,7 @@ static NSString * const kSeafBridgeHelperScript =
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barApp = [UINavigationBarAppearance new];
-        barApp.backgroundColor = [UIColor whiteColor];
+        barApp.backgroundColor = [SeafTheme primarySurface];
         self.navigationController.navigationBar.standardAppearance = barApp;
         self.navigationController.navigationBar.scrollEdgeAppearance = barApp;
     }
@@ -269,7 +269,7 @@ static NSString * const kSeafBridgeHelperScript =
 
     self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
     self.webView.navigationDelegate = self;
-    self.webView.backgroundColor = [UIColor whiteColor];
+    self.webView.backgroundColor = [SeafTheme primarySurface];
     self.webView.translatesAutoresizingMaskIntoConstraints = NO;
     if (@available(iOS 11.0, *)) {
         self.webView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
@@ -338,7 +338,7 @@ static NSString * const kSeafBridgeHelperScript =
 - (UIButton *)makeBottomIconButtonWithImage:(UIImage *)image
 {
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
-    btn.tintColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0];
+    btn.tintColor = [SeafTheme secondaryText];
     [btn setImage:image forState:UIControlStateNormal];
     btn.contentEdgeInsets = UIEdgeInsetsZero;
     btn.imageEdgeInsets = UIEdgeInsetsZero;
@@ -362,13 +362,13 @@ static NSString * const kSeafBridgeHelperScript =
     if (self.bottomBar) return;
 
     UIView *bar = [[UIView alloc] initWithFrame:CGRectZero];
-    bar.backgroundColor = [UIColor whiteColor];
+    bar.backgroundColor = [SeafTheme primarySurface];
     bar.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:bar];
     self.bottomBar = bar;
     // Top divider inside bar
     UIView *divider = [[UIView alloc] initWithFrame:CGRectZero];
-    divider.backgroundColor = [UIColor colorWithRed:0.8 green:0.8 blue:0.8 alpha:1.0];
+    divider.backgroundColor = [SeafTheme separator];
     divider.translatesAutoresizingMaskIntoConstraints = NO;
     [bar addSubview:divider];
     self.bottomDivider = divider;
@@ -484,9 +484,9 @@ static NSString * const kSeafBridgeHelperScript =
         popover.sourceRect = sender.bounds;
         popover.permittedArrowDirections = UIPopoverArrowDirectionDown | UIPopoverArrowDirectionUp;
         popover.delegate = (id<UIPopoverPresentationControllerDelegate>)self;
-        popover.backgroundColor = [UIColor whiteColor];
+        popover.backgroundColor = [SeafTheme primarySurface];
     }
-    
+
     [self presentViewController:popupVC animated:YES completion:nil];
 }
 
@@ -576,9 +576,7 @@ static NSString * const kSeafBridgeHelperScript =
         }
         popover.sourceRect = sourceRect;
         popover.permittedArrowDirections = UIPopoverArrowDirectionAny;
-        if (@available(iOS 13.0, *)) {
-            popover.backgroundColor = [UIColor systemBackgroundColor];
-        }
+        popover.backgroundColor = [SeafTheme primarySurface];
         [self presentViewController:vc animated:YES completion:nil];
     } else {
         [self presentSheetViewController:vc];
@@ -1205,7 +1203,7 @@ static NSString * const kSeafBridgeHelperScript =
         [UIView animateWithDuration:0.25 animations:^{
             self.bottomBar.transform = CGAffineTransformMakeTranslation(0, barHeight);
             self.editorToolbar.alpha = 1.0;
-            self.view.backgroundColor = [UIColor colorWithRed:242.0/255.0 green:242.0/255.0 blue:242.0/255.0 alpha:1.0];
+            self.view.backgroundColor = [SeafTheme groupedSurface];
             [self.view layoutIfNeeded];
         } completion:^(BOOL finished) {
             self.bottomBar.hidden = YES;
@@ -1221,7 +1219,7 @@ static NSString * const kSeafBridgeHelperScript =
         [UIView animateWithDuration:0.25 animations:^{
             self.bottomBar.transform = CGAffineTransformIdentity;
             self.editorToolbar.alpha = 0.0;
-            self.view.backgroundColor = [UIColor whiteColor];
+            self.view.backgroundColor = [SeafTheme primarySurface];
             
             [self updateWebPaddingAndScroll:0];
             [self.view layoutIfNeeded];

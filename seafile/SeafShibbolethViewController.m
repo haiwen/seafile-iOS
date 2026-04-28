@@ -14,6 +14,7 @@
 #import <WebKit/WebKit.h>
 
 #import "Debug.h"
+#import "SeafTheme.h"
 
 @interface SeafShibbolethViewController ()<WKNavigationDelegate, NSURLConnectionDelegate,UINavigationControllerDelegate>
 
@@ -73,7 +74,7 @@
     [super viewDidLoad];
     [self setupNotifications];
     // Do any additional setup after loading the view from its nib.
-    self.view.backgroundColor = [UIColor whiteColor];
+    self.view.backgroundColor = [SeafTheme primarySurface];
     self.navigationController.delegate = self;
     [self start];
 }
@@ -423,7 +424,7 @@
         }
         _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, y, [UIScreen mainScreen].bounds.size.width, 2)];
         _progressView.tintColor = SEAF_COLOR_LIGHT;
-        _progressView.trackTintColor = [UIColor whiteColor];
+        _progressView.trackTintColor = [SeafTheme primarySurface];
     }
     return _progressView;
 }

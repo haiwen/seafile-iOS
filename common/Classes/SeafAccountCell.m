@@ -31,7 +31,11 @@
 - (void)setHighlighted:(BOOL)highlighted animated:(BOOL)animated {
     [super setHighlighted:highlighted animated:animated];
     if (highlighted) {
-        self.contentView.backgroundColor = [UIColor lightGrayColor];
+        if (@available(iOS 13.0, *)) {
+            self.contentView.backgroundColor = [UIColor systemGray5Color];
+        } else {
+            self.contentView.backgroundColor = [UIColor lightGrayColor];
+        }
     } else {
         self.contentView.backgroundColor = [UIColor clearColor];
     }
@@ -45,7 +49,11 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafAccountCell" owner:owner options:nil];
         cell = [cells objectAtIndex:0];
     }
-    cell.contentView.backgroundColor = [UIColor whiteColor];
+    if (@available(iOS 13.0, *)) {
+        cell.contentView.backgroundColor = [UIColor systemBackgroundColor];
+    } else {
+        cell.contentView.backgroundColor = [UIColor whiteColor];
+    }
     cell.accessoryType = UITableViewCellAccessoryNone;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;

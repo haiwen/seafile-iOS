@@ -90,28 +90,31 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+
+    [SeafTheme applyPreferenceToViewController:self];
+
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedSectionFooterHeight = 0;
     self.tableView.estimatedSectionHeaderHeight = 0;
-    
+
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    
+
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor whiteColor];
-        
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
+
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-        
+
         self.tableView.sectionHeaderTopPadding = 0;
     }
-    
+
     if (_directory.editable) {
         // Right bar addFolder icon
         UIImage *addIcon = [[UIImage imageNamed:@"share_addFile"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         UIButton *addBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         [addBtn setImage:addIcon forState:UIControlStateNormal];
-        addBtn.tintColor = [UIColor labelColor];
+        addBtn.tintColor = [SeafTheme primaryText];
         addBtn.translatesAutoresizingMaskIntoConstraints = NO;
         [addBtn.widthAnchor constraintEqualToConstant:24].active = YES;
         [addBtn.heightAnchor constraintEqualToConstant:24].active = YES;
@@ -122,7 +125,7 @@
         UIButton *saveBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         [saveBtn setTitle:NSLocalizedString(@"OK", @"Seafile") forState:UIControlStateNormal];
         saveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
-        [saveBtn setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
+        [saveBtn setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
         saveBtn.translatesAutoresizingMaskIntoConstraints = NO;
         [saveBtn.widthAnchor constraintEqualToConstant:80].active = YES;
         [saveBtn.heightAnchor constraintEqualToConstant:50].active = YES;
@@ -136,15 +139,14 @@
         self.navigationItem.title = @"";
 
         // toolbar bg
-        UIColor *bgCol = [UIColor colorWithRed:242/255.0 green:242/255.0 blue:242/255.0 alpha:1.0];
         if (@available(iOS 15.0,*)) {
             UIToolbarAppearance *toolAp = [UIToolbarAppearance new];
             [toolAp configureWithOpaqueBackground];
-            toolAp.backgroundColor = bgCol;
+            toolAp.backgroundColor = [SeafTheme groupedSurface];
             self.navigationController.toolbar.standardAppearance = toolAp;
             self.navigationController.toolbar.scrollEdgeAppearance = toolAp;
         } else {
-            self.navigationController.toolbar.barTintColor = bgCol;
+            self.navigationController.toolbar.barTintColor = [SeafTheme groupedSurface];
         }
     }
     
@@ -236,7 +238,7 @@
 {
     if (!self.loadingView) {
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        self.loadingView.color = [UIColor darkTextColor];
+        self.loadingView.color = [SeafTheme primaryText];
         self.loadingView.hidesWhenStopped = YES;
         [self.view addSubview:self.loadingView];
     }

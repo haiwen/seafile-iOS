@@ -1,12 +1,14 @@
 //  SeafTagChipCell.m
 
 #import "SeafTagChipCell.h"
+#import "SeafTheme.h"
 
 @interface SeafTagChipCell ()
 @property (nonatomic, strong) UILabel *label;
 @property (nonatomic, strong) NSLayoutConstraint *labelLeadingConstraint;
 @property (nonatomic, strong) CALayer *dotLayer;
 @property (nonatomic, assign) CGFloat lastDotDiameter;
+@property (nonatomic, assign) BOOL usesDynamicBorder;
 @end
 
 @implementation SeafTagChipCell
@@ -20,7 +22,7 @@
 
         _label = [UILabel new];
         _label.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
-        _label.textColor = [UIColor whiteColor];
+        _label.textColor = [SeafTheme primaryText];
         _label.translatesAutoresizingMaskIntoConstraints = NO;
         [self.contentView addSubview:_label];
 
@@ -39,13 +41,14 @@
 {
     [super prepareForReuse];
     self.contentView.backgroundColor = [UIColor clearColor];
-    self.label.textColor = [UIColor secondaryLabelColor];
+    self.label.textColor = [SeafTheme secondaryText];
     self.label.text = @"";
     self.contentView.layer.borderWidth = 0;
     self.contentView.layer.borderColor = nil;
     self.labelLeadingConstraint.constant = 10;
     self.lastDotDiameter = 0;
     self.dotLayer.hidden = YES;
+    self.usesDynamicBorder = NO;
 }
 
 - (void)layoutSubviews
@@ -67,8 +70,9 @@
 {
     self.label.text = text ?: @"";
     UIColor *bg = [self.class colorFromHex:colorHex] ?: [UIColor clearColor];
-    // Text color: #212529 per design spec (fallback if not provided)
-    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0];
+    // Text color falls back to the adaptive primary label so the chip remains readable in dark
+    // mode when the server didn't supply an explicit color pair.
+    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [SeafTheme primaryText];
     self.contentView.backgroundColor = bg;
     self.label.textColor = tc;
     self.contentView.layer.borderWidth = 0;
@@ -80,13 +84,12 @@
 - (void)configureDotStyleWithText:(NSString *)text dotColor:(NSString *)dotColorHex textColor:(NSString *)textColorHex
 {
     self.label.text = text ?: @"";
-    // Text color: #212529 per design spec
-    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0];
-    UIColor *dot = [self.class colorFromHex:dotColorHex] ?: [UIColor colorWithWhite:0.95 alpha:1.0];
-    self.contentView.backgroundColor = [UIColor whiteColor];
-    // Border color: #DBDBDB per design spec
-    self.contentView.layer.borderColor = [UIColor colorWithRed:0xDB/255.0 green:0xDB/255.0 blue:0xDB/255.0 alpha:1.0].CGColor;
+    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [SeafTheme primaryText];
+    UIColor *dot = [self.class colorFromHex:dotColorHex] ?: [SeafTheme fill];
+    self.contentView.backgroundColor = [SeafTheme primarySurface];
+    self.contentView.layer.borderColor = [SeafTheme separator].CGColor;
     self.contentView.layer.borderWidth = 1.0;
+    self.usesDynamicBorder = YES;
     self.label.textColor = tc;
 
     // Ensure dot layer
@@ -109,6 +112,15 @@
 
     // Shift label to the right of dot: left padding 5 + dot size + spacing to text (4 for right padding of dot area)
     self.labelLeadingConstraint.constant = 5 + d + 4;
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
+{
+    [super traitCollectionDidChange:previousTraitCollection];
+    // CGColor is a static snapshot; re-resolve the dynamic separator when the trait collection changes.
+    if (self.usesDynamicBorder) {
+        self.contentView.layer.borderColor = [SeafTheme separator].CGColor;
+    }
 }
 
 + (UIColor *)colorFromHex:(NSString *)hex

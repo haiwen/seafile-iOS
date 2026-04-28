@@ -7,6 +7,7 @@
 //
 
 #import "SeafLoadingView.h"
+#import "SeafTheme.h"
 
 @interface SeafLoadingView()
 
@@ -24,7 +25,7 @@
 
 - (void)setupActivityIndicator {
     self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
-    self.activityIndicator.color = [UIColor darkTextColor];
+    self.activityIndicator.color = [SeafTheme primaryText];
     self.activityIndicator.hidesWhenStopped = YES;
     [self addSubview:self.activityIndicator];
     

@@ -7,6 +7,7 @@
 //
 
 #import "DocumentActionViewController.h"
+#import "SeafTheme.h"
 
 @interface DocumentActionViewController()
 @property (weak) IBOutlet UILabel *identifierLabel;
@@ -15,9 +16,14 @@
 
 @implementation DocumentActionViewController
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [SeafTheme applyPreferenceToViewController:self];
+}
+
 - (void)prepareForActionWithIdentifier:(NSString *)actionIdentifier itemIdentifiers:(NSArray <NSFileProviderItemIdentifier> *)itemIdentifiers {
 }
-    
+
 - (void)prepareForError:(NSError *)error {
     NSDictionary *userInfo = error.userInfo;
     if (userInfo) {

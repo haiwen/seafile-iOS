@@ -20,6 +20,7 @@
 #import "SeafPrivacyPolicyViewController.h"
 #import "SeafDataTaskManager.h"
 #import "SeafAccountTaskQueue.h"
+#import "SeafTheme.h"
 
 
 #define HTTP @"http://"
@@ -227,7 +228,7 @@
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
     self.navigationItem.leftBarButtonItem = cancelItem;
 
-    loginButton.layer.borderColor = [[UIColor whiteColor] CGColor];
+    loginButton.layer.borderColor = [[SeafTheme primarySurface] CGColor];
     loginButton.layer.borderWidth = 0.0f;
     loginButton.layer.cornerRadius = 4.0f;
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
@@ -313,7 +314,7 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor whiteColor];
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
         
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;

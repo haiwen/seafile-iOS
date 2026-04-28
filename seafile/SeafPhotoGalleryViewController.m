@@ -650,7 +650,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor colorWithRed:254/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]; // #FEFFFF
+    self.view.backgroundColor = [SeafTheme primarySurface];
 
     // Determine title setting method based on whether SeafFile is initialized
     NSString *titleText;
@@ -667,8 +667,8 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                                                                  viewController:self];
     self.navigationItem.titleView = titleLabel;
     
-    // Create back button using styling utility, set to gray
-    UIColor *grayColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0]; // Medium gray
+    // Create back button using styling utility
+    UIColor *grayColor = [SeafTheme secondaryText];
     self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
                                                                                        action:@selector(dismissGallery)
                                                                                         color:grayColor];
@@ -831,7 +831,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     self.pagingView.pagingDataSource = self;
     self.pagingView.pagingDelegate = self;
     self.pagingView.interPageSpacing = 20.0;
-    self.pagingView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    self.pagingView.backgroundColor = SeafGalleryChromeVisibleBackground();
     [self.view addSubview:self.pagingView];
 
     if (self.preViewItems.count > 0 && self.currentIndex < self.preViewItems.count) {
@@ -904,7 +904,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     CGFloat stripHeight = 45; // Total height is fixed at 45
     CGRect frame = CGRectMake(0, self.view.bounds.size.height - stripHeight, self.view.bounds.size.width, stripHeight);
     self.thumbnailCollection = [[UICollectionView alloc] initWithFrame:frame collectionViewLayout:layout];
-    self.thumbnailCollection.backgroundColor = [UIColor colorWithRed:254/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]; // #FEFFFF
+    self.thumbnailCollection.backgroundColor = [SeafTheme primarySurface];
     self.thumbnailCollection.showsHorizontalScrollIndicator = NO;
     
     // Register cell
@@ -917,12 +917,14 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // Add to view
     [self.view addSubview:self.thumbnailCollection];
 
-    // Add overlays for left and right edges
+    // Add overlays for left and right edges — fade from the themed surface to clear
+    // so the strip edges blend with the background in both light and dark modes.
+    UIColor *surface = [SeafTheme primarySurface];
     self.leftThumbnailOverlay = [[UIView alloc] init];
     self.leftThumbnailOverlay.userInteractionEnabled = NO;
-    self.leftThumbnailOverlay.backgroundColor = [UIColor clearColor]; // Ensure background is clear
+    self.leftThumbnailOverlay.backgroundColor = [UIColor clearColor];
     CAGradientLayer *leftGradient = [CAGradientLayer layer];
-    leftGradient.colors = @[(id)[UIColor colorWithWhite:1.0 alpha:1.0].CGColor, (id)[UIColor colorWithWhite:1.0 alpha:0.0].CGColor];
+    leftGradient.colors = @[(id)surface.CGColor, (id)[surface colorWithAlphaComponent:0.0].CGColor];
     leftGradient.startPoint = CGPointMake(0.0, 0.5);
     leftGradient.endPoint = CGPointMake(1.0, 0.5);
     [self.leftThumbnailOverlay.layer insertSublayer:leftGradient atIndex:0];
@@ -930,9 +932,9 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
     self.rightThumbnailOverlay = [[UIView alloc] init];
     self.rightThumbnailOverlay.userInteractionEnabled = NO;
-    self.rightThumbnailOverlay.backgroundColor = [UIColor clearColor]; // Ensure background is clear
+    self.rightThumbnailOverlay.backgroundColor = [UIColor clearColor];
     CAGradientLayer *rightGradient = [CAGradientLayer layer];
-    rightGradient.colors = @[(id)[UIColor colorWithWhite:1.0 alpha:0.0].CGColor, (id)[UIColor colorWithWhite:1.0 alpha:1.0].CGColor];
+    rightGradient.colors = @[(id)[surface colorWithAlphaComponent:0.0].CGColor, (id)surface.CGColor];
     rightGradient.startPoint = CGPointMake(0.0, 0.5);
     rightGradient.endPoint = CGPointMake(1.0, 0.5);
     [self.rightThumbnailOverlay.layer insertSublayer:rightGradient atIndex:0];
@@ -1850,7 +1852,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                     btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
                     
                     // Set tintColor: gray (#666666) for all states (selected states differ by icon style, not color)
-                    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0]; // Gray #666666
+                    btn.tintColor = [SeafTheme secondaryText];
                 }
                 break;
             }
@@ -2277,6 +2279,23 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
           NSStringFromRange(_loadedImagesRange));
 }
 
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    // CAGradientLayer snapshots CGColors, so re-apply the surface-derived colors
+    // when the interface style changes.
+    UIColor *surface = [SeafTheme primarySurface];
+    NSArray *leftColors = @[(id)surface.CGColor, (id)[surface colorWithAlphaComponent:0.0].CGColor];
+    NSArray *rightColors = @[(id)[surface colorWithAlphaComponent:0.0].CGColor, (id)surface.CGColor];
+    if (self.leftThumbnailOverlay.layer.sublayers.count > 0) {
+        CAGradientLayer *grad = (CAGradientLayer *)self.leftThumbnailOverlay.layer.sublayers.firstObject;
+        if ([grad isKindOfClass:[CAGradientLayer class]]) grad.colors = leftColors;
+    }
+    if (self.rightThumbnailOverlay.layer.sublayers.count > 0) {
+        CAGradientLayer *grad = (CAGradientLayer *)self.rightThumbnailOverlay.layer.sublayers.firstObject;
+        if ([grad isKindOfClass:[CAGradientLayer class]]) grad.colors = rightColors;
+    }
+}
+
 - (void)dealloc {
     // Release all views and memory
     [self clearViews];
@@ -2452,7 +2471,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     
     self.toolbarView = [[UIView alloc] initWithFrame:tbFrame];
     self.toolbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin;
-    self.toolbarView.backgroundColor = [UIColor colorWithRed:254/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]; // #FEFFFF
+    self.toolbarView.backgroundColor = [SeafTheme primarySurface];
     [self.view addSubview:self.toolbarView];
 
     // Update icon names to those in the design
@@ -2525,7 +2544,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
             
             // Set tintColor: gray (#666666) for non-selected info icons
             if (!isInfoSelected) {
-                btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0]; // Gray #666666
+                btn.tintColor = [SeafTheme secondaryText];
             }
             
             // Push the icon down slightly within the button's frame
@@ -2742,7 +2761,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                     
                     // Set tintColor: gray (#666666) for non-selected state
                     if (!selected) {
-                        btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+                        btn.tintColor = [SeafTheme secondaryText];
                     }
                 }
                 break;
@@ -3240,11 +3259,11 @@ static const NSUInteger kEvictMaxDistance   = 5;  // evict VCs further than ± 5
 
 #pragma mark - Chrome (single source of truth)
 
-/// Light gray background used by the gallery and per-page contentVCs in the
-/// non-immersive (chrome-visible) state. Kept here as a single constant so
+/// Theme-aware background used by the gallery and per-page contentVCs in the
+/// non-immersive (chrome-visible) state. Kept here as a single source so
 /// the value matches everywhere the page background is reset.
 static UIColor *SeafGalleryChromeVisibleBackground(void) {
-    return [UIColor colorWithRed:249.0/255.0 green:249.0/255.0 blue:249.0/255.0 alpha:1.0]; // #F9F9F9
+    return [SeafTheme primaryBackgroundColor];
 }
 
 - (void)setChromeHidden:(BOOL)hidden
@@ -3556,7 +3575,7 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
 - (void)updateCachedVCsForImmersiveMode:(BOOL)immersive {
     UIColor *bgColor = immersive
         ? [UIColor blackColor]
-        : [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        : SeafGalleryChromeVisibleBackground();
     for (NSNumber *key in [self.contentVCCache allKeys]) {
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
         if (vc != self.currentContentVC) {

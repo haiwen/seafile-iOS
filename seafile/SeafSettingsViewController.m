@@ -29,6 +29,7 @@
 #import "SeafPrivacyPolicyViewController.h"
 #import "SeafBackupGuideViewController.h"
 #import "SeafRealmManager.h"
+#import "SeafTheme.h"
 
 #define CELL_PADDING_HORIZONTAL 10.0
 #define CELL_CORNER_RADIUS 10.0
@@ -73,6 +74,7 @@ enum {
     CELL_SERVER = 0,
     CELL_VERSION,
     CELL_PRIVACY,
+    CELL_APPEARANCE,
 };
 
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
@@ -442,11 +444,11 @@ enum {
     
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor whiteColor];
-        
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
+
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-        
+
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
@@ -598,6 +600,72 @@ enum {
     }
 }
 
+#pragma mark - Table view data source
+
+- (BOOL)isAppearanceIndexPath:(NSIndexPath *)indexPath
+{
+    if (@available(iOS 13.0, *)) {
+        return indexPath.section == SECTION_ABOUT && indexPath.row == CELL_APPEARANCE;
+    }
+    return NO;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    NSInteger rows = [super tableView:tableView numberOfRowsInSection:section];
+    if (section == SECTION_ABOUT) {
+        if (@available(iOS 13.0, *)) {
+            return rows + 1;
+        }
+    }
+    return rows;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if ([self isAppearanceIndexPath:indexPath]) {
+        return [self appearanceCell];
+    }
+    return [super tableView:tableView cellForRowAtIndexPath:indexPath];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if ([self isAppearanceIndexPath:indexPath]) {
+        return 50;
+    }
+    return [super tableView:tableView heightForRowAtIndexPath:indexPath];
+}
+
+- (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if ([self isAppearanceIndexPath:indexPath]) {
+        return 1;
+    }
+    return [super tableView:tableView indentationLevelForRowAtIndexPath:indexPath];
+}
+
+- (UITableViewCell *)appearanceCell
+{
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    cell.textLabel.text = NSLocalizedString(@"Appearance", @"Seafile");
+
+    NSArray *items = @[NSLocalizedString(@"System", @"Seafile"),
+                       NSLocalizedString(@"Light", @"Seafile"),
+                       NSLocalizedString(@"Dark", @"Seafile")];
+    UISegmentedControl *segmented = [[UISegmentedControl alloc] initWithItems:items];
+    segmented.selectedSegmentIndex = (NSInteger)[SeafTheme currentPreference];
+    [segmented addTarget:self action:@selector(appearanceSegmentedChanged:) forControlEvents:UIControlEventValueChanged];
+    [segmented sizeToFit];
+    cell.accessoryView = segmented;
+    return cell;
+}
+
+- (void)appearanceSegmentedChanged:(UISegmentedControl *)sender
+{
+    [SeafTheme setPreference:(SeafThemePreference)sender.selectedSegmentIndex];
+}
+
 #pragma mark - Table view delegate
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -611,8 +679,12 @@ enum {
     cell.indentationLevel = 1;  // Each indentation level is typically 10 points
     cell.indentationWidth = 30; // Override the default width
 
+    // Appearance cell keeps its segmented-control accessoryView untouched.
+    if ([self isAppearanceIndexPath:indexPath]) {
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    } else
     // Check if this is the logout cell or the privacy policy cell
-    if (indexPath.section == SECTION_LOGOUT || 
+    if (indexPath.section == SECTION_LOGOUT ||
         (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY)) {
         // Create a custom accessory view with the chevron shifted 5px to the left
         // Instead of using the standard accessory type
@@ -631,7 +703,7 @@ enum {
         // Set the frame to position it 5px to the left with smaller dimensions
         chevronImageView.frame = CGRectMake(-5, 2, 12, 16); // Reduced size from 15x20 to 12x16
         chevronImageView.contentMode = UIViewContentModeScaleAspectFit;
-        chevronImageView.tintColor = [UIColor lightGrayColor];
+        chevronImageView.tintColor = [SeafTheme tertiaryText];
         
         [customAccessoryView addSubview:chevronImageView];
         cell.accessoryView = customAccessoryView;
@@ -668,7 +740,7 @@ enum {
     // Create the card background view
     UIView *cardBackgroundView = [[UIView alloc] init];
     cardBackgroundView.tag = 999;
-    cardBackgroundView.backgroundColor = [UIColor whiteColor]; // Card color
+    cardBackgroundView.backgroundColor = [SeafTheme primarySurface];
     cardBackgroundView.layer.cornerRadius = CELL_CORNER_RADIUS;
     cardBackgroundView.clipsToBounds = YES;
 
@@ -705,7 +777,7 @@ enum {
         // Create a separator view
         UIView *separatorView = [[UIView alloc] init];
         separatorView.tag = 888;
-        separatorView.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1.0]; // Light gray color
+        separatorView.backgroundColor = [SeafTheme separator];
         
         // Calculate separator frame - place it at the bottom of the cell
         CGFloat separatorHeight = 0.5; // Standard separator height
@@ -746,13 +818,13 @@ enum {
                 
                 // Configure navigation bar appearance
                 navController.navigationBar.tintColor = BAR_COLOR;
-                navController.navigationBar.barTintColor = [UIColor whiteColor];
+                navController.navigationBar.barTintColor = [SeafTheme primarySurface];
                 navController.navigationBar.translucent = NO;
-                
+
                 if (@available(iOS 15.0, *)) {
                     UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
                     [appearance configureWithOpaqueBackground];
-                    appearance.backgroundColor = [UIColor whiteColor];
+                    appearance.backgroundColor = [SeafTheme primarySurface];
                     navController.navigationBar.standardAppearance = appearance;
                     navController.navigationBar.scrollEdgeAppearance = appearance;
                 }
@@ -906,20 +978,25 @@ enum {
     // Create a label with 30-point left indentation
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 5, tableView.frame.size.width - 40, 30)];
     titleLabel.font = [UIFont systemFontOfSize:14];
-    titleLabel.textColor = [UIColor colorWithWhite:0.4 alpha:1.0]; // Gray text
+    titleLabel.textColor = [SeafTheme secondaryText];
     titleLabel.text = title;
     [headerView addSubview:titleLabel];
     
     return headerView;
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
     NSString *title = [self tableView:tableView titleForHeaderInSection:section];
     if (!title || [title isEqualToString:@""]) {
         return 12; // Small height for empty header
     }
     return 35; // Standard height for headers with titles
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+{
+    return UITableViewAutomaticDimension;
 }
 
 - (void)viewDidUnload {
@@ -999,6 +1076,7 @@ enum {
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafUploadTaskStatusChanged" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafDownloadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafAccountInfoUpdated" object:nil];
 }
 
