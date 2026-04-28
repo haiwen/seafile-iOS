@@ -8,6 +8,7 @@
 #import "SeafLivePhotoPlayerView.h"
 #import "Debug.h"
 #import "SeafMotionPhotoExtractor.h"
+#import "SeafTheme.h"
 
 /// Length of the silent "hint" preview run when the page becomes visible in the
 /// gallery. Tuned to roughly match the brief motion flash shown by the iOS
@@ -69,7 +70,7 @@ static const NSTimeInterval kSeafLivePhotoHintPreviewDuration = 1.2;
 }
 
 - (void)commonInit {
-    self.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    self.backgroundColor = [SeafTheme primaryBackgroundColor];
     self.clipsToBounds = YES;
     
     _imageContentMode = UIViewContentModeScaleAspectFit;

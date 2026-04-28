@@ -28,6 +28,7 @@
 #import "SeafDataTaskManager.h"
 #import "SeafNavigationBarStyler.h"
 #import "SeafSdocWebViewController.h"
+#import "SeafTheme.h"
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
@@ -400,7 +401,7 @@ enum SHARE_STATUS {
     // Do any additional setup after loading the view, typically from a nib.
 
     // Replace previous backItem implementation, use style tool to create gray back button
-    UIColor *grayColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0]; // Medium gray
+    UIColor *grayColor = [SeafTheme secondaryText];
     self.backItem = [SeafNavigationBarStyler createBackButtonWithTarget:self 
                                                                 action:@selector(goBack:)
                                                                  color:grayColor];
@@ -430,7 +431,7 @@ enum SHARE_STATUS {
         self.progressView = [views objectAtIndex:0];
     }
     self.webView = [[WKWebView alloc] initWithFrame:self.view.frame];
-    self.webView.backgroundColor = [UIColor whiteColor];
+    self.webView.backgroundColor = [SeafTheme primarySurface];
     self.webView.autoresizesSubviews = YES;
     self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     [self.view addSubview:self.failedView];
@@ -978,7 +979,7 @@ enum SHARE_STATUS {
         _mwPhotoBrowser.enableGrid = true;
         _mwPhotoBrowser.startOnGrid = false;
         _mwPhotoBrowser.enableSwipeToDismiss = true;
-        _mwPhotoBrowser.backgroundColor = [UIColor whiteColor];
+        _mwPhotoBrowser.backgroundColor = [SeafTheme primarySurface];
         _mwPhotoBrowser.trackTintColor = SEAF_COLOR_LIGHT;
         _mwPhotoBrowser.progressColor = SEAF_COLOR_ORANGE;
         _mwPhotoBrowser.preLoadNumLeft = 0;
@@ -1111,12 +1112,12 @@ enum SHARE_STATUS {
     
     self.toolbarView = [[UIView alloc] initWithFrame:tbFrame];
     self.toolbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin;
-    self.toolbarView.backgroundColor = [UIColor whiteColor];
+    self.toolbarView.backgroundColor = [SeafTheme primarySurface];
     [self.view addSubview:self.toolbarView];
 
     // Add top separator line
     UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.toolbarView.bounds.size.width, 0.5)];
-    separator.backgroundColor = [UIColor colorWithRed:0.8 green:0.8 blue:0.8 alpha:1.0]; // Light gray
+    separator.backgroundColor = [SeafTheme separator];
     separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [self.toolbarView addSubview:separator];
 
@@ -1174,7 +1175,7 @@ enum SHARE_STATUS {
             [btn setImage:resizedImage forState:UIControlStateNormal];
             btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
             // Set gray color (#666666) to match other icons
-            btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+            btn.tintColor = [SeafTheme secondaryText];
             // Vertically center icon inside the button
             CGFloat verticalOffset = (toolbarH - iconSize)/2.0;
             btn.imageEdgeInsets = UIEdgeInsetsMake(verticalOffset, 0, verticalOffset, 0);
@@ -1279,7 +1280,7 @@ enum SHARE_STATUS {
                     [btn setImage:resizedImage forState:UIControlStateNormal];
                     btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
                     // Set gray color (#666666) for all states (selected states differ by icon style, not color)
-                    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+                    btn.tintColor = [SeafTheme secondaryText];
                     // Vertically center icon again in case of state change
                     CGFloat toolbarH = 36.0f;
                     CGFloat verticalOffset = (toolbarH - iconSize)/2.0f;

@@ -136,8 +136,11 @@
     resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [btn setImage:resizedImage forState:UIControlStateNormal];
     btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    // Set gray color to match original icon color (#666666)
-    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+    if (@available(iOS 13.0, *)) {
+        btn.tintColor = [UIColor secondaryLabelColor];
+    } else {
+        btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+    }
     btn.showsTouchWhenHighlighted = YES;
     btn.clipsToBounds = true;
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
@@ -197,7 +200,11 @@
         
         visibilityButton.frame = CGRectMake(0, 0, 30, 30); // Consistent with SeafMkLibAlertController
         visibilityButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-        visibilityButton.tintColor = [UIColor grayColor]; // A common tint color for such icons
+        if (@available(iOS 13.0, *)) {
+            visibilityButton.tintColor = [UIColor secondaryLabelColor];
+        } else {
+            visibilityButton.tintColor = [UIColor grayColor];
+        }
         
         // Add target to the UIViewController instance (self)
         [visibilityButton addTarget:self action:@selector(alertTextFieldToggleVisibility:) forControlEvents:UIControlEventTouchUpInside];

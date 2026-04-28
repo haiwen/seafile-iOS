@@ -14,6 +14,7 @@
 #import "SeafPhoto.h"
 #import "SeafGlobal.h"
 #import "SeafUploadOperation.h"
+#import "SeafTheme.h"
 
 #define CANCEL_UPLOAD NSLocalizedString(@"Cancel upload", @"Seafile")
 #define CANCEL_DOWNLOAD NSLocalizedString(@"Cancel download", @"Seafile")
@@ -178,9 +179,9 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
     label.font = [UIFont systemFontOfSize:12];
     label.text = text;
-    label.textColor = [UIColor darkTextColor];
+    label.textColor = [SeafTheme primaryText];
     label.backgroundColor = [UIColor clearColor];
-    [headerView setBackgroundColor:[UIColor colorWithRed:246/255.0 green:246/255.0 blue:250/255.0 alpha:1.0]];
+    [headerView setBackgroundColor:[SeafTheme groupedSurface]];
     [headerView addSubview:label];
     return headerView;
 }

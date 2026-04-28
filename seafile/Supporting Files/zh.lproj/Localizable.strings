@@ -1,4 +1,4 @@
-﻿
+
 /* 目的地选择页 */
 "Current library" = "当前资料库";
 "Other libraries" = "其他资料库";
@@ -1094,3 +1094,9 @@
 "Camera permission is required." = "需要相机权限。";
 "Photo library permission is required." = "需要相册权限。";
 "%lu image(s) failed to upload" = "%lu 张图片上传失败";
+
+/* Appearance settings */
+"Appearance" = "Appearance";
+"System" = "System";
+"Light" = "Light";
+"Dark" = "Dark";

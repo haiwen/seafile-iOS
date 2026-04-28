@@ -1,14 +1,9 @@
 #import "SeafPhotoInfoView.h"
-
+#import "FileSizeFormatter.h"
 #import "Debug.h"
 #import <ImageIO/ImageIO.h>
 #import <SDWebImage/UIImageView+WebCache.h>
-
-// Subview tags inside `infoScrollView`: EXIF card, profile rows section,
-// and the fixed-height loading placeholder for profile rows.
-static const NSInteger kExifSectionTag = 999;
-static const NSInteger kProfileSectionTag = 998;
-static const NSInteger kProfileLoadingTag = 997;
+#import "SeafTheme.h"
 
 @interface SeafPhotoInfoView()
 
@@ -21,7 +16,7 @@ static const NSInteger kProfileLoadingTag = 997;
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor colorWithWhite:0.98 alpha:1.0];
+        self.backgroundColor = [SeafTheme secondarySurface];
         self.layer.cornerRadius = 8.0;
         self.layer.masksToBounds = YES;
         
@@ -29,20 +24,192 @@ static const NSInteger kProfileLoadingTag = 997;
         self.infoScrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
         self.infoScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         self.infoScrollView.contentInset = UIEdgeInsetsMake(0, 0, 20, 0); // Add bottom padding
-        // This nested scroll view lives entirely outside the device safe
-        // area; default `.automatic` would later apply the screen's
-        // safe-area top inset and silently shift contentOffset.y, cropping
-        // the top of the panel until the user pulls down. Opt out.
-        if (@available(iOS 11.0, *)) {
-            self.infoScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-        }
         [self addSubview:self.infoScrollView];
     }
     return self;
 }
 
+- (void)updateInfoView {
+    // Clear only the standard info rows (assuming they don't have tag 999)
+    for (UIView *subview in [self.infoScrollView.subviews copy]) {
+        if (subview.tag != 999) { // Do not remove the EXIF container
+            [subview removeFromSuperview];
+        }
+    }
+    
+    if (!self.infoModel || self.infoModel.count == 0) {
+        return;
+    }
+    
+    CGFloat padding = 16.0;
+    CGFloat iconSize = 18.0;
+    CGFloat verticalSpacing = 13.0;
+    CGFloat horizontalSpacing = 10.0;
+    CGFloat currentY = padding + 10;
+    CGFloat availableWidth = self.infoScrollView.bounds.size.width - (2 * padding);
+
+    UIFont *keyLabelFont = [UIFont systemFontOfSize:14];
+    UIFont *valueLabelFont = [UIFont systemFontOfSize:14];
+    UIColor *keyLabelColor = [SeafTheme secondaryText];
+    UIColor *valueLabelColor = [SeafTheme primaryText];
+
+    // Keep track of the last standard row's bottom position
+    CGFloat lastStandardRowBottomY = currentY;
+
+    // Define the items to display based on the design
+    NSArray *infoItems = @[
+        @{@"icon": @"detail_photo_size",     @"key": @"Size",        @"label": NSLocalizedString(@"Size", @"Seafile"), @"placeholder": @"N/A"},
+        @{@"icon": @"detail_photo_calendar", @"key": @"Modified",    @"label": NSLocalizedString(@"Modified Time", @"Seafile"), @"placeholder": NSLocalizedString(@"Unknown Date", @"Seafile")},
+        @{@"icon": @"detail_photo_user",     @"key": @"Owner",       @"label": NSLocalizedString(@"Last Modifier", @"Seafile"), @"placeholder": NSLocalizedString(@"Unknown User", @"Seafile")}
+    ];
+
+    for (NSDictionary *itemInfo in infoItems) {
+        NSString *iconName = itemInfo[@"icon"];
+        NSString *dataKey = itemInfo[@"key"];
+        NSString *displayLabelText = itemInfo[@"label"];
+        NSString *placeholder = itemInfo[@"placeholder"];
+        
+        NSString *value = [self.infoModel objectForKey:dataKey];
+        if (!value || [value isKindOfClass:[NSNull class]] || [value isEqualToString:@""]) {
+            value = placeholder;
+        } else {
+            if ([dataKey isEqualToString:@"Size"]) {
+                long long sizeBytes = [value longLongValue];
+                if (sizeBytes > 0) {
+                    value = [FileSizeFormatter stringFromLongLong:sizeBytes];
+                } else {
+                    value = placeholder;
+                }
+            }
+            else if ([dataKey isEqualToString:@"Modified"]) {
+                NSDateFormatter *inputFormatter = [[NSDateFormatter alloc] init];
+                [inputFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"];
+                
+                NSDate *date = [inputFormatter dateFromString:value];
+                if (date) {
+                    NSDateFormatter *outputFormatter = [[NSDateFormatter alloc] init];
+                    [outputFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+                    value = [outputFormatter stringFromDate:date];
+                } else {
+                    [inputFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+                    date = [inputFormatter dateFromString:value];
+                    
+                    if (date) {
+                        NSDateFormatter *outputFormatter = [[NSDateFormatter alloc] init];
+                        [outputFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+                        value = [outputFormatter stringFromDate:date];
+                    }
+                }
+            }
+        }
+
+        // Create Row Container
+        UIView *rowView = [[UIView alloc] initWithFrame:CGRectMake(padding, currentY, availableWidth, iconSize)];
+        
+        // Icon
+        UIImageView *iconImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, iconSize, iconSize)];
+        iconImageView.image = [UIImage imageNamed:iconName];
+        iconImageView.contentMode = UIViewContentModeScaleAspectFit;
+        [rowView addSubview:iconImageView];
+        
+        // Key Label
+        UILabel *keyLabel = [[UILabel alloc] init];
+        keyLabel.font = keyLabelFont;
+        keyLabel.textColor = keyLabelColor;
+        keyLabel.text = displayLabelText;
+        [keyLabel sizeToFit];
+        
+        CGFloat keyLabelX = iconSize + horizontalSpacing;
+        CGFloat keyLabelY = (iconSize - keyLabel.frame.size.height) / 2.0;
+        keyLabel.frame = CGRectMake(keyLabelX, keyLabelY, keyLabel.frame.size.width, keyLabel.frame.size.height);
+        [rowView addSubview:keyLabel];
+        
+        CGFloat standardRowHeight = 26.0;
+        
+        if ([dataKey isEqualToString:@"Owner"]) {
+            UIView *ownerTagView = [self createOwnerTagViewWithValue:value availableWidth:availableWidth standardRowHeight:standardRowHeight];
+            [rowView addSubview:ownerTagView];
+        } else {
+            UILabel *valueLabel = [[UILabel alloc] init];
+            valueLabel.font = valueLabelFont;
+            valueLabel.textColor = valueLabelColor;
+            valueLabel.text = value;
+            valueLabel.textAlignment = NSTextAlignmentRight;
+            valueLabel.numberOfLines = 0;
+            
+            CGFloat valueLabelX = CGRectGetMaxX(keyLabel.frame) + horizontalSpacing;
+            CGFloat valueLabelWidth = availableWidth - valueLabelX;
+            valueLabel.frame = CGRectMake(valueLabelX, 0, valueLabelWidth, standardRowHeight);
+            valueLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
+            
+            [rowView addSubview:valueLabel];
+        }
+
+        CGRect rowFrame = rowView.frame;
+        rowFrame.size.height = standardRowHeight;
+        rowView.frame = rowFrame;
+        
+        CGRect iconFrame = iconImageView.frame;
+        iconFrame.origin.y = (standardRowHeight - iconSize) / 2.0;
+        iconImageView.frame = iconFrame;
+        
+        CGRect keyLabelFrame = keyLabel.frame;
+        keyLabelFrame.origin.y = (standardRowHeight - keyLabel.frame.size.height) / 2.0;
+        keyLabel.frame = keyLabelFrame;
+        
+        [self.infoScrollView addSubview:rowView];
+        
+        currentY += standardRowHeight + verticalSpacing;
+        lastStandardRowBottomY = currentY;
+    }
+
+    CGFloat totalContentHeight = lastStandardRowBottomY + padding;
+    CGFloat minContentHeight = self.infoScrollView.bounds.size.height + 1;
+    self.infoScrollView.contentSize = CGSizeMake(self.infoScrollView.bounds.size.width, MAX(totalContentHeight, minContentHeight));
+}
+
+- (UIView *)createOwnerTagViewWithValue:(NSString *)value availableWidth:(CGFloat)availableWidth standardRowHeight:(CGFloat)standardRowHeight {
+    UIView *ownerTagView = [[UIView alloc] init];
+    ownerTagView.backgroundColor = [SeafTheme fill];
+    ownerTagView.layer.cornerRadius = 13.0;
+    ownerTagView.layer.masksToBounds = YES;
+
+    UIImageView *avatarView = [[UIImageView alloc] initWithFrame:CGRectMake(5, 2, 22, 22)];
+    avatarView.contentMode = UIViewContentModeScaleAspectFill;
+    avatarView.layer.cornerRadius = 11.0;
+    avatarView.layer.masksToBounds = YES;
+    avatarView.backgroundColor = [SeafTheme fill];
+    
+    NSString *avatarURL = [self.infoModel objectForKey:@"OwnerAvatar"];
+    if (avatarURL) {
+        NSURL *url = [NSURL URLWithString:avatarURL];
+        if (url) {
+            // set avatar
+            [avatarView sd_setImageWithURL:url placeholderImage:[UIImage imageNamed:@"account"]];
+        }
+    }
+    [ownerTagView addSubview:avatarView];
+
+    UILabel *nameLabel = [[UILabel alloc] init];
+    nameLabel.font = [UIFont systemFontOfSize:14];
+    nameLabel.textColor = [SeafTheme secondaryText];
+    nameLabel.text = value;
+    [nameLabel sizeToFit];
+
+    CGFloat nameLabelWidth = nameLabel.frame.size.width;
+    CGFloat tagWidth = 5 + 22 + 5 + nameLabelWidth + 8;
+    CGFloat tagHeight = 26;
+
+    ownerTagView.frame = CGRectMake(availableWidth - tagWidth, (standardRowHeight - tagHeight) / 2, tagWidth, tagHeight);
+    nameLabel.frame = CGRectMake(5 + 22 + 5, (tagHeight - nameLabel.frame.size.height) / 2, nameLabelWidth, nameLabel.frame.size.height);
+    [ownerTagView addSubview:nameLabel];
+
+    return ownerTagView;
+}
+
 - (void)clearExifDataView {
-    UIView *exifSectionView = [self.infoScrollView viewWithTag:kExifSectionTag];
+    NSInteger exifSectionTag = 999;
+    UIView *exifSectionView = [self.infoScrollView viewWithTag:exifSectionTag];
     if (exifSectionView) {
         [exifSectionView removeFromSuperview];
     }
@@ -127,28 +294,26 @@ static const NSInteger kProfileLoadingTag = 997;
     UIFont *modelFont = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
     UIFont *mediumFont = [UIFont systemFontOfSize:13];
     UIFont *smallFont = [UIFont systemFontOfSize:12];
-    UIColor *textColor = [UIColor darkGrayColor];
-    UIColor *lightGrayColor = [UIColor lightGrayColor];
-    UIColor *cardBackgroundColor = [UIColor colorWithWhite:0.96 alpha:1.0]; // Light gray background for card
-    UIColor *modelBackgroundColor = [UIColor colorWithWhite:0.92 alpha:1.0]; // Slightly darker for model row
+    UIColor *textColor = [SeafTheme secondaryText];
+    UIColor *lightGrayColor = [SeafTheme separator];
+    UIColor *cardBackgroundColor = [SeafTheme secondarySurface];
+    UIColor *modelBackgroundColor = [SeafTheme fill];
 
     // --- Find Position ---
-    // Anchor strictly against the profile area (real section preferred,
-    // loading placeholder as fallback). Iterating all subviews is unsafe:
-    // UIScrollView's own scroll indicators (tag==0) can be picked as the
-    // "last row" once contentSize is non-zero, sending EXIF far down.
-    UIView *anchorView = [self.infoScrollView viewWithTag:kProfileSectionTag];
-    if (!anchorView) {
-        anchorView = [self.infoScrollView viewWithTag:kProfileLoadingTag];
+    UIView *lastStandardRowView = nil;
+    for (UIView *subview in self.infoScrollView.subviews) {
+        if ([subview isKindOfClass:[UIView class]] && subview.tag != 999) {
+            lastStandardRowView = subview;
+        }
     }
-    CGFloat startY = outerPadding;
-    if (anchorView) {
-        startY = CGRectGetMaxY(anchorView.frame) + outerPadding * 1.5; // 24pt gap below profile
+    CGFloat startY = outerPadding; // Default start Y
+    if (lastStandardRowView) {
+        startY = CGRectGetMaxY(lastStandardRowView.frame) + outerPadding * 1.5; // Position below the last standard row
     }
 
     // --- Create Card Container View ---
     UIView *exifSectionContainer = [[UIView alloc] initWithFrame:CGRectMake(outerPadding, startY, availableWidth, 0)]; // Height calculated later
-    exifSectionContainer.tag = kExifSectionTag; // Important: tag it for identification later
+    exifSectionContainer.tag = 999; // Important: tag it for identification later
     exifSectionContainer.backgroundColor = cardBackgroundColor;
     exifSectionContainer.layer.cornerRadius = 8.0;
     exifSectionContainer.layer.masksToBounds = YES;
@@ -171,7 +336,7 @@ static const NSInteger kProfileLoadingTag = 997;
     if (model && model.length > 0) {
         UILabel *modelLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardPadding, currentModelY, availableWidth - 2 * cardPadding, 0)];
         modelLabel.font = modelFont;
-        modelLabel.textColor = [UIColor blackColor]; // Use black for model
+        modelLabel.textColor = [SeafTheme primaryText];
         modelLabel.text = model;
         [modelLabel sizeToFit]; // Adjust height
         CGRect modelFrame = modelLabel.frame;
@@ -351,430 +516,6 @@ static const NSInteger kProfileLoadingTag = 997;
     CGFloat newContentHeight = CGRectGetMaxY(exifSectionContainer.frame) + outerPadding;
     CGFloat minContentHeight = self.infoScrollView.bounds.size.height + 1;
     self.infoScrollView.contentSize = CGSizeMake(self.infoScrollView.bounds.size.width, MAX(newContentHeight, minContentHeight));
-}
-
-#pragma mark - Profile Rows (Metadata from Aggregate API)
-
-- (void)clearProfileRows {
-    UIView *container = [self.infoScrollView viewWithTag:kProfileSectionTag];
-    if (container) {
-        [container removeFromSuperview];
-    }
-    [self recalculateContentSize];
-}
-
-- (void)showProfileLoading {
-    // Don't add duplicate loading indicator
-    if ([self.infoScrollView viewWithTag:kProfileLoadingTag]) {
-        return;
-    }
-
-    CGFloat topPadding = 25.0;
-    // Reserve height close to the typical profile section to minimise the
-    // visual jump when profile rows replace this placeholder.
-    CGFloat reservedHeight = 140.0;
-
-    UIView *loadingContainer = [[UIView alloc] initWithFrame:CGRectMake(0, topPadding, self.infoScrollView.bounds.size.width, reservedHeight)];
-    loadingContainer.tag = kProfileLoadingTag;
-
-    UIActivityIndicatorView *spinner;
-    if (@available(iOS 13.0, *)) {
-        spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
-    } else {
-        spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    }
-    // Center spinner in the reserved area
-    spinner.center = CGPointMake(loadingContainer.bounds.size.width / 2.0, reservedHeight / 2.0);
-    spinner.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    [spinner startAnimating];
-    [loadingContainer addSubview:spinner];
-
-    [self.infoScrollView addSubview:loadingContainer];
-    [self recalculateContentSize];
-}
-
-- (void)hideProfileLoading {
-    UIView *loadingView = [self.infoScrollView viewWithTag:kProfileLoadingTag];
-    if (loadingView) {
-        [loadingView removeFromSuperview];
-        [self recalculateContentSize];
-    }
-}
-
-- (void)renderProfileRows:(NSArray<NSDictionary *> *)rows {
-    // Always hide loading indicator first
-    [self hideProfileLoading];
-
-    if (!rows || rows.count == 0) {
-        return;
-    }
-
-    // Remove previous profile section if any
-    [self clearProfileRows];
-
-    CGFloat outerPadding = 16.0;
-    CGFloat topPadding = 25.0;
-    CGFloat iconSize = 14.0;
-    CGFloat horizontalSpacing = 8.0;
-    CGFloat rowSpacing = 10.0;
-    CGFloat availableWidth = self.infoScrollView.bounds.size.width - (2 * outerPadding);
-    CGFloat leftColumnWidth = 140.0;
-
-    UIFont *titleFont = [UIFont systemFontOfSize:14];
-    UIFont *valueFont = [UIFont systemFontOfSize:14];
-    UIColor *titleColor = [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0]; // #666666
-    UIColor *valueColor = [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0]; // #212529
-    UIColor *emptyColor = [UIColor colorWithRed:0x99/255.0 green:0x99/255.0 blue:0x99/255.0 alpha:1.0]; // #999999
-    UIColor *iconTint = [UIColor colorWithRed:0x99/255.0 green:0x99/255.0 blue:0x99/255.0 alpha:1.0]; // #999999
-
-    // Profile section is the primary content — start from reduced top padding
-    CGFloat insertY = topPadding;
-
-    // Create profile section container
-    UIView *profileContainer = [[UIView alloc] initWithFrame:CGRectMake(0, insertY, self.infoScrollView.bounds.size.width, 0)];
-    profileContainer.tag = kProfileSectionTag;
-
-    CGFloat currentY = rowSpacing;
-
-    for (NSDictionary *row in rows) {
-        NSString *type = row[@"type"] ?: @"text";
-        NSString *title = NSLocalizedString(row[@"title"] ?: @"", nil);
-        NSString *iconName = row[@"icon"] ?: @"text";
-        NSArray *values = row[@"values"] ?: @[];
-
-        // --- Left side: icon + title ---
-        UIImage *img = [UIImage imageNamed:iconName];
-        if (!img) img = [UIImage imageNamed:@"text"];
-        img = [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImageView *iconView = [[UIImageView alloc] initWithImage:img];
-        iconView.contentMode = UIViewContentModeScaleAspectFit;
-        iconView.tintColor = iconTint;
-        iconView.frame = CGRectMake(outerPadding, currentY + 2, iconSize, iconSize);
-        [profileContainer addSubview:iconView];
-
-        UILabel *titleLabel = [[UILabel alloc] init];
-        titleLabel.font = titleFont;
-        titleLabel.textColor = titleColor;
-        titleLabel.text = title;
-        titleLabel.numberOfLines = 1;
-        [titleLabel sizeToFit];
-        CGFloat titleX = outerPadding + iconSize + horizontalSpacing;
-        titleLabel.frame = CGRectMake(titleX, currentY, leftColumnWidth - iconSize - horizontalSpacing, titleLabel.frame.size.height);
-        [profileContainer addSubview:titleLabel];
-
-        // --- Right side: values ---
-        CGFloat rightX = outerPadding + leftColumnWidth + horizontalSpacing;
-        CGFloat rightWidth = availableWidth - leftColumnWidth - horizontalSpacing;
-        CGFloat rowHeight = MAX(titleLabel.frame.size.height, 20);
-
-        if ([self isProfilePlainTextType:type]) {
-            // Plain text value (right-aligned)
-            NSMutableString *combined = [NSMutableString string];
-            BOOL isEmpty = NO;
-            for (NSDictionary *v in values) {
-                NSString *t = v[@"text"] ?: @"";
-                isEmpty = [v[@"isEmpty"] boolValue] || [t isEqualToString:@"empty"];
-                if (isEmpty) t = NSLocalizedString(@"Empty", nil);
-                if (combined.length > 0) [combined appendString:@"\n"];
-                [combined appendString:t];
-            }
-            UILabel *valLabel = [[UILabel alloc] init];
-            valLabel.font = valueFont;
-            valLabel.textColor = isEmpty ? emptyColor : valueColor;
-            valLabel.text = combined;
-            valLabel.textAlignment = NSTextAlignmentRight;
-            valLabel.numberOfLines = 0;
-            valLabel.lineBreakMode = NSLineBreakByWordWrapping;
-            CGSize maxSize = CGSizeMake(rightWidth, CGFLOAT_MAX);
-            CGSize fitted = [valLabel sizeThatFits:maxSize];
-            valLabel.frame = CGRectMake(rightX, currentY, rightWidth, fitted.height);
-            [profileContainer addSubview:valLabel];
-            rowHeight = MAX(rowHeight, fitted.height);
-
-        } else if ([self isProfileChipsType:type]) {
-            // Chips: collaborator, single_select, multiple_select, link (tags)
-            CGFloat chipHeight = 22.0;
-            CGFloat chipSpacing = 4.0;
-            CGFloat chipX = rightX;
-            CGFloat chipY = currentY;
-            CGFloat chipRowMaxX = rightX + rightWidth;
-            BOOL allEmpty = YES;
-
-            for (NSDictionary *v in values) {
-                BOOL vEmpty = [v[@"isEmpty"] boolValue];
-                NSString *vText = v[@"text"] ?: @"";
-                if (!(vEmpty || [vText isEqualToString:@"empty"])) {
-                    allEmpty = NO;
-                    break;
-                }
-            }
-
-            if (allEmpty) {
-                UILabel *emptyLabel = [[UILabel alloc] init];
-                emptyLabel.font = valueFont;
-                emptyLabel.textColor = emptyColor;
-                emptyLabel.text = NSLocalizedString(@"Empty", nil);
-                emptyLabel.textAlignment = NSTextAlignmentRight;
-                [emptyLabel sizeToFit];
-                emptyLabel.frame = CGRectMake(rightX, currentY, rightWidth, emptyLabel.frame.size.height);
-                [profileContainer addSubview:emptyLabel];
-                rowHeight = MAX(rowHeight, emptyLabel.frame.size.height);
-            } else {
-                // --- Two-pass layout: measure first, then place right-aligned ---
-                // Pass 1: Calculate widths of all non-empty chips
-                NSMutableArray *chipWidths = [NSMutableArray array];
-                for (NSDictionary *v in values) {
-                    BOOL vEmpty = [v[@"isEmpty"] boolValue];
-                    NSString *vText = v[@"text"] ?: @"";
-                    if (vEmpty || [vText isEqualToString:@"empty"]) continue;
-
-                    if ([type isEqualToString:@"collaborator"]) {
-                        NSString *name = v[@"user_name"] ?: vText;
-                        UIFont *chipFont = [UIFont systemFontOfSize:13];
-                        CGFloat nameW = ceil([name sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
-                        CGFloat chipW = 4 + 16 + 4 + nameW + 6;
-                        [chipWidths addObject:@(chipW)];
-                    } else {
-                        NSString *text = vText;
-                        UIFont *chipFont = [UIFont systemFontOfSize:13];
-                        CGFloat textW = ceil([text sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
-                        BOOL isDotStyle = [type isEqualToString:@"link"];
-                        CGFloat chipW;
-                        if (isDotStyle) {
-                            CGFloat dotSize = 10.0;
-                            chipW = 5 + dotSize + 4 + textW + 8;
-                        } else {
-                            chipW = 8 + textW + 8;
-                        }
-                        [chipWidths addObject:@(chipW)];
-                    }
-                }
-
-                // Calculate total width of chips that fit on the first row
-                CGFloat totalFirstRowW = 0;
-                for (NSUInteger i = 0; i < chipWidths.count; i++) {
-                    CGFloat w = [chipWidths[i] floatValue];
-                    CGFloat needed = (i > 0) ? chipSpacing + w : w;
-                    if (totalFirstRowW + needed > rightWidth) break;
-                    totalFirstRowW += needed;
-                }
-
-                // Start X: right-aligned on the first row
-                CGFloat chipX = chipRowMaxX - totalFirstRowW;
-                CGFloat chipY = currentY;
-
-                // Pass 2: Create and place chips
-                NSUInteger chipIdx = 0;
-                for (NSDictionary *v in values) {
-                    BOOL vEmpty = [v[@"isEmpty"] boolValue];
-                    NSString *vText = v[@"text"] ?: @"";
-                    if (vEmpty || [vText isEqualToString:@"empty"]) continue;
-
-                    CGFloat chipW = [chipWidths[chipIdx] floatValue];
-                    chipIdx++;
-
-                    // Wrap to next row if needed (subsequent rows also right-aligned)
-                    if (chipX + chipW > chipRowMaxX && chipX > rightX) {
-                        // Recalculate remaining chips width for right-alignment on new row
-                        CGFloat remainingW = 0;
-                        for (NSUInteger j = chipIdx - 1; j < chipWidths.count; j++) {
-                            CGFloat w = [chipWidths[j] floatValue];
-                            CGFloat needed = (j > chipIdx - 1) ? chipSpacing + w : w;
-                            if (remainingW + needed > rightWidth) break;
-                            remainingW += needed;
-                        }
-                        chipX = chipRowMaxX - remainingW;
-                        chipY += chipHeight + chipSpacing;
-                    }
-
-                    if ([type isEqualToString:@"collaborator"]) {
-                        NSString *name = v[@"user_name"] ?: vText;
-                        UIFont *chipFont = [UIFont systemFontOfSize:13];
-                        CGFloat nameW = ceil([name sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
-
-                        UIView *chip = [[UIView alloc] initWithFrame:CGRectMake(chipX, chipY, chipW, chipHeight)];
-                        chip.backgroundColor = [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
-                        chip.layer.cornerRadius = chipHeight / 2.0;
-                        chip.layer.masksToBounds = YES;
-
-                        // Avatar
-                        UIImageView *av = [[UIImageView alloc] initWithFrame:CGRectMake(3, 3, 16, 16)];
-                        av.contentMode = UIViewContentModeScaleAspectFill;
-                        av.layer.cornerRadius = 8;
-                        av.layer.masksToBounds = YES;
-                        av.backgroundColor = [UIColor lightGrayColor];
-                        NSString *avatarURL = v[@"avatar"];
-                        if (avatarURL && [avatarURL isKindOfClass:[NSString class]] && avatarURL.length > 0) {
-                            NSURL *url = [NSURL URLWithString:avatarURL];
-                            if (url) {
-                                [av sd_setImageWithURL:url placeholderImage:[UIImage imageNamed:@"account"]];
-                            }
-                        }
-                        [chip addSubview:av];
-
-                        UILabel *nl = [[UILabel alloc] initWithFrame:CGRectMake(4 + 16 + 4, 0, nameW, chipHeight)];
-                        nl.font = chipFont;
-                        nl.textColor = valueColor;
-                        nl.text = name;
-                        [chip addSubview:nl];
-
-                        [profileContainer addSubview:chip];
-                    } else {
-                        // Tag / select chip
-                        NSString *text = vText;
-                        NSString *bgColor = v[@"color"] ?: @"";
-                        NSString *txtColor = v[@"textColor"] ?: @"";
-                        UIFont *chipFont = [UIFont systemFontOfSize:13];
-                        CGFloat textW = ceil([text sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
-                        BOOL isDotStyle = [type isEqualToString:@"link"];
-
-                        UIView *chip = [[UIView alloc] initWithFrame:CGRectMake(chipX, chipY, chipW, chipHeight)];
-                        chip.layer.cornerRadius = chipHeight / 2.0;
-                        chip.layer.masksToBounds = YES;
-
-                        if (isDotStyle) {
-                            chip.backgroundColor = [UIColor colorWithRed:0.96 green:0.96 blue:0.96 alpha:1.0];
-                            CGFloat dotSize = 10.0;
-                            UIView *dot = [[UIView alloc] initWithFrame:CGRectMake(5, (chipHeight - dotSize) / 2, dotSize, dotSize)];
-                            dot.layer.cornerRadius = dotSize / 2;
-                            dot.backgroundColor = [self profileColorFromHex:bgColor] ?: [UIColor grayColor];
-                            [chip addSubview:dot];
-
-                            UILabel *tl = [[UILabel alloc] initWithFrame:CGRectMake(5 + dotSize + 4, 0, textW, chipHeight)];
-                            tl.font = chipFont;
-                            tl.textColor = [self profileColorFromHex:txtColor] ?: valueColor;
-                            tl.text = text;
-                            [chip addSubview:tl];
-                        } else {
-                            UIColor *bg = [self profileColorFromHex:bgColor];
-                            chip.backgroundColor = bg ?: [UIColor colorWithRed:0.93 green:0.93 blue:0.93 alpha:1.0];
-
-                            UILabel *tl = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, textW, chipHeight)];
-                            tl.font = chipFont;
-                            tl.textColor = [self profileColorFromHex:txtColor] ?: valueColor;
-                            tl.text = text;
-                            [chip addSubview:tl];
-                        }
-
-                        [profileContainer addSubview:chip];
-                    }
-
-                    chipX += chipW + chipSpacing;
-                }
-                CGFloat chipsBottom = chipY + chipHeight;
-                rowHeight = MAX(rowHeight, chipsBottom - currentY);
-            }
-
-        } else if ([type isEqualToString:@"rate"]) {
-            NSDictionary *v = values.firstObject ?: @{};
-            NSInteger selected = [v[@"ratingSelected"] integerValue];
-            NSInteger maxRate = [v[@"ratingMax"] integerValue] ?: 5;
-            NSString *ratingColorHex = v[@"ratingColor"] ?: @"";
-            UIColor *selColor = [self profileColorFromHex:ratingColorHex] ?: [UIColor colorWithRed:0x6E/255.0 green:0x6E/255.0 blue:0x6E/255.0 alpha:1.0];
-            UIColor *unSelColor = [UIColor colorWithRed:0xE9/255.0 green:0xE9/255.0 blue:0xE9/255.0 alpha:1.0];
-            CGFloat starSize = 16.0;
-            CGFloat starSpacing = 3.0;
-            // Right-align stars
-            CGFloat totalStarsW = maxRate * starSize + (maxRate - 1) * starSpacing;
-            CGFloat starStartX = rightX + rightWidth - totalStarsW;
-            for (NSInteger i = 0; i < maxRate; i++) {
-                UIImage *starImg = [[UIImage imageNamed:@"ic_star_32"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-                UIImageView *star = [[UIImageView alloc] initWithImage:starImg];
-                star.contentMode = UIViewContentModeScaleAspectFit;
-                star.tintColor = (i < selected) ? selColor : unSelColor;
-                star.frame = CGRectMake(starStartX + i * (starSize + starSpacing), currentY + 1, starSize, starSize);
-                [profileContainer addSubview:star];
-            }
-            rowHeight = MAX(rowHeight, starSize);
-
-        } else if ([type isEqualToString:@"checkbox"]) {
-            NSDictionary *v = values.firstObject ?: @{};
-            BOOL checked = [v[@"checked"] boolValue];
-            UIImage *cbImg = nil;
-            if (@available(iOS 13.0, *)) {
-                cbImg = checked ? [UIImage systemImageNamed:@"checkmark.square.fill"] : [UIImage systemImageNamed:@"square"];
-            }
-            if (!cbImg) {
-                cbImg = checked ? [UIImage imageNamed:@"ic_checkbox_checked"] : [UIImage imageNamed:@"ic_checkbox_unchecked"];
-            }
-            cbImg = [cbImg imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-            UIImageView *cbView = [[UIImageView alloc] initWithImage:cbImg];
-            cbView.contentMode = UIViewContentModeScaleAspectFit;
-            cbView.tintColor = [UIColor colorWithRed:0xFF/255.0 green:0x98/255.0 blue:0x00/255.0 alpha:1.0]; // #FF9800
-            CGFloat cbSize = 18.0;
-            cbView.frame = CGRectMake(rightX + rightWidth - cbSize, currentY, cbSize, cbSize);
-            [profileContainer addSubview:cbView];
-            rowHeight = MAX(rowHeight, cbSize);
-        }
-
-        // Vertically center icon with the row
-        CGRect iconFrame = iconView.frame;
-        iconFrame.origin.y = currentY + (rowHeight - iconSize) / 2.0;
-        iconView.frame = iconFrame;
-
-        currentY += rowHeight + rowSpacing;
-    }
-
-    currentY += 10; // Bottom padding
-
-    // Set container height
-    CGRect containerFrame = profileContainer.frame;
-    containerFrame.size.height = currentY;
-    profileContainer.frame = containerFrame;
-    [self.infoScrollView addSubview:profileContainer];
-
-    // Re-align EXIF against the freshly-rendered profile container.
-    // BIDIRECTIONAL: also shift EXIF up when the real profile section is
-    // shorter than the 140pt loading placeholder it replaced — otherwise
-    // the leftover gap stays as visible whitespace.
-    UIView *exifView = [self.infoScrollView viewWithTag:kExifSectionTag];
-    if (exifView) {
-        CGRect exifFrame = exifView.frame;
-        CGFloat desiredExifY = CGRectGetMaxY(profileContainer.frame) + 10;
-        if (fabs(exifFrame.origin.y - desiredExifY) > 0.5) {
-            exifFrame.origin.y = desiredExifY;
-            exifView.frame = exifFrame;
-        }
-    }
-
-    [self recalculateContentSize];
-}
-
-- (void)recalculateContentSize {
-    CGFloat maxBottom = 0;
-    for (UIView *subview in self.infoScrollView.subviews) {
-        CGFloat bottom = CGRectGetMaxY(subview.frame);
-        if (bottom > maxBottom) maxBottom = bottom;
-    }
-    CGFloat minContentHeight = self.infoScrollView.bounds.size.height + 1;
-    self.infoScrollView.contentSize = CGSizeMake(self.infoScrollView.bounds.size.width, MAX(maxBottom + 20, minContentHeight));
-}
-
-- (BOOL)isProfilePlainTextType:(NSString *)type {
-    static NSSet *types;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        types = [NSSet setWithArray:@[@"text", @"long_text", @"number", @"date", @"url", @"email", @"duration", @"geolocation"]];
-    });
-    return [types containsObject:type ?: @""];
-}
-
-- (BOOL)isProfileChipsType:(NSString *)type {
-    static NSSet *types;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        types = [NSSet setWithArray:@[@"collaborator", @"single_select", @"multiple_select", @"link"]];
-    });
-    return [types containsObject:type ?: @""];
-}
-
-- (UIColor *)profileColorFromHex:(NSString *)hex {
-    if (![hex isKindOfClass:[NSString class]] || hex.length == 0) return nil;
-    NSString *h = [hex stringByReplacingOccurrencesOfString:@"#" withString:@""];
-    if (h.length < 6) return nil;
-    unsigned int rgb = 0;
-    [[NSScanner scannerWithString:h] scanHexInt:&rgb];
-    return [UIColor colorWithRed:((rgb>>16)&0xFF)/255.0 green:((rgb>>8)&0xFF)/255.0 blue:(rgb&0xFF)/255.0 alpha:1];
 }
 
 #pragma mark - Scroll View Property Access Methods

@@ -21,7 +21,7 @@
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="weqeqweqweqwe" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="3">
                             <rect key="frame" x="50" y="375" width="275" height="20.5"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                            <color key="textColor" systemColor="labelColor"/>
                             <nil key="highlightedColor"/>
                         </label>
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Name" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="7">
@@ -37,7 +37,7 @@
                             </constraints>
                         </imageView>
                     </subviews>
-                    <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     <constraints>
                         <constraint firstItem="3" firstAttribute="width" secondItem="16" secondAttribute="width" constant="-100" id="2Y0-DO-Uee"/>
                         <constraint firstItem="3" firstAttribute="top" secondItem="7" secondAttribute="bottom" constant="30" id="3oF-4Y-cio"/>
@@ -50,7 +50,7 @@
                     </constraints>
                 </view>
             </subviews>
-            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <constraints>
                 <constraint firstItem="16" firstAttribute="width" secondItem="1" secondAttribute="width" id="1Jx-PJ-3ek"/>
                 <constraint firstItem="16" firstAttribute="height" secondItem="1" secondAttribute="height" id="Qsd-64-PgE"/>

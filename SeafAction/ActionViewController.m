@@ -31,13 +31,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    // Force Light mode regardless of system setting
-    if (@available(iOS 13.0, *)) {
-        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        // Also force navigation controller/bar into Light mode
-        self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-    }
+    [SeafTheme applyPreferenceToViewController:self];
 
     if (IsIpad()) {
         CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
@@ -64,7 +58,7 @@
     self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.bounds.size.width, 10)];
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor systemBackgroundColor];
+        barAppearance.backgroundColor = [SeafTheme primarySurface];
         
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;

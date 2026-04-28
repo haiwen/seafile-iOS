@@ -23,14 +23,14 @@
 #import "SeafGlobal.h"
 #import "SeafMentionSheetViewController.h"
 #import "SeafSdocUserMapper.h"
-#import "SeafImagePickerHelper.h"
+#import "SeafTheme.h"
 
 static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
 static NSTimeInterval const kRelatedUsersCacheTTL = 300.0; // 5 minutes
 static NSMutableDictionary<NSString *, NSArray<NSDictionary *> *> *gRelatedUsersCache;
 static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
-@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate, SeafImagePickerHelperDelegate
+@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
 , UIAdaptivePresentationControllerDelegate
 #endif
@@ -65,7 +65,6 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 @property (nonatomic, assign) BOOL isMentionSheetPresented;
 @property (nonatomic, assign) NSUInteger lastPlainTextLength;
 @property (nonatomic, assign) NSRange lastSelectedRange;
-@property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
 
 @end
 
@@ -75,24 +74,17 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.view.backgroundColor = SeafColor_SystemBackground;
+    self.view.backgroundColor = [SeafTheme primarySurface];
     _attachmentDeleteButtons = [NSMapTable strongToWeakObjectsMapTable];
 
     self.navigationItem.title = self.docDisplayName.length > 0 ? self.docDisplayName : NSLocalizedString(@"Comments", nil);
-    UIBarButtonItem *closeItem;
-    if (@available(iOS 13.0, *)) {
-        closeItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemClose target:self action:@selector(onClose)];
-    } else {
-        closeItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(onClose)];
-    }
-    self.navigationItem.leftBarButtonItem = closeItem;
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemClose target:self action:@selector(onClose)];
 
     _items = [NSMutableArray array];
     _service = [SeafDocsCommentService new];
 
     _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
-    // Match unresolved comment cell background: #F5F5F5
-    _tableView.backgroundColor = [UIColor colorWithRed:245.0/255.0 green:245.0/255.0 blue:245.0/255.0 alpha:1.0];
+    _tableView.backgroundColor = [SeafTheme groupedSurface];
     _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     _tableView.dataSource = self;
     _tableView.delegate = self;
@@ -158,8 +150,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
     // loading indicator
     if (!_loadingIndicator) {
-        UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleGray;
-        if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium;
+        UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleMedium;
+        if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium; else style = UIActivityIndicatorViewStyleGray;
         _loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:style];
         _loadingIndicator.hidesWhenStopped = YES;
         _loadingIndicator.translatesAutoresizingMaskIntoConstraints = NO;
@@ -257,7 +249,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         img.image = tipImage;
     } else if (@available(iOS 13.0, *)) {
         img.image = [UIImage systemImageNamed:@"tray"];
-        img.tintColor = [UIColor tertiaryLabelColor];
+        img.tintColor = [SeafTheme tertiaryText];
     }
     img.contentMode = UIViewContentModeScaleAspectFit;
     img.translatesAutoresizingMaskIntoConstraints = NO;
@@ -271,7 +263,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         androidEmpty = NSLocalizedString(@"No comments", nil);
     }
     lab.text = androidEmpty;
-    lab.textColor = SeafColor_Label;
+    lab.textColor = [SeafTheme primaryText];
     lab.textAlignment = NSTextAlignmentCenter;
     lab.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     lab.numberOfLines = 0;
@@ -324,14 +316,37 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
 - (void)onTapPhoto
 {
-    if (!_imagePickerHelper) {
-        _imagePickerHelper = [[SeafImagePickerHelper alloc] init];
-        _imagePickerHelper.delegate = self;
-        _imagePickerHelper.allowsMultipleSelection = NO;
-        _imagePickerHelper.mediaType = QBImagePickerMediaTypeImage;
-        _imagePickerHelper.maximumNumberOfSelection = 1;
+    // Simple image picker: PHPicker preferred
+    __weak typeof(self) wself = self;
+    void (^presentLegacyPicker)(void) = ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong typeof(wself) sself = wself; if (!sself) return;
+            UIImagePickerController *picker = [UIImagePickerController new];
+            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            picker.modalPresentationStyle = UIModalPresentationFullScreen;
+            picker.delegate = (id<UINavigationControllerDelegate, UIImagePickerControllerDelegate>)sself;
+            [sself presentViewController:picker animated:YES completion:nil];
+        });
+    };
+    if (@available(iOS 14.0, *)) {
+        PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init];
+        config.selectionLimit = 1;
+        config.filter = [PHPickerFilter imagesFilter];
+        PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
+        picker.delegate = (id<PHPickerViewControllerDelegate>)self;
+        [self presentViewController:picker animated:YES completion:nil];
+    } else {
+        PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatus];
+        if (st == PHAuthorizationStatusAuthorized) {
+            presentLegacyPicker();
+        } else if (st == PHAuthorizationStatusNotDetermined) {
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+                if (status == PHAuthorizationStatusAuthorized) presentLegacyPicker();
+            }];
+        } else {
+            // no-op
+        }
     }
-    [_imagePickerHelper presentFromViewController:self barButtonItem:nil sourceView:nil];
 }
 
 - (void)onTapSend:(NSString *)text
@@ -953,20 +968,12 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
 - (void)_menuRowTouchDown:(UIButton *)sender
 {
-    if (@available(iOS 13.0, *)) {
-        sender.backgroundColor = [UIColor tertiarySystemFillColor];
-    } else {
-        sender.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1.0];
-    }
+    sender.backgroundColor = [SeafTheme fill];
 }
 
 - (void)_menuRowTouchUp:(UIButton *)sender
 {
-    if (@available(iOS 13.0, *)) {
-        sender.backgroundColor = UIColor.clearColor;
-    } else {
-        sender.backgroundColor = UIColor.clearColor;
-    }
+    sender.backgroundColor = UIColor.clearColor;
 }
 
 - (void)_onCustomSheetMark:(UIButton *)sender
@@ -1030,75 +1037,141 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     }];
 }
 
-#pragma mark - SeafImagePickerHelperDelegate
-
-- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingAssets:(NSArray<PHAsset *> *)assets
+#pragma mark - Image picker delegates
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info
 {
-    PHAsset *asset = assets.firstObject;
-    if (!asset) return;
+    UIImage *image = info[UIImagePickerControllerOriginalImage];
+    NSURL *url = info[UIImagePickerControllerImageURL];
+    [picker dismissViewControllerAnimated:YES completion:nil];
+    if (!image) return;
+    // Immediately insert attachment as square with width = 2/5 of input text area (no stretch; crop center)
+    [self.view layoutIfNeeded];
+    CGFloat inputTextWidth = MAX(0.0, self->_inputViewBar.textView.bounds.size.width);
+    CGFloat showW = floor(MAX(48.0, inputTextWidth * 0.4));
+    CGFloat showH = showW; // square
+    UIImage *squareImg = [self squareImageFrom:image targetSide:showW];
+    SeafImageAttachment *att = [SeafImageAttachment new];
+    att.image = squareImg ?: image;
+    att.bounds = CGRectMake(0, 0, showW, showH);
+    NSAttributedString *imgAttr = [NSAttributedString attributedStringWithAttachment:att];
+    NSMutableAttributedString *cur = [[NSMutableAttributedString alloc] initWithAttributedString:self->_inputViewBar.textView.attributedText ?: [[NSAttributedString alloc] initWithString:@""]];
+    // Ensure one blank line before the image
+    if (cur.length > 0) {
+        unichar lastChar = [[cur string] characterAtIndex:cur.length - 1];
+        if (lastChar != '\n') {
+            [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
+        } else {
+            // If there is exactly one trailing newline, add one more to make a blank line
+            if (cur.length >= 2) {
+                unichar prevChar = [[cur string] characterAtIndex:cur.length - 2];
+                if (prevChar != '\n') {
+                    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
+                }
+            } else {
+                [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
+            }
+        }
+    }
+    [cur appendAttributedString:imgAttr];
+    // Ensure one blank line after the image
+    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
+    // Enforce consistent font for all text runs to avoid font size changing
+    UIFont *baseFont = self->_inputViewBar.textView.font ?: [UIFont systemFontOfSize:17];
+    [cur addAttribute:NSFontAttributeName value:baseFont range:NSMakeRange(0, cur.length)];
+    self->_inputViewBar.textView.attributedText = cur.copy;
+    self->_inputViewBar.textView.typingAttributes = @{ NSFontAttributeName: baseFont };
+    [self updateSendEnabledState];
 
-    PHImageRequestOptions *opts = [PHImageRequestOptions new];
-    opts.networkAccessAllowed = YES;
-    opts.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
-    opts.synchronous = NO;
+ 
 
+    // Add delete overlay for this attachment and layout
+    [self addDeleteOverlayForAttachment:att];
+
+    // Add loading overlay for upload progress
+    [self addLoadingOverlayForAttachment:att];
+
+    // Recalculate input bar height immediately after inserting image
+    [self->_inputViewBar invalidateIntrinsicContentSize];
+    [self->_inputViewBar setNeedsLayout];
+    [self layoutBottomBarForKeyboardHeight:self.currentKeyboardOverlap animated:NO];
+
+    NSData *data = UIImageJPEGRepresentation(image, 0.9);
+    if (!data) return;
+    NSString *fileName = url.lastPathComponent ?: @"image.jpg";
+    self.pendingUploads += 1;
+    [self uploadImageData:data fileName:fileName mime:@"image/jpeg" forAttachment:att];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
+{
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)picker:(PHPickerViewController *)picker didFinishPicking:(NSArray<PHPickerResult *> *)results API_AVAILABLE(ios(14.0))
+{
+    [picker dismissViewControllerAnimated:YES completion:nil];
+    if (results.count == 0) return;
+    PHPickerResult *r = results.firstObject;
+    if (![r.itemProvider canLoadObjectOfClass:[UIImage class]]) return;
     __weak typeof(self) wself = self;
-    [[PHImageManager defaultManager] requestImageForAsset:asset
-        targetSize:PHImageManagerMaximumSize
-        contentMode:PHImageContentModeDefault
-        options:opts
-        resultHandler:^(UIImage * _Nullable image, NSDictionary * _Nullable info) {
-            if (!image) return;
-            NSData *data = UIImageJPEGRepresentation(image, 0.9);
-            if (!data) return;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                __strong typeof(wself) sself = wself; if (!sself) return;
-                [sself.view layoutIfNeeded];
-                CGFloat inputTextWidth = MAX(0.0, sself->_inputViewBar.textView.bounds.size.width);
-                CGFloat showW = floor(MAX(48.0, inputTextWidth * 0.4));
-                CGFloat showH = showW;
-                UIImage *squareImg = [sself squareImageFrom:image targetSide:showW];
-                SeafImageAttachment *att = [SeafImageAttachment new];
-                att.image = squareImg ?: image;
-                att.bounds = CGRectMake(0, 0, showW, showH);
-                NSAttributedString *imgAttr = [NSAttributedString attributedStringWithAttachment:att];
-                NSMutableAttributedString *cur = [[NSMutableAttributedString alloc] initWithAttributedString:sself->_inputViewBar.textView.attributedText ?: [[NSAttributedString alloc] initWithString:@""]];
-                if (cur.length > 0) {
-                    unichar lastChar = [[cur string] characterAtIndex:cur.length - 1];
-                    if (lastChar != '\n') {
-                        [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-                    } else {
-                        if (cur.length >= 2) {
-                            unichar prevChar = [[cur string] characterAtIndex:cur.length - 2];
-                            if (prevChar != '\n') {
-                                [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
-                            }
-                        } else {
+    [r.itemProvider loadObjectOfClass:[UIImage class] completionHandler:^(UIImage *image, NSError * _Nullable error) {
+        if (!image || error) return;
+        NSData *data = UIImageJPEGRepresentation(image, 0.9);
+        if (!data) return;
+        // Insert attachment and start upload on main thread where 'att' is created
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong typeof(wself) sself = wself; if (!sself) return;
+            [sself.view layoutIfNeeded];
+            CGFloat inputTextWidth = MAX(0.0, sself->_inputViewBar.textView.bounds.size.width);
+            CGFloat showW = floor(MAX(48.0, inputTextWidth * 0.4));
+            CGFloat showH = showW;
+            UIImage *squareImg = [sself squareImageFrom:image targetSide:showW];
+            SeafImageAttachment *att = [SeafImageAttachment new];
+            att.image = squareImg ?: image;
+            att.bounds = CGRectMake(0, 0, showW, showH);
+            NSAttributedString *imgAttr = [NSAttributedString attributedStringWithAttachment:att];
+            NSMutableAttributedString *cur = [[NSMutableAttributedString alloc] initWithAttributedString:sself->_inputViewBar.textView.attributedText ?: [[NSAttributedString alloc] initWithString:@""]];
+            if (cur.length > 0) {
+                unichar lastChar = [[cur string] characterAtIndex:cur.length - 1];
+                if (lastChar != '\n') {
+                    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
+                } else {
+                    if (cur.length >= 2) {
+                        unichar prevChar = [[cur string] characterAtIndex:cur.length - 2];
+                        if (prevChar != '\n') {
                             [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
                         }
+                    } else {
+                        [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
                     }
                 }
-                [cur appendAttributedString:imgAttr];
-                [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-                UIFont *baseFont = sself->_inputViewBar.textView.font ?: [UIFont systemFontOfSize:17];
-                [cur addAttribute:NSFontAttributeName value:baseFont range:NSMakeRange(0, cur.length)];
-                sself->_inputViewBar.textView.attributedText = cur.copy;
-                sself->_inputViewBar.textView.typingAttributes = @{ NSFontAttributeName: baseFont };
-                [sself updateSendEnabledState];
+            }
+            [cur appendAttributedString:imgAttr];
+            [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
+            UIFont *baseFont = sself->_inputViewBar.textView.font ?: [UIFont systemFontOfSize:17];
+            [cur addAttribute:NSFontAttributeName value:baseFont range:NSMakeRange(0, cur.length)];
+            sself->_inputViewBar.textView.attributedText = cur.copy;
+            sself->_inputViewBar.textView.typingAttributes = @{ NSFontAttributeName: baseFont };
+            [sself updateSendEnabledState];
 
-                [sself addDeleteOverlayForAttachment:att];
-                [sself addLoadingOverlayForAttachment:att];
+ 
 
-                [sself->_inputViewBar invalidateIntrinsicContentSize];
-                [sself->_inputViewBar setNeedsLayout];
-                [sself layoutBottomBarForKeyboardHeight:sself.currentKeyboardOverlap animated:NO];
-                [sself updateAttachmentDeleteButtonsLayout];
+            // Add delete overlay and layout for this attachment
+            [sself addDeleteOverlayForAttachment:att];
 
-                sself.pendingUploads += 1;
-                NSString *uniqueFileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
-                [sself uploadImageData:data fileName:uniqueFileName mime:@"image/jpeg" forAttachment:att];
-            });
-        }];
+            // Add loading overlay for upload progress
+            [sself addLoadingOverlayForAttachment:att];
+
+            [sself->_inputViewBar invalidateIntrinsicContentSize];
+            [sself->_inputViewBar setNeedsLayout];
+            [sself layoutBottomBarForKeyboardHeight:sself.currentKeyboardOverlap animated:NO];
+            [sself updateAttachmentDeleteButtonsLayout];
+
+            sself.pendingUploads += 1;
+            NSString *uniqueFileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
+            [sself uploadImageData:data fileName:uniqueFileName mime:@"image/jpeg" forAttachment:att];
+        });
+    }];
 }
 
 - (void)uploadImageData:(NSData *)data fileName:(NSString *)fileName mime:(NSString *)mime forAttachment:(SeafImageAttachment *)attachment
@@ -1275,7 +1348,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         attrs[NSFontAttributeName] = f;
     }
     if (!attrs[NSForegroundColorAttributeName]) {
-        UIColor *c = tv.textColor ?: SeafColor_Label;
+        UIColor *c = tv.textColor ?: [SeafTheme primaryText];
         attrs[NSForegroundColorAttributeName] = c;
     }
     // Current content: if not attributed, convert from plain with default attrs
@@ -1655,7 +1728,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     }
     btn.frame = CGRectMake(0, 0, 20, 20);
     btn.contentEdgeInsets = UIEdgeInsetsZero;
-    btn.backgroundColor = [UIColor whiteColor];
+    btn.backgroundColor = [SeafTheme primarySurface];
     btn.layer.cornerRadius = 10.0;
     btn.clipsToBounds = YES;
     [btn addTarget:self action:@selector(onDeleteAttachmentButton:) forControlEvents:UIControlEventTouchUpInside];
@@ -1677,8 +1750,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     UIView *overlay = [[UIView alloc] initWithFrame:CGRectZero];
     overlay.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.3];
     overlay.userInteractionEnabled = NO;
-    UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleWhite;
-    if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium;
+    UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleMedium;
+    if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium; else style = UIActivityIndicatorViewStyleWhite;
     UIActivityIndicatorView *spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:style];
     if (@available(iOS 13.0, *)) {
         spinner.color = [UIColor whiteColor];
@@ -1726,7 +1799,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     UIButton *retry = [UIButton buttonWithType:UIButtonTypeSystem];
     [retry setTitle:NSLocalizedString(@"Retry", nil) forState:UIControlStateNormal];
     retry.translatesAutoresizingMaskIntoConstraints = NO;
-    retry.backgroundColor = [[UIColor whiteColor] colorWithAlphaComponent:0.9];
+    retry.backgroundColor = [SeafTheme elevatedSurface];
     retry.layer.cornerRadius = 14.0;
     retry.contentEdgeInsets = UIEdgeInsetsMake(6, 12, 6, 12);
     [retry addTarget:self action:@selector(onRetryAttachmentButton:) forControlEvents:UIControlEventTouchUpInside];

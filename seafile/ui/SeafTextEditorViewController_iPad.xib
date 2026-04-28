@@ -14,7 +14,7 @@
         <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="2" customClass="UITextView">
             <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <connections>
                 <outlet property="delegate" destination="-1" id="4"/>
             </connections>

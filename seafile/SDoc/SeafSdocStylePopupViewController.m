@@ -7,6 +7,7 @@
 
 #import "SeafSdocStylePopupViewController.h"
 #import "SeafGlobal.h"
+#import "SeafTheme.h"
 
 @interface SeafSdocStylePopupViewController () <UITableViewDelegate, UITableViewDataSource>
 
@@ -22,7 +23,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.view.backgroundColor = [UIColor whiteColor];
+    self.view.backgroundColor = [SeafTheme primarySurface];
     self.preferredContentSize = CGSizeMake(200, 460); // Width and estimated height
     
     [self initData];
@@ -116,7 +117,7 @@
         checkIcon.tag = 100;
         checkIcon.contentMode = UIViewContentModeScaleAspectFit;
         checkIcon.translatesAutoresizingMaskIntoConstraints = NO;
-        checkIcon.tintColor = [UIColor colorWithWhite:0.6 alpha:1.0]; // material_grey_500
+        checkIcon.tintColor = [SeafTheme secondaryText];
         
         [cell.contentView addSubview:checkIcon];
         
@@ -144,7 +145,7 @@
         // Android: Divider after paragraph and subtitle?
         // Android XML: Paragraph -> Divider -> Title -> Subtitle -> Divider -> H1...
         UIView *divider = [[UIView alloc] init];
-        divider.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1.0]; // Light divider
+        divider.backgroundColor = [SeafTheme separator];
         divider.tag = 102;
         divider.translatesAutoresizingMaskIntoConstraints = NO;
         [cell.contentView addSubview:divider];

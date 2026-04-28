@@ -160,7 +160,7 @@ static NSSet *SeafChipTypes(void)
 {
     [super viewDidLoad];
     if (@available(iOS 15.0, *)) {
-        self.view.backgroundColor = SeafColor_SystemBackground;
+        self.view.backgroundColor = [SeafTheme primarySurface];
     } else {
         // Dim background and host a bottom panel
         self.view.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
@@ -172,7 +172,7 @@ static NSSet *SeafChipTypes(void)
     } else {
         UIView *panel = [UIView new];
         panel.translatesAutoresizingMaskIntoConstraints = NO;
-        panel.backgroundColor = SeafColor_SystemBackground;
+        panel.backgroundColor = [SeafTheme primarySurface];
         panel.layer.cornerRadius = 12.0;
         panel.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
         panel.clipsToBounds = YES;
@@ -225,12 +225,6 @@ static NSSet *SeafChipTypes(void)
     [_stack addArrangedSubview:topSpacer];
 
     [self renderRows];
-
-    // Bottom spacer to leave blank area between content and sheet bottom (safe area)
-    UIView *bottomSpacer = [UIView new];
-    bottomSpacer.translatesAutoresizingMaskIntoConstraints = NO;
-    [bottomSpacer.heightAnchor constraintEqualToConstant:16.0].active = YES;
-    [_stack addArrangedSubview:bottomSpacer];
 
     // Pre-compute content height for dynamic sheet detent selection
     [self.view layoutIfNeeded];
@@ -398,7 +392,7 @@ static NSSet *SeafChipTypes(void)
     img = [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     UIImageView *icon = [[UIImageView alloc] initWithImage:img];
     icon.contentMode = UIViewContentModeScaleAspectFit;
-    icon.tintColor = [UIColor colorWithRed:0x99/255.0 green:0x99/255.0 blue:0x99/255.0 alpha:1.0]; // #999999
+    icon.tintColor = [SeafTheme tertiaryText];
     icon.translatesAutoresizingMaskIntoConstraints = NO;
     [icon.widthAnchor constraintEqualToConstant:14].active = YES;
     [icon.heightAnchor constraintEqualToConstant:14].active = YES;
@@ -406,7 +400,7 @@ static NSSet *SeafChipTypes(void)
 
     UILabel *title = [UILabel new];
     title.text = NSLocalizedString(row[@"title"] ?: @"", nil);
-    title.textColor = [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0]; // #666666
+    title.textColor = [SeafTheme secondaryText];
     title.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     title.numberOfLines = 0;
     title.lineBreakMode = NSLineBreakByWordWrapping;
@@ -452,27 +446,6 @@ static NSSet *SeafChipTypes(void)
             BOOL isEmpty = [[first objectForKey:@"isEmpty"] boolValue];
             NSString *t = first[@"text"];
             if (isEmpty || ([t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"])) {
-                UIStackView *sv = [UIStackView new];
-                sv.axis = UILayoutConstraintAxisVertical;
-                sv.spacing = 4;
-                sv.alignment = UIStackViewAlignmentTrailing;
-                UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"] isEmpty:YES];
-                lab.numberOfLines = 1;
-                [sv addArrangedSubview:lab];
-                return sv;
-            }
-        }
-        // Special case: link (e.g. _tags) empty -> show localized empty text (align Android)
-        if ([type isEqualToString:@"link"]) {
-            BOOL isEmptyOnly = YES;
-            for (NSDictionary *v in values) {
-                BOOL vIsEmpty = [[v objectForKey:@"isEmpty"] boolValue];
-                NSString *tx = v[@"text"];
-                if (!(vIsEmpty || ([tx isKindOfClass:[NSString class]] && [tx isEqualToString:@"empty"]))) {
-                    isEmptyOnly = NO; break;
-                }
-            }
-            if (isEmptyOnly) {
                 UIStackView *sv = [UIStackView new];
                 sv.axis = UILayoutConstraintAxisVertical;
                 sv.spacing = 4;
@@ -674,9 +647,9 @@ static NSSet *SeafChipTypes(void)
     lab.text = text ?: @"";
     // Text color: #212529 for data, #666666 for empty
     if (isEmpty) {
-        lab.textColor = [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0]; // #666666
+        lab.textColor = [SeafTheme secondaryText];
     } else {
-        lab.textColor = [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0]; // #212529
+        lab.textColor = [SeafTheme primaryText];
     }
     lab.font = [UIFont systemFontOfSize:16];
     lab.numberOfLines = 0;
