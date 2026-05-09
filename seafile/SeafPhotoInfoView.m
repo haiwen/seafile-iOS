@@ -369,7 +369,7 @@ static const NSInteger kProfileLoadingTag = 997;
         return;
     }
 
-    CGFloat topPadding = 10.0;
+    CGFloat topPadding = 25.0;
     // Reserve height close to the typical profile section to minimise the
     // visual jump when profile rows replace this placeholder.
     CGFloat reservedHeight = 140.0;
@@ -413,7 +413,7 @@ static const NSInteger kProfileLoadingTag = 997;
     [self clearProfileRows];
 
     CGFloat outerPadding = 16.0;
-    CGFloat topPadding = 10.0;
+    CGFloat topPadding = 25.0;
     CGFloat iconSize = 14.0;
     CGFloat horizontalSpacing = 8.0;
     CGFloat rowSpacing = 10.0;
@@ -715,7 +715,7 @@ static const NSInteger kProfileLoadingTag = 997;
         currentY += rowHeight + rowSpacing;
     }
 
-    currentY += 4; // Bottom padding
+    currentY += 10; // Bottom padding
 
     // Set container height
     CGRect containerFrame = profileContainer.frame;

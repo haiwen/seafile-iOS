@@ -38,7 +38,7 @@
 #import "SVProgressHUD.h"
 #import "Debug.h"
 
-#import "QBImagePickerController.h"
+#import "SeafImagePickerHelper.h"
 #import <WechatOpenSDK/WXApi.h>
 #import "SeafWechatHelper.h"
 #import "SeafMkLibAlertController.h"
@@ -84,7 +84,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate, UIDocumentPickerDelegate>
+@interface SeafFileViewController ()<SeafImagePickerHelperDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate, UIDocumentPickerDelegate>
 
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -130,6 +130,8 @@ enum {
 // toolbar and bottom tool button flows). This avoids relying solely on
 // tableView selection state when the destination picker returns.
 @property (nonatomic, strong) NSArray<NSString *> *pendingEntriesForOperation;
+
+@property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
 
 @end
 
@@ -1507,131 +1509,31 @@ enum {
 
 #pragma mark - Photos / Album
 
+- (SeafImagePickerHelper *)imagePickerHelper {
+    if (!_imagePickerHelper) {
+        _imagePickerHelper = [[SeafImagePickerHelper alloc] init];
+        _imagePickerHelper.delegate = self;
+        _imagePickerHelper.allowsMultipleSelection = YES;
+        _imagePickerHelper.mediaType = QBImagePickerMediaTypeAny;
+    }
+    return _imagePickerHelper;
+}
+
 - (void)addPhotos:(id)sender {
-    PHAuthorizationStatus status;
-    if (@available(iOS 14, *)) {
-        status = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+    UIBarButtonItem *barItem = nil;
+    if ([sender isKindOfClass:[UIBarButtonItem class]]) {
+        barItem = (UIBarButtonItem *)sender;
     } else {
-        status = [PHPhotoLibrary authorizationStatus];
+        barItem = self.photoItem ?: self.editItem;
     }
-
-    switch (status) {
-        case PHAuthorizationStatusNotDetermined: {
-            void (^completion)(PHAuthorizationStatus) = ^(PHAuthorizationStatus newStatus) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self addPhotos:sender];
-                });
-            };
-            if (@available(iOS 14, *)) {
-                [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelReadWrite handler:completion];
-            } else {
-                [PHPhotoLibrary requestAuthorization:completion];
-            }
-            return;
-        }
-        case PHAuthorizationStatusRestricted:
-        case PHAuthorizationStatusDenied:
-            [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
-            return;
-        case PHAuthorizationStatusLimited:
-        case PHAuthorizationStatusAuthorized:
-        default:
-            // Limited access no longer triggers a separate action sheet: the
-            // picker itself appends an "Add Photos" cell at the trailing
-            // position (right of the newest photo) when running in Limited
-            // mode (handled inside presentQBImagePicker:).
-            [self presentQBImagePicker:sender];
-            return;
-    }
+    [self.imagePickerHelper presentFromViewController:self
+                                       barButtonItem:barItem
+                                          sourceView:nil];
 }
 
-- (void)presentQBImagePicker:(id)sender {
-    QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
-    imagePickerController.title = NSLocalizedString(@"Photos", @"Seafile");
-    imagePickerController.delegate = self;
-    imagePickerController.allowsMultipleSelection = YES;
-    imagePickerController.mediaType = QBImagePickerMediaTypeAny;
+#pragma mark - SeafImagePickerHelperDelegate
 
-    // Theme the picker chrome to match the rest of the Seafile app:
-    //   - tintColor: navigation bar buttons (incl. the storyboard "Cancel"
-    //     text item) stay neutral gray.
-    //   - checkmarkTintColor: selection check uses the app's theme orange.
-    //   - addPhotosTintColor: trailing "Add New Photo" cell renders in #999999.
-    //   - addPhotosIconImage: replace the SF symbol "plus" with our asset.
-    //   - backIndicatorImage: match the main app's back chevron on the
-    //     pushed assets view.
-    // We intentionally do NOT set cancelImage here so the albums (root)
-    // screen keeps its default text "Cancel" button instead of an icon.
-    imagePickerController.tintColor          = BAR_COLOR;
-    imagePickerController.checkmarkTintColor = SEAF_COLOR_ORANGE;
-    imagePickerController.addPhotosTintColor = [UIColor colorWithWhite:153.0/255.0 alpha:1.0];
-    imagePickerController.addPhotosIconImage = [UIImage imageNamed:@"qb_add_photo"];
-    imagePickerController.backIndicatorImage = [UIImage imageNamed:@"arrowLeft_black"];
-
-    // Show the trailing "Add Photos" cell only when access is Limited so the
-    // user can expand the limited photo selection without leaving the picker.
-    if (@available(iOS 14, *)) {
-        PHAuthorizationStatus currentStatus = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
-        imagePickerController.showsAddPhotosCell = (currentStatus == PHAuthorizationStatusLimited);
-    }
-
-    if (IsIpad()) {
-        imagePickerController.modalPresentationStyle = UIModalPresentationPopover;
-        // Use self.editItem if self.photoItem is nil (when called from "more" menu)
-        UIBarButtonItem *sourceItem = sender && [sender isKindOfClass:[UIBarButtonItem class]] ? (UIBarButtonItem *)sender : (self.photoItem ? self.photoItem : self.editItem);
-        imagePickerController.popoverPresentationController.barButtonItem = sourceItem;
-        
-        // Fallback to using view controller's view as source view if no bar button item is available
-        if (!sourceItem) {
-            imagePickerController.popoverPresentationController.sourceView = self.view;
-            imagePickerController.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
-        }
-    } else {
-        imagePickerController.modalPresentationStyle = UIModalPresentationFullScreen;
-    }
-    [self presentViewController:imagePickerController animated:YES completion:nil];
-}
-
-- (void)presentLimitedAccessActionSheet:(id)sender API_AVAILABLE(ios(14)) {
-    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil message:NSLocalizedString(@"Seafile only has access to a limited set of photos.", @"Seafile") preferredStyle:UIAlertControllerStyleActionSheet];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Use selected photos", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        [self presentQBImagePicker:sender];
-    }]];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Select more photos...", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:self];
-    }]];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:nil]];
-
-    if (IsIpad()) {
-        UIBarButtonItem *sourceItem = sender && [sender isKindOfClass:[UIBarButtonItem class]] ? (UIBarButtonItem *)sender : (self.photoItem ? self.photoItem : self.editItem);
-        sheet.popoverPresentationController.barButtonItem = sourceItem;
-        if (!sourceItem) {
-            sheet.popoverPresentationController.sourceView = self.view;
-            sheet.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
-        }
-    }
-
-    [self presentViewController:sheet animated:YES completion:nil];
-}
-
-- (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
-    [self dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)qb_imagePickerControllerDidTapAddPhotos:(QBImagePickerController *)imagePickerController {
-    // The trailing "Add Photos" cell in the QBImagePicker grid was tapped.
-    // Present the system limited library picker so the user can grant access
-    // to additional assets; PHPhotoLibraryChangeObserver inside the picker
-    // will refresh the grid automatically when new assets become visible.
-    if (@available(iOS 14, *)) {
-        [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:imagePickerController];
-    }
-}
-
-- (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingAssets:(NSArray<PHAsset *> *)assets {
     if (assets.count == 0) return;
     NSSet *nameSet = [self getExistedNameSet];
     NSMutableArray *identifiers = [[NSMutableArray alloc] init];
@@ -1650,7 +1552,6 @@ enum {
         } else
             Warning("Failed to get asset url %@", asset);
     }
-    [self dismissViewControllerAnimated:YES completion:nil];
     if (duplicated > 0) {
         NSString *title = duplicated == 1 ? STR_12 : STR_13;
         @weakify(self);
