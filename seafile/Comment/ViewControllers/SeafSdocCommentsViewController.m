@@ -23,13 +23,14 @@
 #import "SeafGlobal.h"
 #import "SeafMentionSheetViewController.h"
 #import "SeafSdocUserMapper.h"
+#import "SeafImagePickerHelper.h"
 
 static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
 static NSTimeInterval const kRelatedUsersCacheTTL = 300.0; // 5 minutes
 static NSMutableDictionary<NSString *, NSArray<NSDictionary *> *> *gRelatedUsersCache;
 static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
-@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate
+@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate, SeafImagePickerHelperDelegate
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
 , UIAdaptivePresentationControllerDelegate
 #endif
@@ -64,6 +65,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 @property (nonatomic, assign) BOOL isMentionSheetPresented;
 @property (nonatomic, assign) NSUInteger lastPlainTextLength;
 @property (nonatomic, assign) NSRange lastSelectedRange;
+@property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
 
 @end
 
@@ -316,37 +318,14 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
 - (void)onTapPhoto
 {
-    // Simple image picker: PHPicker preferred
-    __weak typeof(self) wself = self;
-    void (^presentLegacyPicker)(void) = ^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            __strong typeof(wself) sself = wself; if (!sself) return;
-            UIImagePickerController *picker = [UIImagePickerController new];
-            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-            picker.modalPresentationStyle = UIModalPresentationFullScreen;
-            picker.delegate = (id<UINavigationControllerDelegate, UIImagePickerControllerDelegate>)sself;
-            [sself presentViewController:picker animated:YES completion:nil];
-        });
-    };
-    if (@available(iOS 14.0, *)) {
-        PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init];
-        config.selectionLimit = 1;
-        config.filter = [PHPickerFilter imagesFilter];
-        PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
-        picker.delegate = (id<PHPickerViewControllerDelegate>)self;
-        [self presentViewController:picker animated:YES completion:nil];
-    } else {
-        PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatus];
-        if (st == PHAuthorizationStatusAuthorized) {
-            presentLegacyPicker();
-        } else if (st == PHAuthorizationStatusNotDetermined) {
-            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-                if (status == PHAuthorizationStatusAuthorized) presentLegacyPicker();
-            }];
-        } else {
-            // no-op
-        }
+    if (!_imagePickerHelper) {
+        _imagePickerHelper = [[SeafImagePickerHelper alloc] init];
+        _imagePickerHelper.delegate = self;
+        _imagePickerHelper.allowsMultipleSelection = NO;
+        _imagePickerHelper.mediaType = QBImagePickerMediaTypeImage;
+        _imagePickerHelper.maximumNumberOfSelection = 1;
     }
+    [_imagePickerHelper presentFromViewController:self barButtonItem:nil sourceView:nil];
 }
 
 - (void)onTapSend:(NSString *)text
@@ -1045,141 +1024,75 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     }];
 }
 
-#pragma mark - Image picker delegates
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info
+#pragma mark - SeafImagePickerHelperDelegate
+
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingAssets:(NSArray<PHAsset *> *)assets
 {
-    UIImage *image = info[UIImagePickerControllerOriginalImage];
-    NSURL *url = info[UIImagePickerControllerImageURL];
-    [picker dismissViewControllerAnimated:YES completion:nil];
-    if (!image) return;
-    // Immediately insert attachment as square with width = 2/5 of input text area (no stretch; crop center)
-    [self.view layoutIfNeeded];
-    CGFloat inputTextWidth = MAX(0.0, self->_inputViewBar.textView.bounds.size.width);
-    CGFloat showW = floor(MAX(48.0, inputTextWidth * 0.4));
-    CGFloat showH = showW; // square
-    UIImage *squareImg = [self squareImageFrom:image targetSide:showW];
-    SeafImageAttachment *att = [SeafImageAttachment new];
-    att.image = squareImg ?: image;
-    att.bounds = CGRectMake(0, 0, showW, showH);
-    NSAttributedString *imgAttr = [NSAttributedString attributedStringWithAttachment:att];
-    NSMutableAttributedString *cur = [[NSMutableAttributedString alloc] initWithAttributedString:self->_inputViewBar.textView.attributedText ?: [[NSAttributedString alloc] initWithString:@""]];
-    // Ensure one blank line before the image
-    if (cur.length > 0) {
-        unichar lastChar = [[cur string] characterAtIndex:cur.length - 1];
-        if (lastChar != '\n') {
-            [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-        } else {
-            // If there is exactly one trailing newline, add one more to make a blank line
-            if (cur.length >= 2) {
-                unichar prevChar = [[cur string] characterAtIndex:cur.length - 2];
-                if (prevChar != '\n') {
-                    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
-                }
-            } else {
-                [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
-            }
-        }
-    }
-    [cur appendAttributedString:imgAttr];
-    // Ensure one blank line after the image
-    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-    // Enforce consistent font for all text runs to avoid font size changing
-    UIFont *baseFont = self->_inputViewBar.textView.font ?: [UIFont systemFontOfSize:17];
-    [cur addAttribute:NSFontAttributeName value:baseFont range:NSMakeRange(0, cur.length)];
-    self->_inputViewBar.textView.attributedText = cur.copy;
-    self->_inputViewBar.textView.typingAttributes = @{ NSFontAttributeName: baseFont };
-    [self updateSendEnabledState];
+    PHAsset *asset = assets.firstObject;
+    if (!asset) return;
 
- 
+    PHImageRequestOptions *opts = [PHImageRequestOptions new];
+    opts.networkAccessAllowed = YES;
+    opts.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+    opts.synchronous = NO;
 
-    // Add delete overlay for this attachment and layout
-    [self addDeleteOverlayForAttachment:att];
-
-    // Add loading overlay for upload progress
-    [self addLoadingOverlayForAttachment:att];
-
-    // Recalculate input bar height immediately after inserting image
-    [self->_inputViewBar invalidateIntrinsicContentSize];
-    [self->_inputViewBar setNeedsLayout];
-    [self layoutBottomBarForKeyboardHeight:self.currentKeyboardOverlap animated:NO];
-
-    NSData *data = UIImageJPEGRepresentation(image, 0.9);
-    if (!data) return;
-    NSString *fileName = url.lastPathComponent ?: @"image.jpg";
-    self.pendingUploads += 1;
-    [self uploadImageData:data fileName:fileName mime:@"image/jpeg" forAttachment:att];
-}
-
-- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
-{
-    [picker dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)picker:(PHPickerViewController *)picker didFinishPicking:(NSArray<PHPickerResult *> *)results API_AVAILABLE(ios(14.0))
-{
-    [picker dismissViewControllerAnimated:YES completion:nil];
-    if (results.count == 0) return;
-    PHPickerResult *r = results.firstObject;
-    if (![r.itemProvider canLoadObjectOfClass:[UIImage class]]) return;
     __weak typeof(self) wself = self;
-    [r.itemProvider loadObjectOfClass:[UIImage class] completionHandler:^(UIImage *image, NSError * _Nullable error) {
-        if (!image || error) return;
-        NSData *data = UIImageJPEGRepresentation(image, 0.9);
-        if (!data) return;
-        // Insert attachment and start upload on main thread where 'att' is created
-        dispatch_async(dispatch_get_main_queue(), ^{
-            __strong typeof(wself) sself = wself; if (!sself) return;
-            [sself.view layoutIfNeeded];
-            CGFloat inputTextWidth = MAX(0.0, sself->_inputViewBar.textView.bounds.size.width);
-            CGFloat showW = floor(MAX(48.0, inputTextWidth * 0.4));
-            CGFloat showH = showW;
-            UIImage *squareImg = [sself squareImageFrom:image targetSide:showW];
-            SeafImageAttachment *att = [SeafImageAttachment new];
-            att.image = squareImg ?: image;
-            att.bounds = CGRectMake(0, 0, showW, showH);
-            NSAttributedString *imgAttr = [NSAttributedString attributedStringWithAttachment:att];
-            NSMutableAttributedString *cur = [[NSMutableAttributedString alloc] initWithAttributedString:sself->_inputViewBar.textView.attributedText ?: [[NSAttributedString alloc] initWithString:@""]];
-            if (cur.length > 0) {
-                unichar lastChar = [[cur string] characterAtIndex:cur.length - 1];
-                if (lastChar != '\n') {
-                    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-                } else {
-                    if (cur.length >= 2) {
-                        unichar prevChar = [[cur string] characterAtIndex:cur.length - 2];
-                        if (prevChar != '\n') {
+    [[PHImageManager defaultManager] requestImageForAsset:asset
+        targetSize:PHImageManagerMaximumSize
+        contentMode:PHImageContentModeDefault
+        options:opts
+        resultHandler:^(UIImage * _Nullable image, NSDictionary * _Nullable info) {
+            if (!image) return;
+            NSData *data = UIImageJPEGRepresentation(image, 0.9);
+            if (!data) return;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                __strong typeof(wself) sself = wself; if (!sself) return;
+                [sself.view layoutIfNeeded];
+                CGFloat inputTextWidth = MAX(0.0, sself->_inputViewBar.textView.bounds.size.width);
+                CGFloat showW = floor(MAX(48.0, inputTextWidth * 0.4));
+                CGFloat showH = showW;
+                UIImage *squareImg = [sself squareImageFrom:image targetSide:showW];
+                SeafImageAttachment *att = [SeafImageAttachment new];
+                att.image = squareImg ?: image;
+                att.bounds = CGRectMake(0, 0, showW, showH);
+                NSAttributedString *imgAttr = [NSAttributedString attributedStringWithAttachment:att];
+                NSMutableAttributedString *cur = [[NSMutableAttributedString alloc] initWithAttributedString:sself->_inputViewBar.textView.attributedText ?: [[NSAttributedString alloc] initWithString:@""]];
+                if (cur.length > 0) {
+                    unichar lastChar = [[cur string] characterAtIndex:cur.length - 1];
+                    if (lastChar != '\n') {
+                        [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
+                    } else {
+                        if (cur.length >= 2) {
+                            unichar prevChar = [[cur string] characterAtIndex:cur.length - 2];
+                            if (prevChar != '\n') {
+                                [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
+                            }
+                        } else {
                             [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
                         }
-                    } else {
-                        [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
                     }
                 }
-            }
-            [cur appendAttributedString:imgAttr];
-            [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-            UIFont *baseFont = sself->_inputViewBar.textView.font ?: [UIFont systemFontOfSize:17];
-            [cur addAttribute:NSFontAttributeName value:baseFont range:NSMakeRange(0, cur.length)];
-            sself->_inputViewBar.textView.attributedText = cur.copy;
-            sself->_inputViewBar.textView.typingAttributes = @{ NSFontAttributeName: baseFont };
-            [sself updateSendEnabledState];
+                [cur appendAttributedString:imgAttr];
+                [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
+                UIFont *baseFont = sself->_inputViewBar.textView.font ?: [UIFont systemFontOfSize:17];
+                [cur addAttribute:NSFontAttributeName value:baseFont range:NSMakeRange(0, cur.length)];
+                sself->_inputViewBar.textView.attributedText = cur.copy;
+                sself->_inputViewBar.textView.typingAttributes = @{ NSFontAttributeName: baseFont };
+                [sself updateSendEnabledState];
 
- 
+                [sself addDeleteOverlayForAttachment:att];
+                [sself addLoadingOverlayForAttachment:att];
 
-            // Add delete overlay and layout for this attachment
-            [sself addDeleteOverlayForAttachment:att];
+                [sself->_inputViewBar invalidateIntrinsicContentSize];
+                [sself->_inputViewBar setNeedsLayout];
+                [sself layoutBottomBarForKeyboardHeight:sself.currentKeyboardOverlap animated:NO];
+                [sself updateAttachmentDeleteButtonsLayout];
 
-            // Add loading overlay for upload progress
-            [sself addLoadingOverlayForAttachment:att];
-
-            [sself->_inputViewBar invalidateIntrinsicContentSize];
-            [sself->_inputViewBar setNeedsLayout];
-            [sself layoutBottomBarForKeyboardHeight:sself.currentKeyboardOverlap animated:NO];
-            [sself updateAttachmentDeleteButtonsLayout];
-
-            sself.pendingUploads += 1;
-            NSString *uniqueFileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
-            [sself uploadImageData:data fileName:uniqueFileName mime:@"image/jpeg" forAttachment:att];
-        });
-    }];
+                sself.pendingUploads += 1;
+                NSString *uniqueFileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
+                [sself uploadImageData:data fileName:uniqueFileName mime:@"image/jpeg" forAttachment:att];
+            });
+        }];
 }
 
 - (void)uploadImageData:(NSData *)data fileName:(NSString *)fileName mime:(NSString *)mime forAttachment:(SeafImageAttachment *)attachment

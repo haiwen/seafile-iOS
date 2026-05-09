@@ -91,8 +91,8 @@
         dispatch_sync(guardQueue, ^{
             detail = resp;
             if (error && !stage1Error) stage1Error = error;
+            dispatch_group_leave(g1);
         });
-        dispatch_group_leave(g1);
     }];
 
     dispatch_group_enter(g1);
@@ -100,8 +100,8 @@
         dispatch_sync(guardQueue, ^{
             meta = resp ?: @{};
             if (error && !stage1Error) stage1Error = error;
+            dispatch_group_leave(g1);
         });
-        dispatch_group_leave(g1);
     }];
 
     dispatch_group_notify(g1, dispatch_get_main_queue(), ^{
@@ -142,8 +142,8 @@
                 dispatch_sync(guardQueue, ^{
                     record = resp;
                     if (error && !stage2Error) stage2Error = error;
+                    dispatch_group_leave(g2);
                 });
-                dispatch_group_leave(g2);
             }];
 
             dispatch_group_enter(g2);
@@ -151,8 +151,8 @@
                 dispatch_sync(guardQueue, ^{
                     users = resp;
                     if (error && !stage2Error) stage2Error = error;
+                    dispatch_group_leave(g2);
                 });
-                dispatch_group_leave(g2);
             }];
         }
 
@@ -162,8 +162,8 @@
                 dispatch_sync(guardQueue, ^{
                     tags = resp;
                     if (error && !stage2Error) stage2Error = error;
+                    dispatch_group_leave(g2);
                 });
-                dispatch_group_leave(g2);
             }];
         }
 

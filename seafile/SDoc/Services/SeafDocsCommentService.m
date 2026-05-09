@@ -264,14 +264,14 @@ static NSString * const kSeafDocsCommentServiceErrorDomain = @"SeafDocsCommentSe
     void (^maybeFinish)(void) = ^{
         @synchronized (lock) {
             if (remaining > 0) return;
+            NSMutableArray<NSString *> *flat = [NSMutableArray array];
+            for (NSArray<NSString *> *paths in slots) {
+                if (paths.count > 0) [flat addObjectsFromArray:paths];
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (completion) completion(flat.copy, failedCount, lastError);
+            });
         }
-        NSMutableArray<NSString *> *flat = [NSMutableArray array];
-        for (NSArray<NSString *> *paths in slots) {
-            if (paths.count > 0) [flat addObjectsFromArray:paths];
-        }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (completion) completion(flat.copy, failedCount, lastError);
-        });
     };
     
     for (NSUInteger idx = 0; idx < total; idx++) {

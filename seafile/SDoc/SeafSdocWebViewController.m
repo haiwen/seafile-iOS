@@ -16,6 +16,7 @@
 #import "SeafNavLeftItem.h"
 #import "SeafSdocProfileSheetViewController.h"
 #import "SeafDocsCommentService.h"
+#import "SeafImagePickerHelper.h"
 #import "SVProgressHUD.h"
 #import "Constants.h"
 #import <AVFoundation/AVFoundation.h>
@@ -70,7 +71,7 @@ static NSString * const kSeafBridgeHelperScript =
 
 @interface SeafSdocWebViewController () <SeafSdocStylePopupDelegate, SeafSdocEditorToolbarDelegate,
     UINavigationControllerDelegate, UIImagePickerControllerDelegate,
-    UIDocumentPickerDelegate, PHPickerViewControllerDelegate>
+    UIDocumentPickerDelegate, SeafImagePickerHelperDelegate>
 
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) UIBarButtonItem *editItem;
@@ -111,6 +112,7 @@ static NSString * const kSeafBridgeHelperScript =
 // Insert-image (sdoc local image) state
 @property (nonatomic, strong) SeafDocsCommentService *imageService;
 @property (nonatomic, assign) BOOL isUploadingImages;
+@property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
 
 @end
 
@@ -603,42 +605,14 @@ static NSString * const kSeafBridgeHelperScript =
 
 - (void)presentPhotoLibraryPicker
 {
-    if (@available(iOS 14.0, *)) {
-        PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init];
-        config.selectionLimit = 20;
-        config.filter = [PHPickerFilter imagesFilter];
-        PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
-        picker.delegate = self;
-        [self presentViewController:picker animated:YES completion:nil];
-    } else {
-        // iOS 11-13 fallback: legacy single-select picker after auth check.
-        PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatus];
-        void (^launchLegacy)(void) = ^{
-            dispatch_async(dispatch_get_main_queue(), ^{
-                UIImagePickerController *picker = [UIImagePickerController new];
-                picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-                picker.mediaTypes = @[(NSString *)kUTTypeImage];
-                picker.delegate = self;
-                picker.modalPresentationStyle = UIModalPresentationFullScreen;
-                [self presentViewController:picker animated:YES completion:nil];
-            });
-        };
-        if (st == PHAuthorizationStatusAuthorized) {
-            launchLegacy();
-        } else if (st == PHAuthorizationStatusNotDetermined) {
-            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-                if (status == PHAuthorizationStatusAuthorized) {
-                    launchLegacy();
-                } else {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self showOpenSettingsAlertWithMessage:NSLocalizedString(@"Photo library permission is required.", nil)];
-                    });
-                }
-            }];
-        } else {
-            [self showOpenSettingsAlertWithMessage:NSLocalizedString(@"Photo library permission is required.", nil)];
-        }
+    if (!_imagePickerHelper) {
+        _imagePickerHelper = [[SeafImagePickerHelper alloc] init];
+        _imagePickerHelper.delegate = self;
+        _imagePickerHelper.allowsMultipleSelection = YES;
+        _imagePickerHelper.mediaType = QBImagePickerMediaTypeImage;
+        _imagePickerHelper.maximumNumberOfSelection = 20;
     }
+    [_imagePickerHelper presentFromViewController:self barButtonItem:nil sourceView:nil];
 }
 
 - (void)presentDocumentPicker
@@ -656,38 +630,79 @@ static NSString * const kSeafBridgeHelperScript =
     [self presentViewController:picker animated:YES completion:nil];
 }
 
-#pragma mark - Picker delegates
+#pragma mark - SeafImagePickerHelperDelegate
 
-// PHPicker (iOS 14+)
-- (void)picker:(PHPickerViewController *)picker didFinishPicking:(NSArray<PHPickerResult *> *)results API_AVAILABLE(ios(14.0))
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingAssets:(NSArray<PHAsset *> *)assets
 {
-    [picker dismissViewControllerAnimated:YES completion:nil];
-    if (results.count == 0) return;
+    if (assets.count == 0) return;
 
     NSMutableArray<NSDictionary *> *items = [NSMutableArray array];
     NSObject *lock = [NSObject new];
     dispatch_group_t group = dispatch_group_create();
     NSUInteger order = 0;
-    for (PHPickerResult *r in results) {
+
+    PHImageRequestOptions *opts = [PHImageRequestOptions new];
+    opts.networkAccessAllowed = YES;
+    opts.version = PHImageRequestOptionsVersionCurrent;
+
+    for (PHAsset *asset in assets) {
         NSUInteger idx = order++;
-        NSItemProvider *provider = r.itemProvider;
         dispatch_group_enter(group);
-        // Prefer original data so we control HEIC->JPEG ourselves & avoid double re-encoding.
-        [self loadImageDataFromItemProvider:provider completion:^(NSData * _Nullable data, NSString * _Nullable suggestedName, NSString * _Nullable mime) {
-            if (data.length > 0 && mime.length > 0) {
-                NSString *fileName = suggestedName.length > 0 ? suggestedName : [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
-                @synchronized (lock) {
-                    [items addObject:@{ @"_order": @(idx),
-                                         @"data": data,
-                                         @"fileName": fileName,
-                                         @"mime": mime }];
+        [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation orientation, NSDictionary * _Nullable info) {
+            if (!imageData || imageData.length == 0) {
+                dispatch_group_leave(group);
+                return;
+            }
+            NSData *data = imageData;
+            NSString *mime = @"image/jpeg";
+            NSString *fileName = nil;
+
+            // Determine filename from asset resource
+            NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
+            for (PHAssetResource *res in resources) {
+                if (res.type == PHAssetResourceTypePhoto) {
+                    fileName = res.originalFilename;
+                    break;
                 }
+            }
+            if (!fileName) {
+                fileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
+            }
+
+            // HEIC/HEIF → JPEG transcoding for backend compatibility
+            NSString *ext = fileName.pathExtension.lowercaseString;
+            BOOL isHEIC = [ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]
+                       || [dataUTI isEqualToString:@"public.heic"] || [dataUTI isEqualToString:@"public.heif"];
+            if (isHEIC) {
+                UIImage *img = [UIImage imageWithData:data];
+                NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
+                if (jpeg.length > 0) {
+                    data = jpeg;
+                    mime = @"image/jpeg";
+                    fileName = [[fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+                }
+            } else if ([ext isEqualToString:@"png"]) {
+                mime = @"image/png";
+            } else if ([ext isEqualToString:@"webp"]) {
+                mime = @"image/webp";
+            } else if ([ext isEqualToString:@"gif"]) {
+                mime = @"image/gif";
+            } else {
+                // Default to JPEG for jpg/jpeg and unknown extensions
+                mime = @"image/jpeg";
+            }
+
+            @synchronized (lock) {
+                [items addObject:@{ @"_order": @(idx),
+                                     @"data": data,
+                                     @"fileName": fileName,
+                                     @"mime": mime }];
             }
             dispatch_group_leave(group);
         }];
     }
+
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
-        // Restore picker order
         NSArray *sorted = [items sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
             return [a[@"_order"] compare:b[@"_order"]];
         }];
@@ -705,7 +720,8 @@ static NSString * const kSeafBridgeHelperScript =
     });
 }
 
-// Legacy UIImagePickerController (camera + iOS 11-13 photo library)
+#pragma mark - Camera picker delegates (UIImagePickerController)
+
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info
 {
     [picker dismissViewControllerAnimated:YES completion:nil];
@@ -729,7 +745,8 @@ static NSString * const kSeafBridgeHelperScript =
     [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
-// UIDocumentPicker
+#pragma mark - Document picker delegates
+
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls
 {
     if (urls.count == 0) return;
@@ -762,88 +779,6 @@ static NSString * const kSeafBridgeHelperScript =
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller
 {
-}
-
-#pragma mark - Image item helpers
-
-// Load NSData + suggested name + mime from an NSItemProvider produced by PHPicker.
-// Strategy: try to load native bytes first (cheaper, no decode/re-encode). If the
-// item is HEIC/HEIF, transcode to JPEG so the seadoc server stores a portable format.
-- (void)loadImageDataFromItemProvider:(NSItemProvider *)provider
-                            completion:(void(^)(NSData * _Nullable data, NSString * _Nullable suggestedName, NSString * _Nullable mime))completion
-{
-    if (!provider || !completion) { if (completion) completion(nil, nil, nil); return; }
-    NSString *suggestedName = provider.suggestedName;
-    
-    // Find the best image type identifier among what the provider claims to provide.
-    NSArray<NSString *> *typeIDs = provider.registeredTypeIdentifiers ?: @[];
-    NSString *chosen = nil;
-    NSArray *preference = @[ @"public.jpeg", @"public.png", @"public.webp", @"public.heic", @"public.heif", @"public.image" ];
-    for (NSString *p in preference) {
-        if ([typeIDs containsObject:p]) { chosen = p; break; }
-    }
-    
-    void (^loadAsObject)(void) = ^{
-        if (![provider canLoadObjectOfClass:[UIImage class]]) {
-            completion(nil, suggestedName, nil);
-            return;
-        }
-        [provider loadObjectOfClass:[UIImage class] completionHandler:^(UIImage *image, NSError * _Nullable error) {
-            if (error || !image) { completion(nil, suggestedName, nil); return; }
-            NSData *jpeg = UIImageJPEGRepresentation(image, 0.92);
-            NSString *name = suggestedName.length > 0 ? [[suggestedName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"] : nil;
-            completion(jpeg, name, @"image/jpeg");
-        }];
-    };
-    
-    if (!chosen) {
-        loadAsObject();
-        return;
-    }
-    
-    [provider loadDataRepresentationForTypeIdentifier:chosen completionHandler:^(NSData * _Nullable data, NSError * _Nullable error) {
-        if (error || data.length == 0) {
-            loadAsObject();
-            return;
-        }
-        NSString *mime = [self mimeForTypeIdentifier:chosen];
-        // Transcode HEIC/HEIF to JPEG for backend compatibility.
-        if ([chosen isEqualToString:@"public.heic"] || [chosen isEqualToString:@"public.heif"]) {
-            UIImage *img = [UIImage imageWithData:data];
-            NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
-            if (jpeg.length > 0) {
-                NSString *name = suggestedName.length > 0 ? [[suggestedName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"] : nil;
-                completion(jpeg, name, @"image/jpeg");
-                return;
-            }
-        }
-        NSString *ext = [self extensionForTypeIdentifier:chosen] ?: @"jpg";
-        NSString *baseName = suggestedName.length > 0 ? suggestedName : [NSString stringWithFormat:@"IMG_%@", [[NSUUID UUID] UUIDString]];
-        NSString *finalName = ([baseName.pathExtension length] == 0)
-            ? [baseName stringByAppendingPathExtension:ext]
-            : baseName;
-        completion(data, finalName, mime);
-    }];
-}
-
-- (NSString *)mimeForTypeIdentifier:(NSString *)uti
-{
-    if ([uti isEqualToString:@"public.jpeg"]) return @"image/jpeg";
-    if ([uti isEqualToString:@"public.png"]) return @"image/png";
-    if ([uti isEqualToString:@"public.webp"]) return @"image/webp";
-    if ([uti isEqualToString:@"public.heic"]) return @"image/heic";
-    if ([uti isEqualToString:@"public.heif"]) return @"image/heif";
-    return @"image/jpeg";
-}
-
-- (NSString *)extensionForTypeIdentifier:(NSString *)uti
-{
-    if ([uti isEqualToString:@"public.jpeg"]) return @"jpg";
-    if ([uti isEqualToString:@"public.png"]) return @"png";
-    if ([uti isEqualToString:@"public.webp"]) return @"webp";
-    if ([uti isEqualToString:@"public.heic"]) return @"heic";
-    if ([uti isEqualToString:@"public.heif"]) return @"heif";
-    return nil;
 }
 
 - (NSString *)mimeTypeForURL:(NSURL *)url
