@@ -122,6 +122,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readonly) BOOL isCommunityServer;///< Indicates whether the server is running Seafile Community edition.
 @property (readonly) BOOL isAdvancedSearchEnabled;///< Indicates whether advanced search (file-search) is enabled on the server.
 @property (readonly) BOOL isActivityEnabled;///< Indicates whether activity tracking is enabled on the server.
+@property (readonly) BOOL isWikiEnabled;///< Indicates whether wiki feature is enabled on the server.
 @property (readonly) BOOL isNewActivitiesApiSupported;///< Indicates whether the new activities API is supported.
 @property (readonly) NSData* _Nullable clientIdentityKey;///< Client identity key for secure communications.
 

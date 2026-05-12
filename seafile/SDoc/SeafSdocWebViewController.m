@@ -2,6 +2,7 @@
 //  Seafile
 
 #import "SeafSdocWebViewController.h"
+#import "SeafWebViewBridge.h"
 #import "SeafSdocStylePopupViewController.h"
 #import "SeafSdocEditorToolbar.h"
 #import "SeafAppDelegate.h"
@@ -28,47 +29,6 @@
 #import <string.h>
 
 typedef void (^SeafJSCallback)(NSString * _Nullable data);
-
-static NSString * const kSeafBridgeShimScript =
-@"(function(){\n"
-"  var w=window;\n"
-"  if(!w.WebViewJavascriptBridge){\n"
-"    var _handlers={};\n"
-"    w.WebViewJavascriptBridge={\n"
-"      registerHandler:function(name,handler){ try{ _handlers[name]=handler; }catch(e){} },\n"
-"      callHandler:function(name,data,resp){ try{ if(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers[name]){ var payload=(typeof data==='string')?data:JSON.stringify(data||{}); w.webkit.messageHandlers[name].postMessage(payload); if(typeof resp==='function'){ resp(''); } } }catch(e){} },\n"
-"      _invoke:function(name,data){ try{ var h=_handlers[name]; if(typeof h==='function'){ h(data, function(res){ try{ if(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.callAndroidFunction){ w.webkit.messageHandlers.callAndroidFunction.postMessage(JSON.stringify({action:'N_N_N_N_Callback',data:res||''})); } }catch(e){} }); } }catch(e){} }\n"
-"    };\n"
-"  }\n"
-"})();";
-
-static NSString * const kSeafBridgeHelperScript =
-@"window.callAndroidFunction = window.callAndroidFunction || function(payload){ if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.callAndroidFunction){ window.webkit.messageHandlers.callAndroidFunction.postMessage(payload); } };";
-
-@interface SeafWeakScriptMessageHandler : NSObject<WKScriptMessageHandler>
-
-@property (nonatomic, weak) id<WKScriptMessageHandler> target;
-
-- (instancetype)initWithTarget:(id<WKScriptMessageHandler>)target;
-
-@end
-
-@implementation SeafWeakScriptMessageHandler
-
-- (instancetype)initWithTarget:(id<WKScriptMessageHandler>)target
-{
-    if (self = [super init]) {
-        _target = target;
-    }
-    return self;
-}
-
-- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
-{
-    [self.target userContentController:userContentController didReceiveScriptMessage:message];
-}
-
-@end
 
 @interface SeafSdocWebViewController () <SeafSdocStylePopupDelegate, SeafSdocEditorToolbarDelegate,
     UINavigationControllerDelegate, UIImagePickerControllerDelegate,
@@ -283,9 +243,8 @@ static NSString * const kSeafBridgeHelperScript =
 {
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
     WKUserContentController *uc = [[WKUserContentController alloc] init];
-    self.weakBridgeHandler = [[SeafWeakScriptMessageHandler alloc] initWithTarget:self];
-    [uc addScriptMessageHandler:self.weakBridgeHandler name:@"callAndroidFunction"];
-    [self injectBridgeScriptsIntoUserContentController:uc];
+    self.weakBridgeHandler = [uc seaf_addBridgeMessageHandlerWithTarget:self];
+    [uc seaf_injectBridgeScripts];
     config.userContentController = uc;
 
     self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
@@ -318,14 +277,7 @@ static NSString * const kSeafBridgeHelperScript =
     self.callbackQueue = [NSMutableArray array];
 }
 
-- (void)injectBridgeScriptsIntoUserContentController:(WKUserContentController *)controller
-{
-    NSArray<NSString *> *baseScripts = @[kSeafBridgeShimScript, kSeafBridgeHelperScript];
-    for (NSString *source in baseScripts) {
-        WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES];
-        [controller addUserScript:script];
-    }
-}
+
 
 - (void)updateWebViewBottomConstraintWithAnchor:(NSLayoutYAxisAnchor *)anchor constant:(CGFloat)constant
 {
@@ -1161,7 +1113,7 @@ static NSString * const kSeafBridgeHelperScript =
     [self stopEditTimeout];
     WKUserContentController *uc = self.webView.configuration.userContentController;
     if (uc) {
-        [uc removeScriptMessageHandlerForName:@"callAndroidFunction"];
+        [uc seaf_removeBridgeMessageHandler];
     }
 }
 

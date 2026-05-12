@@ -79,10 +79,12 @@
             [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_SETTINGS] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_ACTIVITY] popToRootViewControllerAnimated:NO];
+            [[self masterNavController:TABBED_WIKI] popToRootViewControllerAnimated:NO];
             self.fileVC.connection = conn;
             self.starredVC.connection = conn;
             self.settingVC.connection = conn;
             self.actvityVC.connection = conn;
+            self.wikiVC.connection = conn;
 
             // Clear web cookies for the target account host to avoid stale session after switching accounts
             NSString *host = [NSURL URLWithString:conn.address].host;
@@ -126,20 +128,11 @@
     if (self.window.rootViewController == self.tabbarController)
         return;
 
-    Debug("isActivityEnabled:%d tabbarController: %ld", conn.isActivityEnabled, (long)self.tabbarController.viewControllers.count);
+    Debug("isActivityEnabled:%d isWikiEnabled:%d tabbarController: %ld", conn.isActivityEnabled, conn.isWikiEnabled, (long)self.tabbarController.viewControllers.count);
     
-    // Adjust tab bar controller's tabs based on the account's features
-    if (conn.isActivityEnabled) {
-        if (self.tabbarController.viewControllers.count != TABBED_COUNT) {
-            [self.tabbarController setViewControllers:self.viewControllers];
-        }
-    } else {
-        if (self.tabbarController.viewControllers.count == TABBED_COUNT) {
-            NSMutableArray *vcs = [NSMutableArray arrayWithArray:[self.tabbarController viewControllers]];
-            [vcs removeObjectAtIndex:TABBED_ACTIVITY];
-            [self.tabbarController setViewControllers:vcs];
-        }
-    }
+    // Build visible tabs based on server features
+    [self updateTabsForConnection:conn];
+
     if (updated) {
         // Restart any unfinished tasks and default to the files tab.
         [SeafDataTaskManager.sharedObject startLastTimeUnfinshTaskWithConnection:conn];
@@ -149,6 +142,25 @@
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
     
+}
+
+/// Dynamically add/remove Wiki and Activity tabs based on server features.
+- (void)updateTabsForConnection:(SeafConnection *)conn
+{
+    NSMutableArray *vcs = [NSMutableArray arrayWithArray:self.viewControllers];
+    NSMutableArray *visible = [NSMutableArray new];
+    for (UIViewController *vc in vcs) {
+        // Always include Files, Starred, Settings
+        NSInteger idx = [vcs indexOfObject:vc];
+        if (idx == TABBED_SEAFILE || idx == TABBED_STARRED || idx == TABBED_SETTINGS) {
+            [visible addObject:vc];
+        } else if (idx == TABBED_WIKI && conn.isWikiEnabled) {
+            [visible addObject:vc];
+        } else if (idx == TABBED_ACTIVITY && conn.isActivityEnabled) {
+            [visible addObject:vc];
+        }
+    }
+    [self.tabbarController setViewControllers:visible];
 }
 
 // Exit current account and display the start (login) screen.
@@ -563,10 +575,15 @@
     } else {
         tabs = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"TABVC"];
     }
-    UIViewController *fileController = [tabs.viewControllers objectAtIndex:TABBED_SEAFILE];
-    UIViewController *starredController = [tabs.viewControllers objectAtIndex:TABBED_STARRED];
-    UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
-    UIViewController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
+    // Storyboard tab order: 0=Files, 1=Starred, 2=Activity, 3=Settings
+    UIViewController *fileController     = [tabs.viewControllers objectAtIndex:0];
+    UIViewController *starredController  = [tabs.viewControllers objectAtIndex:1];
+    UIViewController *activityController = [tabs.viewControllers objectAtIndex:2];
+    UIViewController *settingsController = [tabs.viewControllers objectAtIndex:3];
+
+    // Create Wiki tab programmatically (not in storyboard)
+    SeafWikiViewController *wikiVC = [[SeafWikiViewController alloc] init];
+    UINavigationController *wikiNav = [[UINavigationController alloc] initWithRootViewController:wikiVC];
 
     UITabBarItem *homeItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Libraries", @"Seafile") image:[UIImage imageNamed:@"tab-home.png"] tag:0];
     fileController.tabBarItem = homeItem;
@@ -574,19 +591,24 @@
     UITabBarItem *starItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Starred", @"Seafile") image:[UIImage imageNamed:@"tab-star.png"] tag:1];
     starredController.tabBarItem = starItem;
     
-    UITabBarItem *settingsItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Seafile") image:[UIImage imageNamed:@"tab-settings.png"] tag:2];
-    settingsController.tabBarItem = settingsItem;
+    UITabBarItem *wikiItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Wikis", @"Seafile") image:[UIImage imageNamed:@"icon_wikis"] tag:2];
+    wikiNav.tabBarItem = wikiItem;
     
     UITabBarItem *activityItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Activity", @"Seafile") image:[UIImage imageNamed:@"tab-modify.png"] tag:3];
     activityController.tabBarItem = activityItem;
+
+    UITabBarItem *settingsItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Seafile") image:[UIImage imageNamed:@"tab-settings.png"] tag:4];
+    settingsController.tabBarItem = settingsItem;
 
     if (IsIpad()) {
         ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)starredController).delegate = (id)[[((UISplitViewController *)starredController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)settingsController).delegate = (id)[[((UISplitViewController *)settingsController).viewControllers lastObject] topViewController];
     }
-    self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
+    // New tab order: Files, Starred, Wiki, Activity, Settings
+    self.viewControllers = @[fileController, starredController, wikiNav, activityController, settingsController];
     _tabbarController = tabs;
+    [_tabbarController setViewControllers:self.viewControllers];
     _tabbarController.navigationController.navigationBar.backgroundColor = [UIColor whiteColor];
     _tabbarController.delegate = self;
     if (ios7)
@@ -613,7 +635,8 @@
     if (!IsIpad())
         return [self.viewControllers objectAtIndex:index];
     else {
-        return (index == TABBED_ACTIVITY)? [self.viewControllers objectAtIndex:index] : [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
+        // Wiki and Activity tabs use plain UINavigationController (not UISplitViewController)
+        return (index == TABBED_ACTIVITY || index == TABBED_WIKI) ? [self.viewControllers objectAtIndex:index] : [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
     }
 }
 
@@ -648,6 +671,11 @@
 - (SeafActivityViewController *)actvityVC
 {
     return (SeafActivityViewController *)[[self.viewControllers objectAtIndex:TABBED_ACTIVITY] topViewController];
+}
+
+- (SeafWikiViewController *)wikiVC
+{
+    return (SeafWikiViewController *)[[self.viewControllers objectAtIndex:TABBED_WIKI] topViewController];
 }
 
 - (void)showDetailView:(UIViewController *) c

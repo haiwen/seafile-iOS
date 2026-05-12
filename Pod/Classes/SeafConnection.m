@@ -295,6 +295,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [self isFeatureEnabled:@"seafile-pro"];
 }
 
+- (BOOL)isWikiEnabled
+{
+    return [self isFeatureEnabled:@"wiki"];
+}
+
 - (BOOL)isNewActivitiesApiSupported {
     NSString *version = self.serverVersion;
     return version != nil && [version compare:@"7.0.0" options:NSNumericSearch] != NSOrderedAscending;
