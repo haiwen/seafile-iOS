@@ -125,13 +125,15 @@
 - (void)enterAccount:(SeafConnection *)conn
 {
     BOOL updated = [self selectAccount:conn];
-    if (self.window.rootViewController == self.tabbarController)
-        return;
 
     Debug("isActivityEnabled:%d isWikiEnabled:%d tabbarController: %ld", conn.isActivityEnabled, conn.isWikiEnabled, (long)self.tabbarController.viewControllers.count);
-    
-    // Build visible tabs based on server features
+
+    // Always update tabs based on the new connection's server features,
+    // even if we are already showing the tabbar (e.g. switching accounts).
     [self updateTabsForConnection:conn];
+
+    if (self.window.rootViewController == self.tabbarController)
+        return;
 
     if (updated) {
         // Restart any unfinished tasks and default to the files tab.
@@ -141,7 +143,6 @@
     // Make the tab bar controller the root view controller and display it.
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
-    
 }
 
 /// Dynamically add/remove Wiki and Activity tabs based on server features.
@@ -613,6 +614,16 @@
     _tabbarController.delegate = self;
     if (ios7)
         _tabbarController.view.backgroundColor = [UIColor colorWithRed:150.0f/255 green:150.0f/255 blue:150.0f/255 alpha:1];
+
+    // Ensure consistent tab bar appearance on iOS 15+.
+    // Without this, scrollEdgeAppearance defaults to transparent, causing the
+    // tab bar to flash white when Wiki/Activity content doesn't reach the bottom.
+    if (@available(iOS 15.0, *)) {
+        UITabBarAppearance *tabBarAppearance = [UITabBarAppearance new];
+        [tabBarAppearance configureWithDefaultBackground];
+        _tabbarController.tabBar.standardAppearance = tabBarAppearance;
+        _tabbarController.tabBar.scrollEdgeAppearance = tabBarAppearance;
+    }
 
 }
 

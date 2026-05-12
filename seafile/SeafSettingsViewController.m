@@ -565,7 +565,13 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    [self.tableView reloadData];
+    // Only reload when visible to avoid brief flash of Settings content
+    // (e.g. "Local Cache" cell) during tab layout recomposition triggered
+    // by setViewControllers: when switching accounts.
+    // viewDidAppear: → configureView will refresh the data when user navigates here.
+    if (self.isViewLoaded && self.view.window) {
+        [self.tableView reloadData];
+    }
     [self updateAccountInfo];
 }
 
