@@ -19,6 +19,7 @@
 #import "SeafImagePickerHelper.h"
 #import "SVProgressHUD.h"
 #import "Constants.h"
+#import "SeafLoadingView.h"
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <PhotosUI/PhotosUI.h>
@@ -114,6 +115,9 @@ static NSString * const kSeafBridgeHelperScript =
 @property (nonatomic, assign) BOOL isUploadingImages;
 @property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
 
+// Native loading overlay shown while WKWebView loads the SDoc page
+@property (nonatomic, strong) SeafLoadingView *loadingView;
+
 @end
 
 @implementation SeafSdocWebViewController
@@ -134,13 +138,16 @@ static NSString * const kSeafBridgeHelperScript =
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    NSLog(@"[SDOC-DEBUG] viewDidLoad: self.view.bounds=%@", NSStringFromCGRect(self.view.bounds));
     [self setupAppearance];
     [self configureNavigationItems];
     [self configureEditButton];
     [self setupWebView];
     [self setupBottomToolbar];
     [self setupEditorToolbar];
+    [self showNativeLoadingView];
     [self setupUserAgentAndLoad];
+    [self debugDumpAllActivityIndicators:@"viewDidLoad"];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -632,6 +639,70 @@ static NSString * const kSeafBridgeHelperScript =
 
 #pragma mark - SeafImagePickerHelperDelegate
 
+/// Shared image data processing: extract filename, transcode HEIC→JPEG, determine MIME,
+/// and append the result to the shared `items` array. Called from both iOS 13+ and pre-iOS 13
+/// PHImageManager callbacks to eliminate code duplication.
+- (void)processImageData:(NSData *)imageData
+                 dataUTI:(NSString *)dataUTI
+                   asset:(PHAsset *)asset
+                   index:(NSUInteger)idx
+                    lock:(NSObject *)lock
+                   items:(NSMutableArray<NSDictionary *> *)items
+                   group:(dispatch_group_t)group
+{
+    if (!imageData || imageData.length == 0) {
+        dispatch_group_leave(group);
+        return;
+    }
+
+    NSData *data = imageData;
+    NSString *mime = @"image/jpeg";
+    NSString *fileName = nil;
+
+    // Determine filename from asset resource
+    NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
+    for (PHAssetResource *res in resources) {
+        if (res.type == PHAssetResourceTypePhoto) {
+            fileName = res.originalFilename;
+            break;
+        }
+    }
+    if (!fileName) {
+        fileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
+    }
+
+    // HEIC/HEIF → JPEG transcoding for backend compatibility
+    NSString *ext = fileName.pathExtension.lowercaseString;
+    BOOL isHEIC = [ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]
+               || [dataUTI isEqualToString:@"public.heic"] || [dataUTI isEqualToString:@"public.heif"];
+    if (isHEIC) {
+        UIImage *img = [UIImage imageWithData:data];
+        NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
+        if (jpeg.length > 0) {
+            data = jpeg;
+            mime = @"image/jpeg";
+            fileName = [[fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+        }
+    } else if ([ext isEqualToString:@"png"]) {
+        mime = @"image/png";
+    } else if ([ext isEqualToString:@"webp"]) {
+        mime = @"image/webp";
+    } else if ([ext isEqualToString:@"gif"]) {
+        mime = @"image/gif";
+    } else {
+        // Default to JPEG for jpg/jpeg and unknown extensions
+        mime = @"image/jpeg";
+    }
+
+    @synchronized (lock) {
+        [items addObject:@{ @"_order": @(idx),
+                             @"data": data,
+                             @"fileName": fileName,
+                             @"mime": mime }];
+    }
+    dispatch_group_leave(group);
+}
+
 - (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingAssets:(NSArray<PHAsset *> *)assets
 {
     if (assets.count == 0) return;
@@ -648,58 +719,18 @@ static NSString * const kSeafBridgeHelperScript =
     for (PHAsset *asset in assets) {
         NSUInteger idx = order++;
         dispatch_group_enter(group);
-        [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation orientation, NSDictionary * _Nullable info) {
-            if (!imageData || imageData.length == 0) {
-                dispatch_group_leave(group);
-                return;
-            }
-            NSData *data = imageData;
-            NSString *mime = @"image/jpeg";
-            NSString *fileName = nil;
-
-            // Determine filename from asset resource
-            NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
-            for (PHAssetResource *res in resources) {
-                if (res.type == PHAssetResourceTypePhoto) {
-                    fileName = res.originalFilename;
-                    break;
-                }
-            }
-            if (!fileName) {
-                fileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
-            }
-
-            // HEIC/HEIF → JPEG transcoding for backend compatibility
-            NSString *ext = fileName.pathExtension.lowercaseString;
-            BOOL isHEIC = [ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]
-                       || [dataUTI isEqualToString:@"public.heic"] || [dataUTI isEqualToString:@"public.heif"];
-            if (isHEIC) {
-                UIImage *img = [UIImage imageWithData:data];
-                NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
-                if (jpeg.length > 0) {
-                    data = jpeg;
-                    mime = @"image/jpeg";
-                    fileName = [[fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
-                }
-            } else if ([ext isEqualToString:@"png"]) {
-                mime = @"image/png";
-            } else if ([ext isEqualToString:@"webp"]) {
-                mime = @"image/webp";
-            } else if ([ext isEqualToString:@"gif"]) {
-                mime = @"image/gif";
-            } else {
-                // Default to JPEG for jpg/jpeg and unknown extensions
-                mime = @"image/jpeg";
-            }
-
-            @synchronized (lock) {
-                [items addObject:@{ @"_order": @(idx),
-                                     @"data": data,
-                                     @"fileName": fileName,
-                                     @"mime": mime }];
-            }
-            dispatch_group_leave(group);
-        }];
+        if (@available(iOS 13.0, *)) {
+            [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation __unused orientation, NSDictionary * _Nullable info) {
+                [self processImageData:imageData dataUTI:dataUTI asset:asset index:idx lock:lock items:items group:group];
+            }];
+        } else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            [[PHImageManager defaultManager] requestImageDataForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation __unused orientation, NSDictionary * _Nullable info) {
+                [self processImageData:imageData dataUTI:dataUTI asset:asset index:idx lock:lock items:items group:group];
+            }];
+#pragma clang diagnostic pop
+        }
     }
 
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
@@ -974,7 +1005,7 @@ static NSString * const kSeafBridgeHelperScript =
         popover.sourceRect = sourceRect;
         popover.permittedArrowDirections = UIPopoverArrowDirectionAny;
         if (@available(iOS 13.0, *)) {
-            popover.backgroundColor = [UIColor systemBackgroundColor];
+            popover.backgroundColor = SeafColor_SystemBackground;
         }
         [self presentViewController:vc animated:YES completion:nil];
     } else {
@@ -1083,6 +1114,10 @@ static NSString * const kSeafBridgeHelperScript =
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
+    NSLog(@"[SDOC-DEBUG] viewDidLayoutSubviews: self.view.bounds=%@ webView.frame=%@ loadingView.frame=%@",
+          NSStringFromCGRect(self.view.bounds),
+          NSStringFromCGRect(self.webView.frame),
+          self.loadingView ? NSStringFromCGRect(self.loadingView.frame) : @"nil");
     if (!self.webView) return;
     UIEdgeInsets contentInset = UIEdgeInsetsZero;
     if (@available(iOS 11.0, *)) {
@@ -1627,6 +1662,7 @@ static NSString * const kSeafBridgeHelperScript =
 #pragma mark - WKNavigationDelegate
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
+    [self dismissNativeLoadingView];
     self.editItem.enabled = YES;
     [self readPageOptionsIfNeeded];
     NSString *initTitle = self.nextEditMode ? NSLocalizedString(@"Edit", nil) : NSLocalizedString(@"Done", nil);
@@ -1635,7 +1671,72 @@ static NSString * const kSeafBridgeHelperScript =
     [self updateEditButtonWithTitle:initTitle];
 }
 
-// removed empty delegate stubs: didFailNavigation / didFailProvisionalNavigation
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+    [self dismissNativeLoadingView];
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+    [self dismissNativeLoadingView];
+}
+
+#pragma mark - Native Loading View
+
+- (void)showNativeLoadingView
+{
+    if (self.loadingView) return;
+    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: self.view.bounds=%@", NSStringFromCGRect(self.view.bounds));
+    self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
+    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: loadingView.frame=%@ (after create)", NSStringFromCGRect(self.loadingView.frame));
+    [self.loadingView showInView:self.view];
+    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: loadingView.frame=%@ (after showInView)", NSStringFromCGRect(self.loadingView.frame));
+    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: self.view.subviews=%@", self.view.subviews);
+}
+
+- (void)dismissNativeLoadingView
+{
+    NSLog(@"[SDOC-DEBUG] dismissNativeLoadingView called, loadingView=%@", self.loadingView);
+    if (!self.loadingView) return;
+    [self.loadingView dismiss];
+    self.loadingView = nil;
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    NSLog(@"[SDOC-DEBUG] viewDidAppear: self.view.bounds=%@ loadingView.frame=%@",
+          NSStringFromCGRect(self.view.bounds),
+          self.loadingView ? NSStringFromCGRect(self.loadingView.frame) : @"nil");
+    [self debugDumpAllActivityIndicators:@"viewDidAppear"];
+}
+
+/// Recursively find all UIActivityIndicatorView in a view hierarchy
+- (void)debugDumpAllActivityIndicators:(NSString *)tag
+{
+    NSLog(@"[SDOC-DEBUG] === Dumping all UIActivityIndicatorView instances [%@] ===", tag);
+    [self debugEnumerateSubviews:self.view depth:0 tag:tag];
+    NSLog(@"[SDOC-DEBUG] === End dump [%@] ===", tag);
+}
+
+- (void)debugEnumerateSubviews:(UIView *)view depth:(int)depth tag:(NSString *)tag
+{
+    for (UIView *sub in view.subviews) {
+        if ([sub isKindOfClass:[UIActivityIndicatorView class]]) {
+            UIActivityIndicatorView *ind = (UIActivityIndicatorView *)sub;
+            // Convert to window coordinates for absolute position
+            CGPoint windowPos = [sub.superview convertPoint:sub.frame.origin toView:nil];
+            NSLog(@"[SDOC-DEBUG] [%@] Found UIActivityIndicatorView at depth=%d frame=%@ windowPos=(%@, %@) animating=%d superview=%@ superFrame=%@",
+                  tag, depth,
+                  NSStringFromCGRect(sub.frame),
+                  @(windowPos.x), @(windowPos.y),
+                  ind.isAnimating,
+                  NSStringFromClass([sub.superview class]),
+                  NSStringFromCGRect(sub.superview.frame));
+        }
+        [self debugEnumerateSubviews:sub depth:depth+1 tag:tag];
+    }
+}
 
 - (void)readOutlinesWithCompletion:(void(^)(NSArray<OutlineItemModel *> *items))completion
 {

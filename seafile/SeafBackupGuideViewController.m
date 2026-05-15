@@ -391,12 +391,54 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     UIImage *unselectedImage;
     UIImage *selectedImage;
 
-    if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
-        unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
-        selectedImage = [[UIImage systemImageNamed:@"checkmark.circle.fill"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+    if (@available(iOS 13.0, *)) {
+        if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
+            unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+            selectedImage = [[UIImage systemImageNamed:@"checkmark.circle.fill"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+        } else {
+            unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+            selectedImage = [[UIImage systemImageNamed:@"circle.inset.filled"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+        }
     } else {
-        unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
-        selectedImage = [[UIImage systemImageNamed:@"circle.inset.filled"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+        // Fallback for iOS 12: programmatically draw simple circle images
+        CGFloat size = 24.0;
+        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(size, size)];
+        unselectedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull ctx) {
+            [[UIColor grayColor] setStroke];
+            CGRect circleRect = CGRectInset(CGRectMake(0, 0, size, size), 1.5, 1.5);
+            [[UIBezierPath bezierPathWithOvalInRect:circleRect] stroke];
+        }];
+        if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
+            // Checkbox style: filled circle with checkmark
+            selectedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull ctx) {
+                [[UIColor orangeColor] setFill];
+                CGRect circleRect = CGRectInset(CGRectMake(0, 0, size, size), 1.5, 1.5);
+                [[UIBezierPath bezierPathWithOvalInRect:circleRect] fill];
+                // Draw a simple checkmark in white
+                [[UIColor whiteColor] setStroke];
+                UIBezierPath *check = [UIBezierPath bezierPath];
+                check.lineWidth = 2.0;
+                check.lineCapStyle = kCGLineCapRound;
+                check.lineJoinStyle = kCGLineJoinRound;
+                [check moveToPoint:CGPointMake(size * 0.28, size * 0.50)];
+                [check addLineToPoint:CGPointMake(size * 0.44, size * 0.66)];
+                [check addLineToPoint:CGPointMake(size * 0.72, size * 0.36)];
+                [check stroke];
+            }];
+        } else {
+            // Radio style: filled inner circle
+            selectedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull ctx) {
+                [[UIColor orangeColor] setStroke];
+                [[UIColor orangeColor] setFill];
+                CGRect outerRect = CGRectInset(CGRectMake(0, 0, size, size), 1.5, 1.5);
+                UIBezierPath *outer = [UIBezierPath bezierPathWithOvalInRect:outerRect];
+                outer.lineWidth = 1.5;
+                [outer stroke];
+                CGFloat inset = size * 0.3;
+                CGRect innerRect = CGRectInset(CGRectMake(0, 0, size, size), inset, inset);
+                [[UIBezierPath bezierPathWithOvalInRect:innerRect] fill];
+            }];
+        }
     }
     [button setImage:unselectedImage forState:UIControlStateNormal];
     [button setImage:selectedImage forState:UIControlStateSelected];

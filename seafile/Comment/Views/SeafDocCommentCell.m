@@ -146,12 +146,12 @@ static NSString *commentImageCacheDir()
 
         _nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _nameLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
-        _nameLabel.textColor = [UIColor labelColor];
+        _nameLabel.textColor = SeafColor_Label;
         [self.contentView addSubview:_nameLabel];
 
         _timeLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _timeLabel.font = [UIFont systemFontOfSize:12];
-        _timeLabel.textColor = [UIColor secondaryLabelColor];
+        _timeLabel.textColor = SeafColor_SecondaryLabel;
         [self.contentView addSubview:_timeLabel];
 
         _resolvedLabel = [[UILabel alloc] initWithFrame:CGRectZero];
@@ -189,7 +189,7 @@ static NSString *commentImageCacheDir()
             [_moreButton setTitle:@"⋮" forState:UIControlStateNormal];
             _moreButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightRegular];
             if (@available(iOS 13.0, *)) {
-                [_moreButton setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
+                [_moreButton setTitleColor:(SeafColor_Label) forState:UIControlStateNormal];
             } else {
                 [_moreButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             }

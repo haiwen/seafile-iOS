@@ -28,7 +28,13 @@
     self.thumbnailImageView.layer.masksToBounds = YES;
     [self.contentView addSubview:self.thumbnailImageView];
 
-    self.loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
+    UIActivityIndicatorViewStyle thumbStyle;
+    if (@available(iOS 13.0, *)) {
+        thumbStyle = UIActivityIndicatorViewStyleMedium;
+    } else {
+        thumbStyle = UIActivityIndicatorViewStyleGray;
+    }
+    self.loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:thumbStyle];
     self.loadingIndicator.hidesWhenStopped = YES;
     self.loadingIndicator.center = CGPointMake(self.contentView.bounds.size.width / 2, self.contentView.bounds.size.height / 2);
     self.loadingIndicator.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
