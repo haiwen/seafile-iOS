@@ -393,9 +393,9 @@ enum {
             self.rightItems = [NSArray arrayWithObjects:self.editItem,nil];
         }
 
-        _selectNoneItem = [[SeafEditNavRightItem alloc] initWithTitle:@"Select All" imageName:@"ic_checkbox_unchecked" target:self action:@selector(selectAll:)];
+        _selectNoneItem = [[SeafEditNavRightItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") imageName:@"ic_checkbox_unchecked" target:self action:@selector(selectAll:)];
         
-        _selectAllItem = [[SeafEditNavRightItem alloc] initWithTitle:@"Select All" imageName:@"ic_checkbox_checked" target:self action:@selector(selectNone:)];
+        _selectAllItem = [[SeafEditNavRightItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") imageName:@"ic_checkbox_checked" target:self action:@selector(selectNone:)];
         self.navigationItem.rightBarButtonItems = self.rightItems;
     });
 }

@@ -607,7 +607,9 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     }
 
     // Assign to player item. This replaces any existing external metadata we may have set earlier.
-    self.playerItem.externalMetadata = metadataItems;
+    if (@available(iOS 12.2, *)) {
+        self.playerItem.externalMetadata = metadataItems;
+    }
 
 }
 

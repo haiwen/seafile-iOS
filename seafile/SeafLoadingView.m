@@ -23,7 +23,13 @@
 }
 
 - (void)setupActivityIndicator {
-    self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+    UIActivityIndicatorViewStyle style;
+    if (@available(iOS 13.0, *)) {
+        style = UIActivityIndicatorViewStyleLarge;
+    } else {
+        style = UIActivityIndicatorViewStyleWhiteLarge;
+    }
+    self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:style];
     self.activityIndicator.color = [UIColor darkTextColor];
     self.activityIndicator.hidesWhenStopped = YES;
     [self addSubview:self.activityIndicator];

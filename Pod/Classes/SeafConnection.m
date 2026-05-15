@@ -139,6 +139,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 #endif
         //configuration.TLSMaximumSupportedProtocol = kTLSProtocol12;
         configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
+        // Inject a Seafile-specific User-Agent so all API requests are identifiable on the server side.
+        NSString *_appVer = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"unknown";
+        configuration.HTTPAdditionalHeaders = @{ @"User-Agent": [NSString stringWithFormat:@"Seafile iOS/%@", _appVer] };
         _sessionMgr = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:self.address] sessionConfiguration:configuration];
         _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
         
@@ -609,6 +612,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
+    // Inject a Seafile-specific User-Agent so login requests are identifiable on the server side.
+    NSString *_loginAppVer = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"unknown";
+    configuration.HTTPAdditionalHeaders = @{ @"User-Agent": [NSString stringWithFormat:@"Seafile iOS/%@", _loginAppVer] };
 
     AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
     [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {

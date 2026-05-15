@@ -160,7 +160,7 @@ static NSSet *SeafChipTypes(void)
 {
     [super viewDidLoad];
     if (@available(iOS 15.0, *)) {
-        self.view.backgroundColor = [UIColor systemBackgroundColor];
+        self.view.backgroundColor = SeafColor_SystemBackground;
     } else {
         // Dim background and host a bottom panel
         self.view.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
@@ -172,7 +172,7 @@ static NSSet *SeafChipTypes(void)
     } else {
         UIView *panel = [UIView new];
         panel.translatesAutoresizingMaskIntoConstraints = NO;
-        panel.backgroundColor = [UIColor systemBackgroundColor];
+        panel.backgroundColor = SeafColor_SystemBackground;
         panel.layer.cornerRadius = 12.0;
         panel.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
         panel.clipsToBounds = YES;

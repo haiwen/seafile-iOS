@@ -31,15 +31,15 @@ static UIImage *SeafDefaultAvatarImage(void)
     self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
     if (self) {
         self.selectionStyle = UITableViewCellSelectionStyleDefault;
-        self.backgroundColor = [UIColor systemBackgroundColor];
-        self.contentView.backgroundColor = [UIColor systemBackgroundColor];
+        self.backgroundColor = SeafColor_SystemBackground;
+        self.contentView.backgroundColor = SeafColor_SystemBackground;
         _avatarView = [[UIImageView alloc] initWithFrame:CGRectZero];
         _avatarView.clipsToBounds = YES;
         _avatarView.layer.cornerRadius = 18.0; // 36x36
         [self.contentView addSubview:_avatarView];
         self.textLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
         self.detailTextLabel.font = [UIFont systemFontOfSize:12];
-        self.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+        self.detailTextLabel.textColor = SeafColor_SecondaryLabel;
     }
     return self;
 }
@@ -120,7 +120,7 @@ static UIImage *SeafDefaultAvatarImage(void)
     if (self) {
         self.layer.cornerRadius = 12.0;
         self.layer.masksToBounds = NO;
-        self.backgroundColor = [UIColor systemBackgroundColor];
+        self.backgroundColor = SeafColor_SystemBackground;
         self.layer.shadowColor = [UIColor blackColor].CGColor;
         self.layer.shadowOpacity = 0.12;
         self.layer.shadowRadius = 8.0;

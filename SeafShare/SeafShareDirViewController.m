@@ -99,7 +99,7 @@
         UIImage *addFolderIcon = [[UIImage imageNamed:@"share_addFile"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         UIButton *addBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         [addBtn setImage:addFolderIcon forState:UIControlStateNormal];
-        addBtn.tintColor = [UIColor labelColor];
+        addBtn.tintColor = SeafColor_Label;
         // Use Auto Layout constraints to enforce size so it does not stretch
         addBtn.translatesAutoresizingMaskIntoConstraints = NO;
         [addBtn.widthAnchor constraintEqualToConstant:24].active = YES;
@@ -112,7 +112,7 @@
         UIButton *saveBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         [saveBtn setTitle:NSLocalizedString(@"OK", @"Seafile") forState:UIControlStateNormal];
         saveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
-        [saveBtn setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
+        [saveBtn setTitleColor:(SeafColor_Label) forState:UIControlStateNormal];
         saveBtn.translatesAutoresizingMaskIntoConstraints = NO;
         [saveBtn.widthAnchor constraintEqualToConstant:80].active = YES;
         [saveBtn.heightAnchor constraintEqualToConstant:50].active = YES;

@@ -107,7 +107,7 @@ static const CGFloat kBaseWidth = 414.0;
     [styleContainer addSubview:self.btnStyle];
     
     // Store constraint for dynamic adjustment
-    self.styleLeadingConstraint = [self.btnStyle.leadingAnchor constraintEqualToAnchor:styleContainer.leadingAnchor constant:16];
+    self.styleLeadingConstraint = [self.btnStyle.leadingAnchor constraintEqualToAnchor:styleContainer.leadingAnchor constant:10];
     [NSLayoutConstraint activateConstraints:@[
         self.styleLeadingConstraint,
         [self.btnStyle.centerYAnchor constraintEqualToAnchor:styleContainer.centerYAnchor],
@@ -123,7 +123,7 @@ static const CGFloat kBaseWidth = 414.0;
     [styleContainer addSubview:self.styleArrowView];
     
     // Store constraint for dynamic adjustment
-    self.arrowTrailingConstraint = [self.styleArrowView.trailingAnchor constraintEqualToAnchor:styleContainer.trailingAnchor constant:-15];
+    self.arrowTrailingConstraint = [self.styleArrowView.trailingAnchor constraintEqualToAnchor:styleContainer.trailingAnchor constant:-12];
     [NSLayoutConstraint activateConstraints:@[
         self.arrowTrailingConstraint,
         [self.styleArrowView.centerYAnchor constraintEqualToAnchor:styleContainer.centerYAnchor],
@@ -145,13 +145,14 @@ static const CGFloat kBaseWidth = 414.0;
     
     // Store constraint for dynamic adjustment
     self.styleContainerMinWidthConstraint = [styleContainer.widthAnchor constraintGreaterThanOrEqualToConstant:60.0];
+    self.styleContainerMinWidthConstraint.priority = UILayoutPriorityDefaultHigh; // Allow shrinking on narrow screens
     self.styleContainerMinWidthConstraint.active = YES;
     
     self.listStack = [self createGroupStack];
-    // Tuned margins/spacing to align separators and keep buttons evenly spaced.
-    self.listStack.layoutMargins = UIEdgeInsetsMake(0, 8, 0, 8);
+    // Tighter than undo/image groups so more width remains for the trailing keyboard column on narrow screens.
+    self.listStack.layoutMargins = UIEdgeInsetsMake(0, 2, 0, 2);
     self.listStack.layoutMarginsRelativeArrangement = YES;
-    self.listStack.spacing = 8.0;
+    self.listStack.spacing = 2.0;
     
     UIColor *selectedBgColor = [UIColor colorWithRed:0.933 green:0.886 blue:0.816 alpha:1.0];
     UIImage *selectedBgImg = [self createResizableRoundedImageWithColor:selectedBgColor cornerRadius:6.0 inset:6.0];
@@ -183,20 +184,10 @@ static const CGFloat kBaseWidth = 414.0;
     self.imageStack.layoutMarginsRelativeArrangement = YES;
     
     self.btnImage = [self createButtonWithImageName:@"local-image-nomal" action:@selector(onImageTapped:)];
-    UIImage *imageIcon = [UIImage imageNamed:@"local-image-nomal"];
-    if (!imageIcon) {
-        if (@available(iOS 13.0, *)) {
-            imageIcon = [UIImage systemImageNamed:@"photo.on.rectangle"];
-        }
-    }
-    if (imageIcon) {
-        UIImage *templateImg = [imageIcon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        [self.btnImage setImage:templateImg forState:UIControlStateNormal];
-        [self.btnImage setImage:templateImg forState:UIControlStateDisabled];
-    }
     [self.imageStack addArrangedSubview:self.btnImage];
     
     self.kbStack = [self createGroupStack];
+    // Symmetric margins to keep separator visually centered between image and keyboard icons.
     self.kbStack.layoutMargins = UIEdgeInsetsMake(0, 5, 0, 5);
     self.kbStack.layoutMarginsRelativeArrangement = YES;
     
@@ -210,7 +201,7 @@ static const CGFloat kBaseWidth = 414.0;
     [stack addArrangedSubview:self.listStack];
     [stack addArrangedSubview:[self createVerticalSeparatorWithOffset:0]];
     [stack addArrangedSubview:self.imageStack];
-    [stack addArrangedSubview:[self createVerticalSeparatorWithOffset:4]];
+    [stack addArrangedSubview:[self createVerticalSeparatorWithOffset:0]];
     [stack addArrangedSubview:self.kbStack];
     
     [self updateListSelectionTint];
@@ -220,7 +211,8 @@ static const CGFloat kBaseWidth = 414.0;
     [self.listStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [self.imageStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [styleContainer setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
-    [styleContainer setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    // styleContainer is the flexible element — let it compress before any button group.
+    [styleContainer setContentCompressionResistancePriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisHorizontal];
     
     [NSLayoutConstraint activateConstraints:@[
         [stack.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
@@ -251,22 +243,22 @@ static const CGFloat kBaseWidth = 414.0;
     self.undoRedoStack.layoutMargins = UIEdgeInsetsMake(0, 16 * scale, 0, 16 * scale);
     self.undoRedoStack.spacing = 5.0 * scale;
     
-    // listStack: base margins (8, 8), spacing 8
-    self.listStack.layoutMargins = UIEdgeInsetsMake(0, 8 * scale, 0, 8 * scale);
-    self.listStack.spacing = 8.0 * scale;
+    // listStack: base margins (2, 2), spacing 2
+    self.listStack.layoutMargins = UIEdgeInsetsMake(0, 2 * scale, 0, 2 * scale);
+    self.listStack.spacing = 2.0 * scale;
     
     // imageStack: base margins (5, 5)
     self.imageStack.layoutMargins = UIEdgeInsetsMake(0, 5 * scale, 0, 5 * scale);
     
-    // kbStack: base margins (5, 5)
+    // kbStack: base margins (5, 5) — symmetric with imageStack
     self.kbStack.layoutMargins = UIEdgeInsetsMake(0, 5 * scale, 0, 5 * scale);
     
     // Update constraints
-    self.styleLeadingConstraint.constant = 16 * scale;
-    self.arrowTrailingConstraint.constant = -15 * scale;
+    self.styleLeadingConstraint.constant = 10 * scale;
+    self.arrowTrailingConstraint.constant = -12 * scale;
     self.styleContainerMinWidthConstraint.constant = 60 * scale;
     
-    // Update button widths and imageEdgeInsets
+    // Update button widths and imageEdgeInsets (keyboard matches other toolbar icons)
     CGFloat buttonWidth = 40 * scale;
     CGFloat inset = 11 * scale;
     

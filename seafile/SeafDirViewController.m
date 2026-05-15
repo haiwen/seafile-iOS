@@ -207,11 +207,11 @@
     // Build compact header with no top padding
     NSString *text = [self repoGroupTitleForSection:section] ?: @"";
     UIView *header = [[UIView alloc] initWithFrame:CGRectZero];
-    header.backgroundColor = [UIColor systemBackgroundColor];
+    header.backgroundColor = SeafColor_SystemBackground;
     UILabel *label = [[UILabel alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = text;
-    label.textColor = [UIColor secondaryLabelColor];
+    label.textColor = SeafColor_SecondaryLabel;
     label.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
     [header addSubview:label];
     [NSLayoutConstraint activateConstraints:@[
@@ -324,18 +324,18 @@
     }
     CGFloat height = 48.0;
     UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.bounds.size.width, height)];
-    header.backgroundColor = [UIColor systemBackgroundColor];
+    header.backgroundColor = SeafColor_SystemBackground;
     header.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 
     UIImageView *icon = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"return"]];
     icon.translatesAutoresizingMaskIntoConstraints = NO;
-    icon.tintColor = [UIColor systemGrayColor];
+    icon.tintColor = SeafColor_SystemGray;
     [header addSubview:icon];
 
     UILabel *label = [[UILabel alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = NSLocalizedString(@"Return to previous level", @"Seafile");
-    label.textColor = [UIColor secondaryLabelColor];
+    label.textColor = SeafColor_SecondaryLabel;
     label.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     [header addSubview:label];
 

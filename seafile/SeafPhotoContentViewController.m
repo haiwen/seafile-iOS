@@ -1867,7 +1867,13 @@
     [self removeExistingLoadingIndicators];
     
     // Activity Indicator
-    self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+    UIActivityIndicatorViewStyle indicatorStyle;
+    if (@available(iOS 13.0, *)) {
+        indicatorStyle = UIActivityIndicatorViewStyleLarge;
+    } else {
+        indicatorStyle = UIActivityIndicatorViewStyleWhiteLarge;
+    }
+    self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:indicatorStyle];
     self.activityIndicator.hidesWhenStopped = YES;
     self.activityIndicator.center = self.view.center; // Center in the main view initially
     self.activityIndicator.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;

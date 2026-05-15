@@ -112,7 +112,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
 
     UIImageView *icon = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"return"]];
     icon.translatesAutoresizingMaskIntoConstraints = NO;
-    icon.tintColor = [UIColor systemGrayColor];
+    icon.tintColor = SeafColor_SystemGray;
     [self.fixedReturnHeaderView addSubview:icon];
 
     UILabel *label = [[UILabel alloc] init];
@@ -258,16 +258,16 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     if (self.fileNames.count == 1 && self.fileNames.firstObject.length > 0) {
         NSString *fileName = self.fileNames.firstObject;
         NSString *full = [NSString stringWithFormat:@"%@ %@", action, fileName];
-        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: UIColor.labelColor }];
+        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: SeafColor_Label }];
         NSRange nameRange = [full rangeOfString:fileName options:NSBackwardsSearch];
         if (nameRange.location != NSNotFound) {
             [attr addAttributes:@{ NSForegroundColorAttributeName: primary } range:nameRange];
         }
     } else if (self.fileNames.count > 1) {
         NSString *full = [NSString stringWithFormat:@"%@ %lu %@", action, (unsigned long)self.fileNames.count, NSLocalizedString(@"items", @"Seafile")];
-        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: UIColor.labelColor }];
+        attr = [[NSMutableAttributedString alloc] initWithString:full attributes:@{ NSForegroundColorAttributeName: SeafColor_Label }];
     } else {
-        attr = [[NSMutableAttributedString alloc] initWithString:action attributes:@{ NSForegroundColorAttributeName: UIColor.labelColor }];
+        attr = [[NSMutableAttributedString alloc] initWithString:action attributes:@{ NSForegroundColorAttributeName: SeafColor_Label }];
     }
 
     if (!self.titleLabel) {
@@ -473,7 +473,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     UIColor *primaryColor = BAR_COLOR_ORANGE ?: [UIColor systemOrangeColor];
     self.cancelButton = [self buildActionButtonWithTitle:NSLocalizedString(@"Cancel", @"Seafile")
                                               background:[UIColor whiteColor]
-                                              titleColor:[UIColor labelColor]
+                                              titleColor:(SeafColor_Label)
                                                 selector:@selector(onCancel:)];
     self.cancelButton.isAccessibilityElement = YES;
     self.cancelButton.accessibilityLabel = NSLocalizedString(@"Cancel", @"Seafile");
