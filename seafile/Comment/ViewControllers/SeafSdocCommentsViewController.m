@@ -75,11 +75,17 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor systemBackgroundColor];
+    self.view.backgroundColor = SeafColor_SystemBackground;
     _attachmentDeleteButtons = [NSMapTable strongToWeakObjectsMapTable];
 
     self.navigationItem.title = self.docDisplayName.length > 0 ? self.docDisplayName : NSLocalizedString(@"Comments", nil);
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemClose target:self action:@selector(onClose)];
+    UIBarButtonItem *closeItem;
+    if (@available(iOS 13.0, *)) {
+        closeItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemClose target:self action:@selector(onClose)];
+    } else {
+        closeItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(onClose)];
+    }
+    self.navigationItem.leftBarButtonItem = closeItem;
 
     _items = [NSMutableArray array];
     _service = [SeafDocsCommentService new];
@@ -152,8 +158,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
     // loading indicator
     if (!_loadingIndicator) {
-        UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleMedium;
-        if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium; else style = UIActivityIndicatorViewStyleGray;
+        UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleGray;
+        if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium;
         _loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:style];
         _loadingIndicator.hidesWhenStopped = YES;
         _loadingIndicator.translatesAutoresizingMaskIntoConstraints = NO;
@@ -265,7 +271,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         androidEmpty = NSLocalizedString(@"No comments", nil);
     }
     lab.text = androidEmpty;
-    lab.textColor = [UIColor labelColor];
+    lab.textColor = SeafColor_Label;
     lab.textAlignment = NSTextAlignmentCenter;
     lab.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     lab.numberOfLines = 0;
@@ -1269,7 +1275,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         attrs[NSFontAttributeName] = f;
     }
     if (!attrs[NSForegroundColorAttributeName]) {
-        UIColor *c = tv.textColor ?: ([UIColor respondsToSelector:@selector(labelColor)] ? [UIColor labelColor] : [UIColor blackColor]);
+        UIColor *c = tv.textColor ?: SeafColor_Label;
         attrs[NSForegroundColorAttributeName] = c;
     }
     // Current content: if not attributed, convert from plain with default attrs
@@ -1671,8 +1677,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     UIView *overlay = [[UIView alloc] initWithFrame:CGRectZero];
     overlay.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.3];
     overlay.userInteractionEnabled = NO;
-    UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleMedium;
-    if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium; else style = UIActivityIndicatorViewStyleWhite;
+    UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleWhite;
+    if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium;
     UIActivityIndicatorView *spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:style];
     if (@available(iOS 13.0, *)) {
         spinner.color = [UIColor whiteColor];

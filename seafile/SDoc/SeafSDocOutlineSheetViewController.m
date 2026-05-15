@@ -22,7 +22,7 @@
         label.translatesAutoresizingMaskIntoConstraints = NO;
         label.numberOfLines = 2;
         if (@available(iOS 13.0, *)) {
-            label.textColor = [UIColor labelColor];
+            label.textColor = SeafColor_Label;
         } else {
             label.textColor = [UIColor blackColor];
         }
@@ -99,7 +99,7 @@
 {
     [super viewDidLoad];
     if (@available(iOS 15.0, *)) {
-        self.view.backgroundColor = [UIColor systemBackgroundColor];
+        self.view.backgroundColor = SeafColor_SystemBackground;
         [self buildTableIntoView:self.view edgeInsets:UIEdgeInsetsZero];
     } else {
         [self buildCustomSheet];
@@ -124,7 +124,7 @@
     tv.estimatedRowHeight = 48;
     tv.rowHeight = UITableViewAutomaticDimension;
     if (@available(iOS 13.0, *)) {
-        tv.backgroundColor = [UIColor systemBackgroundColor];
+        tv.backgroundColor = SeafColor_SystemBackground;
     }
     [tv registerClass:[SeafSDocOutlineCell class] forCellReuseIdentifier:@"cell"];
     [host addSubview:tv];
@@ -316,7 +316,7 @@
         img.image = tipImage;
     } else if (@available(iOS 13.0, *)) {
         img.image = [UIImage systemImageNamed:@"tray"];
-        img.tintColor = [UIColor tertiaryLabelColor];
+        img.tintColor = SeafColor_TertiaryLabel;
     }
     img.contentMode = UIViewContentModeScaleAspectFit;
     img.translatesAutoresizingMaskIntoConstraints = NO;
@@ -328,7 +328,7 @@
     NSString *emptyText = NSLocalizedString(@"No data", nil);
     lab.text = emptyText;
     if (@available(iOS 13.0, *)) {
-        lab.textColor = [UIColor labelColor];
+        lab.textColor = SeafColor_Label;
     }
     lab.textAlignment = NSTextAlignmentCenter;
     lab.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];

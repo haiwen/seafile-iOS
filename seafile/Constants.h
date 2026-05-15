@@ -40,4 +40,35 @@
     blue:((float)(rgbValue & 0xFF))/255.0 \
     alpha:1.0]
 
+// ── iOS 13+ Dynamic Color Compatibility ──────────────────────────────────────
+// Uses a proper if (@available) guard that Clang recognises, avoiding
+// -Wunguarded-availability-new warnings from the ternary @available pattern.
 
+NS_INLINE UIColor * _Nonnull SeafDynamicColor(SEL dynamicSel, UIColor * _Nonnull fallback) {
+    if (@available(iOS 13.0, *)) {
+        UIColor *color = ((UIColor *(*)(id, SEL))[UIColor methodForSelector:dynamicSel])(UIColor.class, dynamicSel);
+        if (color) return color;
+    }
+    return fallback;
+}
+
+#define SeafColor_SystemBackground \
+    SeafDynamicColor(@selector(systemBackgroundColor), [UIColor whiteColor])
+
+#define SeafColor_SecondarySystemBackground \
+    SeafDynamicColor(@selector(secondarySystemBackgroundColor), [UIColor colorWithWhite:0.95 alpha:1])
+
+#define SeafColor_Label \
+    SeafDynamicColor(@selector(labelColor), [UIColor blackColor])
+
+#define SeafColor_SecondaryLabel \
+    SeafDynamicColor(@selector(secondaryLabelColor), [UIColor grayColor])
+
+#define SeafColor_TertiaryLabel \
+    SeafDynamicColor(@selector(tertiaryLabelColor), [UIColor lightGrayColor])
+
+#define SeafColor_Separator \
+    SeafDynamicColor(@selector(separatorColor), [UIColor lightGrayColor])
+
+#define SeafColor_SystemGray \
+    SeafDynamicColor(@selector(systemGrayColor), [UIColor grayColor])

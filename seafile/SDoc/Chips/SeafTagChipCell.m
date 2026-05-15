@@ -14,7 +14,7 @@
 - (instancetype)initWithFrame:(CGRect)frame
 {
     if (self = [super initWithFrame:frame]) {
-        self.contentView.backgroundColor = [UIColor systemGrayColor];
+        self.contentView.backgroundColor = SeafColor_SystemGray;
         self.contentView.layer.cornerRadius = 16;
         self.contentView.layer.masksToBounds = YES;
 
@@ -39,7 +39,7 @@
 {
     [super prepareForReuse];
     self.contentView.backgroundColor = [UIColor clearColor];
-    self.label.textColor = [UIColor secondaryLabelColor];
+    self.label.textColor = SeafColor_SecondaryLabel;
     self.label.text = @"";
     self.contentView.layer.borderWidth = 0;
     self.contentView.layer.borderColor = nil;

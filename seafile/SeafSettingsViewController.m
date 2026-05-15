@@ -622,11 +622,14 @@ enum {
         UIView *customAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 20)];
         
         // Create a chevron image view
-        UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"chevron.right"]];
-        if (chevronImageView.image == nil) {
-            // Fallback for older iOS versions
-            chevronImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"arrowright2"]];
+        UIImage *chevronImage = nil;
+        if (@available(iOS 13.0, *)) {
+            chevronImage = [UIImage systemImageNamed:@"chevron.right"];
         }
+        if (!chevronImage) {
+            chevronImage = [UIImage imageNamed:@"arrowright2"];
+        }
+        UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:chevronImage];
         
         // Set the frame to position it 5px to the left with smaller dimensions
         chevronImageView.frame = CGRectMake(-5, 2, 12, 16); // Reduced size from 15x20 to 12x16
