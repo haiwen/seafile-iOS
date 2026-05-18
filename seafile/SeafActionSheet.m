@@ -304,12 +304,6 @@ static BOOL disableCustomEasing = NO;
         height += spacing;
         button.frame = (CGRect){{spacing, height}, {width, button.bounds.size.height}};
         height += button.bounds.size.height;
-        
-        for (UIView *subview in button.subviews) {
-            if (subview.frame.size.height <= 0.5) {
-                [subview removeFromSuperview];
-            }
-        }
     }
 
     height += spacing;

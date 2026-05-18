@@ -149,6 +149,9 @@
         NSURLSessionConfiguration *cfg = [NSURLSessionConfiguration defaultSessionConfiguration];
         cfg.timeoutIntervalForRequest = 15.0;
         cfg.timeoutIntervalForResource = 30.0;
+        // Inject a Seafile-specific User-Agent so comment image requests are identifiable on the server side.
+        NSString *_commentAppVer = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"unknown";
+        cfg.HTTPAdditionalHeaders = @{ @"User-Agent": [NSString stringWithFormat:@"Seafile iOS/%@", _commentAppVer] };
         NSURLSession *session = [NSURLSession sessionWithConfiguration:cfg];
         dispatch_semaphore_t sema = dispatch_semaphore_create(0);
         __block UIImage *img = nil;
