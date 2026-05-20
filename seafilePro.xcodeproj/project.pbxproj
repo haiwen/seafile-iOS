@@ -46,6 +46,7 @@
 		5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
 		577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
 		57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57814AF71AA8B55000D1D5D8 /* Photos.framework */; };
+		57814AFA1AA8B55000D1D5D8 /* PhotosUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57814AF91AA8B55000D1D5D8 /* PhotosUI.framework */; };
 		57A029771A16F8AD009C9D7B /* SeafFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0296D1A16F8AD009C9D7B /* SeafFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A0297A1A16F8AD009C9D7B /* SeafFileProviderUI.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0295F1A16F8AC009C9D7B /* SeafFileProviderUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A029821A16F91F009C9D7B /* DocumentPickerViewController.m */; };
@@ -1160,6 +1161,7 @@
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
 		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SeafCell.m; sourceTree = "<group>"; };
 		57814AF71AA8B55000D1D5D8 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
+		57814AF91AA8B55000D1D5D8 /* PhotosUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PhotosUI.framework; path = System/Library/Frameworks/PhotosUI.framework; sourceTree = SDKROOT; };
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
 		57A0295F1A16F8AC009C9D7B /* SeafFileProviderUI.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafFileProviderUI.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1564,6 +1566,7 @@
 				F527AF3D22F881490057B59E /* WebKit.framework in Frameworks */,
 				57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */,
 				57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */,
+				57814AFA1AA8B55000D1D5D8 /* PhotosUI.framework in Frameworks */,
 				57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */,
 				5725186217AE7D010078CD12 /* Security.framework in Frameworks */,
 				57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */,
@@ -1863,6 +1866,7 @@
 				583F23C11E3E6EAC00F9FE07 /* Contacts.framework */,
 				57F143921B886B96009C1BC8 /* CoreLocation.framework */,
 				57814AF71AA8B55000D1D5D8 /* Photos.framework */,
+				57814AF91AA8B55000D1D5D8 /* PhotosUI.framework */,
 				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				57DB827715A833FA00097CEC /* CoreData.framework */,
 				57DB827515A833FA00097CEC /* CoreGraphics.framework */,

@@ -988,6 +988,47 @@
 
 
 
+- (void)applyProfileRowsFromAggregate:(SeafFileProfileAggregate *)agg requestedPath:(NSString *)requestedPath
+{
+    if (![self.filePath isEqualToString:requestedPath]) {
+        return;
+    }
+
+    NSArray *rows = [SeafSdocProfileAssembler buildRowsFromProfileAggregate:agg];
+    self.profileRows = rows;
+    if (self.infoVisible && rows.count > 0) {
+        [self.infoView renderProfileRows:rows];
+    } else {
+        [self.infoView hideProfileLoading];
+    }
+}
+
+- (void)loadProfileFallbackFileDetailWithService:(SeafSdocService *)service requestedPath:(NSString *)requestedPath
+{
+    __weak typeof(self) wself = self;
+    [service getFileDetailWithRepoId:self.repoId
+                                path:self.filePath
+                          completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
+        __strong typeof(wself) sself = wself;
+        if (!sself) return;
+        sself.isLoadingProfile = NO;
+
+        if (![sself.filePath isEqualToString:requestedPath]) {
+            return;
+        }
+
+        if (![resp isKindOfClass:[NSDictionary class]]) {
+            [sself.infoView hideProfileLoading];
+            return;
+        }
+
+        SeafFileProfileAggregate *agg = [SeafFileProfileAggregate new];
+        agg.fileDetail = resp;
+        agg.metadataConfig = @{};
+        [sself applyProfileRowsFromAggregate:agg requestedPath:requestedPath];
+    }];
+}
+
 // Lazy-load full metadata profile from aggregate API
 - (void)loadProfileDataIfNeeded {
     // Only load for SeafFile with valid connection/repo/path
@@ -1018,31 +1059,23 @@
     __weak typeof(self) wself = self;
     [service fetchFileProfileAggregateWithRepoId:self.repoId
                                             path:self.filePath
-                                      completion:^(id _Nullable agg, NSError * _Nullable error) {
+                                      completion:^(SeafFileProfileAggregate * _Nullable agg, NSError * _Nullable error) {
         __strong typeof(wself) sself = wself;
         if (!sself) return;
-        sself.isLoadingProfile = NO;
 
-        // VC may have been reused for a different file during the async fetch
         if (![sself.filePath isEqualToString:requestedPath]) {
+            sself.isLoadingProfile = NO;
             return;
         }
 
-        if (!agg) {
-            [sself.infoView hideProfileLoading];
+        if (agg) {
+            sself.isLoadingProfile = NO;
+            [sself applyProfileRowsFromAggregate:agg requestedPath:requestedPath];
             return;
         }
 
-        NSArray *rows = [SeafSdocProfileAssembler buildRowsFromProfileAggregate:agg];
-        // completion is already on main queue (dispatch_group_notify → main_queue)
-        sself.profileRows = rows;
-        if (sself.infoVisible && rows.count > 0) {
-            [sself.infoView renderProfileRows:rows];
-        } else {
-            // No rows or info not visible — just hide loading
-            [sself.infoView hideProfileLoading];
-        }
-
+        // Aggregate failed (e.g. file detail error) — fall back to file detail only
+        [sself loadProfileFallbackFileDetailWithService:service requestedPath:requestedPath];
     }];
 }
 
