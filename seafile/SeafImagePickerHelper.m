@@ -7,6 +7,7 @@
 #import "Constants.h"
 #import "Debug.h"
 #import <PhotosUI/PhotosUI.h>
+#import <PhotosUI/PHPhotoLibrary+PhotosUISupport.h>
 
 @interface SeafImagePickerHelper ()
 @property (nonatomic, weak) UIViewController *presentingVC;

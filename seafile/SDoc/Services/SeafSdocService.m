@@ -77,35 +77,37 @@
                                        path:(NSString *)path
                                  completion:(void(^)(SeafFileProfileAggregate * _Nullable agg, NSError * _Nullable error))completion
 {
-    // Serial queue to protect concurrent writes to __block variables from parallel callbacks
     dispatch_queue_t guardQueue = dispatch_queue_create("com.seafile.profileAggregate", DISPATCH_QUEUE_SERIAL);
 
     __block NSDictionary *detail = nil;
-    __block NSDictionary *meta = nil;
-    __block NSError *stage1Error = nil;
+    __block NSDictionary *meta = @{};
+    __block NSError *detailError = nil;
 
     dispatch_group_t g1 = dispatch_group_create();
 
     dispatch_group_enter(g1);
     [self getFileDetailWithRepoId:repoId path:path completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-        dispatch_sync(guardQueue, ^{
+        dispatch_async(guardQueue, ^{
             detail = resp;
-            if (error && !stage1Error) stage1Error = error;
+            if (error) detailError = error;
             dispatch_group_leave(g1);
         });
     }];
 
     dispatch_group_enter(g1);
     [self getMetadataWithRepoId:repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-        dispatch_sync(guardQueue, ^{
-            meta = resp ?: @{};
-            if (error && !stage1Error) stage1Error = error;
+        dispatch_async(guardQueue, ^{
+            // Metadata is optional: continue with empty config when the endpoint fails.
+            meta = error ? @{} : (resp ?: @{});
             dispatch_group_leave(g1);
         });
     }];
 
     dispatch_group_notify(g1, dispatch_get_main_queue(), ^{
-        if (stage1Error) { if (completion) completion(nil, stage1Error); return; }
+        if (![detail isKindOfClass:[NSDictionary class]]) {
+            if (completion) completion(nil, detailError);
+            return;
+        }
 
         SeafFileProfileAggregate *agg = [SeafFileProfileAggregate new];
         agg.fileDetail = detail;
@@ -124,7 +126,6 @@
         __block NSDictionary *tags = nil;
         __block NSError *stage2Error = nil;
 
-        // path split
         NSString *parentDir = @"/";
         NSString *name = path ?: @"";
         NSRange r = [path rangeOfString:@"/" options:NSBackwardsSearch];
@@ -139,7 +140,7 @@
         if (metaEnabled) {
             dispatch_group_enter(g2);
             [self getRecordsWithRepoId:repoId parentDir:parentDir name:name fileName:name completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-                dispatch_sync(guardQueue, ^{
+                dispatch_async(guardQueue, ^{
                     record = resp;
                     if (error && !stage2Error) stage2Error = error;
                     dispatch_group_leave(g2);
@@ -148,7 +149,7 @@
 
             dispatch_group_enter(g2);
             [self getRelatedUsersWithRepoId:repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-                dispatch_sync(guardQueue, ^{
+                dispatch_async(guardQueue, ^{
                     users = resp;
                     if (error && !stage2Error) stage2Error = error;
                     dispatch_group_leave(g2);
@@ -159,7 +160,7 @@
         if (tagsEnabled) {
             dispatch_group_enter(g2);
             [self getTagsWithRepoId:repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-                dispatch_sync(guardQueue, ^{
+                dispatch_async(guardQueue, ^{
                     tags = resp;
                     if (error && !stage2Error) stage2Error = error;
                     dispatch_group_leave(g2);
@@ -177,4 +178,3 @@
 }
 
 @end
-

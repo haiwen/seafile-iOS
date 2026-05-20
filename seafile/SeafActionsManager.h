@@ -56,7 +56,7 @@ enum {
 #define S_CLEAR_REPO_PASSWORD NSLocalizedString(@"Clear password", @"Seafile")
 #define S_SHARE_TO_WECHAT NSLocalizedString(@"Share to WeChat", "Seafile")
 #define S_SHARE NSLocalizedString(@"Share", "Seafile")
-#define S_PROFILE NSLocalizedString(@"Profile", @"Seafile")
+#define S_PROFILE NSLocalizedString(@"Properties", @"Seafile")
 
 NS_ASSUME_NONNULL_BEGIN
 

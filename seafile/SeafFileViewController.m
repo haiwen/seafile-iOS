@@ -3223,7 +3223,7 @@ enum {
     NSArray *secondRowTitles = @[
         NSLocalizedString(@"Move", @"Seafile"),
         NSLocalizedString(@"Delete", @"Seafile"),
-        NSLocalizedString(@"Profile", @"Seafile")
+        NSLocalizedString(@"Properties", @"Seafile")
     ];
     
     NSArray *secondRowIcons = @[

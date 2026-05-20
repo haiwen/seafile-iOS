@@ -138,7 +138,6 @@ static NSString * const kSeafBridgeHelperScript =
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    NSLog(@"[SDOC-DEBUG] viewDidLoad: self.view.bounds=%@", NSStringFromCGRect(self.view.bounds));
     [self setupAppearance];
     [self configureNavigationItems];
     [self configureEditButton];
@@ -147,7 +146,6 @@ static NSString * const kSeafBridgeHelperScript =
     [self setupEditorToolbar];
     [self showNativeLoadingView];
     [self setupUserAgentAndLoad];
-    [self debugDumpAllActivityIndicators:@"viewDidLoad"];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -1114,10 +1112,6 @@ static NSString * const kSeafBridgeHelperScript =
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
-    NSLog(@"[SDOC-DEBUG] viewDidLayoutSubviews: self.view.bounds=%@ webView.frame=%@ loadingView.frame=%@",
-          NSStringFromCGRect(self.view.bounds),
-          NSStringFromCGRect(self.webView.frame),
-          self.loadingView ? NSStringFromCGRect(self.loadingView.frame) : @"nil");
     if (!self.webView) return;
     UIEdgeInsets contentInset = UIEdgeInsetsZero;
     if (@available(iOS 11.0, *)) {
@@ -1686,56 +1680,15 @@ static NSString * const kSeafBridgeHelperScript =
 - (void)showNativeLoadingView
 {
     if (self.loadingView) return;
-    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: self.view.bounds=%@", NSStringFromCGRect(self.view.bounds));
     self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
-    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: loadingView.frame=%@ (after create)", NSStringFromCGRect(self.loadingView.frame));
     [self.loadingView showInView:self.view];
-    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: loadingView.frame=%@ (after showInView)", NSStringFromCGRect(self.loadingView.frame));
-    NSLog(@"[SDOC-DEBUG] showNativeLoadingView: self.view.subviews=%@", self.view.subviews);
 }
 
 - (void)dismissNativeLoadingView
 {
-    NSLog(@"[SDOC-DEBUG] dismissNativeLoadingView called, loadingView=%@", self.loadingView);
     if (!self.loadingView) return;
     [self.loadingView dismiss];
     self.loadingView = nil;
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-    NSLog(@"[SDOC-DEBUG] viewDidAppear: self.view.bounds=%@ loadingView.frame=%@",
-          NSStringFromCGRect(self.view.bounds),
-          self.loadingView ? NSStringFromCGRect(self.loadingView.frame) : @"nil");
-    [self debugDumpAllActivityIndicators:@"viewDidAppear"];
-}
-
-/// Recursively find all UIActivityIndicatorView in a view hierarchy
-- (void)debugDumpAllActivityIndicators:(NSString *)tag
-{
-    NSLog(@"[SDOC-DEBUG] === Dumping all UIActivityIndicatorView instances [%@] ===", tag);
-    [self debugEnumerateSubviews:self.view depth:0 tag:tag];
-    NSLog(@"[SDOC-DEBUG] === End dump [%@] ===", tag);
-}
-
-- (void)debugEnumerateSubviews:(UIView *)view depth:(int)depth tag:(NSString *)tag
-{
-    for (UIView *sub in view.subviews) {
-        if ([sub isKindOfClass:[UIActivityIndicatorView class]]) {
-            UIActivityIndicatorView *ind = (UIActivityIndicatorView *)sub;
-            // Convert to window coordinates for absolute position
-            CGPoint windowPos = [sub.superview convertPoint:sub.frame.origin toView:nil];
-            NSLog(@"[SDOC-DEBUG] [%@] Found UIActivityIndicatorView at depth=%d frame=%@ windowPos=(%@, %@) animating=%d superview=%@ superFrame=%@",
-                  tag, depth,
-                  NSStringFromCGRect(sub.frame),
-                  @(windowPos.x), @(windowPos.y),
-                  ind.isAnimating,
-                  NSStringFromClass([sub.superview class]),
-                  NSStringFromCGRect(sub.superview.frame));
-        }
-        [self debugEnumerateSubviews:sub depth:depth+1 tag:tag];
-    }
 }
 
 - (void)readOutlinesWithCompletion:(void(^)(NSArray<OutlineItemModel *> *items))completion
