@@ -15,7 +15,7 @@
     [super awakeFromNib];
     // Set text colors
     self.authorLabel.textColor = [UIColor blackColor];
-    self.desLabel.textColor = BAR_COLOR_ORANGE;
+    // desLabel color is now driven by NSAttributedString from the model
     self.timeLabel.textColor = [UIColor grayColor];
     self.repoNameLabel.textColor = BAR_COLOR_ORANGE;
     
@@ -24,7 +24,7 @@
     self.operationContainer.backgroundColor = [[UIColor lightGrayColor] colorWithAlphaComponent:0.2];
 }
 
-- (void)showWithImage:(NSURL *)imageURL author:(NSString *)author operation:(NSString *)operation time:(NSString *)time detail:(NSString *)detail repoName:(NSString *)repoName {
+- (void)showWithImage:(NSURL *)imageURL author:(NSString *)author operation:(NSString *)operation time:(NSString *)time attributedDetail:(NSAttributedString *)attributedDetail repoName:(NSString *)repoName {
     
     self.accountImageView.layer.cornerRadius = 20.0f;
     self.accountImageView.clipsToBounds = YES;
@@ -34,15 +34,18 @@
     self.repoNameLabel.text = repoName;
     self.authorLabel.text = author;
     self.timeLabel.text = time;
-    self.desLabel.text = detail;
+    self.desLabel.attributedText = attributedDetail;
     
     if (operation && operation.length > 0) {
-        self.operationContainer.hidden = false;
+        self.operationContainer.hidden = NO;
+        self.operationLabel.hidden = NO;
         self.operationContainer.layer.cornerRadius = 3.0;
-        self.operationContainer.layer.masksToBounds = true;
+        self.operationContainer.layer.masksToBounds = YES;
         self.operationLabel.text = operation;
     } else {
-        self.operationContainer.hidden = true;
+        self.operationContainer.hidden = YES;
+        self.operationLabel.hidden = YES;
+        self.operationLabel.text = @"";
     }
 }
 

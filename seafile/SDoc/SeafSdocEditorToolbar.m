@@ -493,7 +493,7 @@ static const CGFloat kBaseWidth = 414.0;
 - (void)updateListSelectionTint
 {
     UIColor *normalTint = [UIColor colorWithRed:0x67/255.0 green:0x67/255.0 blue:0x67/255.0 alpha:1.0];
-    UIColor *selectedTint = BAR_COLOR_ORANGE ?: [UIColor colorWithRed:240.0/256 green:128.0/256 blue:48.0/256 alpha:1.0];
+    UIColor *selectedTint = BAR_COLOR_ORANGE ?: [UIColor colorWithRed:240.0/255.0 green:128.0/255.0 blue:48.0/255.0 alpha:1.0];
     UIColor *disabledTint = [UIColor colorWithWhite:0.75 alpha:1.0];
     
     NSArray<UIButton *> *buttons = @[self.btnUnordered, self.btnOrdered, self.btnCheck];

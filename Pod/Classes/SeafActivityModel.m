@@ -27,44 +27,173 @@
             objType = @"draft";
         }
         
-        // Get the operation description from the opsMap
-        self.operation = [self getOpreationFromOpType:opType objType:objType opsMap:opsMap cleanUpTrashDays:[event objectForKey:@"days"]];
-        self.detail = [self getDetail:event opType:opType objType:objType];
+        // Parse batch operation fields (server >= 14.0)
+        self.count = [[event objectForKey:@"count"] integerValue];
+        id detailsObj = [event objectForKey:@"details"];
+        if ([detailsObj isKindOfClass:[NSArray class]]) {
+            self.details = detailsObj;
+        }
+        
+        // Get the operation description
+        self.operation = [self getOperationFromOpType:opType objType:objType cleanUpTrashDays:[event objectForKey:@"days"]];
+        self.attributedDetail = [self getAttributedDetail:event opType:opType objType:objType];
     }
     return self;
 }
 
-- (NSString *)getOpreationFromOpType:(NSString *)opType objType:(NSString *)objType opsMap:(NSDictionary *)opsMap cleanUpTrashDays:(NSString *)days {
-    NSString *operation;
-    if (opType && objType) {
-        NSString *opsKey = [NSString stringWithFormat:@"%@ %@", opType, objType];
-        operation = [opsMap objectForKey:opsKey];
-        //clean-up-trash operation
-        if ([opType isEqualToString:@"clean-up-trash"] && [days integerValue] > 0) {
-            operation = [NSString stringWithFormat:NSLocalizedString(@"Removed items older than %@ days from trash", @"Seafile"), days];
-        }
+- (NSString *)getOperationFromOpType:(NSString *)opType objType:(NSString *)objType cleanUpTrashDays:(NSString *)days {
+    if (!opType || !objType) {
+        return @"";
     }
-    return operation;
+
+    // Handle clean-up-trash operation first
+    if ([opType isEqualToString:@"clean-up-trash"]) {
+        if ([days integerValue] > 0) {
+            return [NSString stringWithFormat:NSLocalizedString(@"Removed items older than %@ days from trash", @"Seafile"), days];
+        }
+        return NSLocalizedString(@"Removed all items from trash", @"Seafile");
+    }
+
+    // Match Android's SystemSwitchUtils.obj_type() if-else structure
+    if ([objType isEqualToString:@"repo"]) {
+        if ([opType isEqualToString:@"create"]) {
+            return NSLocalizedString(@"Created library", @"Seafile");
+        } else if ([opType isEqualToString:@"rename"]) {
+            return NSLocalizedString(@"Renamed library", @"Seafile");
+        } else if ([opType isEqualToString:@"delete"]) {
+            return NSLocalizedString(@"Deleted library", @"Seafile");
+        } else if ([opType isEqualToString:@"restore"] || [opType isEqualToString:@"recover"]) {
+            return NSLocalizedString(@"Restored library", @"Seafile");
+        } else if ([opType isEqualToString:@"edit"]) {
+            return NSLocalizedString(@"Updated library", @"Seafile");
+        } else {
+            return @"";
+        }
+    } else if ([objType isEqualToString:@"dir"]) {
+        if ([opType isEqualToString:@"create"] || [opType isEqualToString:@"batch_create"]) {
+            if (self.count > 1) {
+                return [NSString stringWithFormat:NSLocalizedString(@"Created %ld folders", @"Seafile"), (long)self.count];
+            }
+            return NSLocalizedString(@"Created folder", @"Seafile");
+        } else if ([opType isEqualToString:@"rename"]) {
+            return NSLocalizedString(@"Renamed folder", @"Seafile");
+        } else if ([opType isEqualToString:@"delete"] || [opType isEqualToString:@"batch_delete"]) {
+            if (self.count > 1) {
+                return [NSString stringWithFormat:NSLocalizedString(@"Deleted %ld folders", @"Seafile"), (long)self.count];
+            }
+            return NSLocalizedString(@"Deleted folder", @"Seafile");
+        } else if ([opType isEqualToString:@"restore"] || [opType isEqualToString:@"recover"]) {
+            return NSLocalizedString(@"Restored folder", @"Seafile");
+        } else if ([opType isEqualToString:@"move"]) {
+            return NSLocalizedString(@"Moved folder", @"Seafile");
+        } else if ([opType isEqualToString:@"edit"]) {
+            return NSLocalizedString(@"Updated folder", @"Seafile");
+        } else {
+            return @"";
+        }
+    } else if ([objType isEqualToString:@"file"]) {
+        if ([opType isEqualToString:@"create"] || [opType isEqualToString:@"batch_create"]) {
+            if (self.count > 1) {
+                return [NSString stringWithFormat:NSLocalizedString(@"Created %ld files", @"Seafile"), (long)self.count];
+            }
+            return NSLocalizedString(@"Created file", @"Seafile");
+        } else if ([opType isEqualToString:@"rename"]) {
+            return NSLocalizedString(@"Renamed file", @"Seafile");
+        } else if ([opType isEqualToString:@"delete"] || [opType isEqualToString:@"batch_delete"]) {
+            if (self.count > 1) {
+                return [NSString stringWithFormat:NSLocalizedString(@"Deleted %ld files", @"Seafile"), (long)self.count];
+            }
+            return NSLocalizedString(@"Deleted file", @"Seafile");
+        } else if ([opType isEqualToString:@"restore"] || [opType isEqualToString:@"recover"]) {
+            return NSLocalizedString(@"Restored file", @"Seafile");
+        } else if ([opType isEqualToString:@"move"]) {
+            return NSLocalizedString(@"Moved file", @"Seafile");
+        } else if ([opType isEqualToString:@"update"] || [opType isEqualToString:@"edit"]) {
+            return NSLocalizedString(@"Updated file", @"Seafile");
+        } else {
+            return @"";
+        }
+    } else if ([objType isEqualToString:@"draft"]) {
+        if ([opType isEqualToString:@"create"]) {
+            return NSLocalizedString(@"Created draft", @"Seafile");
+        } else if ([opType isEqualToString:@"rename"]) {
+            return NSLocalizedString(@"Renamed draft", @"Seafile");
+        } else if ([opType isEqualToString:@"delete"]) {
+            return NSLocalizedString(@"Deleted draft", @"Seafile");
+        } else if ([opType isEqualToString:@"update"] || [opType isEqualToString:@"edit"]) {
+            return NSLocalizedString(@"Updated draft", @"Seafile");
+        } else if ([opType isEqualToString:@"publish"]) {
+            return NSLocalizedString(@"Publish draft", @"Seafile");
+        } else {
+            return @"";
+        }
+    } else if ([objType isEqualToString:@"files"]) {
+        if ([opType isEqualToString:@"create"]) {
+            return NSLocalizedString(@"Created files", @"Seafile");
+        } else {
+            return @"";
+        }
+    } else {
+        return @"";
+    }
 }
 
-- (NSString *)getDetail:(NSDictionary *)event opType:(NSString *)opType objType:(NSString *)objType {
-    NSString *detail = [event objectForKey:@"name"];
-    // Handle different types of operations to construct a detailed description
+/// Build attributed detail string with dynamic coloring, aligned with Android ActivityAdapter.onBindActivity.
+/// Colors: orange (BAR_COLOR_ORANGE) for active/clickable items, gray for deleted/secondary text.
+- (NSAttributedString *)getAttributedDetail:(NSDictionary *)event opType:(NSString *)opType objType:(NSString *)objType {
+    UIColor *orangeColor = [UIColor colorWithRed:240.0/255.0 green:128.0/255.0 blue:48.0/255.0 alpha:1.0];
+    UIColor *grayColor = [UIColor grayColor];
+    
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    
     if ([opType isEqualToString:@"rename"]) {
+        // rename: oldName (gray) + " => " (gray) + newName (orange)
+        NSString *oldName;
+        NSString *newName;
         if ([objType isEqualToString:@"file"]) {
-            detail = [NSString stringWithFormat:@"%@ => %@", [event objectForKey:@"old_name"], [event objectForKey:@"name"]];
+            oldName = [event objectForKey:@"old_name"] ?: @"";
+            newName = [event objectForKey:@"name"] ?: @"";
         } else {
             NSString *old_key = [NSString stringWithFormat:@"old_%@_name", objType];
             NSString *key = [NSString stringWithFormat:@"%@_name", objType];
-            detail = [NSString stringWithFormat:@"%@ => %@", [event objectForKey:old_key], [event objectForKey:key]];
+            oldName = [event objectForKey:old_key] ?: @"";
+            newName = [event objectForKey:key] ?: @"";
         }
-    } else if ([opType isEqualToString:@"move"]) {
-        detail = [NSString stringWithFormat:@"%@ => %@", [event objectForKey:@"old_path"], [event objectForKey:@"path"]];
-    } else if ([opType isEqualToString:@"clean-up-trash"]) {
-        detail = [event objectForKey:@"repo_name"];
+        [result appendAttributedString:[[NSAttributedString alloc] initWithString:oldName attributes:@{NSForegroundColorAttributeName: grayColor}]];
+        [result appendAttributedString:[[NSAttributedString alloc] initWithString:@" => " attributes:@{NSForegroundColorAttributeName: grayColor}]];
+        [result appendAttributedString:[[NSAttributedString alloc] initWithString:newName attributes:@{NSForegroundColorAttributeName: orangeColor}]];
+        return result;
     }
     
-    return detail;
+    // Determine the primary name text
+    NSString *name = [event objectForKey:@"name"] ?: @"";
+    if ([opType isEqualToString:@"move"]) {
+        name = [NSString stringWithFormat:@"%@ => %@", [event objectForKey:@"old_path"] ?: @"", [event objectForKey:@"path"] ?: @""];
+    } else if ([opType isEqualToString:@"clean-up-trash"]) {
+        name = [event objectForKey:@"repo_name"] ?: @"";
+    }
+    
+    // Determine name color based on op_type (aligned with Android)
+    BOOL isDelete = [opType isEqualToString:@"delete"] || [opType isEqualToString:@"batch_delete"];
+    UIColor *nameColor = isDelete ? grayColor : orangeColor;
+    
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:name attributes:@{NSForegroundColorAttributeName: nameColor}]];
+    
+    // Append batch suffix with gray color ("and X other files/folders")
+    if (self.details && self.details.count > 1) {
+        NSInteger otherCount = self.count - 1;
+        if (otherCount < 1) otherCount = 1;
+        NSString *otherStr;
+        if ([objType isEqualToString:@"dir"]) {
+            otherStr = [NSString stringWithFormat:NSLocalizedString(@"and %ld other folders", @"Seafile"), (long)otherCount];
+        } else {
+            otherStr = [NSString stringWithFormat:NSLocalizedString(@"and %ld other files", @"Seafile"), (long)otherCount];
+        }
+        [result appendAttributedString:[[NSAttributedString alloc] initWithString:@" " attributes:@{NSForegroundColorAttributeName: grayColor}]];
+        [result appendAttributedString:[[NSAttributedString alloc] initWithString:otherStr attributes:@{NSForegroundColorAttributeName: grayColor}]];
+    }
+    
+    return result;
 }
 
 @end

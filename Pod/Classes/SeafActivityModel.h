@@ -29,8 +29,16 @@ NS_ASSUME_NONNULL_BEGIN
 /// Name of the repository where the activity took place.
 @property (nonatomic, copy) NSString *repoName;
 
-/// Detailed string about the activity, could include file names or paths changed.
-@property (nonatomic, copy) NSString *detail;
+/// Attributed detail string with dynamic coloring aligned with Android ActivityAdapter.
+/// - Orange for create/update/edit file names; gray for delete file names.
+/// - "and X other files/folders" suffix is always gray.
+@property (nonatomic, copy) NSAttributedString *attributedDetail;
+
+/// Number of items in batch operations (server >= 14.0).
+@property (nonatomic, assign) NSInteger count;
+
+/// Detail list for batch operations (server >= 14.0).
+@property (nonatomic, strong, nullable) NSArray *details;
 
 /**
  * Initializes a SeafActivityModel with the JSON dictionary of the event and a map of operations.
