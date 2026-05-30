@@ -451,7 +451,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     }
     
     SeafActivityModel *event = [[SeafActivityModel alloc] initWithEventJSON:[_events objectAtIndex:indexPath.row] andOpsMap:self.opsMap];
-    [cell showWithImage:event.avatarURL author:event.authorName operation:event.operation time:event.time detail:event.detail repoName:event.repoName];
+    [cell showWithImage:event.avatarURL author:event.authorName operation:event.operation time:event.time attributedDetail:event.attributedDetail repoName:event.repoName];
     
     return cell;
 }
