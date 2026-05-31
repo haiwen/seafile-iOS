@@ -7,6 +7,7 @@
 
 #import "SeafActivityModel.h"
 #import "SeafDateFormatter.h"
+#import "Constants.h"
 
 @implementation SeafActivityModel
 
@@ -141,7 +142,6 @@
 /// Build attributed detail string with dynamic coloring, aligned with Android ActivityAdapter.onBindActivity.
 /// Colors: orange (BAR_COLOR_ORANGE) for active/clickable items, gray for deleted/secondary text.
 - (NSAttributedString *)getAttributedDetail:(NSDictionary *)event opType:(NSString *)opType objType:(NSString *)objType {
-    UIColor *orangeColor = [UIColor colorWithRed:240.0/255.0 green:128.0/255.0 blue:48.0/255.0 alpha:1.0];
     UIColor *grayColor = [UIColor grayColor];
     
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
@@ -161,7 +161,7 @@
         }
         [result appendAttributedString:[[NSAttributedString alloc] initWithString:oldName attributes:@{NSForegroundColorAttributeName: grayColor}]];
         [result appendAttributedString:[[NSAttributedString alloc] initWithString:@" => " attributes:@{NSForegroundColorAttributeName: grayColor}]];
-        [result appendAttributedString:[[NSAttributedString alloc] initWithString:newName attributes:@{NSForegroundColorAttributeName: orangeColor}]];
+        [result appendAttributedString:[[NSAttributedString alloc] initWithString:newName attributes:@{NSForegroundColorAttributeName: BAR_COLOR_ORANGE}]];
         return result;
     }
     
@@ -175,7 +175,7 @@
     
     // Determine name color based on op_type (aligned with Android)
     BOOL isDelete = [opType isEqualToString:@"delete"] || [opType isEqualToString:@"batch_delete"];
-    UIColor *nameColor = isDelete ? grayColor : orangeColor;
+    UIColor *nameColor = isDelete ? grayColor : BAR_COLOR_ORANGE;
     
     [result appendAttributedString:[[NSAttributedString alloc] initWithString:name attributes:@{NSForegroundColorAttributeName: nameColor}]];
     

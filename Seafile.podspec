@@ -18,6 +18,7 @@ Pod::Spec.new do |s|
 
   s.pod_target_xcconfig = {
     'LIBRARY_SEARCH_PATHS' => '$(inherited) $(PODS_ROOT)/OpenSSL-Universal/lib-ios/',
-    'OTHER_LDFLAGS' => '$(inherited) -lssl -lcrypto'
+    'OTHER_LDFLAGS' => '$(inherited) -lssl -lcrypto',
+    'HEADER_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/seafile"'
   }
 end
