@@ -154,14 +154,8 @@ static const CGFloat kBaseWidth = 414.0;
     self.listStack.layoutMarginsRelativeArrangement = YES;
     self.listStack.spacing = 2.0;
     
-    UIColor *selectedBgLight = [UIColor colorWithRed:0.933 green:0.886 blue:0.816 alpha:1.0];
-    UIColor *selectedBgColor = selectedBgLight;
-    if (@available(iOS 13.0, *)) {
-        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-            selectedBgColor = [[SeafTheme accentOrange] colorWithAlphaComponent:0.25];
-        }
-    }
-    UIImage *selectedBgImg = [self createResizableRoundedImageWithColor:selectedBgColor cornerRadius:6.0 inset:6.0];
+    UIColor *selectedBgColor = [UIColor colorWithRed:235.0/255.0 green:130.0/255.0 blue:5.0/255.0 alpha:0.15];
+    UIImage *selectedBgImg = [self createResizableRoundedImageWithColor:selectedBgColor cornerRadius:4.0 inset:8.0];
     
     self.btnUnordered = [self createButtonWithImageName:@"unordered list-nomal" action:@selector(onUnorderedTapped)];
     UIImage *unorderedImg = [[UIImage imageNamed:@"unordered list-nomal"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -499,7 +493,7 @@ static const CGFloat kBaseWidth = 414.0;
 - (void)updateListSelectionTint
 {
     UIColor *normalTint = [SeafTheme secondaryText];
-    UIColor *selectedTint = BAR_COLOR_ORANGE ?: [UIColor colorWithRed:240.0/256 green:128.0/256 blue:48.0/256 alpha:1.0];
+    UIColor *selectedTint = [UIColor colorWithRed:235.0/255.0 green:130.0/255.0 blue:5.0/255.0 alpha:1.0];
     UIColor *disabledTint = [SeafTheme tertiaryText];
     
     NSArray<UIButton *> *buttons = @[self.btnUnordered, self.btnOrdered, self.btnCheck];

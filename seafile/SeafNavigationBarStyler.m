@@ -26,7 +26,7 @@
         UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
         [appearance configureWithOpaqueBackground];
         appearance.backgroundColor = [SeafTheme primarySurface];
-        appearance.shadowColor = [SeafTheme separator];
+        appearance.shadowColor = [UIColor opaqueSeparatorColor];
         appearance.titleTextAttributes = titleAttributes;
         appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
 
@@ -39,7 +39,7 @@
         navigationController.navigationBar.translucent = NO;
         navigationController.navigationBar.tintColor = [SeafTheme primaryText];
 
-        navigationController.navigationBar.shadowImage = [self createSinglePixelImageWithColor:[SeafTheme separator]];
+        navigationController.navigationBar.shadowImage = [self createSinglePixelImageWithColor:[UIColor opaqueSeparatorColor]];
     }
 }
 

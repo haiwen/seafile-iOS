@@ -20,8 +20,8 @@
     self.timeLabel.textColor = [SeafTheme secondaryText];
     self.repoNameLabel.textColor = BAR_COLOR_ORANGE;
 
-    self.operationLabel.textColor = [SeafTheme secondaryText];
-    self.operationContainer.backgroundColor = [SeafTheme fill];
+    self.operationLabel.textColor = [SeafTheme operationText];
+    self.operationContainer.backgroundColor = [UIColor colorWithRed:238.0/255.0 green:238.0/255.0 blue:238.0/255.0 alpha:1.0];
 }
 
 - (void)showWithImage:(NSURL *)imageURL author:(NSString *)author operation:(NSString *)operation time:(NSString *)time attributedDetail:(NSAttributedString *)attributedDetail repoName:(NSString *)repoName {

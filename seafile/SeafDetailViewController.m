@@ -1069,6 +1069,8 @@ enum SHARE_STATUS {
     if (!_textView) {
         _textView = [[UITextView alloc] initWithFrame:self.view.frame];
         _textView.editable = false;
+        _textView.backgroundColor = [SeafTheme primarySurface];
+        _textView.textColor = [SeafTheme primaryText];
         _textView.contentInset =UIEdgeInsetsMake(6, 10, 6, 10);
         _textView.alwaysBounceVertical = YES;
     }
@@ -1086,7 +1088,10 @@ enum SHARE_STATUS {
 
 - (NSAttributedString *)attributedTextOfPreViewItem {
     NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithFileURL:self.preViewItem.previewItemURL options:@{NSDocumentTypeDocumentAttribute : NSPlainTextDocumentType} documentAttributes:nil error:nil];
-    [attributedText addAttributes:@{NSFontAttributeName : [UIFont systemFontOfSize:14.0]} range:NSMakeRange(0, attributedText.length)];
+    [attributedText addAttributes:@{
+        NSFontAttributeName : [UIFont systemFontOfSize:14.0],
+        NSForegroundColorAttributeName : [SeafTheme primaryText]
+    } range:NSMakeRange(0, attributedText.length)];
     return attributedText;
 }
 

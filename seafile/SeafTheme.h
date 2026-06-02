@@ -51,6 +51,8 @@ extern NSString * const kSeafThemePreferenceKey;
 + (UIColor *)secondaryText;
 + (UIColor *)tertiaryText;
 + (UIColor *)placeholderText;
++ (UIColor *)operationText;
++ (UIColor *)galleryOperationText;
 
 // Lines / fills
 + (UIColor *)separator;

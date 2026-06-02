@@ -21,6 +21,7 @@
 #import "SeafWechatHelper.h"
 #import "SeafCustomInputAlertViewController.h"
 #import "SeafTheme.h"
+#import "SeafTabBarStyler.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -316,6 +317,11 @@
 - (void)themePreferenceDidChange:(NSNotification *)notification
 {
     [SeafTheme applyPreferenceToWindow:self.window];
+    // Refresh tab bar appearance for the new theme
+    [SeafTabBarStyler applyStandardAppearanceToTabBar:_tabbarController.tabBar];
+    // Refresh SVProgressHUD colors
+    [SVProgressHUD setBackgroundColor:[SeafTheme secondarySurface]];
+    [SVProgressHUD setForegroundColor:[SeafTheme primaryText]];
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -340,14 +346,7 @@
     _global = [SeafGlobal sharedObject];
     [_global migrate];
     [self initTabController];
-    [[UITabBar appearance] setTintColor:BAR_COLOR_ORANGE];
-    if (@available(iOS 15.0, *)) {
-        UITabBarAppearance *tabAppearance = [UITabBarAppearance new];
-        [tabAppearance configureWithOpaqueBackground];
-        tabAppearance.backgroundColor = [SeafTheme primarySurface];
-        [UITabBar appearance].standardAppearance = tabAppearance;
-        [UITabBar appearance].scrollEdgeAppearance = tabAppearance;
-    }
+    [SeafTabBarStyler applyStandardAppearanceToTabBar:_tabbarController.tabBar];
     [SeafGlobal.sharedObject loadAccounts];
 
     self.window.backgroundColor = [SeafTheme primarySurface];
@@ -607,6 +606,7 @@
     }
     self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
     _tabbarController = tabs;
+    [SeafTabBarStyler applyStandardAppearanceToTabBar:_tabbarController.tabBar];
     _tabbarController.navigationController.navigationBar.backgroundColor = [SeafTheme primarySurface];
     _tabbarController.delegate = self;
     if (ios7)

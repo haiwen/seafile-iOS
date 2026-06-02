@@ -38,7 +38,12 @@
         _textView.layer.cornerRadius = 8.0;
         _textView.layer.borderColor = UIColor.clearColor.CGColor;
         _textView.layer.borderWidth = 0;
-        _textView.backgroundColor = [SeafTheme secondarySurface];
+        if (@available(iOS 13.0, *)) {
+            _textView.backgroundColor = [UIColor tertiarySystemGroupedBackgroundColor];
+        } else {
+            _textView.backgroundColor = [SeafTheme secondarySurface];
+        }
+        _textView.textColor = [SeafTheme primaryText];
         _textView.textContainerInset = UIEdgeInsetsMake(4, 8, 4, 8);
         _textView.tintColor = [UIColor colorWithRed:255.0/255.0 green:102.0/255.0 blue:0.0/255.0 alpha:1.0];
         _textView.delegate = self;

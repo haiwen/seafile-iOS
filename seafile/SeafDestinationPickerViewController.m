@@ -21,6 +21,7 @@
 #import "SVProgressHUD.h"
 #import "Debug.h"
 #import "SeafDateFormatter.h"
+#import "SeafNavigationBarStyler.h"
 
 typedef NS_ENUM(NSInteger, SeafDestSegment) {
     SeafDestSegmentCurrent = 0,
@@ -237,21 +238,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:plusBtn];
 
     // Make navigation bar opaque using the theme's primary surface
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-    if (@available(iOS 13.0, *)) {
-        UINavigationBarAppearance *navAp = [UINavigationBarAppearance new];
-        [navAp configureWithOpaqueBackground];
-        navAp.backgroundColor = [SeafTheme primarySurface];
-        self.navigationController.navigationBar.standardAppearance = navAp;
-        self.navigationController.navigationBar.scrollEdgeAppearance = navAp;
-    } else {
-        self.navigationController.navigationBar.barTintColor = [SeafTheme primarySurface];
-        self.navigationController.navigationBar.translucent = NO;
-    }
-#else
-    self.navigationController.navigationBar.barTintColor = [SeafTheme primarySurface];
-    self.navigationController.navigationBar.translucent = NO;
-#endif
+    [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
 }
 
 - (void)updateTitleView

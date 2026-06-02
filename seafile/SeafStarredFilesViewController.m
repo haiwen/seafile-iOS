@@ -19,6 +19,7 @@
 #import "SeafActionSheet.h"
 #import "SeafLoadingView.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -106,19 +107,14 @@
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
-    self.tableView.backgroundColor = [SeafTheme primarySurface];
-    self.view.backgroundColor = [SeafTheme primarySurface];
+    self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
+    self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil] forCellReuseIdentifier:@"SeafCell"];
     
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
+    [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [SeafTheme primarySurface];
-        
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-        
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
@@ -320,7 +316,7 @@
     UIColor *textColor;
     if (sfile.isDeleted){
         detailText = NSLocalizedString(@"Removed", @"Seafile");
-        textColor = UIColor.redColor;
+        textColor = UIColor.systemRedColor;
     } else {
         detailText = sfile.starredDetailText;
         textColor = Utils.cellDetailTextTextColor;
@@ -339,7 +335,7 @@
     UIColor *textColor;
     if (sDir.isDeleted){
         detailText = NSLocalizedString(@"Removed", @"Seafile");
-        textColor = UIColor.redColor;
+        textColor = UIColor.systemRedColor;
     } else {
         detailText = sDir.detailText;
         textColor = Utils.cellDetailTextTextColor;

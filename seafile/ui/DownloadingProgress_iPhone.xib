@@ -39,7 +39,7 @@
                             <fontDescription key="fontDescription" type="system" pointSize="16"/>
                             <color key="tintColor" systemColor="groupTableViewBackgroundColor"/>
                             <state key="normal" title="Cancel download">
-                                <color key="titleColor" red="0.3333333432674408" green="0.3333333432674408" blue="0.3333333432674408" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="titleColor" systemColor="secondaryLabelColor"/>
                             </state>
                         </button>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0%" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lBd-Zc-m0e">

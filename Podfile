@@ -15,7 +15,7 @@ target :"seafileApp" do
   # Pinned to a specific commit so locally-applied theming/localization
   # changes are not lost on `pod install`. Bump the SHA when picking up
   # new upstream commits from haiwen/QBImagePickerController.
-  pod 'QBImagePickerController', :git => 'https://github.com/haiwen/QBImagePickerController.git', :commit => '31b537e1a27027307886b7fc6a42253e6b1b711a'
+  pod 'QBImagePickerController', :git => 'https://github.com/haiwen/QBImagePickerController.git', :commit => '4a678e072d10304a6660cf721d99d558c07f0d4c'
   pod 'WechatOpenSDK', '~> 1.8.7.1'
   shared
 end

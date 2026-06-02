@@ -14,6 +14,7 @@
 #import "Utils.h"
 #import "Debug.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 
 
@@ -81,14 +82,10 @@
     self.navigationItem.leftBarButtonItems = litems;
     [[self textView] setText:_previewFile.strContent];
     [[self textView] setFont:[UIFont fontWithName:@"Courier" size:14.0]];
+    [[self textView] setBackgroundColor:[SeafTheme primarySurface]];
+    [[self textView] setTextColor:[SeafTheme primaryText]];
     
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [SeafTheme primarySurface];
-        
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-    }
+    [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
 }
 
 - (void)didReceiveMemoryWarning

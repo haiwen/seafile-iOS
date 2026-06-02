@@ -359,7 +359,7 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
         self.cancelButtonTopAnchorToEncryptSwitchConstraint, // Initially active
         [self.cancelButton.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding],
         [self.cancelButton.heightAnchor constraintEqualToConstant:buttonHeight],
-        [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.alertView.safeAreaLayoutGuide.bottomAnchor constant:-verticalPaddingToAlertBottom],
+        [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.alertView.bottomAnchor constant:-verticalPaddingToAlertBottom],
 
         [self.confirmButton.topAnchor constraintEqualToAnchor:self.cancelButton.topAnchor],
         [self.confirmButton.leadingAnchor constraintEqualToAnchor:self.cancelButton.trailingAnchor constant:buttonSpacing],
@@ -393,15 +393,40 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     CGRect keyboardFrame = [userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
     NSTimeInterval animationDuration = [userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     UIViewAnimationCurve animationCurve = [userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue];
-    CGFloat keyboardHeight = keyboardFrame.size.height;
     
-    self.alertViewBottomConstraint.constant = -keyboardHeight;
+    // Convert keyboard frame from screen coordinates to self.view's coordinate system.
+    // This is necessary because self.view may not extend to the screen bottom
+    // (e.g., when presented over a tab bar controller with UIModalPresentationOverCurrentContext).
+    CGRect keyboardFrameInView = [self.view convertRect:keyboardFrame fromView:nil];
+    CGFloat keyboardTopInView = keyboardFrameInView.origin.y;
+    CGFloat offsetFromViewBottom = self.view.bounds.size.height - keyboardTopInView;
+    
+    NSLog(@"[MkLib DEBUG] ========== keyboardWillShow ==========");
+    NSLog(@"[MkLib DEBUG] keyboardFrame (screen): %@", NSStringFromCGRect(keyboardFrame));
+    NSLog(@"[MkLib DEBUG] keyboardFrameInView: %@", NSStringFromCGRect(keyboardFrameInView));
+    NSLog(@"[MkLib DEBUG] self.view.bounds.size.height: %.1f", self.view.bounds.size.height);
+    NSLog(@"[MkLib DEBUG] keyboardTopInView: %.1f", keyboardTopInView);
+    NSLog(@"[MkLib DEBUG] offsetFromViewBottom: %.1f", offsetFromViewBottom);
+    NSLog(@"[MkLib DEBUG] alertViewBottomConstraint.constant before: %.1f", self.alertViewBottomConstraint.constant);
+    
+    self.alertViewBottomConstraint.constant = -offsetFromViewBottom;
+    
+    NSLog(@"[MkLib DEBUG] alertViewBottomConstraint.constant after: %.1f", self.alertViewBottomConstraint.constant);
     
     [UIView animateWithDuration:animationDuration delay:0.0 options:(animationCurve << 16) | UIViewAnimationOptionBeginFromCurrentState animations:^{
         self.alertView.alpha = 1.0;
         self.backgroundDimmingView.alpha = 1.0;
         [self.view layoutIfNeeded];
-    } completion:nil];
+    } completion:^(BOOL finished) {
+        NSLog(@"[MkLib DEBUG] ---- After layout (animation completed) ----");
+        NSLog(@"[MkLib DEBUG] alertView.frame: %@", NSStringFromCGRect(self.alertView.frame));
+        CGFloat alertViewBottomInScreen = CGRectGetMaxY([self.view convertRect:self.alertView.frame toView:nil]);
+        NSLog(@"[MkLib DEBUG] alertView bottom edge (in screen): %.1f", alertViewBottomInScreen);
+        NSLog(@"[MkLib DEBUG] keyboard top edge (in screen): %.1f", keyboardFrame.origin.y);
+        CGFloat gap = keyboardFrame.origin.y - alertViewBottomInScreen;
+        NSLog(@"[MkLib DEBUG] GAP between alertView bottom and keyboard top: %.1f", gap);
+        NSLog(@"[MkLib DEBUG] ==========================================");
+    }];
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {

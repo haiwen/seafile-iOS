@@ -21,6 +21,7 @@
 #import "SeafDataTaskManager.h"
 #import "SeafAccountTaskQueue.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 
 #define HTTP @"http://"
@@ -311,14 +312,8 @@
     [self.serverTextField setDelegate:self];
     
     // Setup navigation bar appearance for iOS 15 and later.
+    [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [SeafTheme primarySurface];
-        
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-    }
 }
 
 - (void)didReceiveMemoryWarning

@@ -271,7 +271,7 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
         [self.cancelButton.topAnchor constraintEqualToAnchor:self.inputTextField.bottomAnchor constant:buttonTopMargin],
         [self.cancelButton.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding],
         [self.cancelButton.heightAnchor constraintEqualToConstant:buttonHeight],
-        [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.alertView.safeAreaLayoutGuide.bottomAnchor constant:-verticalPadding], // Consider safe area for bottom buttons
+        [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.alertView.bottomAnchor constant:-verticalPadding], // Consider safe area for bottom buttons
     ]];
 
     [NSLayoutConstraint activateConstraints:@[ // confirmButton constraints
@@ -316,7 +316,10 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
             [self.view layoutIfNeeded];
         } completion:nil];
     } else {
-        self.alertViewBottomConstraint.constant = -keyboardFrame.size.height;
+        // keyboardFrame.size.height doesn't change after convertRect; use origin.y instead
+        // to get the actual overlap within self.view's coordinate system.
+        CGFloat keyboardOverlap = self.view.bounds.size.height - keyboardFrame.origin.y;
+        self.alertViewBottomConstraint.constant = -keyboardOverlap;
         [UIView animateWithDuration:animationDuration
                               delay:0.0
                             options:options

@@ -91,6 +91,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [SeafTheme applyPreferenceToViewController:self];
     self.tableView.rowHeight = 50;
     _clearall = false;
     [self refreshView];
