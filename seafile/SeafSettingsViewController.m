@@ -30,6 +30,7 @@
 #import "SeafBackupGuideViewController.h"
 #import "SeafRealmManager.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 #define CELL_PADDING_HORIZONTAL 10.0
 #define CELL_CORNER_RADIUS 10.0
@@ -98,7 +99,7 @@ enum {
 @property (weak, nonatomic) IBOutlet UITableViewCell *uploadingCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *downloadingCell;
 
-@property (strong, nonatomic) IBOutlet UILabel *logOutLabel;
+
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
 @property (strong, nonatomic) IBOutlet UILabel *wifiOnlyLabel;
 @property (strong, nonatomic) IBOutlet UILabel *videoSyncLabel;
@@ -417,7 +418,7 @@ enum {
 
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
     _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
-    _logOutLabel.text = NSLocalizedString(@"Log out", @"Seafile");
+
     _privacyPolicyLabel.text = NSLocalizedString(@"Privacy Policy", @"Seafile");
 
     self.title = NSLocalizedString(@"Settings", @"Seafile");
@@ -442,13 +443,8 @@ enum {
         [self updateSyncInfo];
     };
     
+    [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [SeafTheme primarySurface];
-
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
@@ -824,13 +820,7 @@ enum {
                 navController.navigationBar.barTintColor = [SeafTheme primarySurface];
                 navController.navigationBar.translucent = NO;
 
-                if (@available(iOS 15.0, *)) {
-                    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
-                    [appearance configureWithOpaqueBackground];
-                    appearance.backgroundColor = [SeafTheme primarySurface];
-                    navController.navigationBar.standardAppearance = appearance;
-                    navController.navigationBar.scrollEdgeAppearance = appearance;
-                }
+                [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:navController];
                 
                 // Present the new view controller after dismissing any existing one
                 dispatch_async(dispatch_get_main_queue(), ^ {

@@ -24,6 +24,7 @@
 #import "SeafVideoPlayerViewController.h"
 #import "SeafPhotoGalleryViewController.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 #import "SeafCacheManager.h"
 #import "SeafRealmManager.h"
 
@@ -68,21 +69,15 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60.0;
     self.tableView.tableFooterView = [UIView new];
-    self.tableView.backgroundColor = [SeafTheme primarySurface];
-    self.view.backgroundColor = [SeafTheme primarySurface];
+    self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
+    self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
     // Initialize loading view
     self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
     
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [SeafTheme primarySurface];
-        
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-    }
+    [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     
     // Initialize basic properties
     self.eventsMore = true;

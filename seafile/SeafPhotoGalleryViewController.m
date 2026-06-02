@@ -649,11 +649,14 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                                                                  viewController:self];
     self.navigationItem.titleView = titleLabel;
     
-    // Create back button using styling utility
-    UIColor *grayColor = [SeafTheme secondaryText];
-    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
-                                                                                       action:@selector(dismissGallery)
-                                                                                        color:grayColor];
+    // Create back button matching file list page style (UIButtonTypeSystem for auto dark mode adaptation)
+    UIButton *backBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    [backBtn setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
+    backBtn.frame = CGRectMake(0, 0, 30, 44);
+    backBtn.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
+    backBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    [backBtn addTarget:self action:@selector(dismissGallery) forControlEvents:UIControlEventTouchUpInside];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:backBtn];
     
     // Set up paging view and thumbnail strip
     [self setupPagingView];
@@ -1811,7 +1814,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                     btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
                     
                     // Set tintColor: gray (#666666) for all states (selected states differ by icon style, not color)
-                    btn.tintColor = [SeafTheme secondaryText];
+                    btn.tintColor = [SeafTheme galleryOperationText];
                 }
                 break;
             }
@@ -2471,7 +2474,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
             
             // Set tintColor: gray (#666666) for non-selected info icons
             if (!isInfoSelected) {
-                btn.tintColor = [SeafTheme secondaryText];
+                btn.tintColor = [SeafTheme galleryOperationText];
             }
             
             // Push the icon down slightly within the button's frame
@@ -2713,7 +2716,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                     
                     // Set tintColor: gray (#666666) for non-selected state
                     if (!selected) {
-                        btn.tintColor = [SeafTheme secondaryText];
+                        btn.tintColor = [SeafTheme galleryOperationText];
                     }
                 }
                 break;

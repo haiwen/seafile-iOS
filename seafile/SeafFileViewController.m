@@ -37,6 +37,7 @@
 #import <objc/runtime.h>
 #import "SVProgressHUD.h"
 #import "Debug.h"
+#import "SeafNavigationBarStyler.h"
 
 #import "SeafImagePickerHelper.h"
 #import <WechatOpenSDK/WXApi.h>
@@ -211,13 +212,9 @@ enum {
     self.tableView.tableFooterView = [UIView new];
     self.tableView.allowsMultipleSelection = NO;
 
+    [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+
     if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [SeafTheme primarySurface];
-
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
-
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
@@ -284,9 +281,10 @@ enum {
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
         // Update customToolView frame for orientation change if it exists
         if (self.customToolView) {
+            CGRect screenBounds = [UIScreen mainScreen].bounds;
             CGRect frame = self.customToolView.frame;
-            frame.size.width = size.width;
-            frame.origin.y = size.height - frame.size.height;
+            frame.size.width = screenBounds.size.width;
+            frame.origin.y = screenBounds.size.height - frame.size.height;
             self.customToolView.frame = frame;
             
             // Update child subviews to match the new width
@@ -1109,6 +1107,7 @@ enum {
         self.originalTitle = self.title;
         
         [self.navigationController.toolbar sizeToFit];
+        self.tabBarController.tabBar.hidden = YES;
         [self setupCustomTabTool];
         [self noneSelected:YES];
         [self.photoItem setEnabled:NO];
@@ -1124,6 +1123,7 @@ enum {
         // Remove custom toolbar
         [self dismissCustomTabTool:^{
             [self adjustContentInsetForCustomToolbar:NO];
+            self.tabBarController.tabBar.hidden = NO;
         }];
     }
 
@@ -1139,7 +1139,7 @@ enum {
     
     [UIView animateWithDuration:0.2 animations:^{
         CGRect frame = self.customToolView.frame;
-        frame.origin.y = self.view.bounds.size.height;
+        frame.origin.y = self.customToolView.superview.bounds.size.height;
         self.customToolView.frame = frame;
     } completion:^(BOOL finished) {
         [self.customToolView removeFromSuperview];
@@ -3030,7 +3030,7 @@ enum {
         if (@available(iOS 13.0, *)) {
             UITextField *searchField = _searchController.searchBar.searchTextField;
             searchField.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
-            searchField.backgroundColor = [SeafTheme primarySurface];
+            searchField.backgroundColor = [UIColor tertiarySystemGroupedBackgroundColor];
 
             // Add custom search icon to the left of the text field
             UIImage *searchIcon = [[UIImage imageNamed:@"fileNav_search"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -3054,13 +3054,7 @@ enum {
         
         // Configure custom appearance for search presentation
         if (@available(iOS 15.0, *)) {
-            UINavigationBarAppearance *searchBarAppearance = [[UINavigationBarAppearance alloc] init];
-            [searchBarAppearance configureWithOpaqueBackground];
-            searchBarAppearance.backgroundColor = [SeafTheme primarySurface];
-            
-            // Apply to navigation bar instead of search bar
-            self.navigationController.navigationBar.standardAppearance = searchBarAppearance;
-            self.navigationController.navigationBar.scrollEdgeAppearance = searchBarAppearance;
+            [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
             
             // For search bar, we can only set these properties
             if (@available(iOS 13.0, *)) {
@@ -3177,19 +3171,32 @@ enum {
         self.customToolView = nil;
     }
     
-    // Calculate custom view size and position
+    // Get key window first since the view will be added to it
+    UIWindow *keyWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        NSArray<UIWindowScene *> *scenes = UIApplication.sharedApplication.connectedScenes.allObjects;
+        for (UIWindowScene *scene in scenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                keyWindow = scene.windows.firstObject;
+                break;
+            }
+        }
+    } else {
+        keyWindow = UIApplication.sharedApplication.keyWindow;
+    }
+    
+    // Calculate custom view size and position using keyWindow coordinates
     CGFloat toolHeight = kCustomTabToolTotalHeight;
     
     CGFloat pureHomeIndicator = 0;
     if (@available(iOS 11.0, *)) {
-        UIWindow *window = UIApplication.sharedApplication.keyWindow;
-           pureHomeIndicator = window.safeAreaInsets.bottom;
+        pureHomeIndicator = keyWindow.safeAreaInsets.bottom;
     }
 
-    // Apply bottom padding parameters
+    // Use keyWindow bounds since the view is added to keyWindow
     CGRect frame = CGRectMake(0,
-                             self.view.bounds.size.height - toolHeight - pureHomeIndicator,
-                             self.view.bounds.size.width,
+                             keyWindow.bounds.size.height - toolHeight - pureHomeIndicator,
+                             keyWindow.bounds.size.width,
                              toolHeight + pureHomeIndicator);
     
     // Create custom view
@@ -3240,23 +3247,10 @@ enum {
         
     // Set initial position below screen
     CGRect initialFrame = customToolView.frame;
-    initialFrame.origin.y = self.view.bounds.size.height;
+    initialFrame.origin.y = keyWindow.bounds.size.height;
     customToolView.frame = initialFrame;
     
     // Add to key window to prevent scrolling with tableView
-    UIWindow *keyWindow = nil;
-    if (@available(iOS 13.0, *)) {
-        NSArray<UIWindowScene *> *scenes = UIApplication.sharedApplication.connectedScenes.allObjects;
-        for (UIWindowScene *scene in scenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                keyWindow = scene.windows.firstObject;
-                break;
-            }
-        }
-    } else {
-        keyWindow = UIApplication.sharedApplication.keyWindow;
-    }
-    
     [keyWindow addSubview:customToolView];
     
     // Store reference
@@ -3386,7 +3380,7 @@ enum {
     UIImageView *iconView = [buttonView viewWithTag:100];
     UILabel *titleLabel = [buttonView viewWithTag:101];
     
-    UIColor *color = enabled ? BAR_COLOR : BOTTOM_TOOL_VIEW_DISABLE_COLOR;
+    UIColor *color = enabled ? [SeafTheme galleryOperationText] : BOTTOM_TOOL_VIEW_DISABLE_COLOR;
     
     iconView.tintColor = color;
     titleLabel.textColor = color;

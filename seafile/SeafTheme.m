@@ -99,8 +99,14 @@ NSString * const kSeafThemePreferenceKey = @"SeafThemePreference";
 + (UIColor *)primaryBackgroundColor
 {
     UIColor *light = [UIColor colorWithRed:247.0/255.0 green:247.0/255.0 blue:247.0/255.0 alpha:1.0];
-    UIColor *dark  = [UIColor colorWithRed: 28.0/255.0 green: 28.0/255.0 blue: 30.0/255.0 alpha:1.0];
-    return [self dynamicColorWithLight:light dark:dark];
+    if (@available(iOS 13.0, *)) {
+        return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
+            return traits.userInterfaceStyle == UIUserInterfaceStyleDark
+                ? [UIColor systemGroupedBackgroundColor]
+                : light;
+        }];
+    }
+    return light;
 }
 
 + (UIColor *)barColor
@@ -143,7 +149,7 @@ NSString * const kSeafThemePreferenceKey = @"SeafThemePreference";
 
 + (UIColor *)primarySurface
 {
-    if (@available(iOS 13.0, *)) return [UIColor systemBackgroundColor];
+    if (@available(iOS 13.0, *)) return [UIColor secondarySystemGroupedBackgroundColor];
     return [UIColor whiteColor];
 }
 
@@ -190,6 +196,20 @@ NSString * const kSeafThemePreferenceKey = @"SeafThemePreference";
 {
     if (@available(iOS 13.0, *)) return [UIColor tertiaryLabelColor];
     return [UIColor lightGrayColor];
+}
+
++ (UIColor *)operationText
+{
+    UIColor *light = [UIColor colorWithRed:60.0/255.0 green:60.0/255.0 blue:60.0/255.0 alpha:0.6];
+    UIColor *dark  = [UIColor colorWithRed:60.0/255.0 green:60.0/255.0 blue:60.0/255.0 alpha:0.6];
+    return [self dynamicColorWithLight:light dark:dark];
+}
+
++ (UIColor *)galleryOperationText
+{
+    UIColor *light = [UIColor colorWithRed:60.0/255.0 green:60.0/255.0 blue:60.0/255.0 alpha:0.6];
+    UIColor *dark  = [UIColor colorWithRed:235.0/255.0 green:235.0/255.0 blue:245.0/255.0 alpha:0.6];
+    return [self dynamicColorWithLight:light dark:dark];
 }
 
 + (UIColor *)placeholderText

@@ -32,7 +32,7 @@
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
         _titleLabel.text = title;
-        _titleLabel.textColor = [SeafTheme primaryText];
+        _titleLabel.textColor = [SeafTheme secondaryText];
         _titleLabel.backgroundColor = [UIColor clearColor];
         _titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         [self addSubview:_titleLabel];

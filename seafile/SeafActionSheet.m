@@ -19,7 +19,7 @@
 #define kArrowHeight 8.0f
 
 #define kShadowRadius 5.0f
-#define kShadowOpacity 0.15f
+#define kShadowOpacity 0.3f
 
 #define kFixedWidth 200.0f
 #define kFixedWidthContinuous 200.0f
@@ -41,10 +41,17 @@
 @interface SeafSectionButton : UIButton
 
 @property (nonatomic, assign) NSUInteger row;
+@property (nonatomic, strong) UIColor *normalColor;
+@property (nonatomic, strong) UIColor *highlightColor;
 
 @end
 
 @implementation SeafSectionButton
+
+- (void)setHighlighted:(BOOL)highlighted {
+    [super setHighlighted:highlighted];
+    self.backgroundColor = highlighted ? self.highlightColor : self.normalColor;
+}
 
 @end
 
@@ -272,8 +279,9 @@ static BOOL disableCustomEasing = NO;
     [b setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
     [b setTitleEdgeInsets:titleInsets];
     [b addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
-    [b setBackgroundImage:[self pixelImageWithColor:[SeafTheme elevatedSurface]] forState:UIControlStateNormal];
-    [b setBackgroundImage:[self pixelImageWithColor:[SeafTheme fill]] forState:UIControlStateHighlighted];
+    b.normalColor = [SeafTheme elevatedSurface];
+    b.highlightColor = [SeafTheme fill];
+    b.backgroundColor = b.normalColor;
     
     // Configure adaptive font size
     b.titleLabel.adjustsFontSizeToFitWidth = YES;
@@ -304,16 +312,13 @@ static BOOL disableCustomEasing = NO;
 }
 
 - (CGRect)layoutForWidth:(CGFloat)width {
-    CGFloat spacing = 0;
     CGFloat height = 0.0f;
 
     for (UIButton *button in self.buttons) {
-        height += spacing;
-        button.frame = (CGRect){{spacing, height}, {width, button.bounds.size.height}};
+        button.frame = (CGRect){{0, height}, {width, button.bounds.size.height}};
         height += button.bounds.size.height;
     }
 
-    height += spacing;
     self.frame = (CGRect){CGPointZero, {width, height}};
     return self.frame;
 }
