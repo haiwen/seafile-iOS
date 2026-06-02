@@ -1,5 +1,6 @@
 #import "SeafPhotoInfoView.h"
 #import "Debug.h"
+#import "SDoc/Chips/SeafCollaboratorChipView.h"
 #import <ImageIO/ImageIO.h>
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "SeafTheme.h"
@@ -531,9 +532,10 @@ static const NSInteger kProfileLoadingTag = 997;
 
                     if ([type isEqualToString:@"collaborator"]) {
                         NSString *name = v[@"user_name"] ?: vText;
-                        UIFont *chipFont = [UIFont systemFontOfSize:13];
+                        UIFont *chipFont = [UIFont systemFontOfSize:15];
                         CGFloat nameW = ceil([name sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
-                        CGFloat chipW = 4 + 16 + 4 + nameW + 6;
+                        // Align with SeafCollaboratorChipView: left 4 + avatar 16 + spacing 4 + text + right 8
+                        CGFloat chipW = 4 + 16 + 4 + nameW + 8;
                         [chipWidths addObject:@(chipW)];
                     } else {
                         NSString *text = vText;
@@ -590,34 +592,10 @@ static const NSInteger kProfileLoadingTag = 997;
 
                     if ([type isEqualToString:@"collaborator"]) {
                         NSString *name = v[@"user_name"] ?: vText;
-                        UIFont *chipFont = [UIFont systemFontOfSize:13];
-                        CGFloat nameW = ceil([name sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
+                        NSString *avatarURL = v[@"avatar"] ?: @"";
 
-                        UIView *chip = [[UIView alloc] initWithFrame:CGRectMake(chipX, chipY, chipW, chipHeight)];
-                        chip.backgroundColor = [SeafTheme fill];
-                        chip.layer.cornerRadius = chipHeight / 2.0;
-                        chip.layer.masksToBounds = YES;
-
-                        // Avatar
-                        UIImageView *av = [[UIImageView alloc] initWithFrame:CGRectMake(3, 3, 16, 16)];
-                        av.contentMode = UIViewContentModeScaleAspectFill;
-                        av.layer.cornerRadius = 8;
-                        av.layer.masksToBounds = YES;
-                        av.backgroundColor = [UIColor lightGrayColor];
-                        NSString *avatarURL = v[@"avatar"];
-                        if (avatarURL && [avatarURL isKindOfClass:[NSString class]] && avatarURL.length > 0) {
-                            NSURL *url = [NSURL URLWithString:avatarURL];
-                            if (url) {
-                                [av sd_setImageWithURL:url placeholderImage:[UIImage imageNamed:@"account"]];
-                            }
-                        }
-                        [chip addSubview:av];
-
-                        UILabel *nl = [[UILabel alloc] initWithFrame:CGRectMake(4 + 16 + 4, 0, nameW, chipHeight)];
-                        nl.font = chipFont;
-                        nl.textColor = valueColor;
-                        nl.text = name;
-                        [chip addSubview:nl];
+                        SeafCollaboratorChipView *chip = [[SeafCollaboratorChipView alloc] initWithFrame:CGRectMake(chipX, chipY, chipW, chipHeight)];
+                        [chip configureWithName:name avatarURL:avatarURL];
 
                         [profileContainer addSubview:chip];
                     } else {
