@@ -2011,8 +2011,14 @@ enum {
                 return;
             }
 
+            SeafFileProfileAggregate *aggTyped = (SeafFileProfileAggregate *)agg;
+            BOOL metaEnabled = [aggTyped.metadataConfig[@"enabled"] boolValue];
             SeafSdocProfileSheetViewController *vc =
-                [[SeafSdocProfileSheetViewController alloc] initWithRows:rows];
+                [[SeafSdocProfileSheetViewController alloc] initWithRows:rows
+                                                             connection:file.connection
+                                                                 repoId:file.repoId
+                                                              aggregate:aggTyped
+                                                        metadataEnabled:metaEnabled];
             vc.modalPresentationStyle = UIModalPresentationPageSheet;
             if (@available(iOS 15.0, *)) {
                 UISheetPresentationController *sheet = vc.sheetPresentationController;

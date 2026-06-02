@@ -227,7 +227,7 @@
     
     // Set the delegate for the internal scroll view
     self.infoView.infoScrollView.delegate = self;
-    
+
     // Initially hidden
     self.infoView.hidden = YES;
 }
