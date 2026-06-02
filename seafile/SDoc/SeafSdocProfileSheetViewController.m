@@ -1,6 +1,9 @@
 //  SeafSdocProfileSheetViewController.m
 
 #import "SeafSdocProfileSheetViewController.h"
+#import "Editor/SeafSdocProfileEditorViewController.h"
+#import "Chips/SeafTagChipView.h"
+#import "Services/SeafSdocService.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -76,12 +79,11 @@
     }
 }
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    // Tag/chip height: 22px per design spec (mobile uses 22px, not same as PC)
-    CGFloat chipHeight = 22.0;
     // Avatar size: 16px per design spec
     CGFloat avatarSize = 16.0;
     
     if ([self.type isEqualToString:@"collaborator"]) {
+        CGFloat chipHeight = 22.0;
         NSDictionary *item = self.vals[indexPath.item];
         NSString *name = item[@"user_name"] ?: @"";
         UIFont *font = [UIFont systemFontOfSize:15];
@@ -92,19 +94,16 @@
     } else {
         NSDictionary *item = self.vals[indexPath.item];
         NSString *text = item[@"text"] ?: @"";
-        UIFont *font = [UIFont systemFontOfSize:15];
-        CGFloat textW = ceil([text sizeWithAttributes:@{NSFontAttributeName:font}].width);
-        CGFloat baseLeft = 10.0;
-        CGFloat baseRight = 10.0;
         if ([self.type isEqualToString:@"link"]) {
-            // Dot style padding: left 5 + dot (height-8) + right 4 + text + right padding
-            CGFloat dotSize = chipHeight - 8.0; // top/bottom 4px each
-            if (dotSize < 10.0) dotSize = 10.0;
-            CGFloat width = 5 + dotSize + 4 + textW + baseRight;
-            return CGSizeMake(MAX(28, width), chipHeight);
+            // Dot style: use shared SeafTagChipView sizing (height=26)
+            CGFloat width = [SeafTagChipView widthForText:text showRemove:NO];
+            return CGSizeMake(width, 26);
         } else {
-            CGFloat width = baseLeft + textW + baseRight;
-            return CGSizeMake(MAX(28, width), chipHeight);
+            // Filled style: multi-select options (height=22)
+            UIFont *font = [UIFont systemFontOfSize:15];
+            CGFloat textW = ceil([text sizeWithAttributes:@{NSFontAttributeName:font}].width);
+            CGFloat width = 10 + textW + 10;
+            return CGSizeMake(MAX(28, width), 22);
         }
     }
 }
@@ -140,14 +139,32 @@ static NSSet *SeafChipTypes(void)
 // < iOS 15 bottom-panel simulation
 @property (nonatomic, strong) UIView *panelView;
 @property (nonatomic, strong) NSLayoutConstraint *panelHeightConstraint;
+// Editing support
+@property (nonatomic, weak) SeafConnection *connection;
+@property (nonatomic, copy) NSString *repoId;
+@property (nonatomic, strong) SeafFileProfileAggregate *aggregate;
+@property (nonatomic, assign) BOOL metadataEnabled;
 @end
 
 @implementation SeafSdocProfileSheetViewController
 
 - (instancetype)initWithRows:(NSArray<NSDictionary *> *)rows
 {
+    return [self initWithRows:rows connection:nil repoId:nil aggregate:nil metadataEnabled:NO];
+}
+
+- (instancetype)initWithRows:(NSArray<NSDictionary *> *)rows
+                  connection:(SeafConnection *)connection
+                      repoId:(NSString *)repoId
+                   aggregate:(SeafFileProfileAggregate *)aggregate
+             metadataEnabled:(BOOL)metadataEnabled
+{
     if (self = [super init]) {
         _rows = rows ?: @[];
+        _connection = connection;
+        _repoId = repoId;
+        _aggregate = aggregate;
+        _metadataEnabled = metadataEnabled;
         self.modalPresentationStyle = UIModalPresentationPageSheet;
         _chipCollections = [NSMutableArray array];
         _chipHeightConstraints = [NSMutableArray array];
@@ -206,7 +223,7 @@ static NSSet *SeafChipTypes(void)
     [_scrollView addSubview:_stack];
 
     [NSLayoutConstraint activateConstraints:@[
-        [_scrollView.topAnchor constraintEqualToAnchor:host.topAnchor],
+        [_scrollView.topAnchor constraintEqualToAnchor:host.topAnchor constant:16],
         [_scrollView.bottomAnchor constraintEqualToAnchor:host.bottomAnchor],
         [_scrollView.leadingAnchor constraintEqualToAnchor:host.leadingAnchor],
         [_scrollView.trailingAnchor constraintEqualToAnchor:host.trailingAnchor],
@@ -218,13 +235,49 @@ static NSSet *SeafChipTypes(void)
         [_stack.widthAnchor constraintEqualToAnchor:_scrollView.frameLayoutGuide.widthAnchor constant:-40]
     ]];
 
-    // Top spacer to leave blank area between sheet top and content
-    UIView *topSpacer = [UIView new];
-    topSpacer.translatesAutoresizingMaskIntoConstraints = NO;
-    [topSpacer.heightAnchor constraintEqualToConstant:40.0].active = YES;
-    [_stack addArrangedSubview:topSpacer];
+    // Top area: "Properties" title on the left + optional Edit button on the right
+    UIView *topContainer = [UIView new];
+    topContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    [topContainer.heightAnchor constraintEqualToConstant:24.0].active = YES;
+    [_stack addArrangedSubview:topContainer];
+
+    // "Properties" title label (always visible, centered)
+    UILabel *titleLabel = [UILabel new];
+    titleLabel.text = NSLocalizedString(@"Properties", @"Seafile");
+    titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
+    titleLabel.textColor = [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0];
+    titleLabel.textAlignment = NSTextAlignmentCenter;
+    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    [topContainer addSubview:titleLabel];
+    [NSLayoutConstraint activateConstraints:@[
+        [titleLabel.centerXAnchor constraintEqualToAnchor:topContainer.centerXAnchor],
+        [titleLabel.centerYAnchor constraintEqualToAnchor:topContainer.centerYAnchor],
+    ]];
+
+    // Show Edit button only when metadata is enabled and we have connection/aggregate
+    if (self.metadataEnabled && self.connection && self.aggregate) {
+        UIButton *editBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+        [editBtn setTitle:NSLocalizedString(@"Edit", @"edit button") forState:UIControlStateNormal];
+        editBtn.tintColor = [UIColor colorWithRed:0xFF/255.0 green:0x98/255.0 blue:0x00/255.0 alpha:1.0];
+        editBtn.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
+        editBtn.translatesAutoresizingMaskIntoConstraints = NO;
+        [editBtn addTarget:self action:@selector(onEditTapped) forControlEvents:UIControlEventTouchUpInside];
+        editBtn.accessibilityIdentifier = @"profile_edit_button";
+        [topContainer addSubview:editBtn];
+        [NSLayoutConstraint activateConstraints:@[
+            [editBtn.trailingAnchor constraintEqualToAnchor:topContainer.trailingAnchor],
+            [editBtn.centerYAnchor constraintEqualToAnchor:topContainer.centerYAnchor],
+        ]];
+    }
 
     [self renderRows];
+
+    // Bottom spacer to leave blank area between content and sheet bottom (safe area)
+    UIView *bottomSpacer = [UIView new];
+    bottomSpacer.translatesAutoresizingMaskIntoConstraints = NO;
+    [bottomSpacer.heightAnchor constraintEqualToConstant:20.0].active = YES;
+    [_stack addArrangedSubview:bottomSpacer];
+
 
     // Pre-compute content height for dynamic sheet detent selection
     [self.view layoutIfNeeded];
@@ -354,6 +407,29 @@ static NSSet *SeafChipTypes(void)
         return NO;
     }
     return YES;
+}
+
+- (void)onEditTapped
+{
+    // Dismiss the profile sheet first, then present editor
+    __weak typeof(self) weakSelf = self;
+    [self dismissViewControllerAnimated:YES completion:^{
+        if (!weakSelf.connection || !weakSelf.aggregate || !weakSelf.repoId) return;
+        
+        SeafSdocProfileEditorViewController *editor = [[SeafSdocProfileEditorViewController alloc]
+                                                        initWithConnection:weakSelf.connection
+                                                                    repoId:weakSelf.repoId
+                                                                 aggregate:weakSelf.aggregate];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:editor];
+        nav.modalPresentationStyle = UIModalPresentationFullScreen;
+        
+        // Find the presenting VC to present the editor from
+        UIViewController *presenter = [UIApplication sharedApplication].keyWindow.rootViewController;
+        while (presenter.presentedViewController) {
+            presenter = presenter.presentedViewController;
+        }
+        [presenter presentViewController:nav animated:YES completion:nil];
+    }];
 }
 
 - (void)onBackgroundTapped
