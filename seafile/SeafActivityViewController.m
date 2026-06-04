@@ -243,7 +243,42 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
             if (page != 1) {
                 [marray addObjectsFromArray:self->_events];
             }
-            [marray addObjectsFromArray:arr];
+            
+            // Backfill event.time into each detail (aligned with Android ActivityViewModel.java:240-243)
+            // Server may return empty detail.time, so use the outer event.time as fallback.
+            // JSON dictionaries from NSJSONSerialization are immutable, so we make mutable copies.
+            NSMutableArray *processedArr = [NSMutableArray arrayWithCapacity:arr.count];
+            for (NSDictionary *event in arr) {
+                if (![event isKindOfClass:[NSDictionary class]]) {
+                    [processedArr addObject:event];
+                    continue;
+                }
+                NSMutableDictionary *mEvent = [event mutableCopy];
+                NSArray *details = mEvent[@"details"];
+                NSString *eventTime = mEvent[@"time"];
+                // JSON null arrives as NSNull, so verify the type before reading length
+                if (![eventTime isKindOfClass:[NSString class]]) {
+                    eventTime = nil;
+                }
+                if ([details isKindOfClass:[NSArray class]] && eventTime.length > 0) {
+                    NSMutableArray *mDetails = [NSMutableArray arrayWithCapacity:details.count];
+                    for (NSDictionary *detail in details) {
+                        if (![detail isKindOfClass:[NSDictionary class]]) {
+                            [mDetails addObject:detail];
+                            continue;
+                        }
+                        NSMutableDictionary *mDetail = [detail mutableCopy];
+                        NSString *detailTime = mDetail[@"time"];
+                        if (![detailTime isKindOfClass:[NSString class]] || detailTime.length == 0) {
+                            mDetail[@"time"] = eventTime;
+                        }
+                        [mDetails addObject:mDetail];
+                    }
+                    mEvent[@"details"] = mDetails;
+                }
+                [processedArr addObject:mEvent];
+            }
+            [marray addObjectsFromArray:processedArr];
             
             BOOL hasMore = arr.count >= 25;  // Check if there's likely more data based on page size
             
@@ -546,11 +581,29 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     NSString *etype = [event objectForKey:@"etype"];
     if ([_connection isNewActivitiesApiSupported]) {
         NSString *name = [event objectForKey:@"name"];
+        // JSON null arrives as NSNull; normalize so containsString:/toast formatting stay safe
+        if (![name isKindOfClass:[NSString class]]) {
+            name = @"";
+        }
         NSString *op_type = [event objectForKey:@"op_type"];
         NSString *obj_type = [event objectForKey:@"obj_type"];
         if ([obj_type containsString:@"draft"] && [op_type isEqualToString:@"publish"]) {
             return [self openFile:[event valueForKey:@"path"] inRepo:[event valueForKey:@"repo_id"]];
-        } else if ([op_type isEqualToString:@"delete"] || [op_type isEqualToString:@"clean-up-trash"] || [name containsString:@"(draft).md"]) {
+        } else if ([op_type isEqualToString:@"batch_create"] || [op_type isEqualToString:@"batch_delete"]) {
+            // Show batch detail dialog aligned with Android's showBatchDialog
+            [self showBatchDetailDialog:event fromCell:[tableView cellForRowAtIndexPath:indexPath]];
+            return;
+        } else if ([op_type isEqualToString:@"delete"]) {
+            // Show delete feedback aligned with Android's checkAndOpen
+            if ([obj_type isEqualToString:@"repo"]) {
+                [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"The library has been deleted", @"Seafile")];
+            } else if ([obj_type isEqualToString:@"dir"]) {
+                [SVProgressHUD showInfoWithStatus:[NSString stringWithFormat:NSLocalizedString(@"The folder \"%@\" has been deleted", @"Seafile"), name]];
+            } else if ([obj_type isEqualToString:@"file"]) {
+                [SVProgressHUD showInfoWithStatus:[NSString stringWithFormat:NSLocalizedString(@"The file \"%@\" has been deleted", @"Seafile"), name]];
+            }
+            return;
+        } else if ([op_type isEqualToString:@"clean-up-trash"] || [name containsString:@"(draft).md"]) {
             return;
         }
     }
@@ -728,6 +781,77 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     [detailvc setPreViewItem:sfile master:nil];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate showDetailView:detailvc];
+}
+
+#pragma mark - Batch Detail Dialog (aligned with Android ActivityOtherListDialog)
+- (void)showBatchDetailDialog:(NSDictionary *)event fromCell:(UITableViewCell *)cell {
+    NSString *op_type = [event objectForKey:@"op_type"];
+    NSString *obj_type = [event objectForKey:@"obj_type"];
+    NSString *repoId = [event objectForKey:@"repo_id"];
+    NSArray *details = [event objectForKey:@"details"];
+
+    if (![details isKindOfClass:[NSArray class]] || details.count == 0) {
+        return;
+    }
+
+    NSString *title = NSLocalizedString(@"Batch details", @"Seafile");
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+
+    BOOL isBatchDelete = [op_type isEqualToString:@"batch_delete"];
+    BOOL isDir = [obj_type isEqualToString:@"dir"];
+
+    for (NSDictionary *detail in details) {
+        if (![detail isKindOfClass:[NSDictionary class]]) continue;
+
+        NSString *path = [detail objectForKey:@"path"];
+        if (![path isKindOfClass:[NSString class]] || path.length == 0) continue;
+
+        NSString *fileName = [path lastPathComponent];
+
+        // Build title with time (aligned with Android ActivityOtherListAdapter: filename + time)
+        NSString *detailTime = [detail objectForKey:@"time"];
+        NSString *actionTitle;
+        if ([detailTime isKindOfClass:[NSString class]] && detailTime.length > 0) {
+            NSString *formattedTime = [SeafDateFormatter compareGMTTimeWithNow:detailTime];
+            actionTitle = [NSString stringWithFormat:@"%@  ·  %@", fileName, formattedTime];
+        } else {
+            actionTitle = fileName;
+        }
+
+        UIAlertAction *action = [UIAlertAction actionWithTitle:actionTitle style:UIAlertActionStyleDefault handler:^(UIAlertAction *act) {
+            if (isBatchDelete) {
+                // Aligned with Android: show delete feedback
+                if (isDir) {
+                    [SVProgressHUD showInfoWithStatus:[NSString stringWithFormat:NSLocalizedString(@"The folder \"%@\" has been deleted", @"Seafile"), fileName]];
+                } else {
+                    [SVProgressHUD showInfoWithStatus:[NSString stringWithFormat:NSLocalizedString(@"The file \"%@\" has been deleted", @"Seafile"), fileName]];
+                }
+            } else if (!isDir) {
+                // batch_create: open the file
+                [self openFile:path inRepo:repoId];
+            }
+            // batch_create for folders: openFile would treat the folder path as a file.
+            // The Activities page has no folder navigation (SeafFileViewController goTo:path:
+            // is declared but unimplemented), so folder entries are listed without an action,
+            // matching the legacy commit-detail sheet's emptyHandler for directories.
+        }];
+        [alert addAction:action];
+    }
+
+    if (!IsIpad()) {
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:nil];
+        [alert addAction:cancelAction];
+    }
+
+    // iPad popover support: anchor to the tapped cell like showEvent:detail:fromCell:
+    alert.popoverPresentationController.sourceView = self.view;
+    if (cell) {
+        alert.popoverPresentationController.sourceRect = [self.tableView convertRect:cell.frame toView:self.view];
+    } else {
+        alert.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2, 0, 0);
+    }
+
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 #pragma mark - SeafDentryDelegate (forward to detail and auto-play video when ready)

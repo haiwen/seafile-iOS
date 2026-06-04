@@ -563,7 +563,13 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    [self.tableView reloadData];
+    // Only reload when visible to avoid brief flash of Settings content
+    // (e.g. "Local Cache" cell) during tab layout recomposition triggered
+    // by setViewControllers: when switching accounts.
+    // viewDidAppear: → configureView will refresh the data when user navigates here.
+    if (self.isViewLoaded && self.view.window) {
+        [self.tableView reloadData];
+    }
     [self updateAccountInfo];
 }
 
@@ -645,6 +651,7 @@ enum {
 {
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Appearance", @"Seafile");
+    cell.textLabel.font = [UIFont systemFontOfSize:17.0];
 
     NSArray *items = @[NSLocalizedString(@"System", @"Seafile"),
                        NSLocalizedString(@"Light", @"Seafile"),
@@ -713,8 +720,7 @@ enum {
             cell.textLabel.text = NSLocalizedString(@"Log out", @"Seafile");
             cell.textLabel.textAlignment = NSTextAlignmentLeft;
             cell.textLabel.textColor = BAR_COLOR_ORANGE;
-            // Reduce the font size
-//            cell.textLabel.font = [UIFont systemFontOfSize:16.0]; // Smaller font size
+            cell.textLabel.font = [UIFont systemFontOfSize:17.0];
         }
     } else {
         // For other cells, add the spacer accessory view
@@ -779,11 +785,11 @@ enum {
         separatorView.backgroundColor = [SeafTheme separator];
         
         // Calculate separator frame - place it at the bottom of the cell
-        CGFloat separatorHeight = 0.5; // Standard separator height
-        CGFloat leftInset = CELL_PADDING_HORIZONTAL + 15.0;
+        CGFloat separatorHeight = SEAF_SEPARATOR_HEIGHT;
+        CGFloat leftInset = SEAF_SEPARATOR_LEFT_INSET;
         CGRect separatorFrame = CGRectMake(leftInset,
                                         cell.bounds.size.height - separatorHeight,
-                                        cell.bounds.size.width - leftInset - CELL_PADDING_HORIZONTAL,
+                                        cell.bounds.size.width - leftInset - SEAF_SEPARATOR_RIGHT_INSET,
                                         separatorHeight);
         
         separatorView.frame = separatorFrame;

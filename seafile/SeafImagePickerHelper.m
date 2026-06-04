@@ -147,10 +147,15 @@
 {
     UIViewController *vc = self.presentingVC;
     if (vc) {
-        [vc dismissViewControllerAnimated:YES completion:nil];
-    }
-    if ([self.delegate respondsToSelector:@selector(imagePickerHelper:didFinishPickingAssets:)]) {
-        [self.delegate imagePickerHelper:self didFinishPickingAssets:assets];
+        [vc dismissViewControllerAnimated:YES completion:^{
+            if ([self.delegate respondsToSelector:@selector(imagePickerHelper:didFinishPickingAssets:)]) {
+                [self.delegate imagePickerHelper:self didFinishPickingAssets:assets];
+            }
+        }];
+    } else {
+        if ([self.delegate respondsToSelector:@selector(imagePickerHelper:didFinishPickingAssets:)]) {
+            [self.delegate imagePickerHelper:self didFinishPickingAssets:assets];
+        }
     }
 }
 

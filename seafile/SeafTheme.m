@@ -8,6 +8,12 @@
 
 NSString * const SeafThemeDidChangeNotification = @"SeafThemeDidChangeNotification";
 NSString * const kSeafThemePreferenceKey = @"SeafThemePreference";
+NSString * const kSeafThemePreferenceMigratedKey = @"SeafThemePreferenceMigrated";
+
+// Mirrors the App Group storage key used by SeafGlobal/SeafStorage to persist
+// configured accounts. Re-declared here to avoid pulling SeafGlobal/SeafStorage
+// into SeafTheme (which is compiled into extensions under -fapplication-extension).
+static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
 
 @implementation SeafTheme
 
@@ -41,6 +47,35 @@ NSString * const kSeafThemePreferenceKey = @"SeafThemePreference";
     // to their window. Intentionally avoid +sharedApplication here so SeafTheme.m stays
     // compilable under -fapplication-extension.
     [[NSNotificationCenter defaultCenter] postNotificationName:SeafThemeDidChangeNotification object:nil];
+}
+
++ (void)migrateLegacyPreferenceIfNeeded
+{
+    NSUserDefaults *defaults = [self sharedDefaults];
+
+    // Already migrated, nothing to do.
+    if ([defaults boolForKey:kSeafThemePreferenceMigratedKey]) return;
+
+    // User already has an explicit preference (unlikely on first run, but be safe):
+    // honor it and just mark migration as done.
+    if ([defaults objectForKey:kSeafThemePreferenceKey]) {
+        [defaults setBool:YES forKey:kSeafThemePreferenceMigratedKey];
+        return;
+    }
+
+    // Distinguish upgrade-from-legacy vs fresh install by the presence of any
+    // configured account in the shared App Group storage. Legacy versions had
+    // no dark mode, so pin those users to Light to avoid a surprise theme flip
+    // after upgrading on a system in dark mode. Fresh installs default to
+    // System (follow OS) and that value is written explicitly so extensions
+    // can read a definitive preference too.
+    NSArray *existingAccounts = [defaults objectForKey:kSeafThemeAccountsKey];
+    BOOL isUpgradingUser = ([existingAccounts isKindOfClass:[NSArray class]] && existingAccounts.count > 0);
+    SeafThemePreference initial = isUpgradingUser ? SeafThemePreferenceLight
+                                                  : SeafThemePreferenceSystem;
+
+    [defaults setObject:@(initial) forKey:kSeafThemePreferenceKey];
+    [defaults setBool:YES forKey:kSeafThemePreferenceMigratedKey];
 }
 
 + (void)applyPreferenceToWindow:(UIWindow *)window

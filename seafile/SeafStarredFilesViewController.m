@@ -103,13 +103,19 @@
          forCellReuseIdentifier:@"SeafCell"];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
-    if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
-        [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
     self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
-    [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil] forCellReuseIdentifier:@"SeafCell"];
+    
+    UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
+    bView.backgroundColor = kPrimaryBackgroundColor;
+    self.tableView.backgroundView = bView;
+    
+    // Unified card-style layout (match file list page)
+    self.tableView.cellLayoutMarginsFollowReadableWidth = NO;
+    self.tableView.layoutMargins = UIEdgeInsetsMake(0, 15, 0, 15);
+    self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
     
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
@@ -383,11 +389,16 @@
     NSObject *entry = [_cellDataArray objectAtIndex:indexPath.row];
     if ([entry isKindOfClass:[SeafStarredFile class]]) {
         [self updateCellContent:cell file:(SeafStarredFile *)entry];
-        return cell;
     } else {
         [self updateCellContent:cell dir:(SeafStarredDir *)entry];
-        return cell;
     }
+    
+    // Unified separator and card corner style (match file list page)
+    BOOL isFirstCell = (indexPath.row == 0);
+    BOOL isLastCell = (indexPath.row == (NSInteger)_cellDataArray.count - 1);
+    [cell updateSeparatorInset:isLastCell];
+    [cell updateCellStyle:isFirstCell isLastCell:isLastCell];
+    
     return cell;
 }
 

@@ -72,7 +72,6 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view from its nib.
     self.navigationItem.rightBarButtonItems = nil;
-    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
     self.navigationItem.rightBarButtonItem = cancelItem;
@@ -84,8 +83,9 @@
     [[self textView] setFont:[UIFont fontWithName:@"Courier" size:14.0]];
     [[self textView] setBackgroundColor:[SeafTheme primarySurface]];
     [[self textView] setTextColor:[SeafTheme primaryText]];
-    
+
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)didReceiveMemoryWarning

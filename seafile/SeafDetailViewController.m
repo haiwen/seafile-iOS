@@ -29,6 +29,7 @@
 #import "SeafNavigationBarStyler.h"
 #import "SeafSdocWebViewController.h"
 #import "SeafTheme.h"
+#import "SeafNavLeftItem.h"
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
@@ -96,8 +97,19 @@ enum SHARE_STATUS {
 // Update navigation items depending on the current state and item properties.
 - (void)updateNavigation
 {
-    if ([self isModal])
-         [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
+    if ([self isModal]) {
+        [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
+    } else if (!(IsIpad() && [self isPortrait])
+               && ![self.navigationItem.leftBarButtonItem.customView isKindOfClass:[SeafNavLeftItem class]]) {
+        // Match the file list back button (SeafNavLeftItem) for push presentations on
+        // iPhone and iPad landscape; iPad portrait keeps the split-view displayMode button.
+        UIView *backView = [SeafNavLeftItem navLeftItemWithDirectory:nil
+                                                                title:@""
+                                                               target:self
+                                                               action:@selector(goBack:)];
+        UIBarButtonItem *customBack = [[UIBarButtonItem alloc] initWithCustomView:backView];
+        [self.navigationItem setLeftBarButtonItem:customBack animated:NO];
+    }
 
     // Set title using style tool
     NSString *titleText = self.preViewItem.previewItemTitle;
@@ -400,11 +412,13 @@ enum SHARE_STATUS {
         self.edgesForExtendedLayout = UIRectEdgeAll;
     // Do any additional setup after loading the view, typically from a nib.
 
-    // Replace previous backItem implementation, use style tool to create gray back button
-    UIColor *grayColor = [SeafTheme secondaryText];
-    self.backItem = [SeafNavigationBarStyler createBackButtonWithTarget:self 
-                                                                action:@selector(goBack:)
-                                                                 color:grayColor];
+    // Use the same SeafNavLeftItem as the file list so the back button icon, size, and
+    // tint behavior stay consistent across pages (especially in dark mode).
+    UIView *backView = [SeafNavLeftItem navLeftItemWithDirectory:nil
+                                                            title:@""
+                                                           target:self
+                                                           action:@selector(goBack:)];
+    self.backItem = [[UIBarButtonItem alloc] initWithCustomView:backView];
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -442,7 +456,7 @@ enum SHARE_STATUS {
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    self.navigationController.navigationBar.tintColor = BAR_COLOR_ORANGE;
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     
     if (IsIpad() && self.navigationItem.leftBarButtonItem == nil && [self isPortrait]) {
         [self.navigationItem setLeftBarButtonItem:self.splitViewController.displayModeButtonItem animated:NO];
@@ -464,8 +478,9 @@ enum SHARE_STATUS {
     // Apply navigation styling
     if (self.navigationController) {
         [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+        self.navigationController.navigationBar.tintColor = BAR_COLOR;
     }
-    
+
     [self updateNavigation];
 }
 
@@ -540,6 +555,7 @@ enum SHARE_STATUS {
     // Apply navigation bar style using style tool
     if (self.navigationController) {
         [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+        self.navigationController.navigationBar.tintColor = BAR_COLOR;
     }
 }
 

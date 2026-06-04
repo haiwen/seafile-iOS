@@ -79,14 +79,8 @@
     [super layoutSubviews];
     
     if (!self.isLastCell) {
-        // Get current layoutMargins
-        UIEdgeInsets margins = self.layoutMargins;
-        
-        // Calculate separator position considering layoutMargins
-        CGFloat leftInset = self.cellBackgroundView.frame.origin.x + margins.left - 2;// Adjusted to align with the icon's bottom line
-        CGFloat rightInset = 16;
-        
-        self.separatorInset = UIEdgeInsetsMake(0, leftInset, 0, rightInset);
+        // Unified separator inset matching card-style list standard
+        self.separatorInset = UIEdgeInsetsMake(0, SEAF_SEPARATOR_LEFT_INSET, 0, SEAF_SEPARATOR_RIGHT_INSET);
     }
     else {
         // reset separatorInset to default.
