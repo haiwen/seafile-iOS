@@ -19,6 +19,7 @@ typedef NS_ENUM(NSInteger, SeafThemePreference) {
 
 extern NSString * const SeafThemeDidChangeNotification;
 extern NSString * const kSeafThemePreferenceKey;
+extern NSString * const kSeafThemePreferenceMigratedKey;
 
 @interface SeafTheme : NSObject
 
@@ -28,6 +29,15 @@ extern NSString * const kSeafThemePreferenceKey;
 + (void)setPreference:(SeafThemePreference)preference;
 + (void)applyPreferenceToWindow:(nullable UIWindow *)window;
 + (void)applyPreferenceToViewController:(nullable UIViewController *)viewController;
+
+// One-time migration: detect upgrade-from-legacy users (already have accounts
+// configured in App Group storage) and pin them to Light to preserve their
+// pre-dark-mode visual experience. Brand-new installs are explicitly written
+// as System (follow OS) so extensions can read a definitive value too.
+// Safe to call multiple times; runs at most once. Should be invoked from the
+// main app's launch path *after* SeafGlobal account migration but *before*
+// applyPreferenceToWindow:.
++ (void)migrateLegacyPreferenceIfNeeded;
 
 #pragma mark - Semantic color tokens
 

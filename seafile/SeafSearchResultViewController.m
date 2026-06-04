@@ -36,7 +36,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
+    self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
@@ -49,7 +49,7 @@
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
          forCellReuseIdentifier:@"SeafDirCell"];
 
-    UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
+    UIView *bView = [[UIView alloc] initWithFrame:CGRectZero];
     bView.backgroundColor = kPrimaryBackgroundColor;
     self.tableView.backgroundView = bView;
     self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
@@ -58,11 +58,16 @@
         self.tableView.sectionHeaderTopPadding = 0;
     }
 
-    if (!IsIpad()) {
-        self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-    }
-    
     [self.view addSubview:self.tableView];
+    
+    // Use Auto Layout to let UISearchController manage the correct presentation area
+    self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
+    [NSLayoutConstraint activateConstraints:@[
+        [self.tableView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [self.tableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+    ]];
     
     self.stateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];
     self.stateLabel.textAlignment = NSTextAlignmentCenter;
@@ -70,34 +75,6 @@
     self.stateLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.stateLabel.centerXAnchor constraintEqualToAnchor:self.tableView.centerXAnchor].active = YES;
     [self.stateLabel.centerYAnchor constraintEqualToAnchor:self.tableView.centerYAnchor constant:-100].active = YES;
-}
-
-- (void)viewWillLayoutSubviews {
-    [super viewWillLayoutSubviews];
-    
-    CGFloat heightToSubtract = 0;
-    UIViewController *rootVC = [UIApplication sharedApplication].keyWindow.rootViewController;
-    if ([rootVC isKindOfClass:[UITabBarController class]]) {
-        UITabBarController *tabBarController = (UITabBarController *)rootVC;
-        if (!tabBarController.tabBar.isHidden) {
-            heightToSubtract = tabBarController.tabBar.frame.size.height;
-        }
-    }
-
-    if (heightToSubtract == 0) {
-        if (@available(iOS 11.0, *)) {
-            UIWindow *window = [UIApplication sharedApplication].keyWindow;
-            heightToSubtract = window.safeAreaInsets.bottom;
-        }
-    }
-
-    if (IsIpad()) {
-        self.tableView.frame = CGRectMake(0, 0, self.presentingViewController.view.frame.size.width, self.view.window.frame.size.height - heightToSubtract);
-    } else {
-        CGRect frame = self.view.bounds;
-        frame.size.height -= heightToSubtract;
-        self.tableView.frame = frame;
-    }
 }
 
 // Update search results when user types in the search bar.

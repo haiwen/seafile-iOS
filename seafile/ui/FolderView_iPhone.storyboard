@@ -21,6 +21,7 @@
                     <connections>
                         <segue destination="CNF-ja-c3a" kind="relationship" relationship="viewControllers" id="udP-do-9F7"/>
                         <segue destination="z9c-1t-xJ2" kind="relationship" relationship="viewControllers" id="vnq-Uu-mkU"/>
+                        <segue destination="WkN-c0-AAA" kind="relationship" relationship="viewControllers" id="WkS-tb-AAA"/>
                         <segue destination="mEX-CF-kI0" kind="relationship" relationship="viewControllers" id="hEv-Za-HGM"/>
                         <segue destination="bYI-tW-uUU" kind="relationship" relationship="viewControllers" id="Vac-1A-vei"/>
                     </connections>
@@ -33,7 +34,7 @@
         <scene sceneID="cix-vt-Igt">
             <objects>
                 <navigationController title="Seafile" toolbarHidden="NO" id="CNF-ja-c3a" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="" id="6rl-FR-hto"/>
+                    <tabBarItem key="tabBarItem" title="" image="tab-home.png" id="6rl-FR-hto"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="fTo-jb-ZSP">
@@ -128,7 +129,7 @@
         <scene sceneID="F3d-4G-2bC">
             <objects>
                 <navigationController title="Starred" definesPresentationContext="YES" id="z9c-1t-xJ2" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="" id="VH7-iY-RiF"/>
+                    <tabBarItem key="tabBarItem" title="" image="tab-star.png" id="VH7-iY-RiF"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="cyv-Qp-O9m">
                         <rect key="frame" x="0.0" y="118" width="393" height="44"/>
@@ -433,6 +434,30 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
+                            <tableViewSection headerTitle="Wiki" id="Wki-Se-c01">
+                                <cells>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Wki-Ce-l01">
+                                        <rect key="frame" x="0.0" y="0.0" width="393" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Wki-Ce-l01" id="Wki-Cv-01">
+                                            <rect key="frame" x="0.0" y="0.0" width="393" height="44"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Enable Wiki" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Wki-Lb-01">
+                                                    <rect key="frame" x="30" y="11" width="230" height="21"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="Wki-Sw-01">
+                                                    <rect key="frame" x="336" y="6" width="51" height="31"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                                </switch>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
                             <tableViewSection headerTitle="Cache" id="1FF-GC-okj">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="63f-7w-kh2" detailTextLabel="2Kn-7t-ZsF" style="IBUITableViewCellStyleValue1" id="h43-fm-QEc">
@@ -656,6 +681,9 @@
                         <outlet property="wifiOnlyLabel" destination="5rP-cB-Wm0" id="cct-Db-dJa"/>
                         <outlet property="wifiOnlySwitch" destination="EII-rv-WS4" id="LcC-Y3-z9u"/>
                         <outlet property="wipeCacheCell" destination="SoU-ux-EmS" id="cdz-yX-LcP"/>
+                        <outlet property="wikiSwitchCell" destination="Wki-Ce-l01" id="Wki-Oc-01"/>
+                        <outlet property="wikiSwitch" destination="Wki-Sw-01" id="Wki-Os-01"/>
+                        <outlet property="wikiSwitchLabel" destination="Wki-Lb-01" id="Wki-Ol-01"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LzM-gp-ws5" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -666,7 +694,7 @@
         <scene sceneID="xpW-VU-zvN">
             <objects>
                 <navigationController storyboardIdentifier="SETTINGSNAV" title="Settings" definesPresentationContext="YES" id="bYI-tW-uUU" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="" id="Jmw-Qh-gQG"/>
+                    <tabBarItem key="tabBarItem" title="" image="tab-settings.png" id="Jmw-Qh-gQG"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="wRf-xr-PKT">
                         <rect key="frame" x="0.0" y="118" width="393" height="44"/>
@@ -752,7 +780,7 @@
         <scene sceneID="NnU-GF-PKm">
             <objects>
                 <navigationController title="Activity" definesPresentationContext="YES" id="mEX-CF-kI0" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="" id="Lne-Be-K6O"/>
+                    <tabBarItem key="tabBarItem" title="" image="tab-modify.png" id="Lne-Be-K6O"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="cTk-LZ-0Cj">
@@ -790,9 +818,48 @@
             </objects>
             <point key="canvasLocation" x="-3824" y="-1050.6746626686659"/>
         </scene>
+        <!--Wikis-->
+        <scene sceneID="Wki-Sn-AAA">
+            <objects>
+                <navigationController title="Wikis" definesPresentationContext="YES" id="WkN-c0-AAA" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="" image="icon_wikis" id="WkT-bi-AAA"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="WkB-ar-AAA">
+                        <rect key="frame" x="0.0" y="118" width="393" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="WkV-c0-AAA" kind="relationship" relationship="rootViewController" id="WkR-sg-AAA"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="WkP-pl-AAA" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1490" y="-1700"/>
+        </scene>
+        <!--Seaf Wiki View Controller-->
+        <scene sceneID="Wkv-Sn-AAA">
+            <objects>
+                <viewController id="WkV-c0-AAA" customClass="SeafWikiViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Wkv-vw-AAA">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="Wkv-ni-AAA"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Wkv-pl-AAA" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-260" y="-1700"/>
+        </scene>
     </scenes>
     <resources>
+        <image name="icon_wikis" width="24" height="24"/>
         <image name="seafile-logo.png" width="360" height="360"/>
+        <image name="tab-home.png" width="25" height="25"/>
+        <image name="tab-modify.png" width="25" height="25"/>
+        <image name="tab-settings.png" width="25" height="25"/>
+        <image name="tab-star.png" width="25" height="25"/>
         <systemColor name="tableCellGroupedBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

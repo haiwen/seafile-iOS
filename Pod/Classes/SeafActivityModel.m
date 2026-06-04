@@ -29,7 +29,9 @@
         }
         
         // Parse batch operation fields (server >= 14.0)
-        self.count = [[event objectForKey:@"count"] integerValue];
+        // JSON null arrives as NSNull, which does not respond to integerValue
+        id countObj = [event objectForKey:@"count"];
+        self.count = [countObj respondsToSelector:@selector(integerValue)] ? [countObj integerValue] : 0;
         id detailsObj = [event objectForKey:@"details"];
         if ([detailsObj isKindOfClass:[NSArray class]]) {
             self.details = detailsObj;

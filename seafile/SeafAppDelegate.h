@@ -19,9 +19,12 @@
 #import "SeafActivityViewController.h"
 #import "SeafGlobal.h"
 
+#import "SeafWikiViewController.h"
+
 enum {
     TABBED_SEAFILE = 0,
     TABBED_STARRED,
+    TABBED_WIKI,
     TABBED_ACTIVITY,
     TABBED_SETTINGS,
     TABBED_COUNT,
@@ -55,6 +58,7 @@ enum {
 @property (readonly) SeafStarredFilesViewController *starredVC;
 @property (readonly) SeafSettingsViewController *settingVC;
 @property (readonly) SeafActivityViewController *actvityVC;
+@property (readonly) SeafWikiViewController *wikiVC;
 @property (readonly) MFMailComposeViewController *globalMailComposer;
 @property (readonly) NSData *deviceToken;
 

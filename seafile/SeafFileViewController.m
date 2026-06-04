@@ -1123,7 +1123,16 @@ enum {
         // Remove custom toolbar
         [self dismissCustomTabTool:^{
             [self adjustContentInsetForCustomToolbar:NO];
-            self.tabBarController.tabBar.hidden = NO;
+            // On iPadOS 18+, tabs are shown at the top; keep bottom tab bar hidden.
+            if (IsIpad()) {
+                if (@available(iOS 18.0, *)) {
+                    // Tab bar stays hidden on iPad with compact top tabs
+                } else {
+                    self.tabBarController.tabBar.hidden = NO;
+                }
+            } else {
+                self.tabBarController.tabBar.hidden = NO;
+            }
         }];
     }
 

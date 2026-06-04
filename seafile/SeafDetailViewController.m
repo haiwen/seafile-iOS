@@ -29,6 +29,7 @@
 #import "SeafNavigationBarStyler.h"
 #import "SeafSdocWebViewController.h"
 #import "SeafTheme.h"
+#import "SeafNavLeftItem.h"
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
@@ -96,8 +97,19 @@ enum SHARE_STATUS {
 // Update navigation items depending on the current state and item properties.
 - (void)updateNavigation
 {
-    if ([self isModal])
-         [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
+    if ([self isModal]) {
+        [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
+    } else if (!(IsIpad() && [self isPortrait])
+               && ![self.navigationItem.leftBarButtonItem.customView isKindOfClass:[SeafNavLeftItem class]]) {
+        // Match the file list back button (SeafNavLeftItem) for push presentations on
+        // iPhone and iPad landscape; iPad portrait keeps the split-view displayMode button.
+        UIView *backView = [SeafNavLeftItem navLeftItemWithDirectory:nil
+                                                                title:@""
+                                                               target:self
+                                                               action:@selector(goBack:)];
+        UIBarButtonItem *customBack = [[UIBarButtonItem alloc] initWithCustomView:backView];
+        [self.navigationItem setLeftBarButtonItem:customBack animated:NO];
+    }
 
     // Set title using style tool
     NSString *titleText = self.preViewItem.previewItemTitle;
@@ -264,8 +276,10 @@ enum SHARE_STATUS {
     // --- End Toolbar Visibility Control ---
 
     CGFloat y = 64;
-    if (@available(iOS 11.0, *)) {
-       y = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
+    if (IsIpad()) {
+        y = 0;
+    } else if (@available(iOS 11.0, *)) {
+        y = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
     }
     
     // Calculate bottom margin to account for toolbar, including safe area
@@ -398,13 +412,16 @@ enum SHARE_STATUS {
     [super viewDidLoad];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.view.backgroundColor = [SeafTheme primarySurface];
     // Do any additional setup after loading the view, typically from a nib.
 
-    // Replace previous backItem implementation, use style tool to create gray back button
-    UIColor *grayColor = [SeafTheme secondaryText];
-    self.backItem = [SeafNavigationBarStyler createBackButtonWithTarget:self 
-                                                                action:@selector(goBack:)
-                                                                 color:grayColor];
+    // Use the same SeafNavLeftItem as the file list so the back button icon, size, and
+    // tint behavior stay consistent across pages (especially in dark mode).
+    UIView *backView = [SeafNavLeftItem navLeftItemWithDirectory:nil
+                                                            title:@""
+                                                           target:self
+                                                           action:@selector(goBack:)];
+    self.backItem = [[UIBarButtonItem alloc] initWithCustomView:backView];
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -442,7 +459,7 @@ enum SHARE_STATUS {
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    self.navigationController.navigationBar.tintColor = BAR_COLOR_ORANGE;
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     
     if (IsIpad() && self.navigationItem.leftBarButtonItem == nil && [self isPortrait]) {
         [self.navigationItem setLeftBarButtonItem:self.splitViewController.displayModeButtonItem animated:NO];
@@ -464,8 +481,9 @@ enum SHARE_STATUS {
     // Apply navigation styling
     if (self.navigationController) {
         [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+        self.navigationController.navigationBar.tintColor = BAR_COLOR;
     }
-    
+
     [self updateNavigation];
 }
 
@@ -493,10 +511,28 @@ enum SHARE_STATUS {
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);// Calculate layout rectangle
-    if (IsIpad()) {
-        r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height - 0);
+    // Calculate layout y offset: iPad detail view starts below nav bar already, so y=0
+    CGFloat layoutY = 0;
+    if (!IsIpad()) {
+        layoutY = 64;
+        if (@available(iOS 11.0, *)) {
+            layoutY = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
+        }
     }
+    
+    // Calculate bottom margin to avoid toolbar overlap
+    CGFloat layoutBottomMargin = 0;
+    if (self.toolbarView && !self.toolbarView.hidden) {
+        CGFloat toolbarHeight = 36;
+        CGFloat safeAreaBottom = 0;
+        if (@available(iOS 11.0, *)) {
+            safeAreaBottom = self.view.safeAreaInsets.bottom;
+        }
+        layoutBottomMargin = toolbarHeight + safeAreaBottom;
+    }
+    
+    CGRect r = CGRectMake(0, layoutY, self.view.bounds.size.width, self.view.bounds.size.height - layoutY - layoutBottomMargin);
+    
     if (self.state == PREVIEW_PHOTO){
         if (IsIpad()) {
             self.mwPhotoBrowser.view.frame = r;// Adjust photo browser frame for iPad
@@ -509,9 +545,23 @@ enum SHARE_STATUS {
             }
         }
     } else {
-        if (self.view.subviews.count > 1) {
-            UIView *v = [self.view.subviews objectAtIndex:0];
-            v.frame = r; // Adjust frame for the first subview
+        // Update the actual visible content view based on current preview state
+        switch (self.state) {
+            case PREVIEW_WEBVIEW:
+            case PREVIEW_WEBVIEW_JS:
+                self.webView.frame = r;
+                break;
+            case PREVIEW_TEXT:
+                self.textView.frame = r;
+                break;
+            case PREVIEW_DOWNLOADING:
+                self.progressView.frame = r;
+                break;
+            case PREVIEW_FAILED:
+                self.failedView.frame = r;
+                break;
+            default:
+                break;
         }
     }
     
@@ -540,6 +590,7 @@ enum SHARE_STATUS {
     // Apply navigation bar style using style tool
     if (self.navigationController) {
         [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+        self.navigationController.navigationBar.tintColor = BAR_COLOR;
     }
 }
 

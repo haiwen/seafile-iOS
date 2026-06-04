@@ -39,8 +39,10 @@ enum {
     SECTION_ACCOUNT = 0,
     SECTION_CAMERA,
     SECTION_UPDOWNLOAD,
+    SECTION_WIKI,
     SECTION_CACHE,
     SECTION_ENC,
+    SECTION_DISPLAY,
     SECTION_ABOUT,
     SECTION_LOGOUT,
 };
@@ -75,7 +77,6 @@ enum {
     CELL_SERVER = 0,
     CELL_VERSION,
     CELL_PRIVACY,
-    CELL_APPEARANCE,
 };
 
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
@@ -98,6 +99,10 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *wipeCacheCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *uploadingCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *downloadingCell;
+
+@property (strong, nonatomic) IBOutlet UITableViewCell *wikiSwitchCell;
+@property (strong, nonatomic) IBOutlet UISwitch *wikiSwitch;
+@property (strong, nonatomic) IBOutlet UILabel *wikiSwitchLabel;
 
 
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -422,6 +427,7 @@ enum {
     _privacyPolicyLabel.text = NSLocalizedString(@"Privacy Policy", @"Seafile");
 
     self.title = NSLocalizedString(@"Settings", @"Seafile");
+    self.navigationController.title = NSLocalizedString(@"Settings", @"Seafile");
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
@@ -432,6 +438,9 @@ enum {
     [_autoClearPasswdSwitch addTarget:self action:@selector(autoClearPasswdSwtichFlip:) forControlEvents:UIControlEventValueChanged];
     [_localDecrySwitch addTarget:self action:@selector(localDecryptionSwtichFlip:) forControlEvents:UIControlEventValueChanged];
     [_enableTouchIDSwitch addTarget:self action:@selector(enableTouchIDSwtichFlip:) forControlEvents:UIControlEventValueChanged];
+
+    _wikiSwitchLabel.text = NSLocalizedString(@"Enable Wiki", @"Seafile");
+    [_wikiSwitch addTarget:self action:@selector(wikiSwitchFlip:) forControlEvents:UIControlEventValueChanged];
 
 
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -455,6 +464,10 @@ enum {
     [[NSNotificationCenter defaultCenter] addObserver:self 
                                              selector:@selector(accountInfoUpdated:) 
                                                  name:@"SeafAccountInfoUpdated" 
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(serverInfoDidUpdate:)
+                                                 name:SeafServerInfoUpdatedNotification
                                                object:nil];
 
 }
@@ -526,6 +539,9 @@ enum {
     // ============ Use JPG format for static photo setting (default YES) ============
     self.useJpgSwitch.on = _connection.isUseJpgForStaticPhoto;
 
+    // ============ Wiki switch ============
+    _wikiSwitch.on = _connection.wikiSwitchEnabled;
+
     [self updateSyncInfo];
 
     [self.tableView reloadData];
@@ -563,7 +579,13 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    [self.tableView reloadData];
+    // Only reload when visible to avoid brief flash of Settings content
+    // (e.g. "Local Cache" cell) during tab layout recomposition triggered
+    // by setViewControllers: when switching accounts.
+    // viewDidAppear: → configureView will refresh the data when user navigates here.
+    if (self.isViewLoaded && self.view.window) {
+        [self.tableView reloadData];
+    }
     [self updateAccountInfo];
 }
 
@@ -600,21 +622,40 @@ enum {
 
 - (BOOL)isAppearanceIndexPath:(NSIndexPath *)indexPath
 {
-    if (@available(iOS 13.0, *)) {
-        return indexPath.section == SECTION_ABOUT && indexPath.row == CELL_APPEARANCE;
+    return indexPath.section == SECTION_DISPLAY && indexPath.row == 0;
+}
+
+/// Maps a logical section index to the corresponding storyboard section index.
+/// SECTION_DISPLAY is fully programmatic (no storyboard counterpart),
+/// so sections after it are shifted by -1.
+- (NSInteger)storyboardSectionForSection:(NSInteger)section {
+    if (section > SECTION_DISPLAY) {
+        return section - 1;
     }
-    return NO;
+    return section;
+}
+
+- (NSIndexPath *)storyboardIndexPathForIndexPath:(NSIndexPath *)indexPath {
+    NSInteger sbSection = [self storyboardSectionForSection:indexPath.section];
+    if (sbSection != indexPath.section) {
+        return [NSIndexPath indexPathForRow:indexPath.row inSection:sbSection];
+    }
+    return indexPath;
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return [super numberOfSectionsInTableView:tableView] + 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    NSInteger rows = [super tableView:tableView numberOfRowsInSection:section];
-    if (section == SECTION_ABOUT) {
-        if (@available(iOS 13.0, *)) {
-            return rows + 1;
-        }
+    if (section == SECTION_WIKI && ![self shouldShowWikiSection]) {
+        return 0;
     }
-    return rows;
+    if (section == SECTION_DISPLAY) {
+        return 1;
+    }
+    return [super tableView:tableView numberOfRowsInSection:[self storyboardSectionForSection:section]];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -622,15 +663,18 @@ enum {
     if ([self isAppearanceIndexPath:indexPath]) {
         return [self appearanceCell];
     }
-    return [super tableView:tableView cellForRowAtIndexPath:indexPath];
+    return [super tableView:tableView cellForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (indexPath.section == SECTION_WIKI && ![self shouldShowWikiSection]) {
+        return 0;
+    }
     if ([self isAppearanceIndexPath:indexPath]) {
         return 50;
     }
-    return [super tableView:tableView heightForRowAtIndexPath:indexPath];
+    return [super tableView:tableView heightForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -638,13 +682,14 @@ enum {
     if ([self isAppearanceIndexPath:indexPath]) {
         return 1;
     }
-    return [super tableView:tableView indentationLevelForRowAtIndexPath:indexPath];
+    return [super tableView:tableView indentationLevelForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
 }
 
 - (UITableViewCell *)appearanceCell
 {
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Appearance", @"Seafile");
+    cell.textLabel.font = [UIFont systemFontOfSize:17.0];
 
     NSArray *items = @[NSLocalizedString(@"System", @"Seafile"),
                        NSLocalizedString(@"Light", @"Seafile"),
@@ -713,8 +758,7 @@ enum {
             cell.textLabel.text = NSLocalizedString(@"Log out", @"Seafile");
             cell.textLabel.textAlignment = NSTextAlignmentLeft;
             cell.textLabel.textColor = BAR_COLOR_ORANGE;
-            // Reduce the font size
-//            cell.textLabel.font = [UIFont systemFontOfSize:16.0]; // Smaller font size
+            cell.textLabel.font = [UIFont systemFontOfSize:17.0];
         }
     } else {
         // For other cells, add the spacer accessory view
@@ -779,11 +823,11 @@ enum {
         separatorView.backgroundColor = [SeafTheme separator];
         
         // Calculate separator frame - place it at the bottom of the cell
-        CGFloat separatorHeight = 0.5; // Standard separator height
-        CGFloat leftInset = CELL_PADDING_HORIZONTAL + 15.0;
+        CGFloat separatorHeight = SEAF_SEPARATOR_HEIGHT;
+        CGFloat leftInset = SEAF_SEPARATOR_LEFT_INSET;
         CGRect separatorFrame = CGRectMake(leftInset,
                                         cell.bounds.size.height - separatorHeight,
-                                        cell.bounds.size.width - leftInset - CELL_PADDING_HORIZONTAL,
+                                        cell.bounds.size.width - leftInset - SEAF_SEPARATOR_RIGHT_INSET,
                                         separatorHeight);
         
         separatorView.frame = separatorFrame;
@@ -926,8 +970,10 @@ enum {
         NSLocalizedString(@"Account Info", @"Seafile"),
         NSLocalizedString(@"Camera Upload", @"Seafile"),
         NSLocalizedString(@"Upload & Download", @"Seafile"),
+        NSLocalizedString(@"Wiki", @"Seafile"),
         NSLocalizedString(@"Cache", @"Seafile"),
         NSLocalizedString(@"Encrypted Libraries", @"Seafile"),
+        NSLocalizedString(@"Display", @"Seafile"),
         NSLocalizedString(@"About", @"Seafile"),
         @"",
     };
@@ -980,6 +1026,9 @@ enum {
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
+    if (section == SECTION_WIKI && ![self shouldShowWikiSection]) {
+        return CGFLOAT_MIN;
+    }
     NSString *title = [self tableView:tableView titleForHeaderInSection:section];
     if (!title || [title isEqualToString:@""]) {
         return 12; // Small height for empty header
@@ -989,7 +1038,26 @@ enum {
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
 {
+    if (section == SECTION_WIKI && ![self shouldShowWikiSection]) {
+        return CGFLOAT_MIN;
+    }
     return UITableViewAutomaticDimension;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
+{
+    if (section == SECTION_DISPLAY) {
+        return nil;
+    }
+    return [super tableView:tableView titleForFooterInSection:[self storyboardSectionForSection:section]];
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
+{
+    if (section == SECTION_DISPLAY) {
+        return nil;
+    }
+    return [super tableView:tableView viewForFooterInSection:[self storyboardSectionForSection:section]];
 }
 
 - (void)viewDidUnload {
@@ -1071,6 +1139,7 @@ enum {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafUploadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafDownloadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafAccountInfoUpdated" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:SeafServerInfoUpdatedNotification object:nil];
 }
 
 #pragma mark - SeafBackupGuideDelegate
@@ -1084,6 +1153,25 @@ enum {
     [self.navigationController popToViewController:self animated:YES];
     _autoSyncSwitch.on = false;
     self.autoSync = false;
+}
+
+#pragma mark - Wiki Switch
+- (BOOL)shouldShowWikiSection {
+    return _connection.isServerWikiSupported;
+}
+
+- (void)wikiSwitchFlip:(id)sender {
+    _connection.wikiSwitchEnabled = _wikiSwitch.on;
+    // Reuse existing notification to trigger AppDelegate's tab update
+    [[NSNotificationCenter defaultCenter] postNotificationName:SeafServerInfoUpdatedNotification object:_connection];
+}
+
+- (void)serverInfoDidUpdate:(NSNotification *)note {
+    if (note.object == _connection) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView reloadData];
+        });
+    }
 }
 
 @end

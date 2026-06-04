@@ -2,6 +2,7 @@
 //  Seafile
 
 #import "SeafSdocWebViewController.h"
+#import "SeafWebViewBridge.h"
 #import "SeafSdocStylePopupViewController.h"
 #import "SeafSdocEditorToolbar.h"
 #import "SeafAppDelegate.h"
@@ -29,47 +30,6 @@
 #import <string.h>
 
 typedef void (^SeafJSCallback)(NSString * _Nullable data);
-
-static NSString * const kSeafBridgeShimScript =
-@"(function(){\n"
-"  var w=window;\n"
-"  if(!w.WebViewJavascriptBridge){\n"
-"    var _handlers={};\n"
-"    w.WebViewJavascriptBridge={\n"
-"      registerHandler:function(name,handler){ try{ _handlers[name]=handler; }catch(e){} },\n"
-"      callHandler:function(name,data,resp){ try{ if(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers[name]){ var payload=(typeof data==='string')?data:JSON.stringify(data||{}); w.webkit.messageHandlers[name].postMessage(payload); if(typeof resp==='function'){ resp(''); } } }catch(e){} },\n"
-"      _invoke:function(name,data){ try{ var h=_handlers[name]; if(typeof h==='function'){ h(data, function(res){ try{ if(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.callAndroidFunction){ w.webkit.messageHandlers.callAndroidFunction.postMessage(JSON.stringify({action:'N_N_N_N_Callback',data:res||''})); } }catch(e){} }); } }catch(e){} }\n"
-"    };\n"
-"  }\n"
-"})();";
-
-static NSString * const kSeafBridgeHelperScript =
-@"window.callAndroidFunction = window.callAndroidFunction || function(payload){ if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.callAndroidFunction){ window.webkit.messageHandlers.callAndroidFunction.postMessage(payload); } };";
-
-@interface SeafWeakScriptMessageHandler : NSObject<WKScriptMessageHandler>
-
-@property (nonatomic, weak) id<WKScriptMessageHandler> target;
-
-- (instancetype)initWithTarget:(id<WKScriptMessageHandler>)target;
-
-@end
-
-@implementation SeafWeakScriptMessageHandler
-
-- (instancetype)initWithTarget:(id<WKScriptMessageHandler>)target
-{
-    if (self = [super init]) {
-        _target = target;
-    }
-    return self;
-}
-
-- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
-{
-    [self.target userContentController:userContentController didReceiveScriptMessage:message];
-}
-
-@end
 
 @interface SeafSdocWebViewController () <SeafSdocStylePopupDelegate, SeafSdocEditorToolbarDelegate,
     UINavigationControllerDelegate, UIImagePickerControllerDelegate,
@@ -272,9 +232,8 @@ static NSString * const kSeafBridgeHelperScript =
 {
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
     WKUserContentController *uc = [[WKUserContentController alloc] init];
-    self.weakBridgeHandler = [[SeafWeakScriptMessageHandler alloc] initWithTarget:self];
-    [uc addScriptMessageHandler:self.weakBridgeHandler name:@"callAndroidFunction"];
-    [self injectBridgeScriptsIntoUserContentController:uc];
+    self.weakBridgeHandler = [uc seaf_addBridgeMessageHandlerWithTarget:self];
+    [uc seaf_injectBridgeScripts];
     config.userContentController = uc;
 
     self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
@@ -307,14 +266,7 @@ static NSString * const kSeafBridgeHelperScript =
     self.callbackQueue = [NSMutableArray array];
 }
 
-- (void)injectBridgeScriptsIntoUserContentController:(WKUserContentController *)controller
-{
-    NSArray<NSString *> *baseScripts = @[kSeafBridgeShimScript, kSeafBridgeHelperScript];
-    for (NSString *source in baseScripts) {
-        WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES];
-        [controller addUserScript:script];
-    }
-}
+
 
 - (void)updateWebViewBottomConstraintWithAnchor:(NSLayoutYAxisAnchor *)anchor constant:(CGFloat)constant
 {
@@ -1090,7 +1042,7 @@ static NSString * const kSeafBridgeHelperScript =
         if (ok) {
             SeafSdocCommentsViewController *vc = [SeafSdocCommentsViewController new];
             vc.pageOptions = sself.pageOptions;
-            vc.docDisplayName = sself.navigationItem.title;
+            vc.docDisplayName = sself.titleLabel.text ?: sself.fileName ?: sself.file.name;
             vc.connection = sself.file.connection;
             vc.repoId = sself.file.repoId;
             vc.latestContributor = sself.pageOptions.latestContributor ?: @"";
@@ -1149,7 +1101,7 @@ static NSString * const kSeafBridgeHelperScript =
     [self stopEditTimeout];
     WKUserContentController *uc = self.webView.configuration.userContentController;
     if (uc) {
-        [uc removeScriptMessageHandlerForName:@"callAndroidFunction"];
+        [uc seaf_removeBridgeMessageHandler];
     }
 }
 
@@ -1363,15 +1315,21 @@ static NSString * const kSeafBridgeHelperScript =
             return;
         }
         
+        id callbackId = obj[@"__cbId"]; // response-callback id from the bridge shim
+
         if ([action isEqualToString:@"app.version.get"]) {
-            NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"";
-            [self sendBridgeCallback:version];
+            NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
+            NSString *version = [infoDict objectForKey:@"CFBundleShortVersionString"] ?: @"";
+            NSString *build = [infoDict objectForKey:@"CFBundleVersion"] ?: @"";
+            // Android returns "{versionName}-{versionCode}"
+            NSString *result = build.length > 0 ? [NSString stringWithFormat:@"%@-%@", version, build] : version;
+            [self sendBridgeCallback:result forCallbackId:callbackId];
         } else if ([action isEqualToString:@"app.toast.show"]) {
             if ([payload isKindOfClass:[NSString class]]) [self showToast:(NSString *)payload];
         } else if ([action isEqualToString:@"page.finish"]) {
         } else if ([action isEqualToString:@"page.status.height.get"]) {
             CGFloat h = UIApplication.sharedApplication.statusBarFrame.size.height;
-            [self sendBridgeCallback:[@(h) stringValue]];
+            [self sendBridgeCallback:[@(h) stringValue] forCallbackId:callbackId];
         } else if ([action isEqualToString:@"sdoc.editor.content.select"]) {
             // Handle selection change
             if ([payload isKindOfClass:[NSString class]]) {
@@ -1438,8 +1396,10 @@ static NSString * const kSeafBridgeHelperScript =
     }
 }
 
-- (void)sendBridgeCallback:(NSString *)text
+- (void)sendBridgeCallback:(NSString *)text forCallbackId:(id)callbackId
 {
+    // Empty results never fire the callback, matching Android.
+    [self.webView seaf_sendBridgeResponse:text forCallbackId:callbackId];
 }
 
 - (SeafJSCallback)dequeuePendingCallbackFromFront:(BOOL)front

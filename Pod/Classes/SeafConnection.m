@@ -32,6 +32,8 @@ enum {
     FLAG_LOCAL_DECRYPT = 0x1,
 };
 
+NSNotificationName const SeafServerInfoUpdatedNotification = @"SeafServerInfoUpdated";
+
 #define CAMERA_UPLOADS_DIR @"Camera Uploads"
 
 #define KEY_STARREDFILES @"STARREDFILES"
@@ -295,6 +297,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [self isFeatureEnabled:@"seafile-pro"];
 }
 
+- (BOOL)isServerWikiSupported
+{
+    if (![self serverInfo])
+        return false;
+    return [self isFeatureEnabled:@"wiki"];
+}
+
+- (BOOL)isWikiEnabled
+{
+    return self.isServerWikiSupported && self.wikiSwitchEnabled;
+}
+
+- (BOOL)wikiSwitchEnabled
+{
+    return [[self getAttribute:@"wikiSwitchEnabled"] booleanValue:false];
+}
+
+- (void)setWikiSwitchEnabled:(BOOL)wikiSwitchEnabled
+{
+    if (self.wikiSwitchEnabled == wikiSwitchEnabled) return;
+    [self setAttribute:[NSNumber numberWithBool:wikiSwitchEnabled] forKey:@"wikiSwitchEnabled"];
+}
+
 - (BOOL)isNewActivitiesApiSupported {
     NSString *version = self.serverVersion;
     return version != nil && [version compare:@"7.0.0" options:NSNumericSearch] != NSOrderedAscending;
@@ -308,6 +333,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)setServerInfo:(NSDictionary *)info
 {
     [self setAttribute:info forKey:@"serverInfo"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:SeafServerInfoUpdatedNotification object:self];
 }
 
 - (BOOL)isWifiOnly

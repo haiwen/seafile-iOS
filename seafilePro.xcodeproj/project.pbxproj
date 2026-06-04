@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1234A1AA0526579332B5E703 /* libPods-SeafShare.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DA126D224400B6A8E752C31 /* libPods-SeafShare.a */; };
+		191136FB3E23E08CD24606D5 /* SeafSafariStyleToolbar.m in Sources */ = {isa = PBXBuildFile; fileRef = 28EF956E7A5925DC49342E0B /* SeafSafariStyleToolbar.m */; };
 		1C348932E8D40505EEA4E82A /* local-image-nomal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */; };
 		1C4454A94D2D95203CB3F655 /* SeafImagePickerHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 63D491CDD7B475B4A20E172B /* SeafImagePickerHelper.m */; };
 		28986A845D0CE9E3A2FBA6CD /* local-image-nomal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */; };
@@ -100,6 +101,7 @@
 		A00F9663183F2D3C5D4A04C4 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
 		A1A1A1B12604210000000005 /* SeafPhotoPagingView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1B12604210000000002 /* SeafPhotoPagingView.m */; };
 		A1A1A1B12604210000000006 /* SeafPhotoPageContainer.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1B12604210000000004 /* SeafPhotoPageContainer.m */; };
+		AD9F9BE15EB7572B277B96B7 /* SeafWikiModel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2F538AD6158FC9F31E5C54D /* SeafWikiModel.m */; };
 		BA057DC62E1E60110030C743 /* SeafNavLeftItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA11F5032D91457900F56208 /* SeafNavLeftItem.m */; };
 		BA057DC72E1E60110030C743 /* SeafNavLeftItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA11F5032D91457900F56208 /* SeafNavLeftItem.m */; };
 		BA0DB2C12D8831B500237211 /* arrowLeft_black.png in Resources */ = {isa = PBXBuildFile; fileRef = BA0DB2C02D8831B500237211 /* arrowLeft_black.png */; };
@@ -591,11 +593,14 @@
 		BAF705912F92418C00B80D1F /* SeafZoomableScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF705902F92418C00B80D1F /* SeafZoomableScrollView.m */; };
 		BAFF000000000000FFFE0004 /* SeafPhotoHeroAnimator.m in Sources */ = {isa = PBXBuildFile; fileRef = BAFF000000000000FFFE0003 /* SeafPhotoHeroAnimator.m */; };
 		C116A0493213467193079AA2 /* local-image-nomal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */; };
+		CBF3F952B96D7D3835F945A4 /* SeafWebViewBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B5DE0A087D90BD6B117BD87E /* SeafWebViewBridge.m */; };
 		CC01359F6352B607AF67F125 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
+		D39F0DA10361CD52EAD6E7D5 /* SeafWikiViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27192FBD78A91A8AE45E053D /* SeafWikiViewController.m */; };
 		D9BE2094AD9B16A02584A3C2 /* libPods-seafileApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */; };
 		DB4097410DC1643F77058678 /* qb_add_photo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = CABEB66125FA6F66D728AB57 /* qb_add_photo@2x.png */; };
 		DE940CA1A2BA2DD43C20EA2C /* libPods-SeafFileProviderUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */; };
 		E0FED1E93CBE02FB9B335ADB /* libPods-SeafFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3583928919818364B46034EA /* libPods-SeafFileProvider.a */; };
+		E5C6A2114E5D69744EE4E837 /* SeafWikiWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ACB60280293B649179470147 /* SeafWikiWebViewController.m */; };
 		EFF07ACD1DE00B509BC14A22 /* local-image-nomal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */; };
 		F515E4B621AC3DBB00A62F64 /* SeafActionsManager.m in Sources */ = {isa = PBXBuildFile; fileRef = F515E4B521AC3DBB00A62F64 /* SeafActionsManager.m */; };
 		F515E4D221B6D24E00A62F64 /* SeafSearchResultViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F515E4D121B6D24E00A62F64 /* SeafSearchResultViewController.m */; };
@@ -1127,7 +1132,11 @@
 /* Begin PBXFileReference section */
 		159E0D2A7419F67E532A240F /* libPods-SeafAction.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafAction.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafFileProviderUI.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		27192FBD78A91A8AE45E053D /* SeafWikiViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiViewController.m; sourceTree = "<group>"; };
+		28EF956E7A5925DC49342E0B /* SeafSafariStyleToolbar.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafSafariStyleToolbar.m; sourceTree = "<group>"; };
+		299557302F75C46D4EC6FC3C /* SeafWikiWebViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWikiWebViewController.h; sourceTree = "<group>"; };
 		3583928919818364B46034EA /* libPods-SeafFileProvider.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafFileProvider.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		358939F02FEA86EA4E4F0617 /* SeafWebViewBridge.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWebViewBridge.h; sourceTree = "<group>"; };
 		391E3ED98EC6BAF7AAFE0646 /* qb_add_photo@3x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "qb_add_photo@3x.png"; sourceTree = "<group>"; };
 		492C6C1B7591DFE8AF317708 /* Pods-SeafShare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafShare.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare.release.xcconfig"; sourceTree = "<group>"; };
 		4A5E88CC22AD3102008146BA /* SeafActivitiesCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActivitiesCell.h; sourceTree = "<group>"; };
@@ -1238,6 +1247,7 @@
 		66A0A85ED1C1808578E903C2 /* Pods-SeafFileProvider.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafFileProvider.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider.debug.xcconfig"; sourceTree = "<group>"; };
 		6E02F45D400A774F24C9DCD7 /* SeafImagePickerHelper.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafImagePickerHelper.h; sourceTree = "<group>"; };
 		71B308DC2DFEC09F58232B49 /* Pods-SeafFileProviderUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafFileProviderUI.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI.debug.xcconfig"; sourceTree = "<group>"; };
+		7919C0097090FEE2B1354667 /* SeafSafariStyleToolbar.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafSafariStyleToolbar.h; sourceTree = "<group>"; };
 		79C932333EE0D9ED38CB6CBD /* qb_add_photo.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = qb_add_photo.png; sourceTree = "<group>"; };
 		7F320B5A628F92203C751439 /* local-image-nomal@3x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "local-image-nomal@3x.png"; sourceTree = "<group>"; };
 		86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "local-image-nomal@2x.png"; sourceTree = "<group>"; };
@@ -1247,7 +1257,9 @@
 		A1A1A1B12604210000000002 /* SeafPhotoPagingView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoPagingView.m; sourceTree = "<group>"; };
 		A1A1A1B12604210000000003 /* SeafPhotoPageContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPhotoPageContainer.h; sourceTree = "<group>"; };
 		A1A1A1B12604210000000004 /* SeafPhotoPageContainer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoPageContainer.m; sourceTree = "<group>"; };
+		ACB60280293B649179470147 /* SeafWikiWebViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiWebViewController.m; sourceTree = "<group>"; };
 		B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-seafileApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5DE0A087D90BD6B117BD87E /* SeafWebViewBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWebViewBridge.m; sourceTree = "<group>"; };
 		B6C7801D49498095B24DB644 /* Pods-seafileApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.release.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.release.xcconfig"; sourceTree = "<group>"; };
 		BA0DB2C02D8831B500237211 /* arrowLeft_black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowLeft_black.png; sourceTree = "<group>"; };
 		BA0E7E4E2D92470F00E3E3F0 /* SeafHeaderView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafHeaderView.h; sourceTree = "<group>"; };
@@ -1421,7 +1433,10 @@
 		BAFF000000000000FFFE0002 /* SeafPhotoHeroAnimator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPhotoHeroAnimator.h; sourceTree = "<group>"; };
 		BAFF000000000000FFFE0003 /* SeafPhotoHeroAnimator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoHeroAnimator.m; sourceTree = "<group>"; };
 		CABEB66125FA6F66D728AB57 /* qb_add_photo@2x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "qb_add_photo@2x.png"; sourceTree = "<group>"; };
+		D337E3A761DBD14989ADC49C /* SeafWikiViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWikiViewController.h; sourceTree = "<group>"; };
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
+		E193604B5D640B0EC0451D94 /* SeafWikiModel.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWikiModel.h; sourceTree = "<group>"; };
+		E2F538AD6158FC9F31E5C54D /* SeafWikiModel.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiModel.m; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 		F515E4B421AC3DBB00A62F64 /* SeafActionsManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActionsManager.h; sourceTree = "<group>"; };
 		F515E4B521AC3DBB00A62F64 /* SeafActionsManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafActionsManager.m; sourceTree = "<group>"; };
@@ -1910,6 +1925,9 @@
 				F521116E21E1C0DF00D93BB8 /* ui */,
 				5704C6CF1753A07E0028F4FE /* thirdpart */,
 				5709512615B9ACDF00F48C08 /* views */,
+				6C1F9E8B59F3A3615AE2042A /* Wiki */,
+				358939F02FEA86EA4E4F0617 /* SeafWebViewBridge.h */,
+				B5DE0A087D90BD6B117BD87E /* SeafWebViewBridge.m */,
 			);
 			path = seafile;
 			sourceTree = "<group>";
@@ -1952,6 +1970,22 @@
 				58D40A6C1E9AF7A400A68BEF /* seafile.xcdatamodeld */,
 			);
 			name = Resources;
+			sourceTree = "<group>";
+		};
+		6C1F9E8B59F3A3615AE2042A /* Wiki */ = {
+			isa = PBXGroup;
+			children = (
+				E193604B5D640B0EC0451D94 /* SeafWikiModel.h */,
+				E2F538AD6158FC9F31E5C54D /* SeafWikiModel.m */,
+				D337E3A761DBD14989ADC49C /* SeafWikiViewController.h */,
+				27192FBD78A91A8AE45E053D /* SeafWikiViewController.m */,
+				299557302F75C46D4EC6FC3C /* SeafWikiWebViewController.h */,
+				ACB60280293B649179470147 /* SeafWikiWebViewController.m */,
+				7919C0097090FEE2B1354667 /* SeafSafariStyleToolbar.h */,
+				28EF956E7A5925DC49342E0B /* SeafSafariStyleToolbar.m */,
+			);
+			name = Wiki;
+			path = Wiki;
 			sourceTree = "<group>";
 		};
 		BA896BDF2ED45D8C00EC9CE2 /* sdocIcon */ = {
@@ -3829,6 +3863,11 @@
 				BAF436AB2EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m in Sources */,
 				BAF436AC2EA9D5A70002ECD1 /* SeafTagChipCell.m in Sources */,
 				1C4454A94D2D95203CB3F655 /* SeafImagePickerHelper.m in Sources */,
+				AD9F9BE15EB7572B277B96B7 /* SeafWikiModel.m in Sources */,
+				D39F0DA10361CD52EAD6E7D5 /* SeafWikiViewController.m in Sources */,
+				E5C6A2114E5D69744EE4E837 /* SeafWikiWebViewController.m in Sources */,
+				CBF3F952B96D7D3835F945A4 /* SeafWebViewBridge.m in Sources */,
+				191136FB3E23E08CD24606D5 /* SeafSafariStyleToolbar.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4063,7 +4102,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
@@ -4099,7 +4138,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
@@ -4142,7 +4181,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -4180,7 +4219,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -4223,7 +4262,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -4263,7 +4302,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -4304,7 +4343,7 @@
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -4341,7 +4380,7 @@
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -4486,7 +4525,7 @@
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.FileProviderActionsUI;
@@ -4526,7 +4565,7 @@
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.FileProviderActionsUI;
@@ -4572,7 +4611,7 @@
 				INFOPLIST_FILE = SeafShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -4615,7 +4654,7 @@
 				INFOPLIST_FILE = SeafShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.0.3;
+				MARKETING_VERSION = 4.0.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";

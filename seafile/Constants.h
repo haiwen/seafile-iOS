@@ -32,8 +32,19 @@
 #define BOTTOM_TOOL_VIEW_DISABLE_COLOR [SeafTheme bottomToolDisabledColor]
 
 
-#define SEAF_SEPARATOR_INSET UIEdgeInsetsMake(0, 25, 0, 15)
-#define SEAF_CELL_CORNER 6
+// ── Card-style list unified UI constants ─────────────────────────────────────
+#define SEAF_CARD_HORIZONTAL_PADDING  10.0   // Card background inset from cell edges
+#define SEAF_CELL_CORNER              6      // Card corner radius
+
+// ── Separator unified constants ──────────────────────────────────────────────
+// Left inset = card padding (10) + inner offset (13) = 23
+// Right inset = card padding (10) + inner offset (6) = 16
+#define SEAF_SEPARATOR_LEFT_INSET     23.0
+#define SEAF_SEPARATOR_RIGHT_INSET    16.0
+#define SEAF_SEPARATOR_INSET UIEdgeInsetsMake(0, SEAF_SEPARATOR_LEFT_INSET, 0, SEAF_SEPARATOR_RIGHT_INSET)
+
+// Native separator height: 1 physical pixel on any screen scale
+#define SEAF_SEPARATOR_HEIGHT         (1.0 / [UIScreen mainScreen].scale)
 
 #define UIColorFromRGB(rgbValue) [UIColor \
     colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \

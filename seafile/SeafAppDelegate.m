@@ -81,10 +81,12 @@
             [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_SETTINGS] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_ACTIVITY] popToRootViewControllerAnimated:NO];
+            [[self masterNavController:TABBED_WIKI] popToRootViewControllerAnimated:NO];
             self.fileVC.connection = conn;
             self.starredVC.connection = conn;
             self.settingVC.connection = conn;
             self.actvityVC.connection = conn;
+            self.wikiVC.connection = conn;
 
             // Clear web cookies for the target account host to avoid stale session after switching accounts
             NSString *host = [NSURL URLWithString:conn.address].host;
@@ -125,23 +127,16 @@
 - (void)enterAccount:(SeafConnection *)conn
 {
     BOOL updated = [self selectAccount:conn];
+
+    Debug("isActivityEnabled:%d isWikiEnabled:%d tabbarController: %ld", conn.isActivityEnabled, conn.isWikiEnabled, (long)self.tabbarController.viewControllers.count);
+
+    // Always update tabs based on the new connection's server features,
+    // even if we are already showing the tabbar (e.g. switching accounts).
+    [self updateTabsForConnection:conn];
+
     if (self.window.rootViewController == self.tabbarController)
         return;
 
-    Debug("isActivityEnabled:%d tabbarController: %ld", conn.isActivityEnabled, (long)self.tabbarController.viewControllers.count);
-    
-    // Adjust tab bar controller's tabs based on the account's features
-    if (conn.isActivityEnabled) {
-        if (self.tabbarController.viewControllers.count != TABBED_COUNT) {
-            [self.tabbarController setViewControllers:self.viewControllers];
-        }
-    } else {
-        if (self.tabbarController.viewControllers.count == TABBED_COUNT) {
-            NSMutableArray *vcs = [NSMutableArray arrayWithArray:[self.tabbarController viewControllers]];
-            [vcs removeObjectAtIndex:TABBED_ACTIVITY];
-            [self.tabbarController setViewControllers:vcs];
-        }
-    }
     if (updated) {
         // Restart any unfinished tasks and default to the files tab.
         [SeafDataTaskManager.sharedObject startLastTimeUnfinshTaskWithConnection:conn];
@@ -150,7 +145,38 @@
     // Make the tab bar controller the root view controller and display it.
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
-    
+}
+
+/// Dynamically add/remove Wiki and Activity tabs based on server features.
+- (void)updateTabsForConnection:(SeafConnection *)conn
+{
+    NSMutableArray *vcs = [NSMutableArray arrayWithArray:self.viewControllers];
+    NSMutableArray *visible = [NSMutableArray new];
+    for (UIViewController *vc in vcs) {
+        // Always include Files, Starred, Settings
+        NSInteger idx = [vcs indexOfObject:vc];
+        if (idx == TABBED_SEAFILE || idx == TABBED_STARRED || idx == TABBED_SETTINGS) {
+            [visible addObject:vc];
+        } else if (idx == TABBED_WIKI && conn.isWikiEnabled) {
+            [visible addObject:vc];
+        } else if (idx == TABBED_ACTIVITY && conn.isActivityEnabled) {
+            [visible addObject:vc];
+        }
+    }
+    // Rebuild only when visibility changed to avoid tab churn.
+    if (![self.tabbarController.viewControllers isEqualToArray:visible])
+        [self.tabbarController setViewControllers:visible];
+}
+
+// Server info arrives async after enterAccount:, so re-evaluate feature tabs.
+- (void)serverInfoDidUpdate:(NSNotification *)note
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        SeafConnection *conn = [SeafGlobal sharedObject].connection;
+        if (conn && note.object == conn) {
+            [self updateTabsForConnection:conn];
+        }
+    });
 }
 
 // Exit current account and display the start (login) screen.
@@ -349,6 +375,12 @@
     [SeafTabBarStyler applyStandardAppearanceToTabBar:_tabbarController.tabBar];
     [SeafGlobal.sharedObject loadAccounts];
 
+    // Run the theme preference one-time migration *after* SeafGlobal has migrated
+    // accounts into App Group storage, so SeafTheme can reliably distinguish
+    // upgrade-from-legacy users (existing accounts) from fresh installs and
+    // pick a sensible default. Must run *before* applyPreferenceToWindow:.
+    [SeafTheme migrateLegacyPreferenceIfNeeded];
+
     self.window.backgroundColor = [SeafTheme primarySurface];
     self.autoBackToDefaultAccount = false;
     _monitors = [[NSMutableArray alloc] init];
@@ -361,6 +393,10 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(themePreferenceDidChange:)
                                                  name:SeafThemeDidChangeNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(serverInfoDidUpdate:)
+                                                 name:SeafServerInfoUpdatedNotification
                                                object:nil];
 
 
@@ -574,6 +610,10 @@
 
 #pragma mark - ViewController
 // Method to initialize and setup the tab controller with all required tabs.
+// The full tab set (Files, Starred, Wiki, Activity, Settings) and its order
+// are declared in FolderView_iPhone.storyboard / FolderView_iPad.storyboard,
+// matching the TABBED_* enum. Only localized titles and the iPad split
+// delegate wiring are applied here.
 - (void)initTabController
 {
     UITabBarController *tabs;
@@ -582,35 +622,70 @@
     } else {
         tabs = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"TABVC"];
     }
-    UIViewController *fileController = [tabs.viewControllers objectAtIndex:TABBED_SEAFILE];
-    UIViewController *starredController = [tabs.viewControllers objectAtIndex:TABBED_STARRED];
-    UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
-    UIViewController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
 
-    UITabBarItem *homeItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Libraries", @"Seafile") image:[UIImage imageNamed:@"tab-home.png"] tag:0];
-    fileController.tabBarItem = homeItem;
-    
-    UITabBarItem *starItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Starred", @"Seafile") image:[UIImage imageNamed:@"tab-star.png"] tag:1];
-    starredController.tabBarItem = starItem;
-    
-    UITabBarItem *settingsItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Seafile") image:[UIImage imageNamed:@"tab-settings.png"] tag:2];
-    settingsController.tabBarItem = settingsItem;
-    
-    UITabBarItem *activityItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Activity", @"Seafile") image:[UIImage imageNamed:@"tab-modify.png"] tag:3];
-    activityController.tabBarItem = activityItem;
+    NSArray<NSString *> *titles = @[
+        NSLocalizedString(@"Libraries", @"Seafile"),
+        NSLocalizedString(@"Starred", @"Seafile"),
+        NSLocalizedString(@"Wikis", @"Seafile"),
+        NSLocalizedString(@"Activity", @"Seafile"),
+        NSLocalizedString(@"Settings", @"Seafile"),
+    ];
+    // Replace the storyboard-defined tabBarItem with a fresh one that carries
+    // the localized title. The image is taken from the storyboard so we don't
+    // have to hard-code image names here. Replacing (rather than mutating
+    // .title) ensures UITabBar picks up the change reliably.
+    [tabs.viewControllers enumerateObjectsUsingBlock:^(UIViewController *vc, NSUInteger idx, BOOL *stop) {
+        if (idx < titles.count) {
+            UIImage *image = vc.tabBarItem.image;
+            vc.tabBarItem = [[UITabBarItem alloc] initWithTitle:titles[idx] image:image tag:idx];
+            // On iPad, also set the master NavigationController's title for
+            // SplitViewControllers so that displayModeButtonItem shows
+            // localized text instead of the storyboard-hardcoded English title.
+            if (IsIpad() && [vc isKindOfClass:[UISplitViewController class]]) {
+                UINavigationController *masterNav = [[(UISplitViewController *)vc viewControllers] firstObject];
+                if ([masterNav isKindOfClass:[UINavigationController class]]) {
+                    masterNav.title = titles[idx];
+                }
+            }
+        }
+    }];
 
     if (IsIpad()) {
-        ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
-        ((UISplitViewController *)starredController).delegate = (id)[[((UISplitViewController *)starredController).viewControllers lastObject] topViewController];
-        ((UISplitViewController *)settingsController).delegate = (id)[[((UISplitViewController *)settingsController).viewControllers lastObject] topViewController];
+        for (UIViewController *vc in tabs.viewControllers) {
+            if ([vc isKindOfClass:[UISplitViewController class]]) {
+                UISplitViewController *split = (UISplitViewController *)vc;
+                split.delegate = (id)[[split.viewControllers lastObject] topViewController];
+                split.view.backgroundColor = [SeafTheme primaryBackgroundColor];
+            }
+        }
     }
-    self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
+
+    self.viewControllers = tabs.viewControllers;
     _tabbarController = tabs;
     [SeafTabBarStyler applyStandardAppearanceToTabBar:_tabbarController.tabBar];
     _tabbarController.navigationController.navigationBar.backgroundColor = [SeafTheme primarySurface];
     _tabbarController.delegate = self;
     if (ios7)
-        _tabbarController.view.backgroundColor = [SeafTheme secondarySurface];
+        _tabbarController.view.backgroundColor = [SeafTheme primaryBackgroundColor];
+
+    // Ensure consistent tab bar appearance on iOS 15+.
+    // Without this, scrollEdgeAppearance defaults to transparent, causing the
+    // tab bar to flash white when Wiki/Activity content doesn't reach the bottom.
+    if (@available(iOS 15.0, *)) {
+        UITabBarAppearance *tabBarAppearance = [UITabBarAppearance new];
+        [tabBarAppearance configureWithDefaultBackground];
+        _tabbarController.tabBar.standardAppearance = tabBarAppearance;
+        _tabbarController.tabBar.scrollEdgeAppearance = tabBarAppearance;
+    }
+
+    // On iPadOS 18+, UITabBarController shows tabs at the top (compact tab bar).
+    // The bottom UITabBar still exists and occupies layout space, causing blank
+    // space at the bottom of the screen. Hide it on iPad since tabs are at the top.
+    if (IsIpad()) {
+        if (@available(iOS 18.0, *)) {
+            _tabbarController.tabBar.hidden = YES;
+        }
+    }
 
 }
 
@@ -633,7 +708,8 @@
     if (!IsIpad())
         return [self.viewControllers objectAtIndex:index];
     else {
-        return (index == TABBED_ACTIVITY)? [self.viewControllers objectAtIndex:index] : [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
+        // Wiki and Activity tabs use plain UINavigationController (not UISplitViewController)
+        return (index == TABBED_ACTIVITY || index == TABBED_WIKI) ? [self.viewControllers objectAtIndex:index] : [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
     }
 }
 
@@ -668,6 +744,11 @@
 - (SeafActivityViewController *)actvityVC
 {
     return (SeafActivityViewController *)[[self.viewControllers objectAtIndex:TABBED_ACTIVITY] topViewController];
+}
+
+- (SeafWikiViewController *)wikiVC
+{
+    return (SeafWikiViewController *)[[self.viewControllers objectAtIndex:TABBED_WIKI] topViewController];
 }
 
 - (void)showDetailView:(UIViewController *) c

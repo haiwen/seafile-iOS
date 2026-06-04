@@ -48,6 +48,9 @@ typedef void (^CompletionBlock)(BOOL success, NSError * _Nullable error);
 
 BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
+/// Posted when server info is updated; the object is the SeafConnection.
+extern NSNotificationName const SeafServerInfoUpdatedNotification;
+
 @protocol SeafLoginDelegate <NSObject>
 /**
  * Notifies the delegate that login was successful.
@@ -122,6 +125,9 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readonly) BOOL isCommunityServer;///< Indicates whether the server is running Seafile Community edition.
 @property (readonly) BOOL isAdvancedSearchEnabled;///< Indicates whether advanced search (file-search) is enabled on the server.
 @property (readonly) BOOL isActivityEnabled;///< Indicates whether activity tracking is enabled on the server.
+@property (readonly) BOOL isServerWikiSupported;///< Whether the server has the wiki feature flag.
+@property (readonly) BOOL isWikiEnabled;///< Whether wiki should be shown (server supported AND client switch enabled).
+@property (nonatomic) BOOL wikiSwitchEnabled;///< Client-side wiki toggle (persisted per account, default NO).
 @property (readonly) BOOL isNewActivitiesApiSupported;///< Indicates whether the new activities API is supported.
 @property (readonly) NSData* _Nullable clientIdentityKey;///< Client identity key for secure communications.
 
