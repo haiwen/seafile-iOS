@@ -3,7 +3,7 @@
 //  Uses UITableView with chip-style tag cells and selection checkmarks.
 
 #import "SeafTagSelectorViewController.h"
-#import "../Chips/SeafTagChipView.h"
+#import "SeafTagChipView.h"
 
 #pragma mark - Tag Selector Cell
 

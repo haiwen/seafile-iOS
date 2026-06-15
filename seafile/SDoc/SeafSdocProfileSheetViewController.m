@@ -1,9 +1,9 @@
 //  SeafSdocProfileSheetViewController.m
 
 #import "SeafSdocProfileSheetViewController.h"
-#import "Editor/SeafSdocProfileEditorViewController.h"
-#import "Chips/SeafTagChipView.h"
-#import "Services/SeafSdocService.h"
+#import "SeafSdocProfileEditorViewController.h"
+#import "SeafTagChipView.h"
+#import "SeafSdocService.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -414,12 +414,13 @@ static NSSet *SeafChipTypes(void)
     // Dismiss the profile sheet first, then present editor
     __weak typeof(self) weakSelf = self;
     [self dismissViewControllerAnimated:YES completion:^{
-        if (!weakSelf.connection || !weakSelf.aggregate || !weakSelf.repoId) return;
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf.connection || !strongSelf.aggregate || !strongSelf.repoId) return;
         
         SeafSdocProfileEditorViewController *editor = [[SeafSdocProfileEditorViewController alloc]
-                                                        initWithConnection:weakSelf.connection
-                                                                    repoId:weakSelf.repoId
-                                                                 aggregate:weakSelf.aggregate];
+                                                        initWithConnection:strongSelf.connection
+                                                                    repoId:strongSelf.repoId
+                                                                 aggregate:strongSelf.aggregate];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:editor];
         nav.modalPresentationStyle = UIModalPresentationFullScreen;
         

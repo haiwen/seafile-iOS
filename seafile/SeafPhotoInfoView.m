@@ -1,6 +1,6 @@
 #import "SeafPhotoInfoView.h"
 #import "Debug.h"
-#import "SDoc/Chips/SeafCollaboratorChipView.h"
+#import "SeafCollaboratorChipView.h"
 #import <ImageIO/ImageIO.h>
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "SeafTheme.h"
