@@ -3,13 +3,13 @@
 
 #import "SeafSdocProfileEditorViewController.h"
 #import "SeafSdocLongTextEditorViewController.h"
-#import "../Selectors/SeafSdocOptionSelectorViewController.h"
-#import "../Selectors/SeafSdocDatePickerViewController.h"
-#import "../SeafSdocProfileAssembler.h"
-#import "../Chips/SeafCollaboratorChipView.h"
-#import "../Chips/SeafTagChipView.h"
-#import "../Selectors/SeafTagSelectorViewController.h"
-#import "../Services/SeafSdocService.h"
+#import "SeafSdocOptionSelectorViewController.h"
+#import "SeafSdocDatePickerViewController.h"
+#import "SeafSdocProfileAssembler.h"
+#import "SeafCollaboratorChipView.h"
+#import "SeafTagChipView.h"
+#import "SeafTagSelectorViewController.h"
+#import "SeafSdocService.h"
 #import "SeafConnection.h"
 #import "SeafNavigationBarStyler.h"
 #import "SVProgressHUD.h"
@@ -17,6 +17,14 @@
 
 static NSInteger const kContainerTagBase = 9000;
 static NSInteger const kContentViewTag = 8888;
+
+// Associated object keys (pointer-based, per ObjC best practice)
+static const void *kAssocMetadataKey    = &kAssocMetadataKey;
+static const void *kAssocMetadataDict   = &kAssocMetadataDict;
+static const void *kAssocMaxRate        = &kAssocMaxRate;
+static const void *kAssocRateColor      = &kAssocRateColor;
+static const void *kAssocSelectOptions  = &kAssocSelectOptions;
+static const void *kAssocSelectedValues = &kAssocSelectedValues;
 
 #pragma mark - Cell styling helpers (align Android shape_task_view_editable / no_editable)
 
@@ -536,7 +544,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     
     if (editable) {
         [textField addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
-        objc_setAssociatedObject(textField, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(textField, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     
     [textField.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
@@ -544,7 +552,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 }
 
 - (void)textFieldDidChange:(UITextField *)textField {
-    NSString *key = objc_getAssociatedObject(textField, "metadataKey");
+    NSString *key = objc_getAssociatedObject(textField, kAssocMetadataKey);
     if (key) {
         self.contentMap[key] = textField.text ?: @"";
     }
@@ -597,8 +605,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     
     if (editable) {
         [textField addTarget:self action:@selector(numberFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
-        objc_setAssociatedObject(textField, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
-        objc_setAssociatedObject(textField, "metadataDict", metadata, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(textField, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(textField, kAssocMetadataDict, metadata, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         
         // Align Android: show raw number on focus, formatted number on blur
         [textField addTarget:self action:@selector(numberFieldDidBeginEditing:) forControlEvents:UIControlEventEditingDidBegin];
@@ -684,7 +692,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 
 - (void)numberFieldDidBeginEditing:(UITextField *)textField {
     // On focus: show raw number (align Android onFocusChange hasFocus=true)
-    NSDictionary *metadata = objc_getAssociatedObject(textField, "metadataDict");
+    NSDictionary *metadata = objc_getAssociatedObject(textField, kAssocMetadataDict);
     NSDictionary *configData = metadata[@"data"];
     if ([configData isKindOfClass:[NSArray class]]) {
         NSArray *arr = (NSArray *)configData;
@@ -699,20 +707,16 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     NSString *inputStr = textField.text;
     if (!inputStr || inputStr.length == 0) return;
     
-    NSDictionary *metadata = objc_getAssociatedObject(textField, "metadataDict");
-    @try {
-        double val = [inputStr doubleValue];
-        NSString *formatted = [SeafSdocProfileAssembler formatNumber:@(val) withMetadata:metadata];
-        textField.text = formatted;
-    } @catch (NSException *e) {
-        // If parsing fails, keep as is
-    }
+    NSDictionary *metadata = objc_getAssociatedObject(textField, kAssocMetadataDict);
+    double val = [inputStr doubleValue];
+    NSString *formatted = [SeafSdocProfileAssembler formatNumber:@(val) withMetadata:metadata];
+    textField.text = formatted;
 }
 
 - (void)numberFieldDidChange:(UITextField *)textField {
-    NSString *key = objc_getAssociatedObject(textField, "metadataKey");
+    NSString *key = objc_getAssociatedObject(textField, kAssocMetadataKey);
     if (key) {
-        NSDictionary *metadata = objc_getAssociatedObject(textField, "metadataDict");
+        NSDictionary *metadata = objc_getAssociatedObject(textField, kAssocMetadataDict);
         NSDictionary *configData = metadata[@"data"];
         if ([configData isKindOfClass:[NSArray class]]) {
             NSArray *arr = (NSArray *)configData;
@@ -759,8 +763,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onDateTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
-        objc_setAssociatedObject(wrapper, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
-        objc_setAssociatedObject(wrapper, "metadataDict", metadata, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(wrapper, kAssocMetadataDict, metadata, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         
         // Add disclosure indicator
         UIImageView *arrow = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"chevron.right"]];
@@ -780,8 +784,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 }
 
 - (void)onDateTapped:(UITapGestureRecognizer *)tap {
-    NSString *key = objc_getAssociatedObject(tap.view, "metadataKey");
-    NSDictionary *metadata = objc_getAssociatedObject(tap.view, "metadataDict");
+    NSString *key = objc_getAssociatedObject(tap.view, kAssocMetadataKey);
+    NSDictionary *metadata = objc_getAssociatedObject(tap.view, kAssocMetadataDict);
     if (!key) return;
 
     // Current value
@@ -840,10 +844,11 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     [wrapper addSubview:textLabel];
     
     // Constraints: padding 16dp horizontal, 8dp vertical (align Android)
+    NSLayoutConstraint *textTrailingConstraint = [textLabel.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-16];
     [NSLayoutConstraint activateConstraints:@[
         [textLabel.topAnchor constraintEqualToAnchor:wrapper.topAnchor constant:8],
         [textLabel.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor constant:16],
-        [textLabel.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-16],
+        textTrailingConstraint,
         [textLabel.bottomAnchor constraintEqualToAnchor:wrapper.bottomAnchor constant:-8],
     ]];
     
@@ -855,7 +860,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onLongTextTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
-        objc_setAssociatedObject(wrapper, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         
         // Add disclosure indicator (align Android: shows navigability)
         UIImageView *arrow = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"chevron.right"]];
@@ -868,17 +873,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
             [arrow.widthAnchor constraintEqualToConstant:12],
             [arrow.heightAnchor constraintEqualToConstant:16],
         ]];
-        // Adjust text trailing to not overlap arrow
-        for (NSLayoutConstraint *c in textLabel.constraints) {
-            // no-op: constraints are on wrapper, not textLabel
-        }
         // Re-pin textLabel trailing to leave room for arrow
-        for (NSLayoutConstraint *c in wrapper.constraints) {
-            if (c.firstItem == textLabel && c.firstAttribute == NSLayoutAttributeTrailing) {
-                c.constant = -36; // 16 + 12 (arrow) + 8 (gap)
-                break;
-            }
-        }
+        textTrailingConstraint.constant = -36; // 16 + 12 (arrow) + 8 (gap)
     }
     
     return wrapper;
@@ -886,7 +882,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 
 /// Handle tap on long text field: present full-screen editor (align Android: LongTextSelectorActivity)
 - (void)onLongTextTapped:(UITapGestureRecognizer *)tap {
-    NSString *key = objc_getAssociatedObject(tap.view, "metadataKey");
+    NSString *key = objc_getAssociatedObject(tap.view, kAssocMetadataKey);
     if (!key) return;
     
     NSDictionary *metaMut = self.recordMetaDataMap[key];
@@ -923,7 +919,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     
     if (editable) {
         [toggle addTarget:self action:@selector(checkboxChanged:) forControlEvents:UIControlEventValueChanged];
-        objc_setAssociatedObject(toggle, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(toggle, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     
     UIView *wrapper = [[UIView alloc] init];
@@ -938,7 +934,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 }
 
 - (void)checkboxChanged:(UISwitch *)sw {
-    NSString *key = objc_getAssociatedObject(sw, "metadataKey");
+    NSString *key = objc_getAssociatedObject(sw, kAssocMetadataKey);
     if (key) {
         self.contentMap[key] = @(sw.isOn);
     }
@@ -985,9 +981,9 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         
         if (editable) {
             [star addTarget:self action:@selector(starTapped:) forControlEvents:UIControlEventTouchUpInside];
-            objc_setAssociatedObject(star, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
-            objc_setAssociatedObject(star, "maxRate", @(maxRate), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            objc_setAssociatedObject(star, "rateColor", filledColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            objc_setAssociatedObject(star, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+            objc_setAssociatedObject(star, kAssocMaxRate, @(maxRate), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            objc_setAssociatedObject(star, kAssocRateColor, filledColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
         
         [starStack addArrangedSubview:star];
@@ -1003,9 +999,9 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 }
 
 - (void)starTapped:(UIButton *)button {
-    NSString *key = objc_getAssociatedObject(button, "metadataKey");
-    NSNumber *maxRateNum = objc_getAssociatedObject(button, "maxRate");
-    UIColor *rateColor = objc_getAssociatedObject(button, "rateColor") ?: [UIColor colorWithRed:229.0/255.0 green:229.0/255.0 blue:229.0/255.0 alpha:1.0];
+    NSString *key = objc_getAssociatedObject(button, kAssocMetadataKey);
+    NSNumber *maxRateNum = objc_getAssociatedObject(button, kAssocMaxRate);
+    UIColor *rateColor = objc_getAssociatedObject(button, kAssocRateColor) ?: [UIColor colorWithRed:229.0/255.0 green:229.0/255.0 blue:229.0/255.0 alpha:1.0];
     NSInteger maxRate = [maxRateNum integerValue] ?: 5;
     NSInteger tappedRate = button.tag;
     
@@ -1044,8 +1040,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onSingleSelectTapped:)];
         label.userInteractionEnabled = YES;
         [label addGestureRecognizer:tap];
-        objc_setAssociatedObject(label, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
-        objc_setAssociatedObject(label, "selectOptions", options, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(label, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(label, kAssocSelectOptions, options, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     
     [label.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
@@ -1053,8 +1049,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 }
 
 - (void)onSingleSelectTapped:(UITapGestureRecognizer *)tap {
-    NSString *key = objc_getAssociatedObject(tap.view, "metadataKey");
-    NSArray *options = objc_getAssociatedObject(tap.view, "selectOptions");
+    NSString *key = objc_getAssociatedObject(tap.view, kAssocMetadataKey);
+    NSArray *options = objc_getAssociatedObject(tap.view, kAssocSelectOptions);
     if (!key || !options) return;
     
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
@@ -1101,9 +1097,9 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onMultiSelectTapped:)];
         label.userInteractionEnabled = YES;
         [label addGestureRecognizer:tap];
-        objc_setAssociatedObject(label, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
-        objc_setAssociatedObject(label, "selectOptions", options, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(label, "selectedValues", [selectedNames mutableCopy], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(label, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(label, kAssocSelectOptions, options, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(label, kAssocSelectedValues, [selectedNames mutableCopy], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     
     [label.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
@@ -1111,8 +1107,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 }
 
 - (void)onMultiSelectTapped:(UITapGestureRecognizer *)tap {
-    NSString *key = objc_getAssociatedObject(tap.view, "metadataKey");
-    NSArray *options = objc_getAssociatedObject(tap.view, "selectOptions");
+    NSString *key = objc_getAssociatedObject(tap.view, kAssocMetadataKey);
+    NSArray *options = objc_getAssociatedObject(tap.view, kAssocSelectOptions);
     if (!key || !options) return;
 
     // Get current selections
@@ -1180,7 +1176,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
             UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onCollaboratorTapped:)];
             label.userInteractionEnabled = YES;
             [label addGestureRecognizer:tap];
-            objc_setAssociatedObject(label, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+            objc_setAssociatedObject(label, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         }
         
         [label.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
@@ -1195,7 +1191,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onCollaboratorTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
-        objc_setAssociatedObject(wrapper, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     
     // Layout chips in a horizontal flow (left-to-right, wrapping)
@@ -1216,7 +1212,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     // Since we can't do true flow-layout in pure Auto Layout, use a vertical stack of horizontal stacks
     // But for simplicity and correctness, embed chips directly and rely on intrinsic sizing
     // The chips have fixed intrinsic height (22pt) so we stack them horizontally with wrap support
-    [self layoutChips:chips inContainer:wrapper spacing:chipSpacing lineSpacing:lineSpacing];
+    [self layoutChips:chips inContainer:wrapper chipSpacing:chipSpacing lineSpacing:lineSpacing];
     
     [wrapper.heightAnchor constraintGreaterThanOrEqualToConstant:22].active = YES;
     return wrapper;
@@ -1225,7 +1221,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 /// Layout chip views in a flow layout within a container view
 - (void)layoutChips:(NSArray<SeafCollaboratorChipView *> *)chips
         inContainer:(UIView *)container
-            spacing:(CGFloat)spacing
+        chipSpacing:(CGFloat)chipSpacing
         lineSpacing:(CGFloat)lineSpacing {
     if (chips.count == 0) return;
     
@@ -1252,7 +1248,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     ]];
     
     // Create a single horizontal stack (wrapping handled by compression resistance)
-    UIStackView *currentRow = [self makeChipRowStackWithSpacing:spacing];
+    UIStackView *currentRow = [self makeChipRowStackWithSpacing:chipSpacing];
     [verticalStack addArrangedSubview:currentRow];
     
     for (SeafCollaboratorChipView *chip in chips) {
@@ -1262,7 +1258,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 
 /// Present collaborator multi-select with checkmarks (align Android CollaboratorSelectorFragment)
 - (void)onCollaboratorTapped:(UITapGestureRecognizer *)tap {
-    NSString *key = objc_getAssociatedObject(tap.view, "metadataKey");
+    NSString *key = objc_getAssociatedObject(tap.view, kAssocMetadataKey);
     if (!key) return;
 
     // Get current selected emails
@@ -1391,7 +1387,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         [addButton.widthAnchor constraintEqualToConstant:24].active = YES;
         [addButton.heightAnchor constraintEqualToConstant:24].active = YES;
         [addButton addTarget:self action:@selector(onTagAddTapped:) forControlEvents:UIControlEventTouchUpInside];
-        objc_setAssociatedObject(addButton, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(addButton, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         // Extra spacing before the plus button (12pt vs 6pt between chips)
         if (currentRow.arrangedSubviews.count > 0) {
             [currentRow setCustomSpacing:12 afterView:currentRow.arrangedSubviews.lastObject];
@@ -1402,7 +1398,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onTagAddTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
-        objc_setAssociatedObject(wrapper, "metadataKey", key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     
     [wrapper.heightAnchor constraintGreaterThanOrEqualToConstant:22].active = YES;
@@ -1448,9 +1444,9 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 - (void)onTagAddTapped:(id)sender {
     NSString *key = nil;
     if ([sender isKindOfClass:[UIButton class]]) {
-        key = objc_getAssociatedObject(sender, "metadataKey");
+        key = objc_getAssociatedObject(sender, kAssocMetadataKey);
     } else if ([sender isKindOfClass:[UITapGestureRecognizer class]]) {
-        key = objc_getAssociatedObject(((UITapGestureRecognizer *)sender).view, "metadataKey");
+        key = objc_getAssociatedObject(((UITapGestureRecognizer *)sender).view, kAssocMetadataKey);
     }
     if (!key) return;
     [self presentTagSelectorForKey:key];
@@ -1483,11 +1479,13 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
             allTags:self.tagList
        selectedTags:selectedTags
          completion:^(NSString *returnedKey, NSArray<NSDictionary *> *newSelectedTags) {
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) return;
             // Update contentMap (align Android: onTagSelectedLiveData → contentMap.put)
-            weakSelf.contentMap[returnedKey] = newSelectedTags;
+            strongSelf.contentMap[returnedKey] = newSelectedTags;
             
             // Update metadata value to reflect new selection for UI rebuild
-            NSMutableDictionary *meta = weakSelf.recordMetaDataMap[returnedKey];
+            NSMutableDictionary *meta = strongSelf.recordMetaDataMap[returnedKey];
             if (meta) {
                 // Convert back to linked tag format
                 NSMutableArray *linkedTags = [NSMutableArray array];
@@ -1497,7 +1495,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
                 meta[@"value"] = linkedTags;
             }
             
-            [weakSelf rebuildFieldUIForKey:returnedKey];
+            [strongSelf rebuildFieldUIForKey:returnedKey];
         }];
     
     selector.modalPresentationStyle = UIModalPresentationPageSheet;
@@ -1670,15 +1668,17 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
                                  tagIds:tagIds
                              completion:^(BOOL success, NSError *error) {
         [SVProgressHUD dismiss];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
         if (success) {
-            [weakSelf.contentMap removeAllObjects];
+            [strongSelf.contentMap removeAllObjects];
             UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil
                                                                           message:NSLocalizedString(@"Successfully saved", @"")
                                                                    preferredStyle:UIAlertControllerStyleAlert];
-            [weakSelf presentViewController:alert animated:YES completion:^{
+            [strongSelf presentViewController:alert animated:YES completion:^{
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [alert dismissViewControllerAnimated:YES completion:^{
-                        [weakSelf dismissViewControllerAnimated:YES completion:nil];
+                        [strongSelf dismissViewControllerAnimated:YES completion:nil];
                     }];
                 });
             }];
@@ -1688,7 +1688,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
                                                                           message:msg
                                                                    preferredStyle:UIAlertControllerStyleAlert];
             [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"") style:UIAlertActionStyleDefault handler:nil]];
-            [weakSelf presentViewController:alert animated:YES completion:nil];
+            [strongSelf presentViewController:alert animated:YES completion:nil];
         }
     }];
 }
@@ -1819,7 +1819,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 #pragma mark - UITextViewDelegate
 
 - (void)textViewDidChange:(UITextView *)textView {
-    NSString *key = objc_getAssociatedObject(textView, "metadataKey");
+    NSString *key = objc_getAssociatedObject(textView, kAssocMetadataKey);
     if (key) {
         self.contentMap[key] = textView.text ?: @"";
     }

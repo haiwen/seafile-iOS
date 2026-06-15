@@ -2,7 +2,7 @@
 
 #import "SeafSdocProfileAssembler.h"
 #import "SeafSdocUserMapper.h"
-#import "Services/SeafSdocService.h"
+#import "SeafSdocService.h"
 
 @implementation SeafSdocProfileAssembler
 
