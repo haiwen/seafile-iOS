@@ -59,6 +59,7 @@
     self.textView.textContainerInset = UIEdgeInsetsMake(16, 12, 16, 12); // align Android: padding inside border
     self.textView.backgroundColor = [UIColor systemBackgroundColor];
     self.textView.alwaysBounceVertical = YES;
+    self.textView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     self.textView.accessibilityIdentifier = @"longtext_editor_textview";
     
     // Border styling (align Android: shape_task_view_editable — #E0E5EC border, 4pt corner radius)
@@ -92,6 +93,11 @@
     tapDismiss.delegate = self;
     [self.textView addGestureRecognizer:tapDismiss];
     
+    // Tap outside textView to dismiss keyboard
+    UITapGestureRecognizer *tapOutside = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onOutsideTapped)];
+    tapOutside.cancelsTouchesInView = NO;
+    [self.view addGestureRecognizer:tapOutside];
+    
     // Keyboard avoidance
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardWillChangeFrame:)
@@ -102,6 +108,10 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.textView becomeFirstResponder];
     });
+}
+
+- (void)onOutsideTapped {
+    [self.view endEditing:YES];
 }
 
 - (void)onCancel {
