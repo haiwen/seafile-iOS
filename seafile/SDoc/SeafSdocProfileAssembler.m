@@ -2,7 +2,7 @@
 
 #import "SeafSdocProfileAssembler.h"
 #import "SeafSdocUserMapper.h"
-#import "Services/SeafSdocService.h"
+#import "SeafSdocService.h"
 
 @implementation SeafSdocProfileAssembler
 
@@ -811,19 +811,39 @@
         }
     }
 
-    NSString *result = [fmt stringFromNumber:number] ?: @"";
+    // Handle percent format: multiply by 100 first (align Android BigDecimal multiply 100)
+    NSNumber *effectiveNumber = number;
+    if ([format isKindOfClass:[NSString class]] && [format isEqualToString:@"percent"]) {
+        effectiveNumber = @(number.doubleValue * 100.0);
+    }
 
-    // Format suffix/prefix (align Android MetadataViewUtils)
+    // For currency formats without explicit precision, default to 2 decimal places (align Android)
+    if (!enablePrecision && ([format isEqualToString:@"yuan"] || [format isEqualToString:@"dollar"] || [format isEqualToString:@"euro"] || [format isEqualToString:@"custom_currency"])) {
+        fmt.minimumFractionDigits = 2;
+        fmt.maximumFractionDigits = 2;
+    }
+
+    NSString *result = [fmt stringFromNumber:effectiveNumber] ?: @"";
+
+    // Format suffix/prefix (align Android MetadataViewUtils.getFormattedNumber)
     if ([format isKindOfClass:[NSString class]] && format.length > 0) {
         if ([format isEqualToString:@"percent"]) {
-            // percent: the raw value is already 0-100 range from server
             result = [result stringByAppendingString:@"%"];
         } else if ([format isEqualToString:@"yuan"]) {
-            result = [result stringByAppendingString:@"¥"];
+            result = [@"¥" stringByAppendingString:result];
         } else if ([format isEqualToString:@"dollar"]) {
             result = [@"$" stringByAppendingString:result];
         } else if ([format isEqualToString:@"euro"]) {
             result = [@"€" stringByAppendingString:result];
+        } else if ([format isEqualToString:@"custom_currency"]) {
+            // Align Android: custom_currency uses currency_symbol + currency_symbol_position
+            NSString *symbol = cfg[@"currency_symbol"] ?: @"";
+            NSString *position = cfg[@"currency_symbol_position"] ?: @"before";
+            if ([position isEqualToString:@"before"]) {
+                result = [symbol stringByAppendingString:result];
+            } else {
+                result = [result stringByAppendingString:symbol];
+            }
         }
     }
 
