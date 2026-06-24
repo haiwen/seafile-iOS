@@ -401,32 +401,13 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     CGFloat keyboardTopInView = keyboardFrameInView.origin.y;
     CGFloat offsetFromViewBottom = self.view.bounds.size.height - keyboardTopInView;
     
-    NSLog(@"[MkLib DEBUG] ========== keyboardWillShow ==========");
-    NSLog(@"[MkLib DEBUG] keyboardFrame (screen): %@", NSStringFromCGRect(keyboardFrame));
-    NSLog(@"[MkLib DEBUG] keyboardFrameInView: %@", NSStringFromCGRect(keyboardFrameInView));
-    NSLog(@"[MkLib DEBUG] self.view.bounds.size.height: %.1f", self.view.bounds.size.height);
-    NSLog(@"[MkLib DEBUG] keyboardTopInView: %.1f", keyboardTopInView);
-    NSLog(@"[MkLib DEBUG] offsetFromViewBottom: %.1f", offsetFromViewBottom);
-    NSLog(@"[MkLib DEBUG] alertViewBottomConstraint.constant before: %.1f", self.alertViewBottomConstraint.constant);
-    
     self.alertViewBottomConstraint.constant = -offsetFromViewBottom;
-    
-    NSLog(@"[MkLib DEBUG] alertViewBottomConstraint.constant after: %.1f", self.alertViewBottomConstraint.constant);
     
     [UIView animateWithDuration:animationDuration delay:0.0 options:(animationCurve << 16) | UIViewAnimationOptionBeginFromCurrentState animations:^{
         self.alertView.alpha = 1.0;
         self.backgroundDimmingView.alpha = 1.0;
         [self.view layoutIfNeeded];
-    } completion:^(BOOL finished) {
-        NSLog(@"[MkLib DEBUG] ---- After layout (animation completed) ----");
-        NSLog(@"[MkLib DEBUG] alertView.frame: %@", NSStringFromCGRect(self.alertView.frame));
-        CGFloat alertViewBottomInScreen = CGRectGetMaxY([self.view convertRect:self.alertView.frame toView:nil]);
-        NSLog(@"[MkLib DEBUG] alertView bottom edge (in screen): %.1f", alertViewBottomInScreen);
-        NSLog(@"[MkLib DEBUG] keyboard top edge (in screen): %.1f", keyboardFrame.origin.y);
-        CGFloat gap = keyboardFrame.origin.y - alertViewBottomInScreen;
-        NSLog(@"[MkLib DEBUG] GAP between alertView bottom and keyboard top: %.1f", gap);
-        NSLog(@"[MkLib DEBUG] ==========================================");
-    }];
+    } completion:nil];
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {

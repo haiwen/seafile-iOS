@@ -271,7 +271,7 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
         [self.cancelButton.topAnchor constraintEqualToAnchor:self.inputTextField.bottomAnchor constant:buttonTopMargin],
         [self.cancelButton.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding],
         [self.cancelButton.heightAnchor constraintEqualToConstant:buttonHeight],
-        [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.alertView.bottomAnchor constant:-verticalPadding], // Consider safe area for bottom buttons
+        [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.alertView.bottomAnchor constant:-verticalPadding],
     ]];
 
     [NSLayoutConstraint activateConstraints:@[ // confirmButton constraints

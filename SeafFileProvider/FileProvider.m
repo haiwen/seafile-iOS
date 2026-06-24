@@ -616,7 +616,11 @@
                 [weakFile setThumbCompleteBlock:^(BOOL ret) {
                     counterProgress += 1;
                     if (ret) {
-                        NSData *imageData = [NSData dataWithContentsOfFile:[weakFile thumbPath:weakFile.oid]];
+                        NSString *thumbFilePath = weakFile.oid ? [weakFile thumbPath:weakFile.oid] : nil;
+                        if (!thumbFilePath) {
+                            thumbFilePath = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld", weakFile.name, weakFile.mtime]];
+                        }
+                        NSData *imageData = [NSData dataWithContentsOfFile:thumbFilePath];
                         perThumbnailCompletionHandler(itemIdentifier, imageData, nil);
                     } else {
                         Warning("Failed fetch thumb itemIdentifier: %@", itemIdentifier);
