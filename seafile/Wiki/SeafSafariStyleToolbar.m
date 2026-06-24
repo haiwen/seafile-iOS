@@ -37,6 +37,8 @@
 
 /// Visibility state
 @property (nonatomic, assign) BOOL isToolbarVisible;
+/// Pending progress to apply after first layout pass (-1 = none pending)
+@property (nonatomic, assign) float pendingProgress;
 
 @end
 
@@ -47,6 +49,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
         _isToolbarVisible = NO;
+        _pendingProgress = -1;
         // Initially hidden to avoid flashing during push transition
         self.alpha = 0;
         self.transform = CGAffineTransformMakeTranslation(0, 20);
@@ -132,8 +135,10 @@
         [_backContainer.heightAnchor constraintEqualToConstant:44],
         [_backContainer.widthAnchor constraintEqualToConstant:44],
 
-        [_backButton.centerXAnchor constraintEqualToAnchor:_backContainer.contentView.centerXAnchor],
-        [_backButton.centerYAnchor constraintEqualToAnchor:_backContainer.contentView.centerYAnchor],
+        [_backButton.topAnchor constraintEqualToAnchor:_backContainer.contentView.topAnchor],
+        [_backButton.bottomAnchor constraintEqualToAnchor:_backContainer.contentView.bottomAnchor],
+        [_backButton.leadingAnchor constraintEqualToAnchor:_backContainer.contentView.leadingAnchor],
+        [_backButton.trailingAnchor constraintEqualToAnchor:_backContainer.contentView.trailingAnchor],
 
         // Title container (center) - title capsule
         [_titleContainer.leadingAnchor constraintEqualToAnchor:_backContainer.trailingAnchor constant:8],
@@ -143,14 +148,14 @@
 
         // Title label (left padding, right space for refresh button)
         [_titleLabel.leadingAnchor constraintEqualToAnchor:_titleContainer.contentView.leadingAnchor constant:14],
-        [_titleLabel.trailingAnchor constraintEqualToAnchor:_refreshButton.leadingAnchor constant:-8],
+        [_titleLabel.trailingAnchor constraintEqualToAnchor:_refreshButton.leadingAnchor],
         [_titleLabel.centerYAnchor constraintEqualToAnchor:_titleContainer.contentView.centerYAnchor],
 
-        // Refresh button (right side of title capsule)
-        [_refreshButton.trailingAnchor constraintEqualToAnchor:_titleContainer.contentView.trailingAnchor constant:-12],
-        [_refreshButton.centerYAnchor constraintEqualToAnchor:_titleContainer.contentView.centerYAnchor],
-        [_refreshButton.widthAnchor constraintEqualToConstant:24],
-        [_refreshButton.heightAnchor constraintEqualToConstant:24],
+        // Refresh button (right side of title capsule, expanded to 44pt for full tap area)
+        [_refreshButton.trailingAnchor constraintEqualToAnchor:_titleContainer.contentView.trailingAnchor],
+        [_refreshButton.topAnchor constraintEqualToAnchor:_titleContainer.contentView.topAnchor],
+        [_refreshButton.bottomAnchor constraintEqualToAnchor:_titleContainer.contentView.bottomAnchor],
+        [_refreshButton.widthAnchor constraintEqualToConstant:44],
 
         // More container (right) - more button
         [_moreContainer.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
@@ -158,8 +163,10 @@
         [_moreContainer.heightAnchor constraintEqualToConstant:44],
         [_moreContainer.widthAnchor constraintEqualToConstant:44],
 
-        [_moreButton.centerXAnchor constraintEqualToAnchor:_moreContainer.contentView.centerXAnchor],
-        [_moreButton.centerYAnchor constraintEqualToAnchor:_moreContainer.contentView.centerYAnchor],
+        [_moreButton.topAnchor constraintEqualToAnchor:_moreContainer.contentView.topAnchor],
+        [_moreButton.bottomAnchor constraintEqualToAnchor:_moreContainer.contentView.bottomAnchor],
+        [_moreButton.leadingAnchor constraintEqualToAnchor:_moreContainer.contentView.leadingAnchor],
+        [_moreButton.trailingAnchor constraintEqualToAnchor:_moreContainer.contentView.trailingAnchor],
     ]];
 }
 
@@ -167,6 +174,17 @@
     [_backButton addTarget:self action:@selector(handleBackTapped) forControlEvents:UIControlEventTouchUpInside];
     [_refreshButton addTarget:self action:@selector(handleRefreshTapped) forControlEvents:UIControlEventTouchUpInside];
     [_moreButton addTarget:self action:@selector(handleMoreTapped) forControlEvents:UIControlEventTouchUpInside];
+}
+
+#pragma mark - Layout
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    if (_pendingProgress >= 0 && _titleContainer.bounds.size.width > 0) {
+        float p = _pendingProgress;
+        _pendingProgress = -1;
+        [self updateProgress:p];
+    }
 }
 
 #pragma mark - Glass Container Factory
@@ -230,6 +248,12 @@
 
     // Calculate target width for progress bar
     CGFloat capsuleWidth = _titleContainer.bounds.size.width;
+    if (capsuleWidth <= 0) {
+        // Auto Layout hasn't resolved yet; defer until layoutSubviews
+        _pendingProgress = clamped;
+        return;
+    }
+    _pendingProgress = -1;
     CGFloat targetWidth = capsuleWidth * clamped;
 
     if (clamped < 1.0f) {
@@ -293,6 +317,12 @@
         self.alpha = 0;
         self.transform = CGAffineTransformMakeTranslation(0, 20);
     }
+}
+
+#pragma mark - Public Accessors
+
+- (UIView *)moreButtonView {
+    return _moreContainer;
 }
 
 #pragma mark - Private Helpers

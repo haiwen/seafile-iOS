@@ -18,8 +18,22 @@
 #import "SeafRealmManager.h"
 #import "SeafDataTaskManager.h"
 #import "SeafAccountTaskQueue.h"
+#import <CommonCrypto/CommonDigest.h>
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
+
+// Generate a deterministic identifier from repoId + path when server oid is unavailable.
+static NSString *syntheticOid(NSString *repoId, NSString *path, long long mtime) {
+    NSString *key = [NSString stringWithFormat:@"%@:%@:%lld", repoId ?: @"", path ?: @"", mtime];
+    const char *cstr = [key UTF8String];
+    unsigned char digest[CC_SHA1_DIGEST_LENGTH];
+    CC_SHA1(cstr, (CC_LONG)strlen(cstr), digest);
+    NSMutableString *out = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
+        [out appendFormat:@"%02x", digest[i]];
+    }
+    return out;
+}
 
 @implementation SeafDownloadOperation
 
@@ -95,6 +109,7 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.file.state, strongSelf.downloadingFileOid, curId);
 
         if (!curId) curId = strongSelf.file.oid;
+        if (!curId) curId = syntheticOid(strongSelf.file.repoId, strongSelf.file.path, strongSelf.file.mtime);
         NSString *cachePath = [[SeafCacheManager sharedManager] getCachePathForFile:strongSelf.file];
         if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
             Debug("File %@ already exists, curId=%@, ooid=%@", strongSelf.file.name, curId, strongSelf.file.ooid);

@@ -149,7 +149,19 @@
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     if (_showSafariToolbar && self.isMovingFromParentViewController) {
-        [self.navigationController setNavigationBarHidden:NO animated:animated];
+        // Defer nav bar restoration until the transition completes.
+        // If the interactive pop gesture is cancelled, the nav bar stays hidden.
+        UINavigationController *nav = self.navigationController;
+        id<UIViewControllerTransitionCoordinator> tc = self.transitionCoordinator;
+        if (tc) {
+            [tc animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> ctx) {
+                if (!ctx.isCancelled) {
+                    [nav setNavigationBarHidden:NO animated:NO];
+                }
+            }];
+        } else {
+            [nav setNavigationBarHidden:NO animated:animated];
+        }
     }
 }
 
@@ -206,16 +218,23 @@
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
 
     // Get Link (matches SeaTable's "获取链接" behavior)
+    __weak typeof(self) wself = self;
     [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Get Link", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self showLinkInfo];
+        [wself showLinkInfo];
     }]];
 
     // Cancel
     [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:nil]];
 
-    // iPad popover
-    alert.popoverPresentationController.sourceView = self.view;
-    alert.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMaxX(self.view.bounds) - 60, CGRectGetMaxY(self.view.bounds) - 80, 44, 44);
+    // iPad popover anchored to the actual More button
+    UIView *moreView = _safariToolbar.moreButtonView;
+    if (moreView) {
+        alert.popoverPresentationController.sourceView = moreView;
+        alert.popoverPresentationController.sourceRect = moreView.bounds;
+    } else {
+        alert.popoverPresentationController.sourceView = self.view;
+        alert.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMaxX(self.view.bounds) - 60, CGRectGetMaxY(self.view.bounds) - 80, 44, 44);
+    }
 
     [self presentViewController:alert animated:YES completion:nil];
 }
@@ -236,9 +255,15 @@
 
     [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:nil]];
 
-    // iPad popover
-    alert.popoverPresentationController.sourceView = self.view;
-    alert.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMaxX(self.view.bounds) - 60, CGRectGetMaxY(self.view.bounds) - 80, 44, 44);
+    // iPad popover anchored to the actual More button
+    UIView *moreView = _safariToolbar.moreButtonView;
+    if (moreView) {
+        alert.popoverPresentationController.sourceView = moreView;
+        alert.popoverPresentationController.sourceRect = moreView.bounds;
+    } else {
+        alert.popoverPresentationController.sourceView = self.view;
+        alert.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMaxX(self.view.bounds) - 60, CGRectGetMaxY(self.view.bounds) - 80, 44, 44);
+    }
 
     [self presentViewController:alert animated:YES completion:nil];
 }
@@ -540,11 +565,14 @@
         }
     } else if ([action isEqualToString:@"page.finish"]) {
         // Close the current wiki page, matching Android's PageFinishStrategy → activity.finish()
+        __weak typeof(self) wfinish = self;
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.navigationController) {
-                [self.navigationController popViewControllerAnimated:YES];
+            __strong typeof(wfinish) sfinish = wfinish;
+            if (!sfinish) return;
+            if (sfinish.navigationController) {
+                [sfinish.navigationController popViewControllerAnimated:YES];
             } else {
-                [self dismissViewControllerAnimated:YES completion:nil];
+                [sfinish dismissViewControllerAnimated:YES completion:nil];
             }
         });
     } else if ([action isEqualToString:@"page.status.height.get"]) {

@@ -25,6 +25,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Tapped title area
 @property (nonatomic, copy, nullable) void (^onTitleTapped)(void);
 
+/// The container view of the more button, usable as popover sourceView on iPad
+@property (nonatomic, strong, readonly) UIView *moreButtonView;
+
 #pragma mark - Public Methods
 
 /// Update the displayed title

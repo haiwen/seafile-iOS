@@ -33,7 +33,7 @@
 #import "Debug.h"
 #import "SeafLoadingView.h"
 
-typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
+typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long mtime);
 
 @interface SeafActivityViewController ()<UITableViewDelegate,UITableViewDataSource, SeafDentryDelegate>
 @property (strong) NSArray *events;
@@ -496,18 +496,18 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 }
 
 #pragma mark - Table view delegate
-- (void)addEvents:(NSString *)repoId prefix: (NSString *)prefix array:(NSArray *)arr toAlert:(UIAlertController *)alert handler:(void (^)(NSString *repoId, NSString *path))handler
+- (void)addEvents:(NSString *)repoId prefix: (NSString *)prefix array:(NSArray *)arr toAlert:(UIAlertController *)alert handler:(void (^)(NSString *repoId, NSString *path, long long mtime))handler mtime:(long long)mtime
 {
     for (NSString *name in arr) {
         NSString *message = [NSString stringWithFormat:@"%@ '%@'", prefix, name];
         UIAlertAction *action = [UIAlertAction actionWithTitle:message style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            handler(repoId, name);
+            handler(repoId, name, mtime);
         }];
         [alert addAction:action];
     }
 }
 
-- (void)eventRenamed:(NSString *)repoId prefix:(NSString *)prefix array:(NSArray *)arr toAlert:(UIAlertController *)alert
+- (void)eventRenamed:(NSString *)repoId prefix:(NSString *)prefix array:(NSArray *)arr toAlert:(UIAlertController *)alert eventTime:(long long)eventTime
 {
     for (int i = 1; i < arr.count; i += 2) {
         NSString *from = [arr objectAtIndex:i-1];
@@ -515,32 +515,32 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
         NSString *message = [NSString stringWithFormat:@"%@ %@ ==> %@", prefix, from, to];
         UIAlertAction *action = [UIAlertAction actionWithTitle:message style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self openFile:to inRepo:repoId];
+            [self openFile:to inRepo:repoId mtime:eventTime];
         }];
         [alert addAction:action];
     }
 }
 
-- (UIAlertController *)generateAction:(NSString *)repoId detail:(NSDictionary *)detail withTitle:(NSString *)title
+- (UIAlertController *)generateAction:(NSString *)repoId detail:(NSDictionary *)detail withTitle:(NSString *)title eventTime:(long long)eventTime
 {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
 
-    ModificationHandler openHandler = ^(NSString *repoId, NSString *path) {
-        [self openFile:path inRepo:repoId];
+    ModificationHandler openHandler = ^(NSString *repoId, NSString *path, long long mtime) {
+        [self openFile:path inRepo:repoId mtime:mtime];
     };
-    ModificationHandler emptyHandler = ^(NSString *repoId, NSString *path) {};
+    ModificationHandler emptyHandler = ^(NSString *repoId, NSString *path, long long mtime) {};
     NSString *s1 = NSLocalizedString(@"Added file", @"Seafile");
     NSString *s2 = NSLocalizedString(@"Added directory", @"Seafile");
     NSString *s3 = NSLocalizedString(@"Modified file", @"Seafile");
     NSString *s4 = NSLocalizedString(@"Renamed", @"Seafile");
     NSString *s5 = NSLocalizedString(@"Removed file", @"Seafile");
     NSString *s6 = NSLocalizedString(@"Removed directory", @"Seafile");
-    [self addEvents:repoId prefix:s1 array:[detail objectForKey:@"added_files"] toAlert:alert handler:openHandler];
-    [self addEvents:repoId prefix:s2 array:[detail objectForKey:@"added_dirs"] toAlert:alert handler:emptyHandler];
-    [self addEvents:repoId prefix:s3 array:[detail objectForKey:@"modified_files"] toAlert:alert handler:openHandler];
-    [self eventRenamed:repoId prefix:s4 array:[detail objectForKey:@"renamed_files"] toAlert:alert];
-    [self addEvents:repoId prefix:s5 array:[detail objectForKey:@"deleted_files"] toAlert:alert handler:emptyHandler];
-    [self addEvents:repoId prefix:s6 array:[detail objectForKey:@"deleted_dirs"] toAlert:alert handler:emptyHandler];
+    [self addEvents:repoId prefix:s1 array:[detail objectForKey:@"added_files"] toAlert:alert handler:openHandler mtime:eventTime];
+    [self addEvents:repoId prefix:s2 array:[detail objectForKey:@"added_dirs"] toAlert:alert handler:emptyHandler mtime:eventTime];
+    [self addEvents:repoId prefix:s3 array:[detail objectForKey:@"modified_files"] toAlert:alert handler:openHandler mtime:eventTime];
+    [self eventRenamed:repoId prefix:s4 array:[detail objectForKey:@"renamed_files"] toAlert:alert eventTime:eventTime];
+    [self addEvents:repoId prefix:s5 array:[detail objectForKey:@"deleted_files"] toAlert:alert handler:emptyHandler mtime:eventTime];
+    [self addEvents:repoId prefix:s6 array:[detail objectForKey:@"deleted_dirs"] toAlert:alert handler:emptyHandler mtime:eventTime];
 
     if (!IsIpad()){
         UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -550,22 +550,22 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     return alert;
 }
 
-- (void)showEvent:(NSString *)repoId detail:(NSDictionary *)detail fromCell:(UITableViewCell *)cell
+- (void)showEvent:(NSString *)repoId detail:(NSDictionary *)detail fromCell:(UITableViewCell *)cell eventTime:(long long)eventTime
 {
     NSString *title = NSLocalizedString(@"Modification Details", @"Seafile");
-    UIAlertController *alert = [self generateAction:repoId detail:detail withTitle:title];
+    UIAlertController *alert = [self generateAction:repoId detail:detail withTitle:title eventTime:eventTime];
     alert.popoverPresentationController.sourceView = self.view;
     alert.popoverPresentationController.sourceRect = cell.frame;
     [self presentViewController:alert animated:true completion:nil];
 }
 
-- (void)getCommitModificationDetail:(NSString *)repoId url:(NSString *)url fromCell:(UITableViewCell *)cell
+- (void)getCommitModificationDetail:(NSString *)repoId url:(NSString *)url fromCell:(UITableViewCell *)cell eventTime:(long long)eventTime
 {
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         
         NSDictionary *detail = (NSDictionary *)JSON;
         [_eventDetails setObject:detail forKey:url];
-        [self showEvent:repoId detail:detail fromCell:cell];
+        [self showEvent:repoId detail:detail fromCell:cell eventTime:eventTime];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         Warning("Failed to get commit detail.");
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get modification details", @"Seafile")];
@@ -588,7 +588,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         NSString *op_type = [event objectForKey:@"op_type"];
         NSString *obj_type = [event objectForKey:@"obj_type"];
         if ([obj_type containsString:@"draft"] && [op_type isEqualToString:@"publish"]) {
-            return [self openFile:[event valueForKey:@"path"] inRepo:[event valueForKey:@"repo_id"]];
+            return [self openFile:[event valueForKey:@"path"] inRepo:[event valueForKey:@"repo_id"] mtime:[[event objectForKey:@"time"] longLongValue]];
         } else if ([op_type isEqualToString:@"batch_create"] || [op_type isEqualToString:@"batch_delete"]) {
             // Show batch detail dialog aligned with Android's showBatchDialog
             [self showBatchDetailDialog:event fromCell:[tableView cellForRowAtIndexPath:indexPath]];
@@ -627,25 +627,25 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     }
     // Show event details if already fetched, or fetch them if necessary
     if (detail && !repo.passwordRequired)
-        return [self showEvent:repoId detail:detail fromCell:cell];
+        return [self showEvent:repoId detail:detail fromCell:cell eventTime:[[event objectForKey:@"time"] longLongValue]];
 
     if (repo.passwordRequiredWithSyncRefresh) {
         [self popupSetRepoPassword:repo handler:^{
-            [self getCommitModificationDetail:repoId url:url fromCell:cell];
+            [self getCommitModificationDetail:repoId url:url fromCell:cell eventTime:[[event objectForKey:@"time"] longLongValue]];
         }];
     } else
-        [self getCommitModificationDetail:repoId url:url fromCell:cell];
+        [self getCommitModificationDetail:repoId url:url fromCell:cell eventTime:[[event objectForKey:@"time"] longLongValue]];
 }
 
 // Opens a file specified by path in a given repository
-- (void)openFile:(NSString *)path inRepo:(NSString *)repoId
+- (void)openFile:(NSString *)path inRepo:(NSString *)repoId mtime:(long long)mtime
 {
     // Ensure path starts with "/" (repo_history_changes API returns relative paths)
     if (path.length > 0 && ![path hasPrefix:@"/"]) {
         path = [@"/" stringByAppendingString:path];
     }
     
-    SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:0 size:0];
+    SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:mtime size:0];
     // Probe cache before decision
     NSString *cachePathBefore = nil;
     NSURL *exportURLBefore = nil;
@@ -828,7 +828,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                 }
             } else if (!isDir) {
                 // batch_create: open the file
-                [self openFile:path inRepo:repoId];
+                [self openFile:path inRepo:repoId mtime:[[event objectForKey:@"time"] longLongValue]];
             }
             // batch_create for folders: openFile would treat the folder path as a file.
             // The Activities page has no folder navigation (SeafFileViewController goTo:path:
