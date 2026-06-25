@@ -406,7 +406,13 @@
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
     NSString *abs = navigationAction.request.URL.absoluteString ?: @"";
-    if ([abs containsString:@"login/?next"] && ![abs containsString:@"mobile-login/?next"]) {
+    // Only intercept login redirects from the Seafile server's own domain.
+    // External domains (e.g., SeaTable iframes) must handle their own login flows;
+    // re-routing them through our mobile-login would produce a 404.
+    NSString *serverHost = [NSURL URLWithString:self.connection.address].host;
+    NSString *requestHost = navigationAction.request.URL.host;
+    BOOL isSameHost = (serverHost && requestHost && [requestHost isEqualToString:serverHost]);
+    if (isSameHost && [abs containsString:@"login/?next"] && ![abs containsString:@"mobile-login/?next"]) {
         decisionHandler(WKNavigationActionPolicyCancel);
         // Extract the original target URL from the login redirect's 'next' parameter
         NSString *targetURL = nil;
