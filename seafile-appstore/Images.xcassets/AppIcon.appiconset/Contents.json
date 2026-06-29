@@ -149,6 +149,36 @@
       "idiom" : "ios-marketing",
       "filename" : "1024x1024.png",
       "scale" : "1x"
+    },
+    {
+      "size" : "1024x1024",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "filename" : "1024x1024.png"
+    },
+    {
+      "size" : "1024x1024",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "filename" : "1024x1024-dark.png",
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ]
+    },
+    {
+      "size" : "1024x1024",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "filename" : "1024x1024-tinted.png",
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "tinted"
+        }
+      ]
     }
   ],
   "info" : {
