@@ -985,19 +985,35 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
         }
         NSArray *rows = [SeafSdocProfileAssembler buildRowsFromAggregate:aggregate];
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (!error && rows.count > 0) {
-            SeafSdocProfileSheetViewController *vc = [[SeafSdocProfileSheetViewController alloc] initWithRows:rows];
+            if (!agg) {
+                // Real network/API error
+                [SVProgressHUD dismiss];
+                NSString *msg = error.localizedDescription ?: NSLocalizedString(@"Failed to load file profile", nil);
+                [sself showToast:msg];
+                return;
+            }
+            if (rows.count == 0) {
+                // API succeeded but no displayable data
+                [SVProgressHUD dismiss];
+                [sself showToast:NSLocalizedString(@"No file profile data", nil)];
+                return;
+            }
+            SeafFileProfileAggregate *aggTyped = (SeafFileProfileAggregate *)agg;
+            BOOL metaEnabled = [aggTyped.metadataConfig[@"enabled"] boolValue];
+            SeafSdocProfileSheetViewController *vc = [[SeafSdocProfileSheetViewController alloc]
+                                                       initWithRows:rows
+                                                         connection:sself.file.connection
+                                                             repoId:repoId
+                                                          aggregate:aggTyped
+                                                    metadataEnabled:metaEnabled];
+
             [sself presentSheetViewController:vc];
             // Dismiss SVProgressHUD one frame after the presentation completes
             dispatch_async(dispatch_get_main_queue(), ^{
                 [SVProgressHUD dismiss];
             });
-            } else {
-                [SVProgressHUD dismiss];
-                NSString *msg = error.localizedDescription ?: NSLocalizedString(@"Unknown error", nil);
-                [sself showToast:msg];
-            }
         });
+
     }];
 }
 

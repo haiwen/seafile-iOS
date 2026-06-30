@@ -177,4 +177,125 @@
     });
 }
 
+#pragma mark - PUT methods (JSON body)
+
+/// Helper: Send a PUT request with a JSON body via sendPreparedRequest
+/// We build the base request using SeafConnection's buildRequest (which injects the auth token),
+/// then override Content-Type to application/json and set the JSON body.
+- (void)sendJSONPutToUrl:(NSString *)url
+                jsonBody:(NSDictionary *)jsonBody
+              completion:(void(^)(BOOL success, NSError * _Nullable error))completion
+{
+    NSError *serErr = nil;
+    NSData *bodyData = [NSJSONSerialization dataWithJSONObject:jsonBody options:0 error:&serErr];
+    if (!bodyData) {
+        if (completion) completion(NO, serErr ?: [NSError errorWithDomain:@"SeafSdocService" code:-1 userInfo:@{NSLocalizedDescriptionKey: @"Failed to serialize JSON"}]);
+        return;
+    }
+
+    // Build base request with auth token (form=nil → no Content-Type set yet)
+    NSMutableURLRequest *request = [[self.connection buildRequest:url method:@"PUT" form:nil] mutableCopy];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [request setHTTPBody:bodyData];
+
+    [self.connection sendPreparedRequest:request
+        success:^(NSURLRequest *req, NSHTTPURLResponse *resp, id JSON) {
+            if (completion) completion(YES, nil);
+        }
+        failure:^(NSURLRequest *req, NSHTTPURLResponse *resp, id JSON, NSError *error) {
+            if (completion) completion(NO, error);
+        }];
+}
+
+- (void)putRecordWithRepoId:(NSString *)repoId
+                   recordId:(NSString *)recordId
+                       data:(NSDictionary *)data
+                 completion:(void(^)(BOOL success, NSError * _Nullable error))completion
+{
+    if (!data || data.count == 0) {
+        if (completion) completion(YES, nil); // nothing to update
+        return;
+    }
+
+    NSString *url = [NSString stringWithFormat:@"/api/v2.1/repos/%@/metadata/record/", repoId];
+    NSDictionary *body = @{
+        @"record_id": recordId ?: @"",
+        @"data": data
+    };
+
+    [self sendJSONPutToUrl:url jsonBody:body completion:completion];
+}
+
+- (void)putRecordTagWithRepoId:(NSString *)repoId
+                      recordId:(NSString *)recordId
+                        tagIds:(NSArray<NSString *> *)tagIds
+                    completion:(void(^)(BOOL success, NSError * _Nullable error))completion
+{
+    if (!tagIds) {
+        if (completion) completion(YES, nil); // nothing to update
+        return;
+    }
+
+    NSString *url = [NSString stringWithFormat:@"/api/v2.1/repos/%@/metadata/file-tags/", repoId];
+    NSDictionary *tagEntry = @{
+        @"record_id": recordId ?: @"",
+        @"tags": tagIds
+    };
+    NSDictionary *body = @{
+        @"file_tags_data": @[ tagEntry ]
+    };
+
+    [self sendJSONPutToUrl:url jsonBody:body completion:completion];
+}
+
+- (void)saveProfileWithRepoId:(NSString *)repoId
+                     recordId:(NSString *)recordId
+                         data:(NSDictionary *)data
+                       tagIds:(NSArray<NSString *> *)tagIds
+                   completion:(void(^)(BOOL success, NSError * _Nullable error))completion
+{
+    BOOL hasData = (data && data.count > 0);
+    BOOL hasTags = (tagIds != nil);
+
+    if (!hasData && !hasTags) {
+        if (completion) completion(YES, nil);
+        return;
+    }
+
+    dispatch_group_t group = dispatch_group_create();
+    __block BOOL allSuccess = YES;
+    __block NSError *firstError = nil;
+    dispatch_queue_t guardQueue = dispatch_queue_create("com.seafile.profileSave", DISPATCH_QUEUE_SERIAL);
+
+    if (hasData) {
+        dispatch_group_enter(group);
+        [self putRecordWithRepoId:repoId recordId:recordId data:data completion:^(BOOL success, NSError *error) {
+            dispatch_async(guardQueue, ^{
+                if (!success) {
+                    allSuccess = NO;
+                    if (!firstError) firstError = error;
+                }
+                dispatch_group_leave(group);
+            });
+        }];
+    }
+
+    if (hasTags) {
+        dispatch_group_enter(group);
+        [self putRecordTagWithRepoId:repoId recordId:recordId tagIds:tagIds completion:^(BOOL success, NSError *error) {
+            dispatch_async(guardQueue, ^{
+                if (!success) {
+                    allSuccess = NO;
+                    if (!firstError) firstError = error;
+                }
+                dispatch_group_leave(group);
+            });
+        }];
+    }
+
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        if (completion) completion(allSuccess, firstError);
+    });
+}
+
 @end
