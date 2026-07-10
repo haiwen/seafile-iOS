@@ -17,6 +17,8 @@
 
 + (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner;
 - (void)updateAccountCell:(SeafConnection *)conn;
+/// Pin avatar leading inset (and drop the xib centerX chain). Used by card-style account lists.
+- (void)setAvatarLeadingInset:(CGFloat)leading;
 
 @property (nonatomic, assign) BOOL framesAdjusted;
 @end

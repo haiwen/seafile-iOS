@@ -15,6 +15,7 @@
 #import "UIViewController+Extend.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SeafTheme.h"
 
 
 @implementation UIViewController (Extend)
@@ -136,12 +137,12 @@
     resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [btn setImage:resizedImage forState:UIControlStateNormal];
     btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    if (@available(iOS 13.0, *)) {
-        btn.tintColor = [UIColor secondaryLabelColor];
-    } else {
-        btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
-    }
-    btn.showsTouchWhenHighlighted = YES;
+    btn.tintColor = [SeafTheme galleryOperationText];
+    // Keep the icon color stable while pressed: the default highlight dimming
+    // darkens the template tint into a gray that reads as a light-mode flash in
+    // dark mode, and the legacy touch glow lightens it. Disable both.
+    btn.adjustsImageWhenHighlighted = NO;
+    btn.showsTouchWhenHighlighted = NO;
     btn.clipsToBounds = true;
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
@@ -251,11 +252,17 @@
             } else {
 #ifdef SEAFILE_APP
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
-#endif
                 // Add a slight delay before retrying to allow SVProgressHUD to be seen
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [self popupSetRepoPassword:repo handler:handler];
                 });
+#else
+                // The share extension can't link SVProgressHUD, so surface the failure with
+                // an alert and re-prompt only after the user dismisses it.
+                [self alertWithTitle:NSLocalizedString(@"Wrong library password", @"Seafile") handler:^{
+                    [self popupSetRepoPassword:repo handler:handler];
+                }];
+#endif
             }
         }];
     }];
@@ -275,6 +282,12 @@
 #define STR_19 NSLocalizedString(@"Your device cannot authenticate using Face ID.", @"Seafile")
 
 - (void)checkTouchId:(void (^)(bool success))handler
+{
+    // Preserve the historical contract: user-cancel does not invoke any callback.
+    [self checkTouchId:handler cancelHandler:nil];
+}
+
+- (void)checkTouchId:(void (^)(bool success))handler cancelHandler:(void (^ __nullable)(void))cancelHandler
 {
     NSError *error = nil;
     LAContext *context = [[LAContext alloc] init];
@@ -298,6 +311,12 @@
                       reply:^(BOOL success, NSError *error) {
                           if (error && error.code == LAErrorUserCancel) {
                               Debug("Canceld by user.");
+                              // The reply runs on a private queue; hop to main for any UI work.
+                              if (cancelHandler) {
+                                  dispatch_async(dispatch_get_main_queue(), ^{
+                                      cancelHandler();
+                                  });
+                              }
                               return;
                           }
                           if (success)

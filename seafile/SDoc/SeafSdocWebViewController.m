@@ -300,7 +300,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 - (UIButton *)makeBottomIconButtonWithImage:(UIImage *)image
 {
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
-    btn.tintColor = [SeafTheme secondaryText];
+    btn.tintColor = [SeafTheme galleryOperationText];
     [btn setImage:image forState:UIControlStateNormal];
     btn.contentEdgeInsets = UIEdgeInsetsZero;
     btn.imageEdgeInsets = UIEdgeInsetsZero;

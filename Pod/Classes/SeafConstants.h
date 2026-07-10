@@ -8,4 +8,5 @@
 
 #import <Foundation/Foundation.h>
 
+#define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
 #define APP_ID @"com.seafile.seafilePro" 
