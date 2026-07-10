@@ -24,6 +24,7 @@
     if (needsBackButton) {
         UIButton *customButton = [UIButton buttonWithType:UIButtonTypeSystem];
         [customButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
+        customButton.tintColor = [SeafTheme galleryOperationText];
         customButton.frame = CGRectMake(0, 0, 30, 44);
         customButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
         customButton.imageView.contentMode = UIViewContentModeScaleAspectFit;

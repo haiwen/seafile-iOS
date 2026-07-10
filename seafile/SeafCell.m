@@ -115,15 +115,34 @@
     }
 }
 
+- (void)updateCheckboxImageForSelected:(BOOL)selected
+{
+    NSString *imageName = selected ? @"ic_checkbox_checked" : @"ic_checkbox_unchecked";
+    UIImage *image = [UIImage imageNamed:imageName];
+    if (@available(iOS 13.0, *)) {
+        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            self.checkboxImageView.tintColor = selected
+                ? [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.7]
+                : [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.2];
+        } else {
+            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+            self.checkboxImageView.tintColor = nil;
+        }
+    }
+    self.checkboxImageView.image = image;
+}
+
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated {
     // Avoid using system default editing style
 //    [super setEditing:editing animated:animated];
     self.isUserEditing = editing;
     if (editing) {
-        self.checkboxImageView.image = [UIImage imageNamed:@"ic_checkbox_unchecked"];
+        [self updateCheckboxImageForSelected:self.isSelected];
         self.checkboxWidthConstraint.constant = 24;
     } else {
         self.checkboxImageView.image = nil;
+        self.checkboxImageView.tintColor = nil;
         self.checkboxWidthConstraint.constant = 0;
     }
 }
@@ -134,9 +153,18 @@
     
     // Handle checkbox only in editing mode
     if (self.isUserEditing) {
-        self.checkboxImageView.image = selected ?
-            [UIImage imageNamed:@"ic_checkbox_checked"] :
-            [UIImage imageNamed:@"ic_checkbox_unchecked"];
+        [self updateCheckboxImageForSelected:selected];
+    }
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
+{
+    [super traitCollectionDidChange:previousTraitCollection];
+    if (@available(iOS 13.0, *)) {
+        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]
+            && self.isUserEditing) {
+            [self updateCheckboxImageForSelected:self.isSelected];
+        }
     }
 }
 

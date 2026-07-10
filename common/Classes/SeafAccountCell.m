@@ -83,6 +83,23 @@
 
 #pragma mark - Layout
 
+- (void)setAvatarLeadingInset:(CGFloat)leading {
+    // Xib positions the avatar via serverLabel.centerX + fixed width; replace with a real leading.
+    for (NSLayoutConstraint *c in self.contentView.constraints) {
+        if (c.firstItem == self.serverLabel && c.firstAttribute == NSLayoutAttributeCenterX) {
+            c.active = NO;
+        }
+    }
+    // Avoid double-adding on reuse.
+    for (NSLayoutConstraint *c in self.contentView.constraints) {
+        if (c.firstItem == self.imageview && c.firstAttribute == NSLayoutAttributeLeading) {
+            c.constant = leading;
+            return;
+        }
+    }
+    [self.imageview.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:leading].active = YES;
+}
+
 - (void)layoutSubviews {
     [super layoutSubviews];
     // Ensure avatar stays circular when cell size changes

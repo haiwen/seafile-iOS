@@ -363,6 +363,7 @@ enum {
         UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
         self.doneItem = customBarItem;
         self.editItem = [self getBarItem:@"more" action:@selector(editSheet:) size:26];
+        self.editItem.customView.tintColor = [SeafTheme secondaryText];
 
         // Determine whether to show search button based on server type and current level
         SeafConnection *conn = directory.connection;
@@ -382,6 +383,7 @@ enum {
 
         if (shouldShowSearch) {
             self.searchItem = [self getBarItem:@"fileNav_search" action:@selector(searchAction:) size:20];
+            self.searchItem.customView.tintColor = [SeafTheme secondaryText];
             // Add a fixed width space item to increase button spacing
             UIBarButtonItem *spaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
             spaceItem.width = 20; // Set spacing width
@@ -3029,8 +3031,18 @@ enum {
             _searchController.searchBar.layoutMargins = UIEdgeInsetsMake(0, 42, 0, 0);
         }
         
-        // Configure search bar appearance like system search
-        UIColor *searchBarBg = [SeafTheme secondarySurface];
+        // Configure search bar appearance like system search.
+        // Light mode restores the pre-dark-theme look; dark mode keeps the system color.
+        UIColor *searchBarBg;
+        if (@available(iOS 13.0, *)) {
+            searchBarBg = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull tc) {
+                return tc.userInterfaceStyle == UIUserInterfaceStyleDark
+                    ? [UIColor secondarySystemBackgroundColor]
+                    : [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
+            }];
+        } else {
+            searchBarBg = [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
+        }
         _searchController.searchBar.barTintColor = searchBarBg;
         _searchController.searchBar.backgroundColor = searchBarBg;
         
@@ -3045,21 +3057,34 @@ enum {
         if (@available(iOS 13.0, *)) {
             UITextField *searchField = _searchController.searchBar.searchTextField;
             searchField.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
-            searchField.backgroundColor = [UIColor tertiarySystemGroupedBackgroundColor];
+            // The default rounded border adds a system fill overlay that tints our color
+            // (white renders as gray). Drop it and restore the pill shape manually so the
+            // background color takes effect.
+            searchField.borderStyle = UITextBorderStyleNone;
+            searchField.layer.cornerRadius = 10.0;
+            searchField.clipsToBounds = YES;
+            // Light mode restores the pre-dark-theme white field; dark mode keeps the system color.
+            searchField.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull tc) {
+                return tc.userInterfaceStyle == UIUserInterfaceStyleDark
+                    ? [UIColor tertiarySystemGroupedBackgroundColor]
+                    : [UIColor whiteColor];
+            }];
 
             // Add custom search icon to the left of the text field
             UIImage *searchIcon = [[UIImage imageNamed:@"fileNav_search"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
             UIImageView *searchIconImageView = [[UIImageView alloc] initWithImage:searchIcon];
             searchIconImageView.tintColor = [SeafTheme secondaryText];
-            
-            // Create a container view for the leftView to provide padding
-            CGFloat iconSize = 16.0; // Adjusted icon size
-            CGFloat padding = 0.0;   // Reduced padding further
-            UIView *leftViewContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, iconSize + padding * 2, searchField.bounds.size.height)];
-            searchIconImageView.frame = CGRectMake(padding, (leftViewContainer.bounds.size.height - iconSize) / 2, iconSize, iconSize);
             searchIconImageView.contentMode = UIViewContentModeScaleAspectFit;
+
+            // Scale the icon with Dynamic Type so its proportion to the text stays consistent
+            // in large-text mode. Sizing the container to the icon lets UITextField center it
+            // vertically regardless of the (possibly enlarged) field height.
+            CGFloat iconSize = [[UIFontMetrics defaultMetrics] scaledValueForValue:16.0];
+            UIView *leftViewContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, iconSize, iconSize)];
+            searchIconImageView.frame = leftViewContainer.bounds;
+            searchIconImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             [leftViewContainer addSubview:searchIconImageView];
-            
+
             searchField.leftView = leftViewContainer;
             searchField.leftViewMode = UITextFieldViewModeAlways;
         } else {
@@ -3083,27 +3108,32 @@ enum {
 
         [_searchController.searchBar sizeToFit];
 
-        // Get the actual height of the search bar for vertical centering
-        CGFloat searchBarHeight = _searchController.searchBar.bounds.size.height;
-
-        // Create and add custom back button on the far left
+        // Create and add custom back button on the far left. Center it vertically with Auto
+        // Layout so it stays aligned for every search bar height, including Dynamic Type
+        // large-text mode (previously iPhone pinned it to the top; only iPad was centered).
         UIButton *customBackButton = [UIButton buttonWithType:UIButtonTypeCustom];
         UIImage *backImage = [[UIImage imageNamed:@"arrowLeft_black"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]; // Ensure it's a template image
         [customBackButton setImage:backImage forState:UIControlStateNormal];
-        customBackButton.tintColor = BAR_COLOR; // Match SeafNavigationBarStyler default
-        
-        CGFloat buttonHeight = 44.0;
-        CGFloat buttonY = 0;
-        if (IsIpad()) {
-            buttonY = (searchBarHeight - buttonHeight) / 2.0;
-        }
-        customBackButton.frame = CGRectMake(12, buttonY, 30, buttonHeight);
+        customBackButton.tintColor = [SeafTheme galleryOperationText];
         customBackButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 10);
-
         customBackButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-
         [customBackButton addTarget:self action:@selector(customSearchDismissAction:) forControlEvents:UIControlEventTouchUpInside];
+
+        customBackButton.translatesAutoresizingMaskIntoConstraints = NO;
         [_searchController.searchBar addSubview:customBackButton];
+
+        // Align to the search field's vertical center (not the bar's) — the field is not
+        // centered within the bar, so centering on the bar makes the button sit too low.
+        UIView *verticalCenterView = _searchController.searchBar;
+        if (@available(iOS 13.0, *)) {
+            verticalCenterView = _searchController.searchBar.searchTextField;
+        }
+        [NSLayoutConstraint activateConstraints:@[
+            [customBackButton.leadingAnchor constraintEqualToAnchor:_searchController.searchBar.leadingAnchor constant:12],
+            [customBackButton.centerYAnchor constraintEqualToAnchor:verticalCenterView.centerYAnchor],
+            [customBackButton.widthAnchor constraintEqualToConstant:30],
+            [customBackButton.heightAnchor constraintEqualToConstant:44],
+        ]];
         
         // Listen for notifications to handle search cancellation
         [[NSNotificationCenter defaultCenter] addObserver:self
