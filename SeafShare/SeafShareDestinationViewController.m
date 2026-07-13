@@ -8,6 +8,7 @@
 //
 
 #import "SeafShareDestinationViewController.h"
+#import "SeafUploadProgressViewController.h"
 #import "SeafShareDirViewController.h"
 #import "SeafShareStarredViewController.h"
 #import "SeafShareRecentViewController.h"
@@ -76,13 +77,12 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
 @property (nonatomic, assign) SeafShareTab currentTab;
 
 // Upload state
-@property (nonatomic, strong) UIAlertController *uploadAlert;
-@property (nonatomic, strong) UIProgressView *uploadProgressView;
-@property (nonatomic, strong) UILabel *uploadFileNameLabel;
-@property (nonatomic, strong) UILabel *uploadCountLabel;
+@property (nonatomic, strong) SeafUploadProgressViewController *uploadProgressVC;
 @property (nonatomic, strong) NSArray *ufiles;
 @property (nonatomic, assign) NSInteger uploadFileCount;
 @property (nonatomic, assign) NSInteger completedCount;
+@property (nonatomic, assign) BOOL hasUploadError;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *fileProgressMap;
 @property (nonatomic, strong) SeafDir *uploadDirectory;
 
 @end
@@ -122,10 +122,6 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
     [self updateUnderlineForIndex:SeafShareTabLibraries];
 }
 
-- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
-    [super traitCollectionDidChange:previousTraitCollection];
-}
-
 #pragma mark - Navigation Bar (Liquid Glass style per Figma design)
 
 - (void)setupNavigationBar {
@@ -133,10 +129,17 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
     self.title = @"Seafile";
 
     // Left: back button (iOS 26 auto-applies Liquid Glass pill to standard UIBarButtonItem)
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"chevron.left"]
-                                                                             style:UIBarButtonItemStylePlain
-                                                                            target:self
-                                                                            action:@selector(onBack:)];
+    if (@available(iOS 13.0, *)) {
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"chevron.left"]
+                                                                                 style:UIBarButtonItemStylePlain
+                                                                                target:self
+                                                                                action:@selector(onBack:)];
+    } else {
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile")
+                                                                                 style:UIBarButtonItemStylePlain
+                                                                                target:self
+                                                                                action:@selector(onBack:)];
+    }
 
     // Right: circular new-folder button + blue pill "确定" button
     // Smaller SF Symbol so the Liquid Glass chrome stays circular (wide icons stretch into a pill).
@@ -292,7 +295,10 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
 
     UILayoutGuide *guide = self.view.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
-        [self.contentContainerView.topAnchor constraintEqualToAnchor:self.tabsBar.bottomAnchor constant:8],
+        // No extra gap here: Libraries section headers need to sit flush under the tabs
+        // so their title can be vertically centered between tabs and the first card.
+        // Starred/Recent apply SEAF_CARD_HORIZONTAL_PADDING on their tableView top instead.
+        [self.contentContainerView.topAnchor constraintEqualToAnchor:self.tabsBar.bottomAnchor],
         [self.contentContainerView.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor],
         [self.contentContainerView.trailingAnchor constraintEqualToAnchor:guide.trailingAnchor],
     ]];
@@ -712,6 +718,8 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
 - (void)loadInputsAndUploadToDir:(SeafDir *)dir {
     self.uploadDirectory = dir;
     self.completedCount = 0;
+    self.hasUploadError = NO;
+    self.fileProgressMap = [NSMutableDictionary dictionary];
 
     __weak typeof(self) weakSelf = self;
     [SeafInputItemsProvider loadInputs:self.extensionContext complete:^(BOOL result, NSArray *array, NSString *errorDisplayMessage) {
@@ -732,20 +740,19 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
 
 - (void)startUploadToDir:(SeafDir *)dir {
     SeafRepo *repo = [dir.connection getRepo:dir.repoId];
-    // `repo` is authoritative when cached; fall back to the dir's own flag so a starred
-    // encrypted library that isn't in the local repo cache is still treated as encrypted.
-    BOOL encrypted = repo.encrypted || dir.encrypted;
 
-    if (!encrypted) {
-        [self checkOverwriteAndUploadToDir:dir withFiles:self.ufiles];
-        return;
-    }
-
-    // Verifying/setting an encrypted library's password requires a real SeafRepo.
+    // Regardless of encryption, a nil repo means the local cache hasn't loaded yet.
+    // SeafUploadOperation will also fail in this case, so catch it early with a
+    // user-friendly message instead of a confusing "Repo does not exist" error.
     if (!repo) {
         [self alertWithTitle:NSLocalizedString(@"Unable to load library information, please try again", @"Seafile") handler:^{
             [self done];
         }];
+        return;
+    }
+
+    if (!repo.encrypted) {
+        [self checkOverwriteAndUploadToDir:dir withFiles:self.ufiles];
         return;
     }
 
@@ -782,6 +789,23 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
 }
 
 - (void)checkOverwriteAndUploadToDir:(SeafDir *)dir withFiles:(NSArray *)files {
+    // Load directory content from the server to get the latest file list.
+    // Directories from Recent/Starred tabs are created by directoryFromRecord:
+    // with nil _items, so nameExist: would always return NO without this refresh.
+    [dir loadContentSuccess:^(SeafDir *loadedDir) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self performOverwriteCheckForDir:dir withFiles:files];
+        });
+    } failure:^(SeafDir *failedDir, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // If loading fails, still proceed with upload using whatever _items
+            // are available. The server handles conflicts on its side.
+            [self performOverwriteCheckForDir:dir withFiles:files];
+        });
+    }];
+}
+
+- (void)performOverwriteCheckForDir:(SeafDir *)dir withFiles:(NSArray *)files {
     NSMutableArray *existingNames = [NSMutableArray array];
     for (SeafUploadFile *ufile in files) {
         if ([dir nameExist:ufile.name]) {
@@ -804,7 +828,9 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
         [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile")
                                                   style:UIAlertActionStyleCancel
                                                 handler:^(UIAlertAction *action) {
-            [self done];
+            // Don't close the extension; just clean up loaded temp files
+            // so the user can pick a different directory and try again.
+            [self cleanupLoadedFiles];
         }]];
         [self presentViewController:alert animated:YES completion:nil];
     } else {
@@ -834,106 +860,47 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
 }
 
 - (void)showUploadProgressForFile:(SeafUploadFile *)file totalCount:(NSInteger)total {
-    // Keep the system title short; put the filename / progress into contentViewController
-    // so the bar never overlaps the Cancel action (especially under iOS 26 Liquid Glass alerts).
-    self.uploadAlert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Uploading", @"Seafile")
-                                                          message:nil
-                                                   preferredStyle:UIAlertControllerStyleAlert];
+    self.uploadProgressVC = [[SeafUploadProgressViewController alloc] initWithFileName:file.name
+                                                                           totalCount:total];
+    __weak typeof(self) weakSelf = self;
+    self.uploadProgressVC.onCancel = ^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        [strongSelf.uploadProgressVC dismissViewControllerAnimated:YES completion:^{
+            strongSelf.uploadProgressVC = nil;
+            [SeafDataTaskManager.sharedObject cancelAllUploadTasks:strongSelf.uploadDirectory.connection];
+            [strongSelf done];
+        }];
+    };
 
-    UIViewController *contentVC = [[UIViewController alloc] init];
-    UIView *contentView = contentVC.view;
-    contentView.backgroundColor = [UIColor clearColor];
-
-    UILabel *fileNameLabel = [[UILabel alloc] init];
-    fileNameLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    fileNameLabel.text = file.name ?: @"";
-    fileNameLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightRegular];
-    fileNameLabel.textColor = [SeafTheme secondaryText];
-    fileNameLabel.textAlignment = NSTextAlignmentCenter;
-    fileNameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    fileNameLabel.numberOfLines = 1;
-    [contentView addSubview:fileNameLabel];
-    self.uploadFileNameLabel = fileNameLabel;
-
-    UIProgressView *progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
-    progressView.translatesAutoresizingMaskIntoConstraints = NO;
-    progressView.progress = 0.f;
-    progressView.progressTintColor = [SeafTheme accentOrange];
-    progressView.trackTintColor = [SeafTheme fill];
-    progressView.layer.cornerRadius = 2.0;
-    progressView.clipsToBounds = YES;
-    [contentView addSubview:progressView];
-    self.uploadProgressView = progressView;
-
-    UILabel *countLabel = [[UILabel alloc] init];
-    countLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    countLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
-    countLabel.textColor = [SeafTheme secondaryText];
-    countLabel.textAlignment = NSTextAlignmentCenter;
-    BOOL showCount = total > 1;
-    countLabel.hidden = !showCount;
-    if (showCount) {
-        countLabel.text = [NSString stringWithFormat:@"1 / %ld", (long)total];
-    }
-    [contentView addSubview:countLabel];
-    self.uploadCountLabel = countLabel;
-
-    // UIAlertController sizes contentViewController.view by its Auto Layout fitting size,
-    // NOT by stretching it to the alert width. Neither UIProgressView (no intrinsic width)
-    // nor the short filename label can widen the content, so without an explicit width the
-    // content collapses to the filename's text width and leaves big side gaps. Pin an
-    // explicit width on the progress bar (at <required so it yields on a narrow alert) to
-    // drive the content width; the labels follow via leading/trailing. preferredContentSize
-    // only contributes the height.
-    CGFloat contentHeight = showCount ? 88.0 : 64.0;
-    contentVC.preferredContentSize = CGSizeMake(270.0, contentHeight);
-
-    NSLayoutConstraint *progressWidth = [progressView.widthAnchor constraintEqualToConstant:250.0];
-    progressWidth.priority = UILayoutPriorityRequired - 1;
-
-    [NSLayoutConstraint activateConstraints:@[
-        [fileNameLabel.topAnchor constraintEqualToAnchor:contentView.topAnchor constant:8],
-        [fileNameLabel.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:0],
-        [fileNameLabel.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:0],
-
-        [progressView.topAnchor constraintEqualToAnchor:fileNameLabel.bottomAnchor constant:16],
-        [progressView.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:0],
-        [progressView.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:0],
-        [progressView.heightAnchor constraintEqualToConstant:4],
-        progressWidth,
-
-        [countLabel.topAnchor constraintEqualToAnchor:progressView.bottomAnchor constant:12],
-        [countLabel.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:0],
-        [countLabel.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:0],
-        [countLabel.bottomAnchor constraintLessThanOrEqualToAnchor:contentView.bottomAnchor constant:-6],
-    ]];
-
-    // Undocumented but widely used; places content between title and actions.
-    [self.uploadAlert setValue:contentVC forKey:@"contentViewController"];
-
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile")
-                                                          style:UIAlertActionStyleCancel
-                                                        handler:^(UIAlertAction *action) {
-        [SeafDataTaskManager.sharedObject cancelAllUploadTasks:self.uploadDirectory.connection];
-        [self done];
-    }];
-    [self.uploadAlert addAction:cancelAction];
-
-    [self presentViewController:self.uploadAlert animated:YES completion:nil];
+    [self presentViewController:self.uploadProgressVC animated:YES completion:nil];
 }
 
 #pragma mark - SeafUploadDelegate
 
 - (void)uploadProgress:(SeafUploadFile *)file progress:(float)progress {
     dispatch_async(dispatch_get_main_queue(), ^{
-        self.uploadProgressView.progress = progress;
-        if (file.name.length > 0) {
-            self.uploadFileNameLabel.text = file.name;
+        // Track per-file progress and compute aggregate to avoid jumping/flickering
+        // when multiple concurrent uploads report progress simultaneously.
+        NSString *key = file.lpath ?: file.name;
+        if (key) {
+            self.fileProgressMap[key] = @(progress);
         }
-        if (self.ufiles.count > 1) {
-            self.uploadCountLabel.text = [NSString stringWithFormat:@"%ld / %ld",
+
+        float totalProgress = 0;
+        for (NSNumber *p in self.fileProgressMap.allValues) {
+            totalProgress += p.floatValue;
+        }
+        NSInteger totalFiles = self.ufiles.count;
+        float aggregateProgress = totalFiles > 0 ? (totalProgress / totalFiles) : 0;
+        self.uploadProgressVC.progressView.progress = aggregateProgress;
+
+        if (totalFiles > 1) {
+            self.uploadProgressVC.countLabel.text = [NSString stringWithFormat:@"%ld / %ld",
                                           (long)(self.completedCount + 1),
-                                          (long)self.ufiles.count];
+                                          (long)totalFiles];
+        } else if (file.name.length > 0) {
+            self.uploadProgressVC.fileNameLabel.text = file.name;
         }
     });
 }
@@ -941,18 +908,39 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid {
     if (success) {
         self.completedCount++;
+        // Mark completed file as 100% in the progress map
+        NSString *key = file.lpath ?: file.name;
+        if (key) {
+            self.fileProgressMap[key] = @(1.0f);
+        }
         dispatch_async(dispatch_get_main_queue(), ^{
-            self.uploadProgressView.progress = 1.0f;
+            // Recalculate aggregate progress
+            float totalProgress = 0;
+            for (NSNumber *p in self.fileProgressMap.allValues) {
+                totalProgress += p.floatValue;
+            }
+            NSInteger totalFiles = self.ufiles.count;
+            float aggregateProgress = totalFiles > 0 ? (totalProgress / totalFiles) : 1.0f;
+            self.uploadProgressVC.progressView.progress = aggregateProgress;
+            if (totalFiles > 1) {
+                self.uploadProgressVC.countLabel.text = [NSString stringWithFormat:@"%ld / %ld",
+                                              (long)self.completedCount,
+                                              (long)totalFiles];
+            }
         });
     }
 }
 
 - (void)fileUploadComplete:(SeafUploadFile *)ufile error:(NSError *)error {
+    if (error) {
+        self.hasUploadError = YES;
+    }
     self.uploadFileCount--;
     if (self.uploadFileCount <= 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (error) {
-                [self.uploadAlert dismissViewControllerAnimated:YES completion:^{
+            if (self.hasUploadError) {
+                [self.uploadProgressVC dismissViewControllerAnimated:YES completion:^{
+                    self.uploadProgressVC = nil;
                     [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:^{
                         [self done];
                     }];
@@ -960,7 +948,8 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
             } else {
                 // Brief delay so user can see 100% completion
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [self.uploadAlert dismissViewControllerAnimated:YES completion:^{
+                    [self.uploadProgressVC dismissViewControllerAnimated:YES completion:^{
+                        self.uploadProgressVC = nil;
                         [self done];
                     }];
                 });
@@ -969,7 +958,29 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
     }
 }
 
+/// Clean up temp files created by loadInputs without closing the extension.
+/// Called when the user cancels the overwrite prompt so they can pick another directory.
+- (void)cleanupLoadedFiles {
+    for (SeafUploadFile *ufile in self.ufiles) {
+        [ufile cleanup];
+    }
+    self.ufiles = nil;
+    self.uploadFileCount = 0;
+    self.completedCount = 0;
+    self.uploadDirectory = nil;
+}
+
 - (void)done {
+    // Break strong reference chains before Extension termination.
+    // completionBlock (copy/strong) captures self, and SeafDataTaskManager
+    // singleton holds ufiles — without cleanup, VC stays alive after
+    // completeRequest until the process is actually killed.
+    for (SeafUploadFile *ufile in self.ufiles) {
+        ufile.delegate = nil;
+        ufile.completionBlock = nil;
+    }
+    self.ufiles = nil;
+
     [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
 }
 

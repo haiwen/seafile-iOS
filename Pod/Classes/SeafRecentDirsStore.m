@@ -23,7 +23,19 @@ static NSString * const kSeafRecentShareMigratedKey = @"seaf_recent_share_migrat
 static NSString * const kLegacyShareRecentPathsKey = @"SeafShare_RecentPaths";
 static const NSInteger kSeafRecentMaxDefault = 20;
 
+@interface SeafRecentDirsStore ()
+@property (nonatomic, strong) dispatch_queue_t syncQueue;
+@end
+
 @implementation SeafRecentDirsStore
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _syncQueue = dispatch_queue_create("com.seafile.recentdirs.sync", DISPATCH_QUEUE_SERIAL);
+    }
+    return self;
+}
 
 + (instancetype)shared
 {
@@ -219,28 +231,42 @@ static const NSInteger kSeafRecentMaxDefault = 20;
 {
     if (!directory || !directory.connection || directory.repoId.length == 0 || directory.path.length == 0) return;
     SeafConnection *conn = directory.connection;
-    NSMutableArray<NSDictionary *> *records = [[self loadRecordsForConnection:conn] mutableCopy];
-    if (!records) records = [NSMutableArray array];
+    NSString *repoId = directory.repoId ?: @"";
+    NSString *path = directory.path ?: @"/";
+    NSString *repoName = directory.repoName ?: @"";
+    NSString *dirName = directory.name ?: @"";
 
-    NSDictionary *rec = @{ @"repoId": directory.repoId ?: @"",
-                           @"path": directory.path ?: @"/",
-                           @"repoName": directory.repoName ?: @"",
-                           @"dirName": directory.name ?: @"",
-                           @"time": @([[NSDate date] timeIntervalSince1970]) };
-    [self insertRecord:rec intoRecords:records];
+    dispatch_async(self.syncQueue, ^{
+        NSMutableArray<NSDictionary *> *records = [[self loadRecordsForConnection:conn] mutableCopy];
+        if (!records) records = [NSMutableArray array];
 
-    if (records.count > kSeafRecentMaxDefault) {
-        [records removeObjectsInRange:NSMakeRange(kSeafRecentMaxDefault, records.count - kSeafRecentMaxDefault)];
-    }
-    [self saveRecords:records connection:conn];
+        NSDictionary *rec = @{ @"repoId": repoId,
+                               @"path": path,
+                               @"repoName": repoName,
+                               @"dirName": dirName,
+                               @"time": @([[NSDate date] timeIntervalSince1970]) };
+        [self insertRecord:rec intoRecords:records];
+
+        if (records.count > kSeafRecentMaxDefault) {
+            [records removeObjectsInRange:NSMakeRange(kSeafRecentMaxDefault, records.count - kSeafRecentMaxDefault)];
+        }
+        [self saveRecords:records connection:conn];
+    });
 }
 
 - (NSArray<NSDictionary *> *)recentDirectoriesForConnection:(SeafConnection *)connection maxCount:(NSInteger)max
 {
-    NSArray *records = [self loadRecordsForConnection:connection];
-    if (max <= 0) max = kSeafRecentMaxDefault;
-    if (records.count <= max) return records;
-    return [records subarrayWithRange:NSMakeRange(0, max)];
+    __block NSArray *result = @[];
+    dispatch_sync(self.syncQueue, ^{
+        NSArray *records = [self loadRecordsForConnection:connection];
+        NSInteger limit = (max <= 0) ? kSeafRecentMaxDefault : max;
+        if (records.count <= limit) {
+            result = records;
+        } else {
+            result = [records subarrayWithRange:NSMakeRange(0, limit)];
+        }
+    });
+    return result;
 }
 
 - (SeafDir *)directoryFromRecord:(NSDictionary *)record connection:(SeafConnection *)connection

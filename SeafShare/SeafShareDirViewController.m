@@ -29,8 +29,7 @@
 @property (strong, nonatomic) SeafDir *directory;
 @property (copy, nonatomic) NSArray *subDirs;
 @property (copy, nonatomic) NSArray *destDisplayItems;
-@property (strong, nonatomic) UIBarButtonItem *saveButton;
-@property (strong, nonatomic) UIBarButtonItem *createButton;
+
 @property (strong, nonatomic) UIActivityIndicatorView *loadingView;
 @property (strong, nonatomic) UITableView *tableView;
 /// Rounded clip pinned to the visible area of the file-list card so the card keeps
@@ -51,7 +50,9 @@
     if (self = [super init]) {
         _directory = directory;
         _directory.delegate = self;
-        [_directory loadContent:NO];
+        // Always force-refresh from server so the listing reflects files uploaded
+        // in a prior share session (stale cache would hide newly uploaded files).
+        [_directory loadContent:YES];
     }
     return self;
 }
@@ -98,53 +99,6 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     NSMutableArray *items = [NSMutableArray array];
-    
-    if (_directory.editable && !self.browseOnly) {
-        // Create buttons
-        UIImage *addFolderIcon = [[UIImage imageNamed:@"share_addFile"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIButton *addBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        [addBtn setImage:addFolderIcon forState:UIControlStateNormal];
-        addBtn.tintColor = [SeafTheme primaryText];
-        // Use Auto Layout constraints to enforce size so it does not stretch
-        addBtn.translatesAutoresizingMaskIntoConstraints = NO;
-        [addBtn.widthAnchor constraintEqualToConstant:24].active = YES;
-        [addBtn.heightAnchor constraintEqualToConstant:24].active = YES;
-        [addBtn addTarget:self action:@selector(createFolder) forControlEvents:UIControlEventTouchUpInside];
-        self.createButton = [[UIBarButtonItem alloc] initWithCustomView:addBtn];
-        self.navigationController.toolbarHidden = true;
-        
-        // Create custom text button "OK"
-        UIButton *saveBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        [saveBtn setTitle:NSLocalizedString(@"OK", @"Seafile") forState:UIControlStateNormal];
-        saveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
-        [saveBtn setTitleColor:[SeafTheme primaryText] forState:UIControlStateNormal];
-        saveBtn.translatesAutoresizingMaskIntoConstraints = NO;
-        [saveBtn.widthAnchor constraintEqualToConstant:80].active = YES;
-        [saveBtn.heightAnchor constraintEqualToConstant:50].active = YES;
-        [saveBtn addTarget:self action:@selector(save:) forControlEvents:UIControlEventTouchUpInside];
-        self.saveButton = [[UIBarButtonItem alloc] initWithCustomView:saveBtn];
-        
-        // Toolbar items: center the save button
-        UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-        [self setToolbarItems:@[flexItem, self.saveButton, flexItem] animated:true];
-        
-        // Customize toolbar background color (adapts to light/dark via grouped surface token)
-        if (@available(iOS 15.0, *)) {
-            UIToolbarAppearance *toolAppear = [UIToolbarAppearance new];
-            [toolAppear configureWithOpaqueBackground];
-            toolAppear.backgroundColor = [SeafTheme groupedSurface];
-            self.navigationController.toolbar.standardAppearance = toolAppear;
-            self.navigationController.toolbar.scrollEdgeAppearance = toolAppear;
-        } else {
-            self.navigationController.toolbar.barTintColor = [SeafTheme groupedSurface];
-        }
-        
-        // Navigation bar right contains New Folder
-        [items addObject:self.createButton];
-        self.navigationItem.title = _directory.name;
-        
-
-    }
     
     self.navigationItem.rightBarButtonItems = items;
     [self refreshView];
@@ -194,11 +148,7 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    if (self.browseOnly) {
-        self.navigationController.toolbarHidden = YES;
-    } else {
-        self.navigationController.toolbarHidden = _directory.editable ? NO : YES;
-    }
+    self.navigationController.toolbarHidden = YES;
     // Clear stale selection left from a prior push so labels don't render
     // with SeafCell's white highlightedColor (invisible on light backgrounds).
     if (self.useDestinationStyle) {
@@ -304,11 +254,7 @@
     }];
 }
 
-- (void)save:(id)sender {
-    // Upload is now handled by SeafShareDestinationViewController via popup dialog.
-    // This code path is only reached when browseOnly=NO (legacy toolbar-based flow),
-    // which is no longer used by the current Share Extension architecture.
-}
+
 
 #pragma mark - Table view data source
 
@@ -367,7 +313,8 @@
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = text;
     // Match the main app's file list header style (SeafHeaderView): secondaryText color,
-    // 15pt regular, vertically centered so section 0 doesn't have a large top gap.
+    // 15pt regular, vertically centered. Content sits flush under the tabs bar, so
+    // centering here keeps equal space above the title and below it to the first card.
     label.textColor = [SeafTheme secondaryText];
     label.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
     [header addSubview:label];

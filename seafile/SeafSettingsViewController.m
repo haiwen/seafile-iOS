@@ -966,6 +966,9 @@ enum {
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
+    if (section == SECTION_WIKI && ![self shouldShowWikiSection]) {
+        return nil;
+    }
     NSString *sectionNames[] = {
         NSLocalizedString(@"Account Info", @"Seafile"),
         NSLocalizedString(@"Camera Upload", @"Seafile"),
