@@ -245,7 +245,7 @@ static NSSet *SeafChipTypes(void)
     UILabel *titleLabel = [UILabel new];
     titleLabel.text = NSLocalizedString(@"Properties", @"Seafile");
     titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
-    titleLabel.textColor = [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0];
+    titleLabel.textColor = [SeafTheme primaryText];
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [topContainer addSubview:titleLabel];
@@ -517,33 +517,23 @@ static NSSet *SeafChipTypes(void)
 
     if ([self isChipsType:type]) {
         
-        // Special case: collaborator empty -> show localized empty text
-        if ([type isEqualToString:@"collaborator"]) {
-            NSDictionary *first = values.firstObject ?: @{};
-            BOOL isEmpty = [[first objectForKey:@"isEmpty"] boolValue];
-            NSString *t = first[@"text"];
-            if (isEmpty || ([t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"])) {
-                UIStackView *sv = [UIStackView new];
-                sv.axis = UILayoutConstraintAxisVertical;
-                sv.spacing = 4;
-                sv.alignment = UIStackViewAlignmentTrailing;
-                UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"] isEmpty:YES];
-                lab.numberOfLines = 1;
-                [sv addArrangedSubview:lab];
-                return sv;
-            }
-        }
-        // Special case: single_select/multiple_select empty -> show localized empty text
-        if ([type isEqualToString:@"single_select"] || [type isEqualToString:@"multiple_select"]) {
-            BOOL isEmptyOnly = YES;
+        // Empty only when Assembler marked isEmpty (value == null).
+        // values.count == 0 means non-null empty list → blank (align Android).
+        if ([type isEqualToString:@"collaborator"] || [type isEqualToString:@"link"] ||
+            [type isEqualToString:@"single_select"] || [type isEqualToString:@"multiple_select"]) {
+            BOOL hasEmptyMarker = NO;
+            BOOL hasRealValue = NO;
             for (NSDictionary *v in values) {
                 BOOL vIsEmpty = [[v objectForKey:@"isEmpty"] boolValue];
                 NSString *tx = v[@"text"];
-                if (!(vIsEmpty || ([tx isKindOfClass:[NSString class]] && [tx isEqualToString:@"empty"]))) {
-                    isEmptyOnly = NO; break;
+                if (vIsEmpty || ([tx isKindOfClass:[NSString class]] && [tx isEqualToString:@"empty"])) {
+                    hasEmptyMarker = YES;
+                } else {
+                    hasRealValue = YES;
+                    break;
                 }
             }
-            if (isEmptyOnly) {
+            if (!hasRealValue && hasEmptyMarker) {
                 UIStackView *sv = [UIStackView new];
                 sv.axis = UILayoutConstraintAxisVertical;
                 sv.spacing = 4;
@@ -552,6 +542,12 @@ static NSSet *SeafChipTypes(void)
                 lab.numberOfLines = 1;
                 [sv addArrangedSubview:lab];
                 return sv;
+            }
+            if (values.count == 0) {
+                // Non-null empty array → blank placeholder to keep row height
+                UIView *blank = [UIView new];
+                [blank.heightAnchor constraintGreaterThanOrEqualToConstant:24].active = YES;
+                return blank;
             }
         }
         RightAlignedCollectionViewFlowLayout *layout = [RightAlignedCollectionViewFlowLayout new];
@@ -614,10 +610,19 @@ static NSSet *SeafChipTypes(void)
     }
 
     if ([type isEqualToString:@"rate"]) {
+        NSDictionary *v = values.firstObject ?: @{};
+        if ([[v objectForKey:@"isEmpty"] boolValue] ||
+            ([v[@"text"] isKindOfClass:[NSString class]] && [v[@"text"] isEqualToString:@"empty"])) {
+            UIStackView *sv = [UIStackView new];
+            sv.axis = UILayoutConstraintAxisVertical;
+            sv.alignment = UIStackViewAlignmentTrailing;
+            UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"] isEmpty:YES];
+            [sv addArrangedSubview:lab];
+            return sv;
+        }
         UIStackView *stars = [UIStackView new];
         stars.axis = UILayoutConstraintAxisHorizontal;
         stars.spacing = 4;
-        NSDictionary *v = values.firstObject ?: @{};
         NSInteger selected = [v[@"ratingSelected"] integerValue];
         NSInteger max = [v[@"ratingMax"] integerValue] ?: 5;
         NSString *ratingColorHex = v[@"ratingColor"] ?: @"";
@@ -637,6 +642,15 @@ static NSSet *SeafChipTypes(void)
 
     if ([type isEqualToString:@"checkbox"]) {
         NSDictionary *v = values.firstObject ?: @{};
+        if ([[v objectForKey:@"isEmpty"] boolValue] ||
+            ([v[@"text"] isKindOfClass:[NSString class]] && [v[@"text"] isEqualToString:@"empty"])) {
+            UIStackView *sv = [UIStackView new];
+            sv.axis = UILayoutConstraintAxisVertical;
+            sv.alignment = UIStackViewAlignmentTrailing;
+            UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"] isEmpty:YES];
+            [sv addArrangedSubview:lab];
+            return sv;
+        }
         BOOL checked = [v[@"checked"] boolValue];
         UIImage *img = nil;
         // Use checkbox-filled style per design spec
@@ -680,7 +694,8 @@ static NSSet *SeafChipTypes(void)
     sv.alignment = UIStackViewAlignmentTrailing;
     for (NSDictionary *v in values) {
         NSString *t = v[@"text"] ?: @"";
-        BOOL isEmptyValue = [t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"];
+        BOOL isEmptyValue = [[v objectForKey:@"isEmpty"] boolValue] ||
+            ([t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"]);
         if (isEmptyValue) {
             t = [self emptyDisplayText];
         }
@@ -711,11 +726,8 @@ static NSSet *SeafChipTypes(void)
 
 - (NSString *)emptyDisplayText
 {
-    NSString *emptyText = NSLocalizedString(@"empty", nil);
-    if (emptyText.length == 0 || [emptyText isEqualToString:@"empty"]) {
-        emptyText = NSLocalizedString(@"Empty", nil);
-    }
-    return emptyText ?: @"";
+    // Key "empty" → EN "Empty" / zh-Hans "暂无" (align Android R.string.empty)
+    return NSLocalizedString(@"empty", @"Seafile");
 }
 
 - (UILabel *)makeSecondaryLabelWithText:(NSString *)text titleKey:(NSString *)titleKey isEmpty:(BOOL)isEmpty

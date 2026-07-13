@@ -181,14 +181,15 @@
         // value resolution uses 'name' for Android compatibility
 
         // special: _file_modifier → collaborator with [email]
+        // Keep null/NSNull as-is so Empty semantics match Android (null → Empty, not blank)
         if ([key isEqualToString:@"_file_modifier"]) {
             type = @"collaborator";
-            if (rawValue && [rawValue isKindOfClass:[NSString class]] && [((NSString *)rawValue) length] > 0) {
+            if (rawValue && rawValue != (id)[NSNull null] &&
+                [rawValue isKindOfClass:[NSString class]] && [((NSString *)rawValue) length] > 0) {
                 rawValue = @[ rawValue ];
-            } else if (![rawValue isKindOfClass:[NSArray class]]) {
+            } else if (rawValue && rawValue != (id)[NSNull null] && ![rawValue isKindOfClass:[NSArray class]]) {
                 rawValue = @[];
             }
-            
         }
 
         // Title
@@ -199,35 +200,18 @@
         }
 
         // Merge _location_translated into _location for geolocation rendering
-        // (align Android: _location_translated provides address/city/province etc.)
         if ([key isEqualToString:@"_location"]) {
-            id translated = singleResult[@"_location_translated"];
-            if ([translated isKindOfClass:[NSDictionary class]]) {
-                if (rawValue == nil || rawValue == (id)[NSNull null]) {
-                    // _location absent — use translated as primary
-                    rawValue = translated;
-                } else if ([rawValue isKindOfClass:[NSDictionary class]]) {
-                    // Merge: translated fields supplement _location fields
-                    NSMutableDictionary *merged = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary *)rawValue];
-                    NSDictionary *trans = (NSDictionary *)translated;
-                    // Copy translated fields that _location doesn't have
-                    for (NSString *tk in trans) {
-                        if (!merged[tk] || merged[tk] == [NSNull null]) {
-                            merged[tk] = trans[tk];
-                        }
-                    }
-                    rawValue = [merged copy];
-                }
-            } else if (rawValue == nil || rawValue == (id)[NSNull null]) {
-                if (translated) rawValue = translated;
-            }
+            rawValue = [self mergedGeolocationValue:rawValue translated:singleResult[@"_location_translated"]];
         }
-        NSArray *valueCells = [self renderValueCellsForType:type metadata:m key:key value:rawValue metadataConfig:metadataConfig tagWrapper:tagWrapper relatedUsers:effectiveRelatedUsers];
-        if (valueCells.count == 0) {
-            // except RATE, use structured empty marker (keep legacy "empty" for compatibility)
-            if (![type isEqualToString:@"rate"]) {
-                valueCells = @[ @{ @"isEmpty": @YES, @"text": @"empty" } ];
-            }
+
+        // Align Android FileProfileDialog: Empty only when value == null (including rate).
+        // Non-null empty string / empty array → blank (no Empty label).
+        BOOL valueIsNull = (rawValue == nil || rawValue == (id)[NSNull null]);
+        NSArray *valueCells;
+        if (valueIsNull) {
+            valueCells = @[ @{ @"isEmpty": @YES, @"text": @"empty" } ];
+        } else {
+            valueCells = [self renderValueCellsForType:type metadata:m key:key value:rawValue metadataConfig:metadataConfig tagWrapper:tagWrapper relatedUsers:effectiveRelatedUsers];
         }
 
         [rows addObject:@{
@@ -320,7 +304,7 @@
             @"_outdated": @"_outdated",
             @"_tags": @"_tags",
             @"_owner": @"_owner",
-            @"_rate": @"_file_rate",
+            @"_rate": @"_rate",
             @"_location": @"_location",
             @"_expire_time": @"_expire_time"
         };
@@ -388,7 +372,8 @@
     }
 
     if ([type isEqualToString:@"date"]) {
-        NSString *formatted = [self formatDateValue:value];
+        // Align Android MetadataViewUtils.parseDate (config format or yyyy-MM-dd HH:mm:ss)
+        NSString *formatted = [self displayDateString:value withMetadata:metadata];
         if (formatted.length > 0) return @[ @{ @"text": formatted } ];
         return @[];
     }
@@ -400,15 +385,12 @@
             NSMutableArray *cells = [NSMutableArray array];
             for (id email in arr) {
                 NSDictionary *u = [self findUserByEmail:email users:users];
-                if (u) {
-                    NSDictionary *norm = [SeafSdocUserMapper normalizeUserDict:u];
-                    NSString *name = norm[@"name"] ?: @"";
-                    NSString *avatar = norm[@"avatarURL"] ?: @"";
-                    [cells addObject:@{ @"user_name": name, @"avatar": avatar }];
-                } else if ([email isKindOfClass:[NSString class]] && [(NSString *)email length] > 0) {
-                    // Fallback: relatedUsers unavailable or user not found — show email directly
-                    [cells addObject:@{ @"user_name": (NSString *)email, @"avatar": @"" }];
-                }
+                // Align Android parseCollaborator: skip unresolved emails
+                if (!u) continue;
+                NSDictionary *norm = [SeafSdocUserMapper normalizeUserDict:u];
+                NSString *name = norm[@"name"] ?: @"";
+                NSString *avatar = norm[@"avatarURL"] ?: @"";
+                [cells addObject:@{ @"user_name": name, @"avatar": avatar }];
             }
             return cells;
         }
@@ -489,6 +471,7 @@
                 NSArray *tagResults = [tagWrapper isKindOfClass:[NSDictionary class]] ? tagWrapper[@"results"] : nil;
                 NSMutableArray *cells = [NSMutableArray array];
                 for (NSDictionary *link in links) {
+                    if (![link isKindOfClass:[NSDictionary class]]) continue;
                     NSString *rowId = link[@"row_id"] ?: link[@"id"];
                     NSDictionary *tag = nil;
                     if ([tagResults isKindOfClass:[NSArray class]]) {
@@ -497,15 +480,12 @@
                             if ([rid isKindOfClass:[NSString class]] && [rid isEqualToString:rowId]) { tag = r; break; }
                         }
                     }
-                    NSString *name = nil; NSString *color = nil;
-                    if ([tag isKindOfClass:[NSDictionary class]]) {
-                        name = tag[@"_tag_name"] ?: tag[@"name"] ?: link[@"display_value"];
-                        color = tag[@"_tag_color"] ?: tag[@"color"];
-                    } else {
-                        name = link[@"display_value"] ?: @"";
-                    }
-                    if (name) {
-                        [cells addObject:@{ @"text": name ?: @"",
+                    // Align Android parseTag: skip unresolved row_id (no display_value fallback)
+                    if (![tag isKindOfClass:[NSDictionary class]]) continue;
+                    NSString *name = tag[@"_tag_name"] ?: tag[@"name"];
+                    NSString *color = tag[@"_tag_color"] ?: tag[@"color"];
+                    if ([name isKindOfClass:[NSString class]] && name.length > 0) {
+                        [cells addObject:@{ @"text": name,
                                             @"textColor": @"#202428",
                                             @"color": color ?: @"" }];
                     }
@@ -516,16 +496,17 @@
         return @[];
     }
 
-        if ([type isEqualToString:@"rate"]) {
-        NSNumber *selected = [value isKindOfClass:[NSNumber class]] ? (NSNumber *)value : @(0);
+    if ([type isEqualToString:@"rate"]) {
+        // Caller already handles null → Empty. Non-null non-number → blank (no stars).
+        if (![value isKindOfClass:[NSNumber class]]) return @[];
+        NSNumber *selected = (NSNumber *)value;
         NSDictionary *cfg = [self firstConfigFromMetadata:metadata];
         NSNumber *max = nil; NSString *color = nil;
         if ([cfg isKindOfClass:[NSDictionary class]]) {
             max = cfg[@"max"] ?: cfg[@"rate_max_number"];
             color = cfg[@"color"] ?: cfg[@"rate_style_color"];
         }
-        
-        
+
         NSMutableDictionary *payload = [@{ @"ratingSelected": selected } mutableCopy];
         if (max) payload[@"ratingMax"] = max;
         if (color) payload[@"ratingColor"] = color;
@@ -533,55 +514,8 @@
     }
 
     if ([type isEqualToString:@"geolocation"]) {
-        if ([value isKindOfClass:[NSDictionary class]]) {
-            // Helper block: safely coerce any value to NSString
-            // (API may return NSNumber for lat/lng, NSNull, etc.)
-            NSString *(^safeStr)(id) = ^NSString *(id v) {
-                if ([v isKindOfClass:[NSString class]]) return (NSString *)v;
-                if ([v isKindOfClass:[NSNumber class]]) return [(NSNumber *)v stringValue];
-                return @"";
-            };
-
-            // Priority aligned with Android GeoLocationModel.getText():
-            // 1. address (from _location_translated)
-            // 2. concat: country + province + city + district + street
-            // 3. lat/lng as last resort
-
-            // Priority 1: address field (populated by _location_translated merge)
-            NSString *address = safeStr(value[@"address"]);
-            if (address.length > 0) return @[ @{ @"text": address } ];
-
-            // Priority 2: concat fields (country/country_region + province + city + district + street/detail)
-            NSString *country = safeStr(value[@"country"]);
-            if (country.length == 0) country = safeStr(value[@"country_region"]);
-            if (country.length == 0) country = safeStr(value[@"countryRegion"]);
-            NSString *province = safeStr(value[@"province"]);
-            NSString *city = safeStr(value[@"city"]);
-            NSString *district = safeStr(value[@"district"]);
-            NSString *street = safeStr(value[@"street"]);
-            if (street.length == 0) street = safeStr(value[@"detail"]);
-
-            NSMutableString *concat = [NSMutableString string];
-            if (country.length) [concat appendString:country];
-            if (province.length) [concat appendString:province];
-            if (city.length) [concat appendString:city];
-            if (district.length) [concat appendString:district];
-            if (street.length) [concat appendString:street];
-            if (concat.length > 0) return @[ @{ @"text": [concat copy] } ];
-
-            // Priority 3: lat/lng coordinates as last resort
-            // Android shows coords whenever geo_format is non-empty and lat/lng are valid
-            NSDictionary *cfg = [self firstConfigFromMetadata:metadata];
-            NSString *geo = [cfg isKindOfClass:[NSDictionary class]] ? (cfg[@"geo_format"] ?: cfg[@"geoFormat"]) : nil;
-            if ([geo isKindOfClass:[NSString class]] && geo.length > 0) {
-                NSString *lat = safeStr(value[@"lat"]);
-                NSString *lng = safeStr(value[@"lng"]);
-                if (lat.length && lng.length && ![lat isEqualToString:@"0"] && ![lng isEqualToString:@"0"]) {
-                    // Use "lng, lat" order to align with Android GeoLocationModel.getLngLat()
-                    return @[ @{ @"text": [NSString stringWithFormat:@"%@, %@", lng, lat] } ];
-                }
-            }
-        }
+        NSString *text = [self geolocationDisplayStringFromValue:value metadata:metadata];
+        if (text.length > 0) return @[ @{ @"text": text } ];
         return @[];
     }
 
@@ -601,31 +535,80 @@
 
 #pragma mark - Date Formatting
 
-+ (NSString *)formatDateValue:(id)value
++ (NSDate *)parseDateValue:(id)value
 {
-    // Target format: yyyy-MM-dd HH:mm:ss (align with Android)
     if ([value isKindOfClass:[NSString class]]) {
         NSString *s = (NSString *)value;
-        if (s.length == 0) return @"";
+        if (s.length == 0) return nil;
 
-        // 1) Try ISO8601 with milliseconds / timezone, replace 'T' then parse
+        // Align Android: accept ISO with 'T', then try common patterns
         NSString *norm = [s stringByReplacingOccurrencesOfString:@"T" withString:@" "];
-        NSDate *date = nil;
         for (NSDateFormatter *parser in [self sharedParseDateFormatters]) {
-            date = [parser dateFromString:norm];
-            if (date) break;
+            NSDate *date = [parser dateFromString:norm];
+            if (date) return date;
         }
-        if (!date) return norm; // fallback to normalized string
-        return [[self sharedOutputDateFormatter] stringFromDate:date];
+        // Also try original string (some patterns include 'T')
+        for (NSDateFormatter *parser in [self sharedParseDateFormatters]) {
+            NSDate *date = [parser dateFromString:s];
+            if (date) return date;
+        }
+        NSISO8601DateFormatter *iso = [[NSISO8601DateFormatter alloc] init];
+        iso.formatOptions = NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
+        NSDate *date = [iso dateFromString:s];
+        if (date) return date;
+        iso.formatOptions = NSISO8601DateFormatWithInternetDateTime;
+        return [iso dateFromString:s];
     }
     if ([value isKindOfClass:[NSNumber class]]) {
-        // Treat as epoch seconds or milliseconds
         long long ts = [(NSNumber *)value longLongValue];
         if (ts > 100000000000) ts /= 1000; // ms -> s
-        NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts];
+        return [NSDate dateWithTimeIntervalSince1970:ts];
+    }
+    return nil;
+}
+
++ (NSString *)displayDateString:(id)value withMetadata:(NSDictionary *)metadata
+{
+    // Align Android buildEditableDate / parseDate:
+    // format = configData.format if set, else DATE_YMD_HMS ("yyyy-MM-dd HH:mm:ss")
+    NSDictionary *configData = metadata[@"data"] ?: metadata[@"configData"];
+    if ([configData isKindOfClass:[NSArray class]]) {
+        NSArray *arr = (NSArray *)configData;
+        configData = arr.count > 0 ? arr.firstObject : nil;
+    }
+    NSString *format = nil;
+    if ([configData isKindOfClass:[NSDictionary class]]) {
+        id fmt = configData[@"format"];
+        if ([fmt isKindOfClass:[NSString class]] && [(NSString *)fmt length] > 0) {
+            format = (NSString *)fmt;
+        }
+    }
+
+    NSDate *date = [self parseDateValue:value];
+    if (!date) {
+        if ([value isKindOfClass:[NSString class]]) {
+            return [(NSString *)value stringByReplacingOccurrencesOfString:@"T" withString:@" "];
+        }
+        return @"";
+    }
+
+    if (format.length == 0) {
         return [[self sharedOutputDateFormatter] stringFromDate:date];
     }
-    return @"";
+
+    // SeaTable/Android may use YYYY/DD patterns; normalize to NSDateFormatter tokens
+    NSString *nsFormat = [[format stringByReplacingOccurrencesOfString:@"YYYY" withString:@"yyyy"]
+                          stringByReplacingOccurrencesOfString:@"DD" withString:@"dd"];
+    NSDateFormatter *fmt = [NSDateFormatter new];
+    fmt.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    fmt.dateFormat = nsFormat;
+    return [fmt stringFromDate:date] ?: [[self sharedOutputDateFormatter] stringFromDate:date];
+}
+
++ (NSString *)formatDateValue:(id)value
+{
+    // Target format: yyyy-MM-dd HH:mm:ss (align with Android DateFormatType.DATE_YMD_HMS)
+    return [self displayDateString:value withMetadata:nil];
 }
 
 + (NSDictionary *)findUserByEmail:(NSString *)email users:(NSArray *)users
@@ -1099,6 +1082,75 @@
         }
     }
     return nil;
+}
+
++ (id)mergedGeolocationValue:(id)locationValue translated:(id)translated
+{
+    // Align Android checkLocationTranslated + parseGeoLocation merge
+    if ([translated isKindOfClass:[NSDictionary class]]) {
+        if (locationValue == nil || locationValue == (id)[NSNull null]) {
+            return translated;
+        }
+        if ([locationValue isKindOfClass:[NSDictionary class]]) {
+            NSMutableDictionary *merged = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary *)locationValue];
+            NSDictionary *trans = (NSDictionary *)translated;
+            for (NSString *tk in trans) {
+                if (!merged[tk] || merged[tk] == [NSNull null]) {
+                    merged[tk] = trans[tk];
+                }
+            }
+            return [merged copy];
+        }
+    } else if (locationValue == nil || locationValue == (id)[NSNull null]) {
+        return translated;
+    }
+    return locationValue;
+}
+
++ (NSString *)geolocationDisplayStringFromValue:(id)value metadata:(NSDictionary *)metadata
+{
+    // Align Android MetadataViewUtils.parseGeoLocation: only lng_lat is supported
+    if (![value isKindOfClass:[NSDictionary class]]) return @"";
+
+    NSDictionary *cfg = [self firstConfigFromMetadata:metadata];
+    NSString *geo = [cfg isKindOfClass:[NSDictionary class]] ? (cfg[@"geo_format"] ?: cfg[@"geoFormat"]) : nil;
+    if (![geo isKindOfClass:[NSString class]] || ![geo isEqualToString:@"lng_lat"]) {
+        return @"";
+    }
+
+    NSString *(^safeStr)(id) = ^NSString *(id v) {
+        if ([v isKindOfClass:[NSString class]]) return (NSString *)v;
+        if ([v isKindOfClass:[NSNumber class]]) return [(NSNumber *)v stringValue];
+        return @"";
+    };
+
+    // Priority: address → country/province/city/district/street → lng, lat
+    NSString *address = safeStr(value[@"address"]);
+    if (address.length > 0) return address;
+
+    NSString *country = safeStr(value[@"country"]);
+    if (country.length == 0) country = safeStr(value[@"country_region"]);
+    if (country.length == 0) country = safeStr(value[@"countryRegion"]);
+    NSString *province = safeStr(value[@"province"]);
+    NSString *city = safeStr(value[@"city"]);
+    NSString *district = safeStr(value[@"district"]);
+    NSString *street = safeStr(value[@"street"]);
+    if (street.length == 0) street = safeStr(value[@"detail"]);
+
+    NSMutableString *concat = [NSMutableString string];
+    if (country.length) [concat appendString:country];
+    if (province.length) [concat appendString:province];
+    if (city.length) [concat appendString:city];
+    if (district.length) [concat appendString:district];
+    if (street.length) [concat appendString:street];
+    if (concat.length > 0) return [concat copy];
+
+    NSString *lat = safeStr(value[@"lat"]);
+    NSString *lng = safeStr(value[@"lng"]);
+    if (lat.length && lng.length && ![lat isEqualToString:@"0"] && ![lng isEqualToString:@"0"]) {
+        return [NSString stringWithFormat:@"%@, %@", lng, lat];
+    }
+    return @"";
 }
 
  

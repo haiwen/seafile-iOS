@@ -6,13 +6,10 @@
 //  Shows paths where user has previously uploaded files.
 //
 
-#import <UIKit/UIKit.h>
-@class SeafConnection;
+#import "SeafShareBaseListViewController.h"
 @class SeafDir;
 
-@interface SeafShareRecentViewController : UIViewController
-
-- (instancetype)initWithConnection:(SeafConnection *)connection;
+@interface SeafShareRecentViewController : SeafShareBaseListViewController
 
 /// Returns the currently selected recent directory, or nil if nothing is selected.
 - (SeafDir *)selectedDirectory;

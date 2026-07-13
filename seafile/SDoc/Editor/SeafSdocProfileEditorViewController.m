@@ -12,11 +12,13 @@
 #import "SeafSdocService.h"
 #import "SeafConnection.h"
 #import "SeafNavigationBarStyler.h"
+#import "SeafTheme.h"
 #import "SVProgressHUD.h"
 #import <objc/runtime.h>
 
 static NSInteger const kContainerTagBase = 9000;
 static NSInteger const kContentViewTag = 8888;
+static NSInteger const kCardViewTag = 7777;
 
 // Associated object keys (pointer-based, per ObjC best practice)
 static const void *kAssocMetadataKey    = &kAssocMetadataKey;
@@ -26,59 +28,7 @@ static const void *kAssocRateColor      = &kAssocRateColor;
 static const void *kAssocSelectOptions  = &kAssocSelectOptions;
 static const void *kAssocSelectedValues = &kAssocSelectedValues;
 
-#pragma mark - Cell styling helpers (align Android shape_task_view_editable / no_editable)
-
-/// Apply editable cell style: white bg + #E0E5EC border + 4pt corner radius
-/// Align Android: shape_task_view_editable (light: white bg, #E0E5EC border; dark: #2F2F2F bg, #212121 border)
-static void applyEditableCellStyle(UIView *view) {
-    view.layer.cornerRadius = 4.0;
-    view.layer.masksToBounds = YES;
-    if (@available(iOS 13.0, *)) {
-        view.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
-            return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-                ? [UIColor colorWithRed:0x2F/255.0 green:0x2F/255.0 blue:0x2F/255.0 alpha:1.0]
-                : [UIColor whiteColor];
-        }];
-        view.layer.borderColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
-            return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-                ? [UIColor colorWithRed:0x21/255.0 green:0x21/255.0 blue:0x21/255.0 alpha:1.0]
-                : [UIColor colorWithRed:0xE0/255.0 green:0xE5/255.0 blue:0xEC/255.0 alpha:1.0];
-        }].CGColor;
-    } else {
-        view.backgroundColor = [UIColor whiteColor];
-        view.layer.borderColor = [UIColor colorWithRed:0xE0/255.0 green:0xE5/255.0 blue:0xEC/255.0 alpha:1.0].CGColor;
-    }
-    view.layer.borderWidth = 1.0;
-}
-
-/// Apply non-editable cell style: #f8f8f8 bg + no border + 4pt corner radius
-/// Align Android: shape_task_view_no_editable (light: #f8f8f8; dark: #2F2F2F)
-static void applyNonEditableCellStyle(UIView *view) {
-    view.layer.cornerRadius = 4.0;
-    view.layer.masksToBounds = YES;
-    view.layer.borderWidth = 0;
-    if (@available(iOS 13.0, *)) {
-        view.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
-            return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-                ? [UIColor colorWithRed:0x2F/255.0 green:0x2F/255.0 blue:0x2F/255.0 alpha:1.0]
-                : [UIColor colorWithRed:0xF8/255.0 green:0xF8/255.0 blue:0xF8/255.0 alpha:1.0];
-        }];
-    } else {
-        view.backgroundColor = [UIColor colorWithRed:0xF8/255.0 green:0xF8/255.0 blue:0xF8/255.0 alpha:1.0];
-    }
-}
-
-/// Title color aligned with Android profile_editor_title (light: #666666, dark: #d3d3d3)
-static UIColor *editorTitleColor(void) {
-    if (@available(iOS 13.0, *)) {
-        return [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
-            return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-                ? [UIColor colorWithRed:0xD3/255.0 green:0xD3/255.0 blue:0xD3/255.0 alpha:1.0]
-                : [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0];
-        }];
-    }
-    return [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0];
-}
+#pragma mark - iOS grouped card style
 
 #pragma mark - supportedFieldMap (align Android MetadataViewUtils.getSupportedFieldMap)
 
@@ -109,26 +59,56 @@ static NSDictionary<NSString *, NSNumber *> *supportedFieldMap(void) {
 #pragma mark - Localized titles (align Android ColumnTypeUtils)
 
 static NSString *localizedTitleForKey(NSString *key) {
-    // Map metadata keys to iOS localized string keys
-    static NSDictionary *titleMap;
+    // Align Android ColumnTypeUtils.getResNameByKey / Assembler titleForKey
+    static NSDictionary *titleKeyMap;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        titleMap = @{
-            @"_description":    NSLocalizedString(@"Description", @"metadata field"),
-            @"_file_modifier":  NSLocalizedString(@"Last Modifier", @"metadata field"),
-            @"_file_mtime":     NSLocalizedString(@"Last Modified Time", @"metadata field"),
-            @"_status":         NSLocalizedString(@"File Status", @"metadata field"),
-            @"_collaborators":  NSLocalizedString(@"Collaborators", @"metadata field"),
-            @"_size":           NSLocalizedString(@"Size", @"metadata field"),
-            @"_reviewer":       NSLocalizedString(@"Reviewer", @"metadata field"),
-            @"_owner":          NSLocalizedString(@"Owner", @"metadata field"),
-            @"_tags":           NSLocalizedString(@"Tags", @"metadata field"),
-            @"_rate":           NSLocalizedString(@"Rate", @"metadata field"),
-            @"_location":       NSLocalizedString(@"Location", @"metadata field"),
-            @"_expire_time":    NSLocalizedString(@"Expire Time", @"metadata field"),
+        titleKeyMap = @{
+            @"_description":    @"description",
+            @"_file_modifier":  @"_last_modifier",
+            @"_file_mtime":     @"_last_modified_time",
+            @"_status":         @"_file_status",
+            @"_collaborators":  @"_file_collaborators",
+            @"_size":           @"_size",
+            @"_reviewer":       @"_reviewer",
+            @"_owner":          @"_owner",
+            @"_tags":           @"_tags",
+            @"_rate":           @"_rate",
+            @"_location":       @"_location",
+            @"_expire_time":    @"_expire_time",
         };
     });
-    return titleMap[key];
+    NSString *locKey = titleKeyMap[key];
+    if (!locKey) return nil;
+    return NSLocalizedString(locKey, @"metadata field");
+}
+
+/// Extract options from metadata.data (array[0].options or dict.options), align Android getConfigData().options
+static NSArray *optionsFromMetadata(NSDictionary *metadata) {
+    id data = metadata[@"data"] ?: metadata[@"configData"];
+    if ([data isKindOfClass:[NSArray class]] && [(NSArray *)data count] > 0) {
+        id first = [(NSArray *)data firstObject];
+        if ([first isKindOfClass:[NSDictionary class]]) {
+            NSArray *opts = first[@"options"];
+            if ([opts isKindOfClass:[NSArray class]]) return opts;
+        }
+    }
+    if ([data isKindOfClass:[NSDictionary class]]) {
+        NSArray *opts = ((NSDictionary *)data)[@"options"];
+        if ([opts isKindOfClass:[NSArray class]]) return opts;
+    }
+    NSArray *fieldOpts = metadata[@"options"];
+    if ([fieldOpts isKindOfClass:[NSArray class]]) return fieldOpts;
+    return @[];
+}
+
+/// Localize option display for _status (align Android SupportMetadataRadioGroup + ColumnTypeUtils)
+static NSString *displayNameForSelectOption(NSString *name, NSString *fieldKey) {
+    if (![name isKindOfClass:[NSString class]] || name.length == 0) return @"";
+    if ([fieldKey isEqualToString:@"_status"]) {
+        return NSLocalizedString(name, @"status option");
+    }
+    return name;
 }
 
 #pragma mark - Type normalization (align Android)
@@ -184,22 +164,28 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.view.backgroundColor = [UIColor systemBackgroundColor];
+    self.view.backgroundColor = [SeafTheme groupedSurface];
     self.title = NSLocalizedString(@"Edit", @"editor title");
     
-    // Apply standard navigation bar appearance (align file list page: white bg, black tint)
+    // Apply standard navigation bar appearance (align file list page)
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     
-    // Navigation bar back button (align file list page: arrowLeft_black icon)
-    UIBarButtonItem *backItem = [SeafNavigationBarStyler createBackButtonWithTarget:self action:@selector(onCancelTapped) color:nil];
-    self.navigationItem.leftBarButtonItem = backItem;
+    // Back button matching SeafNavLeftItem (file list): System + arrowLeft_black + galleryOperationText
+    UIButton *backBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    [backBtn setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
+    backBtn.tintColor = [SeafTheme galleryOperationText];
+    backBtn.frame = CGRectMake(0, 0, 30, 44);
+    backBtn.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
+    backBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    [backBtn addTarget:self action:@selector(onCancelTapped) forControlEvents:UIControlEventTouchUpInside];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:backBtn];
     
     // Navigation bar save button (align Android: blue text)
     UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Save", @"save button")
                                                                 style:UIBarButtonItemStyleDone
                                                                target:self
                                                                action:@selector(onSaveTapped)];
-    saveItem.tintColor = [UIColor systemBlueColor];
+    saveItem.tintColor = [SeafTheme accentOrange];
     self.navigationItem.rightBarButtonItem = saveItem;
     
     // Init service
@@ -235,30 +221,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     [self.view endEditing:YES];
 }
 
-/// Refresh layer.borderColor on dark/light mode change (CGColor doesn't dynamically resolve)
-- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
-    [super traitCollectionDidChange:previousTraitCollection];
-    if (@available(iOS 13.0, *)) {
-        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
-            UIColor *borderColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
-                return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-                    ? [UIColor colorWithRed:0x21/255.0 green:0x21/255.0 blue:0x21/255.0 alpha:1.0]
-                    : [UIColor colorWithRed:0xE0/255.0 green:0xE5/255.0 blue:0xEC/255.0 alpha:1.0];
-            }];
-            CGColorRef resolved = [borderColor resolvedColorWithTraitCollection:self.traitCollection].CGColor;
-            [self updateBorderColorRecursively:self.stackView color:resolved];
-        }
-    }
-}
 
-- (void)updateBorderColorRecursively:(UIView *)view color:(CGColorRef)color {
-    if (view.layer.borderWidth > 0) {
-        view.layer.borderColor = color;
-    }
-    for (UIView *sub in view.subviews) {
-        [self updateBorderColorRecursively:sub color:color];
-    }
-}
 
 #pragma mark - UI Setup
 
@@ -271,13 +234,13 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     
     self.stackView = [[UIStackView alloc] init];
     self.stackView.axis = UILayoutConstraintAxisVertical;
-    self.stackView.spacing = 0;
+    self.stackView.spacing = 16;
     self.stackView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.scrollView addSubview:self.stackView];
     
     // Fill the frame width on iPhone, but cap the form width on iPad so fields
     // don't stretch edge-to-edge on wide screens (centered column instead).
-    NSLayoutConstraint *fullWidth = [self.stackView.widthAnchor constraintEqualToAnchor:self.scrollView.frameLayoutGuide.widthAnchor];
+    NSLayoutConstraint *fullWidth = [self.stackView.widthAnchor constraintEqualToAnchor:self.scrollView.frameLayoutGuide.widthAnchor constant:-32];
     fullWidth.priority = UILayoutPriorityDefaultHigh;
 
     [NSLayoutConstraint activateConstraints:@[
@@ -288,7 +251,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         [self.scrollView.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor],
         [self.scrollView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
 
-        [self.stackView.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor],
+        // Match inter-section spacing (16) so the first header isn't flush to the top.
+        [self.stackView.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor constant:16],
         [self.stackView.bottomAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.bottomAnchor],
         [self.stackView.centerXAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.centerXAnchor],
         [self.stackView.leadingAnchor constraintGreaterThanOrEqualToAnchor:self.scrollView.contentLayoutGuide.leadingAnchor],
@@ -355,7 +319,21 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         id rawValue = singleResult[name];
         if ([key isEqualToString:@"_file_modifier"]) {
             metaMut[@"type"] = @"collaborator";
-            metaMut[@"value"] = (rawValue ? @[rawValue] : @[]);
+            if (rawValue && rawValue != (id)[NSNull null] &&
+                [rawValue isKindOfClass:[NSString class]] && [(NSString *)rawValue length] > 0) {
+                metaMut[@"value"] = @[ rawValue ];
+            } else if (rawValue && rawValue != (id)[NSNull null] && [rawValue isKindOfClass:[NSArray class]]) {
+                metaMut[@"value"] = rawValue;
+            } else if (rawValue == nil || rawValue == (id)[NSNull null]) {
+                metaMut[@"value"] = [NSNull null];
+            } else {
+                metaMut[@"value"] = @[];
+            }
+        } else if ([key isEqualToString:@"_location"]) {
+            // Align Android: merge _location_translated for address display
+            id merged = [SeafSdocProfileAssembler mergedGeolocationValue:rawValue
+                                                              translated:singleResult[@"_location_translated"]];
+            metaMut[@"value"] = merged ?: [NSNull null];
         } else {
             metaMut[@"value"] = rawValue ?: [NSNull null];
         }
@@ -425,7 +403,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     [self.stackView addArrangedSubview:spacer];
 }
 
-/// Build a section view for one metadata field (align Android addMetadataView + parseViewByType)
+/// Build a section view for one metadata field — iOS grouped card style
 - (UIView *)buildSectionForKey:(NSString *)key
                          title:(NSString *)title
                           type:(NSString *)type
@@ -433,36 +411,54 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
                       editable:(BOOL)editable
                            tag:(NSInteger)tag
 {
-    UIView *container = [[UIView alloc] init];
-    container.tag = tag;
-    container.translatesAutoresizingMaskIntoConstraints = NO;
+    // Outer wrapper (transparent, holds section header + card)
+    UIView *wrapper = [[UIView alloc] init];
+    wrapper.tag = tag;
+    wrapper.translatesAutoresizingMaskIntoConstraints = NO;
     
-    // Title label
+    // Section header label (iOS footnote style, above card)
     UILabel *titleLabel = [[UILabel alloc] init];
     titleLabel.text = title;
-    titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular]; // align Android: 16sp Regular
-    titleLabel.textColor = editorTitleColor(); // align Android: profile_editor_title #666666
+    titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
+    titleLabel.textColor = [SeafTheme secondaryText];
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    [container addSubview:titleLabel];
+    [wrapper addSubview:titleLabel];
+    
+    // White rounded card (iOS InsetGrouped style)
+    UIView *card = [[UIView alloc] init];
+    card.tag = kCardViewTag;
+    card.translatesAutoresizingMaskIntoConstraints = NO;
+    card.backgroundColor = [SeafTheme primarySurface];
+    card.layer.cornerRadius = 10.0;
+    card.layer.masksToBounds = YES;
+    [wrapper addSubview:card];
     
     // Content area (will be populated by type-specific builder)
     UIView *contentView = [self buildContentViewForType:type key:key metadata:metadata editable:editable];
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
     contentView.tag = kContentViewTag;
-    [container addSubview:contentView];
+    [card addSubview:contentView];
     
     [NSLayoutConstraint activateConstraints:@[
-        [titleLabel.topAnchor constraintEqualToAnchor:container.topAnchor constant:16],
-        [titleLabel.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:16],
-        [titleLabel.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-16],
+        // Section header: above card
+        [titleLabel.topAnchor constraintEqualToAnchor:wrapper.topAnchor],
+        [titleLabel.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor constant:4],
+        [titleLabel.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-4],
         
-        [contentView.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:6],
-        [contentView.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:16],
-        [contentView.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-16],
-        [contentView.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-4],
+        // Card: below header
+        [card.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:6],
+        [card.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor],
+        [card.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor],
+        [card.bottomAnchor constraintEqualToAnchor:wrapper.bottomAnchor],
+        
+        // Content inside card with standard padding
+        [contentView.topAnchor constraintEqualToAnchor:card.topAnchor constant:8],
+        [contentView.leadingAnchor constraintEqualToAnchor:card.leadingAnchor constant:16],
+        [contentView.trailingAnchor constraintEqualToAnchor:card.trailingAnchor constant:-16],
+        [contentView.bottomAnchor constraintEqualToAnchor:card.bottomAnchor constant:-8],
     ]];
     
-    return container;
+    return wrapper;
 }
 
 #pragma mark - Type-specific content builders (align Android MetadataViewUtils.buildEditable*)
@@ -503,7 +499,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         return [self buildCheckboxForKey:key value:value editable:editable];
     }
     else if ([type isEqualToString:@"geolocation"]) {
-        return [self buildReadonlyTextForValue:[self geolocationDisplayString:value]];
+        NSString *text = [SeafSdocProfileAssembler geolocationDisplayStringFromValue:value metadata:metadata];
+        return [self buildReadonlyTextForValue:text];
     }
     else if ([type isEqualToString:@"link"]) {
         if ([key isEqualToString:@"_tags"]) {
@@ -523,31 +520,19 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 - (UIView *)buildTextFieldForKey:(NSString *)key value:(id)value editable:(BOOL)editable {
     UITextField *textField = [[UITextField alloc] init];
     textField.text = [value isKindOfClass:[NSString class]] ? value : [value description];
-    textField.borderStyle = UITextBorderStyleNone; // align Android: custom border via layer
-    textField.font = [UIFont systemFontOfSize:16]; // align Android: 16sp
+    textField.borderStyle = UITextBorderStyleNone;
+    textField.font = [UIFont systemFontOfSize:16];
     textField.enabled = editable;
-    textField.textColor = editable ? [UIColor labelColor] : [UIColor secondaryLabelColor];
+    textField.textColor = editable ? [SeafTheme primaryText] : [SeafTheme secondaryText];
+    textField.backgroundColor = [UIColor clearColor];
     textField.accessibilityIdentifier = [NSString stringWithFormat:@"editor_text_%@", key];
-    
-    // Align Android: shape_task_view_editable / shape_task_view_no_editable
-    if (editable) {
-        applyEditableCellStyle(textField);
-    } else {
-        applyNonEditableCellStyle(textField);
-    }
-    
-    // Internal padding (align Android: padding 16dp/8dp)
-    textField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 16, 0)];
-    textField.leftViewMode = UITextFieldViewModeAlways;
-    textField.rightView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 16, 0)];
-    textField.rightViewMode = UITextFieldViewModeAlways;
     
     if (editable) {
         [textField addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
         objc_setAssociatedObject(textField, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     
-    [textField.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
+    [textField.heightAnchor constraintGreaterThanOrEqualToConstant:28].active = YES;
     return textField;
 }
 
@@ -583,25 +568,13 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     }
     
     textField.text = displayValue;
-    textField.borderStyle = UITextBorderStyleNone; // align Android: custom border via layer
-    textField.font = [UIFont systemFontOfSize:16]; // align Android: 16sp
+    textField.borderStyle = UITextBorderStyleNone;
+    textField.font = [UIFont systemFontOfSize:16];
     textField.keyboardType = UIKeyboardTypeDecimalPad;
     textField.enabled = editable;
-    textField.textColor = editable ? [UIColor labelColor] : [UIColor secondaryLabelColor];
+    textField.textColor = editable ? [SeafTheme primaryText] : [SeafTheme secondaryText];
+    textField.backgroundColor = [UIColor clearColor];
     textField.accessibilityIdentifier = [NSString stringWithFormat:@"editor_number_%@", key];
-    
-    // Align Android: shape_task_view_editable / shape_task_view_no_editable
-    if (editable) {
-        applyEditableCellStyle(textField);
-    } else {
-        applyNonEditableCellStyle(textField);
-    }
-    
-    // Internal padding (align Android: padding 16dp/8dp)
-    textField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 16, 0)];
-    textField.leftViewMode = UITextFieldViewModeAlways;
-    textField.rightView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 16, 0)];
-    textField.rightViewMode = UITextFieldViewModeAlways;
     
     if (editable) {
         [textField addTarget:self action:@selector(numberFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
@@ -732,31 +705,31 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 
 - (UIView *)buildDateFieldForKey:(NSString *)key value:(id)value editable:(BOOL)editable metadata:(NSDictionary *)metadata {
     UIView *wrapper = [[UIView alloc] init];
-    
-    // Align Android: shape_task_view_editable / shape_task_view_no_editable
-    if (editable) {
-        applyEditableCellStyle(wrapper);
-    } else {
-        applyNonEditableCellStyle(wrapper);
-    }
+    wrapper.backgroundColor = [UIColor clearColor];
     
     UILabel *dateLabel = [[UILabel alloc] init];
     dateLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    dateLabel.font = [UIFont systemFontOfSize:16]; // align Android: 16sp
-    dateLabel.textColor = editable ? [UIColor labelColor] : [UIColor secondaryLabelColor];
+    dateLabel.font = [UIFont systemFontOfSize:16];
+    dateLabel.textColor = editable ? [SeafTheme primaryText] : [SeafTheme secondaryText];
     
+    // Align Android MetadataViewUtils.buildEditableDate:
+    // show configData.format, or default yyyy-MM-dd HH:mm:ss (not raw ISO with T/offset)
     NSString *displayDate = @"";
-    if ([value isKindOfClass:[NSString class]] && [(NSString *)value length] > 0) {
-        displayDate = value;
+    if (value && value != [NSNull null]) {
+        if ([value isKindOfClass:[NSString class]] && [(NSString *)value length] == 0) {
+            displayDate = @"";
+        } else {
+            displayDate = [SeafSdocProfileAssembler displayDateString:value withMetadata:metadata];
+        }
     }
     dateLabel.text = displayDate;
     
     [wrapper addSubview:dateLabel];
     [NSLayoutConstraint activateConstraints:@[
-        [dateLabel.topAnchor constraintEqualToAnchor:wrapper.topAnchor constant:8],
-        [dateLabel.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor constant:16], // align Android: padding 16dp
-        [dateLabel.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-16],
-        [dateLabel.bottomAnchor constraintEqualToAnchor:wrapper.bottomAnchor constant:-8],
+        [dateLabel.topAnchor constraintEqualToAnchor:wrapper.topAnchor],
+        [dateLabel.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor],
+        [dateLabel.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor],
+        [dateLabel.bottomAnchor constraintEqualToAnchor:wrapper.bottomAnchor],
     ]];
     
     if (editable) {
@@ -773,13 +746,15 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         [wrapper addSubview:arrow];
         [NSLayoutConstraint activateConstraints:@[
             [arrow.centerYAnchor constraintEqualToAnchor:wrapper.centerYAnchor],
-            [arrow.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-16],
+            [arrow.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor],
             [arrow.widthAnchor constraintEqualToConstant:12],
             [arrow.heightAnchor constraintEqualToConstant:16],
         ]];
+        // Re-pin label trailing to leave room for arrow
+        [dateLabel.trailingAnchor constraintEqualToAnchor:arrow.leadingAnchor constant:-8].active = YES;
     }
     
-    [wrapper.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
+    [wrapper.heightAnchor constraintGreaterThanOrEqualToConstant:28].active = YES;
     return wrapper;
 }
 
@@ -815,21 +790,15 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 #pragma mark - Long Text (align Android buildEditableLongText → click to open LongTextSelectorActivity)
 
 - (UIView *)buildLongTextViewForKey:(NSString *)key value:(id)value editable:(BOOL)editable {
-    // Align Android: buildEditableLongText uses a non-editable TextView + click to launch LongTextSelectorActivity
     UIView *wrapper = [[UIView alloc] init];
+    wrapper.backgroundColor = [UIColor clearColor];
     
-    if (editable) {
-        applyEditableCellStyle(wrapper);
-    } else {
-        applyNonEditableCellStyle(wrapper);
-    }
-    
-    // Display label (non-editable, align Android: TextView with Gravity.START)
+    // Display label
     UILabel *textLabel = [[UILabel alloc] init];
     textLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    textLabel.font = [UIFont systemFontOfSize:16]; // align Android: 16sp
-    textLabel.textColor = editable ? [UIColor labelColor] : [UIColor secondaryLabelColor];
-    textLabel.numberOfLines = 0; // multi-line
+    textLabel.font = [UIFont systemFontOfSize:16];
+    textLabel.textColor = editable ? [SeafTheme primaryText] : [SeafTheme secondaryText];
+    textLabel.numberOfLines = 0;
     textLabel.lineBreakMode = NSLineBreakByWordWrapping;
     textLabel.accessibilityIdentifier = [NSString stringWithFormat:@"editor_longtext_%@", key];
     
@@ -837,44 +806,43 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     if (displayText.length > 0) {
         textLabel.text = displayText;
     } else {
-        textLabel.text = NSLocalizedString(@"Empty", @"placeholder for empty long text");
-        textLabel.textColor = [UIColor tertiaryLabelColor];
+        textLabel.text = NSLocalizedString(@"empty", @"placeholder for empty long text");
+        textLabel.textColor = [SeafTheme tertiaryText];
     }
     
     [wrapper addSubview:textLabel];
     
-    // Constraints: padding 16dp horizontal, 8dp vertical (align Android)
-    NSLayoutConstraint *textTrailingConstraint = [textLabel.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-16];
+    NSLayoutConstraint *textTrailingConstraint = [textLabel.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor];
     [NSLayoutConstraint activateConstraints:@[
-        [textLabel.topAnchor constraintEqualToAnchor:wrapper.topAnchor constant:8],
-        [textLabel.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor constant:16],
+        [textLabel.topAnchor constraintEqualToAnchor:wrapper.topAnchor],
+        [textLabel.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor],
         textTrailingConstraint,
-        [textLabel.bottomAnchor constraintEqualToAnchor:wrapper.bottomAnchor constant:-8],
+        [textLabel.bottomAnchor constraintEqualToAnchor:wrapper.bottomAnchor],
     ]];
     
-    // Min height 72pt (align Android: DP_72)
-    [wrapper.heightAnchor constraintGreaterThanOrEqualToConstant:72].active = YES;
+    // Min height 56pt for long text area
+    [wrapper.heightAnchor constraintGreaterThanOrEqualToConstant:56].active = YES;
     
-    // Tap to open full-screen editor (align Android: onClick → LongTextSelectorActivity)
+    // Tap to open full-screen editor
     if (editable) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onLongTextTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
         objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         
-        // Add disclosure indicator (align Android: shows navigability)
+        // Add disclosure indicator
         UIImageView *arrow = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"chevron.right"]];
         arrow.translatesAutoresizingMaskIntoConstraints = NO;
         arrow.tintColor = [UIColor tertiaryLabelColor];
         [wrapper addSubview:arrow];
         [NSLayoutConstraint activateConstraints:@[
             [arrow.centerYAnchor constraintEqualToAnchor:wrapper.centerYAnchor],
-            [arrow.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-16],
+            [arrow.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor],
             [arrow.widthAnchor constraintEqualToConstant:12],
             [arrow.heightAnchor constraintEqualToConstant:16],
         ]];
         // Re-pin textLabel trailing to leave room for arrow
-        textTrailingConstraint.constant = -36; // 16 + 12 (arrow) + 8 (gap)
+        textTrailingConstraint.constant = -20;
     }
     
     return wrapper;
@@ -1024,63 +992,166 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 #pragma mark - Single Select (align Android buildEditableSingleSelect)
 
 - (UIView *)buildSingleSelectForKey:(NSString *)key value:(id)value editable:(BOOL)editable metadata:(NSDictionary *)metadata {
-    NSArray *options = metadata[@"data"][@"options"];
-    if (![options isKindOfClass:[NSArray class]]) options = @[];
-    
-    NSString *selectedName = [value isKindOfClass:[NSString class]] ? value : nil;
-    
-    // Use a chips-style display with a tap to show picker
-    UILabel *label = [[UILabel alloc] init];
-    label.font = [UIFont systemFontOfSize:15];
-    label.textColor = [UIColor labelColor];
-    label.text = selectedName ?: NSLocalizedString(@"Select...", @"placeholder");
-    if (!selectedName) label.textColor = [UIColor tertiaryLabelColor];
-    
-    if (editable) {
-        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onSingleSelectTapped:)];
-        label.userInteractionEnabled = YES;
-        [label addGestureRecognizer:tap];
-        objc_setAssociatedObject(label, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
-        objc_setAssociatedObject(label, kAssocSelectOptions, options, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    // Align Android MetadataViewUtils.buildEditableSingleSelect → SupportMetadataRadioGroup
+    NSArray *options = optionsFromMetadata(metadata);
+    NSString *selectedName = [value isKindOfClass:[NSString class]] ? (NSString *)value : nil;
+
+    UIStackView *stack = [[UIStackView alloc] init];
+    stack.axis = UILayoutConstraintAxisVertical;
+    stack.spacing = 8;
+    stack.alignment = UIStackViewAlignmentLeading;
+    stack.translatesAutoresizingMaskIntoConstraints = NO;
+    objc_setAssociatedObject(stack, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    objc_setAssociatedObject(stack, kAssocSelectOptions, options, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    for (NSDictionary *opt in options) {
+        if (![opt isKindOfClass:[NSDictionary class]]) continue;
+        NSString *name = opt[@"name"] ?: @"";
+        BOOL selected = (selectedName.length > 0 && [selectedName isEqualToString:name]);
+        UIView *row = [self buildSingleSelectOptionRow:opt
+                                              fieldKey:key
+                                              selected:selected
+                                              editable:editable];
+        [stack addArrangedSubview:row];
     }
-    
-    [label.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
-    return label;
+
+    if (options.count == 0) {
+        UILabel *empty = [[UILabel alloc] init];
+        empty.font = [UIFont systemFontOfSize:15];
+        empty.textColor = [SeafTheme tertiaryText];
+        empty.text = NSLocalizedString(@"empty", @"placeholder");
+        [empty.heightAnchor constraintGreaterThanOrEqualToConstant:28].active = YES;
+        [stack addArrangedSubview:empty];
+    }
+
+    return stack;
 }
 
-- (void)onSingleSelectTapped:(UITapGestureRecognizer *)tap {
-    NSString *key = objc_getAssociatedObject(tap.view, kAssocMetadataKey);
-    NSArray *options = objc_getAssociatedObject(tap.view, kAssocSelectOptions);
-    if (!key || !options) return;
-    
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    __weak typeof(self) weakSelf = self;
-    for (NSDictionary *opt in options) {
-        NSString *name = opt[@"name"] ?: @"";
-        [alert addAction:[UIAlertAction actionWithTitle:name style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            weakSelf.contentMap[key] = opt;
-            [weakSelf updateFieldUIForKey:key withValue:name];
-        }]];
+/// One radio + colored chip row (align Android layout_check_radio_text_round)
+- (UIView *)buildSingleSelectOptionRow:(NSDictionary *)opt
+                              fieldKey:(NSString *)fieldKey
+                              selected:(BOOL)selected
+                              editable:(BOOL)editable {
+    NSString *name = opt[@"name"] ?: @"";
+    NSString *colorHex = [opt[@"color"] isKindOfClass:[NSString class]] ? opt[@"color"] : nil;
+    NSString *textColorHex = [opt[@"textColor"] isKindOfClass:[NSString class]] ? opt[@"textColor"] : nil;
+    if ([fieldKey isEqualToString:@"_status"]) {
+        // Fallback colors when server omits them (align Assembler statusOptionForCode)
+        if (colorHex.length == 0) {
+            NSDictionary *fallback = [SeafSdocProfileAssembler statusOptionForCode:name];
+            colorHex = fallback[@"color"] ?: @"#EED5FF";
+            if (textColorHex.length == 0) {
+                textColorHex = fallback[@"textColor"] ?: @"#202428";
+            }
+        }
+        NSString *bgLower = [(colorHex ?: @"") lowercaseString];
+        if ([name isEqualToString:@"_done"] || [name isEqualToString:@"_outdated"] ||
+            [bgLower isEqualToString:@"#59cb74"] || [bgLower isEqualToString:@"#c2c2c2"]) {
+            textColorHex = @"#FFFFFF";
+        } else if (textColorHex.length == 0) {
+            textColorHex = @"#202428";
+        }
     }
-    
-    [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"") style:UIAlertActionStyleCancel handler:nil]];
 
-    // iPad: action sheets are presented as popovers and require an anchor
-    UIPopoverPresentationController *popover = alert.popoverPresentationController;
-    if (popover) {
-        popover.sourceView = tap.view;
-        popover.sourceRect = tap.view.bounds;
+    UIView *row = [[UIView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+
+    UIButton *radio = [UIButton buttonWithType:UIButtonTypeSystem];
+    radio.translatesAutoresizingMaskIntoConstraints = NO;
+    radio.userInteractionEnabled = NO; // whole row handles tap
+    [self applyRadioAppearance:radio selected:selected];
+
+    // Colored pill (align Android MaterialCardView + profile sheet filled chip: height 22, capsule radius)
+    UIView *chipBg = [[UIView alloc] init];
+    chipBg.translatesAutoresizingMaskIntoConstraints = NO;
+    chipBg.backgroundColor = [SeafTagChipView colorFromHex:colorHex] ?: [UIColor colorWithWhite:0.9 alpha:1];
+    static const CGFloat kStatusChipHeight = 22.0;
+    chipBg.layer.cornerRadius = kStatusChipHeight * 0.5; // true capsule
+    chipBg.layer.masksToBounds = YES;
+    if (@available(iOS 13.0, *)) {
+        chipBg.layer.cornerCurve = kCACornerCurveContinuous;
     }
 
-    [self presentViewController:alert animated:YES completion:nil];
+    UILabel *chip = [[UILabel alloc] init];
+    chip.translatesAutoresizingMaskIntoConstraints = NO;
+    chip.font = [UIFont systemFontOfSize:13];
+    chip.text = displayNameForSelectOption(name, fieldKey);
+    chip.textColor = [SeafTagChipView colorFromHex:textColorHex] ?: [SeafTheme primaryText];
+    chip.numberOfLines = 1;
+    chip.lineBreakMode = NSLineBreakByTruncatingTail;
+
+    [chipBg addSubview:chip];
+    [row addSubview:radio];
+    [row addSubview:chipBg];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [radio.leadingAnchor constraintEqualToAnchor:row.leadingAnchor],
+        [radio.centerYAnchor constraintEqualToAnchor:row.centerYAnchor],
+        [radio.widthAnchor constraintEqualToConstant:28],
+        [radio.heightAnchor constraintEqualToConstant:28],
+        [row.heightAnchor constraintGreaterThanOrEqualToConstant:28],
+
+        [chipBg.leadingAnchor constraintEqualToAnchor:radio.trailingAnchor constant:8],
+        [chipBg.centerYAnchor constraintEqualToAnchor:row.centerYAnchor],
+        [chipBg.trailingAnchor constraintLessThanOrEqualToAnchor:row.trailingAnchor],
+        [chipBg.heightAnchor constraintEqualToConstant:kStatusChipHeight],
+
+        // Padding inside chip: 8 horizontal (align Android marginHorizontal 8dp)
+        [chip.leadingAnchor constraintEqualToAnchor:chipBg.leadingAnchor constant:8],
+        [chip.trailingAnchor constraintEqualToAnchor:chipBg.trailingAnchor constant:-8],
+        [chip.centerYAnchor constraintEqualToAnchor:chipBg.centerYAnchor],
+    ]];
+
+    if (editable) {
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onSingleSelectOptionTapped:)];
+        row.userInteractionEnabled = YES;
+        [row addGestureRecognizer:tap];
+        objc_setAssociatedObject(row, kAssocMetadataKey, fieldKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(row, kAssocMetadataDict, opt, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    } else {
+        row.userInteractionEnabled = NO;
+        radio.enabled = NO;
+    }
+
+    return row;
+}
+
+- (void)applyRadioAppearance:(UIButton *)radio selected:(BOOL)selected {
+    UIImageSymbolConfiguration *cfg = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular];
+    NSString *symbol = selected ? @"circle.inset.filled" : @"circle";
+    UIImage *img = [UIImage systemImageNamed:symbol withConfiguration:cfg];
+    [radio setImage:img forState:UIControlStateNormal];
+    radio.tintColor = selected ? [SeafTheme accentOrange] : [SeafTheme tertiaryText];
+}
+
+- (void)onSingleSelectOptionTapped:(UITapGestureRecognizer *)tap {
+    UIView *row = tap.view;
+    NSString *key = objc_getAssociatedObject(row, kAssocMetadataKey);
+    NSDictionary *opt = objc_getAssociatedObject(row, kAssocMetadataDict);
+    if (!key || !opt) return;
+
+    NSString *name = opt[@"name"] ?: @"";
+    NSString *current = nil;
+    NSMutableDictionary *metaMut = self.recordMetaDataMap[key];
+    id curVal = metaMut[@"value"];
+    if ([curVal isKindOfClass:[NSString class]]) current = (NSString *)curVal;
+
+    // Align Android SupportMetadataRadioGroup.select: tap selected → toggle off; else select
+    BOOL wasSelected = (current.length > 0 && [current isEqualToString:name]);
+    if (wasSelected) {
+        // Cleared selection — store empty string so parseParams submits ""
+        self.contentMap[key] = @"";
+        [self updateFieldUIForKey:key withValue:@""];
+    } else {
+        self.contentMap[key] = opt;
+        [self updateFieldUIForKey:key withValue:name];
+    }
 }
 
 #pragma mark - Multiple Select (align Android buildEditableMultiSelect)
 
 - (UIView *)buildMultiSelectForKey:(NSString *)key value:(id)value editable:(BOOL)editable metadata:(NSDictionary *)metadata {
-    NSArray *options = metadata[@"data"][@"options"];
-    if (![options isKindOfClass:[NSArray class]]) options = @[];
+    NSArray *options = optionsFromMetadata(metadata);
     
     NSArray *selectedNames = [value isKindOfClass:[NSArray class]] ? value : @[];
     
@@ -1149,19 +1220,22 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     NSArray *emails = [value isKindOfClass:[NSArray class]] ? value : @[];
     
     // Build user info (name + avatar) from relatedUserList
+    // Align Android: skip unresolved emails (do not fall back to raw email chip)
     NSMutableArray<NSDictionary *> *userInfos = [NSMutableArray array];
     for (id email in emails) {
         NSString *emailStr = [email isKindOfClass:[NSString class]] ? email : [email description];
-        NSString *name = emailStr;
-        NSString *avatarURL = @"";
+        NSDictionary *matched = nil;
         for (NSDictionary *user in self.relatedUserList) {
             if ([user[@"email"] isEqualToString:emailStr]) {
-                name = user[@"name"] ?: emailStr;
-                avatarURL = user[@"avatar_url"] ?: @"";
+                matched = user;
                 break;
             }
         }
-        [userInfos addObject:@{ @"name": name, @"avatar": avatarURL }];
+        if (!matched) continue;
+        [userInfos addObject:@{
+            @"name": matched[@"name"] ?: emailStr,
+            @"avatar": matched[@"avatar_url"] ?: @""
+        }];
     }
     
     // Empty state: show placeholder label
@@ -1329,7 +1403,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UILabel *label = [[UILabel alloc] init];
         label.font = [UIFont systemFontOfSize:15];
         label.textColor = [UIColor tertiaryLabelColor];
-        label.text = NSLocalizedString(@"Empty", @"placeholder for empty tags");
+        label.text = NSLocalizedString(@"empty", @"placeholder for empty tags");
         label.numberOfLines = 0;
         [label.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
         return label;
@@ -1502,82 +1576,21 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     [self presentViewController:selector animated:YES completion:nil];
 }
 
-#pragma mark - Geolocation (readonly, align Android buildEditableGeoLocation)
-
-/// Align Android GeoLocationModel.getText() priority:
-/// 1. address (from _location_translated)
-/// 2. country + province + city + district + street
-/// 3. lng, lat (Android order: lng first)
-- (NSString *)geolocationDisplayString:(id)value {
-    if (![value isKindOfClass:[NSDictionary class]]) return @"";
-    NSDictionary *geo = (NSDictionary *)value;
-    
-    // Helper: safely coerce to string
-    NSString *(^safeStr)(id) = ^NSString *(id v) {
-        if ([v isKindOfClass:[NSString class]]) return (NSString *)v;
-        if ([v isKindOfClass:[NSNumber class]]) return [(NSNumber *)v stringValue];
-        return @"";
-    };
-    
-    // Priority 1: address (from _location_translated merge)
-    NSString *address = safeStr(geo[@"address"]);
-    if (address.length > 0) return address;
-    
-    // Priority 2: concat country + province + city + district + street
-    NSString *country = safeStr(geo[@"country"]);
-    if (country.length == 0) country = safeStr(geo[@"country_region"]);
-    if (country.length == 0) country = safeStr(geo[@"countryRegion"]);
-    NSString *province = safeStr(geo[@"province"]);
-    NSString *city = safeStr(geo[@"city"]);
-    NSString *district = safeStr(geo[@"district"]);
-    NSString *street = safeStr(geo[@"street"]);
-    if (street.length == 0) street = safeStr(geo[@"detail"]);
-    
-    NSMutableString *concat = [NSMutableString string];
-    if (country.length) [concat appendString:country];
-    if (province.length) [concat appendString:province];
-    if (city.length) [concat appendString:city];
-    if (district.length) [concat appendString:district];
-    if (street.length) [concat appendString:street];
-    if (concat.length > 0) return [concat copy];
-    
-    // Priority 3: coordinates in lng, lat order (align Android GeoLocationModel.getLngLat)
-    NSString *lat = safeStr(geo[@"lat"]);
-    NSString *lng = safeStr(geo[@"lng"]);
-    if (lng.length > 0 && lat.length > 0 && ![lat isEqualToString:@"0"] && ![lng isEqualToString:@"0"]) {
-        return [NSString stringWithFormat:@"%@, %@", lng, lat];
-    }
-    return @"";
-}
-
 #pragma mark - Readonly text
 
 - (UIView *)buildReadonlyTextForValue:(NSString *)text {
-    // Wrap label in a container with non-editable cell style (align Android: shape_task_view_no_editable)
-    UIView *wrapper = [[UIView alloc] init];
-    applyNonEditableCellStyle(wrapper);
-    
     UILabel *label = [[UILabel alloc] init];
-    label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = text.length > 0 ? text : @"—";
-    label.font = [UIFont systemFontOfSize:16]; // align Android: 16sp
-    label.textColor = [UIColor secondaryLabelColor];
+    label.font = [UIFont systemFontOfSize:16];
+    label.textColor = [SeafTheme secondaryText];
     label.numberOfLines = 0;
-    
-    [wrapper addSubview:label];
-    [NSLayoutConstraint activateConstraints:@[
-        [label.topAnchor constraintEqualToAnchor:wrapper.topAnchor constant:8],
-        [label.leadingAnchor constraintEqualToAnchor:wrapper.leadingAnchor constant:16],
-        [label.trailingAnchor constraintEqualToAnchor:wrapper.trailingAnchor constant:-16],
-        [label.bottomAnchor constraintEqualToAnchor:wrapper.bottomAnchor constant:-8],
-    ]];
-    [wrapper.heightAnchor constraintGreaterThanOrEqualToConstant:40].active = YES;
-    return wrapper;
+    [label.heightAnchor constraintGreaterThanOrEqualToConstant:28].active = YES;
+    return label;
 }
 
 #pragma mark - rebuildFieldUIForKey (align Android updateConfigMapMetadata → parseViewByType)
 
-/// Rebuild the content view for a field by removing old and creating new (align Android updateConfigMapMetadata)
+/// Rebuild the content view for a field by removing old and creating new
 - (void)rebuildFieldUIForKey:(NSString *)key {
     NSMutableDictionary *metaMut = self.recordMetaDataMap[key];
     if (!metaMut) return;
@@ -1592,12 +1605,9 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         NSDictionary *meta = self.orderedMetadataList[idx];
         if (![meta[@"key"] isEqualToString:key]) continue;
         
-        // Found the section — remove old content view and rebuild
+        // Found the section — find card and rebuild content
+        UIView *card = [section viewWithTag:kCardViewTag];
         UIView *oldContent = [section viewWithTag:kContentViewTag];
-        UIView *titleLabel = nil;
-        for (UIView *sub in section.subviews) {
-            if (sub != oldContent) { titleLabel = sub; break; }
-        }
         
         if (oldContent) {
             [oldContent removeFromSuperview];
@@ -1612,16 +1622,16 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UIView *newContent = [self buildContentViewForType:type key:key metadata:metaMut editable:editable];
         newContent.translatesAutoresizingMaskIntoConstraints = NO;
         newContent.tag = kContentViewTag;
-        [section addSubview:newContent];
         
-        if (titleLabel) {
-            [NSLayoutConstraint activateConstraints:@[
-                [newContent.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:6],
-                [newContent.leadingAnchor constraintEqualToAnchor:section.leadingAnchor constant:16],
-                [newContent.trailingAnchor constraintEqualToAnchor:section.trailingAnchor constant:-16],
-                [newContent.bottomAnchor constraintEqualToAnchor:section.bottomAnchor constant:-4],
-            ]];
-        }
+        UIView *host = card ?: section;
+        [host addSubview:newContent];
+        
+        [NSLayoutConstraint activateConstraints:@[
+            [newContent.topAnchor constraintEqualToAnchor:host.topAnchor constant:8],
+            [newContent.leadingAnchor constraintEqualToAnchor:host.leadingAnchor constant:16],
+            [newContent.trailingAnchor constraintEqualToAnchor:host.trailingAnchor constant:-16],
+            [newContent.bottomAnchor constraintEqualToAnchor:host.bottomAnchor constant:-8],
+        ]];
         
         break;
     }
@@ -1672,16 +1682,10 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         if (!strongSelf) return;
         if (success) {
             [strongSelf.contentMap removeAllObjects];
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil
-                                                                          message:NSLocalizedString(@"Successfully saved", @"")
-                                                                   preferredStyle:UIAlertControllerStyleAlert];
-            [strongSelf presentViewController:alert animated:YES completion:^{
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [alert dismissViewControllerAnimated:YES completion:^{
-                        [strongSelf dismissViewControllerAnimated:YES completion:nil];
-                    }];
-                });
-            }];
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully saved", @"")];
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [strongSelf dismissViewControllerAnimated:YES completion:nil];
+            });
         } else {
             NSString *msg = error.localizedDescription ?: NSLocalizedString(@"Save failed", @"");
             UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Error", @"")

@@ -5,6 +5,7 @@
 //          Full-width UITextView with 24pt padding
 
 #import "SeafSdocLongTextEditorViewController.h"
+#import "SeafTheme.h"
 
 @interface SeafSdocLongTextEditorViewController () <UIGestureRecognizerDelegate>
 @property (nonatomic, copy) NSString *metadataKey;
@@ -32,7 +33,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.view.backgroundColor = [UIColor systemBackgroundColor];
+    self.view.backgroundColor = [SeafTheme groupedSurface];
     
     // Cancel button (left) — align Android: toolbar cancel
     self.navigationItem.leftBarButtonItem =
@@ -62,15 +63,11 @@
     self.textView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     self.textView.accessibilityIdentifier = @"longtext_editor_textview";
     
-    // Border styling (align Android: shape_task_view_editable — #E0E5EC border, 4pt corner radius)
-    self.textView.layer.cornerRadius = 4.0;
+    // Rounded card style (no Material border)
+    self.textView.layer.cornerRadius = 10.0;
     self.textView.layer.masksToBounds = YES;
-    self.textView.layer.borderWidth = 1.0;
-    self.textView.layer.borderColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
-        return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-            ? [UIColor colorWithRed:0x21/255.0 green:0x21/255.0 blue:0x21/255.0 alpha:1.0]
-            : [UIColor colorWithRed:0xE0/255.0 green:0xE5/255.0 blue:0xEC/255.0 alpha:1.0];
-    }].CGColor;
+    self.textView.layer.borderWidth = 0;
+    self.textView.backgroundColor = [SeafTheme primarySurface];
     
     [self.view addSubview:self.textView];
     

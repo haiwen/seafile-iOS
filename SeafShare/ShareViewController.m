@@ -16,7 +16,7 @@
 #import "Constants.h"
 
 /// Horizontal inset for the account card / title (matches design).
-static const CGFloat kAccountListHorizontalInset = 16.0;
+static const CGFloat kAccountListHorizontalInset = SEAF_CARD_HORIZONTAL_PADDING;
 /// Title band above the card (slightly taller than a single label line).
 static const CGFloat kAccountHeaderHeight = 44.0;
 /// Avatar inset from the card's left edge (tighter than the xib default ~16–20).
@@ -127,6 +127,7 @@ static inline UIEdgeInsets SeafAccountSeparatorInset(void) {
     self.tableView.backgroundColor = [SeafTheme primarySurface];
     self.tableView.layer.cornerRadius = 16.0;
     self.tableView.layer.masksToBounds = YES;
+    self.tableView.contentInset = UIEdgeInsetsMake(8, 0, 8, 0);
     self.tableView.scrollEnabled = NO; // Card hugs content; enable only when taller than viewport.
     self.tableView.alwaysBounceVertical = YES;
     if (@available(iOS 15.0, *)) {
@@ -163,7 +164,9 @@ static inline UIEdgeInsets SeafAccountSeparatorInset(void) {
 
 - (void)updateTableHeight {
     [self.tableView layoutIfNeeded];
-    CGFloat contentHeight = self.tableView.contentSize.height;
+    CGFloat contentHeight = self.tableView.contentSize.height
+                          + self.tableView.contentInset.top
+                          + self.tableView.contentInset.bottom;
     UILayoutGuide *guide = self.view.safeAreaLayoutGuide;
     CGFloat maxHeight = CGRectGetMaxY(guide.layoutFrame) - 16.0 - CGRectGetMinY(self.tableView.frame);
     if (maxHeight < 0) maxHeight = 0;
