@@ -17,7 +17,7 @@
 #import "SeafFilePreviewHandler.h"
 
 
-#define THUMB_SIZE 96
+#define THUMB_SIZE 256
 
 @class SeafFile;
 @class SeafThumb;
@@ -211,6 +211,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)failedDownload:(NSError *_Nullable)error;
 
 - (void)finishDownloadThumb:(BOOL)success;
+
+/// `task` identifies the thumb task reporting completion. Only the task that is
+/// still the file's current one is allowed to clear `thumbTaskForQueue`, so a
+/// completion racing with cancel + re-enqueue cannot drop the newer task.
+/// Pass nil for paths that complete without going through the thumb queue.
+- (void)finishDownloadThumb:(BOOL)success forTask:(SeafThumb *_Nullable)task;
 
 // Public interfaces
 - (void)unload;

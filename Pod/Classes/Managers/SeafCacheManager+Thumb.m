@@ -166,11 +166,14 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
     }
     
     if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
+        // Memory cache miss: load for display without storing an undecoded JPEG.
+        // Warm the cache off the main thread so the next access is hitch-free.
         thumb = [UIImage imageWithContentsOfFile:thumbpath];
         if (thumb) {
-            [SeafCacheManager.sharedManager saveThumbToCache:thumb key:thumbpath];
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                [[SeafCacheManager sharedManager] warmThumbCacheAtPath:thumbpath];
+            });
         } else {
-            // If the image loading fails, delete the corrupted cache file
             Debug(@"Thumbnail at path %@ is corrupted or invalid, deleting it.", thumbpath);
             NSError *error = nil;
             if (![[NSFileManager defaultManager] removeItemAtPath:thumbpath error:&error]) {
@@ -261,7 +264,8 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
                         [imageData writeToFile:mtimePath atomically:YES];
                         
                         if (thumbnailImage) {
-                            [self saveThumbToCache:thumbnailImage key:oidPath ?: mtimePath];
+                            UIImage *decoded = [Utils decodedImageWithImage:thumbnailImage] ?: thumbnailImage;
+                            [self saveThumbToCache:decoded key:oidPath ?: mtimePath];
                         }
                         Debug("Thumbnail saved successfully");
                         [sFile finishDownloadThumb:YES];

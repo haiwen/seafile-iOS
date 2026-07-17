@@ -693,7 +693,11 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 
     CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), imageRef);
     CGImageRef decompressedImageRef = CGBitmapContextCreateImage(context);
-    UIImage *decompressedImage = [UIImage imageWithCGImage:decompressedImageRef];
+    // The bitmap holds raw pixels, so carry over scale and orientation; dropping
+    // them would resize and rotate images that carry EXIF orientation.
+    UIImage *decompressedImage = [UIImage imageWithCGImage:decompressedImageRef
+                                                     scale:image.scale
+                                               orientation:image.imageOrientation];
 
     CGContextRelease(context);
     CGImageRelease(decompressedImageRef);

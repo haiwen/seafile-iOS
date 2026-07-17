@@ -80,6 +80,7 @@
     [_removeButton.heightAnchor constraintEqualToConstant:16].active = YES;
     _removeButton.hidden = YES;
     [_removeButton addTarget:self action:@selector(onRemoveTapped) forControlEvents:UIControlEventTouchUpInside];
+    _removeButton.accessibilityIdentifier = @"tag_chip_remove_button";
 
     [h addArrangedSubview:_dotView];
     [h addArrangedSubview:_nameLabel];

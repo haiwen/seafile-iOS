@@ -358,6 +358,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     }
     self.btnOutline = buttons.count > 0 ? buttons[0] : nil;
     self.btnProfile = buttons.count > 1 ? buttons[1] : nil;
+    self.btnProfile.accessibilityIdentifier = @"sdoc_profile_toolbar_button";
     self.btnComment = buttons.count > 2 ? buttons[2] : nil;
 
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:buttons];

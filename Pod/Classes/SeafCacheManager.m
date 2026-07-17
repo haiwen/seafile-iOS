@@ -9,10 +9,15 @@
 #import "SeafRealmManager.h"
 #import "SeafStorage.h"
 #import "SeafFile.h"
+#import "Utils.h"
+#import "Debug.h"
 #import <CommonCrypto/CommonDigest.h>
+#import <UIKit/UIKit.h>
 
-#define DEFAULT_TotalCostLimit 20*1024*1024
-#define DEFAULT_CountLimit 100
+// Grid view shows many large thumbs at once (THUMB_SIZE=256 → ~2MB decoded @3x).
+// 20MB only kept ~8–9 images and forced constant disk re-decode while scrolling.
+#define DEFAULT_TotalCostLimit 120*1024*1024
+#define DEFAULT_CountLimit 250
 
 @interface SeafCacheManager ()
 
@@ -29,9 +34,10 @@
 
 + (SeafCacheManager *)sharedManager {
     static SeafCacheManager *object = nil;
-    if (!object) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         object = [[SeafCacheManager alloc] init];
-    }
+    });
     return object;
 }
 
@@ -39,13 +45,34 @@
     self = [super init];
     if (self) {
         _cacheQueue = dispatch_queue_create("com.seafile.cacheQueue", DISPATCH_QUEUE_SERIAL);
+        // Built eagerly rather than lazily: thumbs are read on the main queue and
+        // written from background warming, so a lazy getter could build two caches
+        // and silently drop whichever one loses the race.
+        _thumbMemoryCache = [[NSCache alloc] init];
+        _thumbMemoryCache.totalCostLimit = DEFAULT_TotalCostLimit;
+        _thumbMemoryCache.countLimit = DEFAULT_CountLimit;
+        _thumbMemoryCache.evictsObjectsWithDiscardedContent = YES;
+
+        _imageMemoryCache = [[NSCache alloc] init];
+        _imageMemoryCache.totalCostLimit = 50 * 1024 * 1024; // 与评论页一致的约束
+        _imageMemoryCache.countLimit = 200;
+        _imageMemoryCache.evictsObjectsWithDiscardedContent = YES;
         // 初始化 URL 图片缓存目录（沿用评论缓存目录名称以复用已有数据）
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
         NSString *base = (paths.count > 0) ? paths.firstObject : NSTemporaryDirectory();
         _imageDiskCachePath = [base stringByAppendingPathComponent:@"SeafCommentImageCache"];
         [[NSFileManager defaultManager] createDirectoryAtPath:_imageDiskCachePath withIntermediateDirectories:YES attributes:nil error:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(handleMemoryWarning:)
+                                                     name:UIApplicationDidReceiveMemoryWarningNotification
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)handleMemoryWarning:(NSNotification *)notification {
+    [self.thumbMemoryCache removeAllObjects];
+    [self.imageMemoryCache removeAllObjects];
 }
 
 - (void)saveThumbToCache:(UIImage *)image key:(NSString *)key {
@@ -65,6 +92,24 @@
     return [self.thumbMemoryCache objectForKey:key];
 }
 
+- (UIImage *)warmThumbCacheAtPath:(NSString *)path {
+    if (!path || path.length == 0) {
+        return nil;
+    }
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        return nil;
+    }
+    // Always re-read + decode so a concurrent undecoded `thumbForFile` insert
+    // cannot leave a lazily-decoded JPEG wrapper in the memory cache.
+    UIImage *image = [UIImage imageWithContentsOfFile:path];
+    if (!image) {
+        return nil;
+    }
+    image = [Utils decodedImageWithImage:image] ?: image;
+    [self saveThumbToCache:image key:path];
+    return image;
+}
+
 - (NSUInteger)costForImage:(UIImage *)image {
     CGImageRef imageRef = image.CGImage;
     if (!imageRef) {
@@ -74,16 +119,6 @@
     NSUInteger frameCount = image.images.count > 1 ? [NSSet setWithArray:image.images].count : 1;
     NSUInteger cost = bytesPerFrame * frameCount;
     return cost;
-}
-
-- (NSCache *)thumbMemoryCache {
-    if (!_thumbMemoryCache) {
-        _thumbMemoryCache = [[NSCache alloc] init];
-        _thumbMemoryCache.totalCostLimit = DEFAULT_TotalCostLimit;
-        _thumbMemoryCache.countLimit = DEFAULT_CountLimit;
-        _thumbMemoryCache.evictsObjectsWithDiscardedContent = YES;
-    }
-    return _thumbMemoryCache;
 }
 
 #pragma mark - URL Image Cache
@@ -99,16 +134,6 @@ static NSString *sha1String(NSString *s)
         [out appendFormat:@"%02x", digest[i]];
     }
     return out;
-}
-
-- (NSCache *)imageMemoryCache {
-    if (!_imageMemoryCache) {
-        _imageMemoryCache = [[NSCache alloc] init];
-        _imageMemoryCache.totalCostLimit = 50 * 1024 * 1024; // 与评论页一致的约束
-        _imageMemoryCache.countLimit = 200;
-        _imageMemoryCache.evictsObjectsWithDiscardedContent = YES;
-    }
-    return _imageMemoryCache;
 }
 
 - (UIImage *)getImageForURL:(NSString *)url
