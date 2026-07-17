@@ -85,6 +85,12 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 /// Check if a filename indicates a video file.
 + (BOOL)isVideoFile:(NSString *)name;
 
+/// Check if a filename indicates a PDF file.
++ (BOOL)isPdfFile:(NSString *)name;
+
+/// Check if a filename indicates an sdoc file.
++ (BOOL)isSdocFile:(NSString *)name;
+
 /// Check if a file extension is that of a video file.
 + (BOOL)isVideoExt:(NSString *)ext;
 

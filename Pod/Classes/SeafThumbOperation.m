@@ -14,6 +14,8 @@
 #import "SeafRepos.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SeafCacheManager.h"
+#import "SeafCacheManager+Thumb.h"
 #import <AFNetworking/AFHTTPSessionManager.h> // For AFHTTPSessionManager
 #import <AFNetworking/AFNetworkReachabilityManager.h> // For AFNetworkReachabilityManager
 
@@ -115,15 +117,17 @@
 {
     SeafConnection *connection = self.file.connection;
     SeafRepo *repo = [connection getRepo:self.file.repoId];
+    BOOL needsLongerTimeout = [Utils isPdfFile:self.file.name] || [Utils isSdocFile:self.file.name] || [Utils isVideoFile:self.file.name];
     if (repo.encrypted) {
         [self finishDownloadThumbOperation:NO];
         return;
     }
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
-    NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.file.repoId, size, self.file.path.escapedUrl];
+    NSString *thumburl = [connection buildThumbnailRequestPathForFile:self.file requestedSize:size];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
     NSMutableURLRequest *mutableDownloadRequest = [downloadRequest mutableCopy];
-    mutableDownloadRequest.timeoutInterval = 10.0;
+    // PDF/sdoc/video thumbnail generation on the server can take longer than image thumbs.
+    mutableDownloadRequest.timeoutInterval = needsLongerTimeout ? 60.0 : 10.0;
     downloadRequest = [mutableDownloadRequest copy];
     Debug("Request: %@, Timeout: %f", downloadRequest.URL, downloadRequest.timeoutInterval);
     
@@ -146,11 +150,26 @@
         return [NSURL fileURLWithPath:target];
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
+        NSHTTPURLResponse *httpResp = [response isKindOfClass:[NSHTTPURLResponse class]] ? (NSHTTPURLResponse *)response : nil;
+        NSInteger statusCode = httpResp.statusCode;
+
+        // AF download may still write an HTML/JSON error body into the destination on 4xx/5xx.
+        void (^cleanupBadThumbFile)(void) = ^{
+            if (target.length) {
+                [Utils removeFile:target];
+            }
+            if (filePath.path.length && ![filePath.path isEqualToString:target]) {
+                [Utils removeFile:filePath.path];
+            }
+        };
+
         if (strongSelf.isCancelled) {
+            cleanupBadThumbFile();
             [strongSelf finishDownloadThumbOperation:NO];
             return;
         }
         if (error) {
+            cleanupBadThumbFile();
             if (error.code == NSURLErrorCancelled) {
                 Debug(@"Task was cancelled %@", self.file.name);
                 [strongSelf finishDownloadThumbOperation:NO];
@@ -163,6 +182,19 @@
                         [strongSelf downloadThumb];
                     });
                 } else {
+                    // 4xx => permanent (this file version can't be thumbnailed). 5xx =>
+                    // transient (server busy / generation temporarily failed): use a
+                    // capped, backed-off retry so a brief server hiccup doesn't hide the
+                    // thumbnail for the rest of the session. Failures with no HTTP response
+                    // (timeout, connection lost, offline) are NOT recorded and stay fully
+                    // retryable.
+                    if (httpResp != nil) {
+                        if (statusCode >= 400 && statusCode < 500) {
+                            [[SeafCacheManager sharedManager] markThumbDownloadPermanentlyFailedForFile:strongSelf.file];
+                        } else if (statusCode >= 500) {
+                            [[SeafCacheManager sharedManager] markThumbDownloadTransientlyFailedForFile:strongSelf.file];
+                        }
+                    }
                     Debug(@"Max retry count reached for %@. Failing download.", self.file.name);
                     [strongSelf finishDownloadThumbOperation:NO];
                 }
@@ -173,6 +205,17 @@
                 [Utils removeFile:target];
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
             }
+            if (![UIImage imageWithContentsOfFile:target]) {
+                // 2xx but the body isn't a decodable image (HTML error page, empty body,
+                // etc.). Treat as transient-with-cap rather than permanent: retry a bounded
+                // number of times with backoff, then give up, so we neither hammer the
+                // server on every refresh nor hide a recoverable thumbnail forever.
+                [[SeafCacheManager sharedManager] markThumbDownloadTransientlyFailedForFile:strongSelf.file];
+                cleanupBadThumbFile();
+                [strongSelf finishDownloadThumbOperation:NO];
+                return;
+            }
+
             [strongSelf finishDownloadThumbOperation:YES];
         }
     }];

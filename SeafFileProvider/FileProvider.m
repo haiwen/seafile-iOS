@@ -603,7 +603,7 @@
         }
         
         SeafFile *sfile = (SeafFile *)[item toSeafObj];
-        if ([sfile isImageFile]) {
+        if ([sfile isImageFile] || [sfile isPdfFile] || [sfile isVideoFile] || [sfile isSdocFile]) {
             if (sfile.thumb) {
                 counterProgress += 1;
                 NSData *imageData = UIImagePNGRepresentation(sfile.thumb);

@@ -12,6 +12,7 @@
 #import "SeafThumbOperation.h"
 #import "SeafDir.h"
 #import "Debug.h"
+#import "Utils.h"
 #import "SeafStorage.h"
 #import <AFNetworking/AFNetworking.h>
 #import "SeafUploadFileModel.h"

@@ -83,7 +83,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (strong, nonatomic) SeafUploadFile * _Nullable ufile;
 @property (assign, nonatomic) BOOL isDownloading;// Checks if the file is currently being downloaded.
 @property (assign, nonatomic) BOOL downloaded;// Checks if the file is downloaded.
-@property (strong, nonatomic) SeafThumb * _Nullable thumbTaskForQueue;
+@property (strong, atomic) SeafThumb * _Nullable thumbTaskForQueue;
 
 @property (strong, nonatomic) NSURL * _Nullable preViewURL;
 @property (strong, nonatomic) NSURL * _Nullable exportURL;
@@ -108,6 +108,18 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @return YES if the file is a video, otherwise NO.
  */
 - (BOOL)isVideoFile;
+
+/**
+ * Checks if the file is a PDF file.
+ * @return YES if the file is a PDF, otherwise NO.
+ */
+- (BOOL)isPdfFile;
+
+/**
+ * Checks if the file is an sdoc file.
+ * @return YES if the file is an sdoc, otherwise NO.
+ */
+- (BOOL)isSdocFile;
 
 /**
  * Checks if the file is starred.

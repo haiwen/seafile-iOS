@@ -333,6 +333,16 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
     return [Utils isVideoExt:name.pathExtension.lowercaseString];
 }
 
++ (BOOL)isPdfFile:(NSString *)name
+{
+    return [name.pathExtension.lowercaseString isEqualToString:@"pdf"];
+}
+
++ (BOOL)isSdocFile:(NSString *)name
+{
+    return [name.pathExtension.lowercaseString isEqualToString:@"sdoc"];
+}
+
 + (BOOL)isVideoExt:(NSString *)ext
 {
     static NSString *videoexts[] = {@"mp4", @"mov", @"m4v", nil};
