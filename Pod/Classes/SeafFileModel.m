@@ -56,6 +56,14 @@
     return [Utils isVideoFile:self.name];
 }
 
+- (BOOL)isPdfFile {
+    return [Utils isPdfFile:self.name];
+}
+
+- (BOOL)isSdocFile {
+    return [Utils isSdocFile:self.name];
+}
+
 - (BOOL)isEditable {
     // Simple example: check if MIME starts with "text/"
     return [self.mime hasPrefix:@"text/"];

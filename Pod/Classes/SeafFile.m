@@ -220,16 +220,29 @@
 
 - (void)finishDownloadThumb:(BOOL)success{
     Debug("finishDownloadThumb: %@ success: %d", self.name, success);
+    if (success) {
+        // A fresh success supersedes any earlier failure record.
+        [[SeafCacheManager sharedManager] clearThumbDownloadFailedForFile:self];
+    }
+    // NOTE: do NOT negative-cache here on failure. Whether a failure is permanent
+    // (HTTP 4xx) vs transient (5xx, cancel, timeout, offline) is only known at the
+    // download site, which records the failure with the right policy.
     if (self.thumbCompleteBlock)
         self.thumbCompleteBlock(success);
     _thumbtask = nil;
-    if (success || _icon || self.image) {
-        @weakify(self);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            @strongify(self);
+    // Mutate thumbTaskForQueue on the main thread to match iconForFile's
+    // check-then-enqueue, so the queue slot is never written from two threads at once.
+    @weakify(self);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @strongify(self);
+        if (!self) return;
+        self.thumbTaskForQueue = nil;
+        // Only refresh UI on success. Failure + refresh previously re-entered iconForFile
+        // and re-enqueued forever (especially for PDF 500 HTML error pages).
+        if (success) {
             [self.delegate download:self complete:false];
-        });
-    }
+        }
+    });
 }
 
 - (void)setThumbCompleteBlock:(nullable SeafThumbCompleteBlock)block
@@ -268,6 +281,16 @@
 - (BOOL)isVideoFile
 {
     return [Utils isVideoFile:self.name];
+}
+
+- (BOOL)isPdfFile
+{
+    return [Utils isPdfFile:self.name];
+}
+
+- (BOOL)isSdocFile
+{
+    return [Utils isSdocFile:self.name];
 }
 
 - (BOOL)isWebOpenFile {

@@ -30,6 +30,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)saveThumbFromEncrypetedFile:(SeafFile *)seafFile;
 
+/// Remember a failed thumbnail fetch so we do not spin-retry on every cell refresh.
+/// Record a permanent failure (server 4xx: this file version can't be thumbnailed).
+- (void)markThumbDownloadPermanentlyFailedForFile:(SeafFile *)file;
+/// Record a transient failure (server 5xx / non-image body) for backed-off, capped retry.
+- (void)markThumbDownloadTransientlyFailedForFile:(SeafFile *)file;
+/// Clear any failure record (e.g. after a successful download).
+- (void)clearThumbDownloadFailedForFile:(SeafFile *)file;
+/// Whether a thumbnail download should be skipped now (permanent / retry cap reached / within backoff).
+- (BOOL)shouldSkipThumbDownloadForFile:(SeafFile *)file;
+
 @end
 
 NS_ASSUME_NONNULL_END

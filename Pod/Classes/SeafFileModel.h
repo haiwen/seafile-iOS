@@ -61,6 +61,12 @@ NS_ASSUME_NONNULL_BEGIN
 /** Determine if the file is a video */
 - (BOOL)isVideoFile;
 
+/** Determine if the file is a PDF */
+- (BOOL)isPdfFile;
+
+/** Determine if the file is an sdoc */
+- (BOOL)isSdocFile;
+
 /** Determine if the file is editable */
 - (BOOL)isEditable;
 
