@@ -17,6 +17,9 @@
 // Thumbnail cache (maintain existing functionality)
 - (void)saveThumbToCache:(UIImage *)image key:(NSString *)key;
 - (UIImage *)getThumbFromCache:(NSString *)key;
+/// Read thumb from disk if needed, force-decode, and store in memory cache.
+/// Prefer calling off the main thread (e.g. after a thumb download finishes).
+- (UIImage *)warmThumbCacheAtPath:(NSString *)path;
 
 // File cache
 - (NSString *)getCachedPath:(NSString *)fileId;

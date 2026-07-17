@@ -55,6 +55,8 @@
 #import "SeafEditNavRightItem.h"
 #import "SeafLoadingView.h"
 #import "SeafPhotoGalleryViewController.h"
+#import "SeafGridCell.h"
+#import "SeafFileViewType.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <AVKit/AVKit.h>
@@ -85,7 +87,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<SeafImagePickerHelperDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate, UIDocumentPickerDelegate>
+@interface SeafFileViewController ()<SeafImagePickerHelperDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate, UIDocumentPickerDelegate, UITableViewDataSource, UITableViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -99,7 +101,14 @@ enum {
 @property (strong) UIBarButtonItem *doneItem;
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *searchItem;
+@property (strong) UIBarButtonItem *viewModeItem;
 @property (strong) NSArray *rightItems;
+
+@property (strong, nonatomic) UITableView *tableView;
+@property (strong, nonatomic) UICollectionView *collectionView;
+@property (nonatomic, assign) BOOL gridModeEnabled;
+@property (nonatomic, assign) BOOL collectionNeedsReload;
+@property (strong, nonatomic) UIRefreshControl *gridRefreshControl;
 
 @property (retain) SWTableViewCell *selectedCell;// The cell currently selected.
 @property (retain) NSIndexPath *selectedindex; // Index path of the currently selected cell.
@@ -133,6 +142,7 @@ enum {
 @property (nonatomic, strong) NSArray<NSString *> *pendingEntriesForOperation;
 
 @property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
+@property (nonatomic, strong) UISelectionFeedbackGenerator *selectionFeedback;
 
 @end
 
@@ -169,6 +179,47 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+
+    self.view.backgroundColor = kPrimaryBackgroundColor;
+    self.gridModeEnabled = SeafFileBrowseGridModeEnabled();
+
+    UITableView *tv = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
+    tv.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    tv.dataSource = self;
+    tv.delegate = self;
+    tv.allowsSelectionDuringEditing = YES;
+    tv.allowsMultipleSelectionDuringEditing = YES;
+    [self.view addSubview:tv];
+    self.tableView = tv;
+
+    UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
+    // 8pt grid: 16pt page margins, 12pt gutters (Files-like density).
+    layout.minimumInteritemSpacing = 12.0;
+    layout.minimumLineSpacing = 16.0;
+    layout.sectionInset = UIEdgeInsetsMake(16.0, 16.0, 16.0, 16.0);
+    UICollectionView *cv = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:layout];
+    cv.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    cv.backgroundColor = kPrimaryBackgroundColor;
+    cv.dataSource = self;
+    cv.delegate = self;
+    cv.alwaysBounceVertical = YES;
+    cv.hidden = YES;
+    cv.accessibilityElementsHidden = YES;
+    [cv registerClass:[SeafGridCell class] forCellWithReuseIdentifier:@"SeafGridCell"];
+    [self.view addSubview:cv];
+    self.collectionView = cv;
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(gridContentSizeCategoryDidChange:)
+                                                 name:UIContentSizeCategoryDidChangeNotification
+                                               object:nil];
+
+    UILongPressGestureRecognizer *gridLongPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleGridLongPress:)];
+    gridLongPress.minimumPressDuration = 0.5;
+    [self.collectionView addGestureRecognizer:gridLongPress];
+
+    self.selectionFeedback = [[UISelectionFeedbackGenerator alloc] init];
+    [self.selectionFeedback prepare];
     
     // Initialize loading view
     self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
@@ -233,8 +284,12 @@ enum {
     UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
     self.tableView.refreshControl = refreshControl;
     [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
+
+    self.gridRefreshControl = [[UIRefreshControl alloc] init];
+    self.collectionView.refreshControl = self.gridRefreshControl;
+    [self.gridRefreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
     
-    self.view.accessibilityElements = @[refreshControl, self.tableView];
+    self.view.accessibilityElements = @[refreshControl, self.gridRefreshControl, self.tableView, self.collectionView];
     Debug(@"%@", self.view);
     
     self.tableView.cellLayoutMarginsFollowReadableWidth = NO;
@@ -242,6 +297,265 @@ enum {
     self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
     
     [self refreshView];
+    [self applyViewMode];
+}
+
+#pragma mark - Grid / List View Mode
+
+- (BOOL)isRepoRootDirectory {
+    return [_directory isKindOfClass:[SeafRepos class]];
+}
+
+- (BOOL)isGridModeActive {
+    return self.gridModeEnabled && ![self isRepoRootDirectory];
+}
+
+- (NSArray<NSIndexPath *> *)selectedEntryIndexPaths {
+    // Normalize empty selection to nil so existing `if (!idxs)` guards work for both
+    // UITableView (returns nil) and UICollectionView (returns @[]).
+    NSArray<NSIndexPath *> *paths = nil;
+    if ([self isGridModeActive]) {
+        paths = [self.collectionView indexPathsForSelectedItems];
+    } else {
+        paths = [self.tableView indexPathsForSelectedRows];
+    }
+    return paths.count > 0 ? paths : nil;
+}
+
+/// Clear UICollectionView selection state (and visible checkbox visuals).
+/// Unlike UITableView's setEditing:NO, CollectionView keeps indexPathsForSelectedItems
+/// across edit sessions unless explicitly deselected.
+- (void)clearCollectionViewSelection {
+    if (!self.collectionView) return;
+    NSArray<NSIndexPath *> *selected = [[self.collectionView indexPathsForSelectedItems] copy];
+    for (NSIndexPath *indexPath in selected) {
+        [self.collectionView deselectItemAtIndexPath:indexPath animated:NO];
+    }
+    for (UICollectionViewCell *visible in self.collectionView.visibleCells) {
+        if ([visible isKindOfClass:[SeafGridCell class]]) {
+            [(SeafGridCell *)visible updateCheckboxForSelected:NO];
+        }
+    }
+}
+
+- (UIScrollView *)currentContentScrollView {
+    return [self isGridModeActive] ? (UIScrollView *)self.collectionView : (UIScrollView *)self.tableView;
+}
+
+- (void)updateCollectionViewLayout {
+    if (!self.collectionView) return;
+    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
+    CGFloat width = CGRectGetWidth(self.collectionView.bounds);
+    if (width <= 0) width = CGRectGetWidth(self.view.bounds);
+
+    const CGFloat baseInset = 16.0;
+    const CGFloat maxItemWidth = 220.0;
+    CGFloat spacing = layout.minimumInteritemSpacing;
+    // Grow column count on wide iPads instead of leaving large empty side margins.
+    CGFloat usable = width - baseInset * 2.0;
+    NSInteger columns = MAX(2, (NSInteger)floor((usable + spacing) / (maxItemWidth + spacing)));
+    CGFloat available = width - baseInset * 2.0 - spacing * (columns - 1);
+    CGFloat itemWidth = floor(available / columns);
+    UIEdgeInsets inset = UIEdgeInsetsMake(baseInset, baseInset, baseInset, baseInset);
+    if (itemWidth > maxItemWidth) {
+        itemWidth = maxItemWidth;
+        CGFloat used = itemWidth * columns + spacing * (columns - 1);
+        CGFloat side = MAX(baseInset, floor((width - used) / 2.0));
+        inset = UIEdgeInsetsMake(baseInset, side, baseInset, side);
+    }
+    CGSize itemSize = CGSizeMake(itemWidth, [SeafGridCell preferredItemHeightForWidth:itemWidth]);
+    // Skip work when nothing changed (viewDidLayoutSubviews calls this often).
+    if (UIEdgeInsetsEqualToEdgeInsets(layout.sectionInset, inset)
+        && CGSizeEqualToSize(layout.itemSize, itemSize)) {
+        return;
+    }
+    layout.sectionInset = inset;
+    layout.itemSize = itemSize;
+    [layout invalidateLayout];
+}
+
+- (void)applyViewMode {
+    BOOL grid = [self isGridModeActive];
+    self.tableView.hidden = grid;
+    self.collectionView.hidden = !grid;
+    self.tableView.accessibilityElementsHidden = grid;
+    self.collectionView.accessibilityElementsHidden = !grid;
+    if (grid) {
+        [self updateCollectionViewLayout];
+        if (self.collectionNeedsReload) {
+            [self.collectionView reloadData];
+            self.collectionNeedsReload = NO;
+        }
+    }
+    [self updateViewModeBarButtonImage];
+}
+
+- (void)gridContentSizeCategoryDidChange:(NSNotification *)notification {
+    if ([self isGridModeActive]) {
+        [self updateCollectionViewLayout];
+        [self.collectionView reloadData];
+    }
+}
+
+/// Shared nav-bar icon metrics so more / view-mode / search share equal spacing.
+/// Narrow item width keeps icons visually close; height stays tall for tap comfort.
+static const CGFloat kNavBarIconItemWidth = 28.0;
+static const CGFloat kNavBarIconItemHeight = 44.0;
+static const CGFloat kNavBarIconGlyphSize = 20.0;
+/// View-mode SF Symbol reads slightly larger than PNG glyphs at the same point size.
+static const CGFloat kNavBarViewModeGlyphSize = 17.0;
+/// Pull custom-view items together evenly (UIKit default gap is too wide for 3 icons).
+static const CGFloat kNavBarIconInterItemSpace = -8.0;
+
+- (UIButton *)makeNavBarIconButton {
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
+    btn.frame = CGRectMake(0, 0, kNavBarIconItemWidth, kNavBarIconItemHeight);
+    btn.tintColor = [SeafTheme secondaryText];
+    btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+    btn.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+    btn.adjustsImageWhenHighlighted = NO;
+    return btn;
+}
+
+- (UIBarButtonItem *)navBarIconSpacingItem {
+    UIBarButtonItem *space = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                                                           target:nil
+                                                                           action:nil];
+    space.width = kNavBarIconInterItemSpace;
+    return space;
+}
+
+- (NSArray<UIBarButtonItem *> *)navBarRightItemsByInsertingEqualSpacing:(NSArray<UIBarButtonItem *> *)items {
+    if (items.count <= 1) return items;
+    NSMutableArray<UIBarButtonItem *> *spaced = [NSMutableArray arrayWithCapacity:items.count * 2 - 1];
+    [items enumerateObjectsUsingBlock:^(UIBarButtonItem *item, NSUInteger idx, BOOL *stop) {
+        if (idx > 0) {
+            [spaced addObject:[self navBarIconSpacingItem]];
+        }
+        [spaced addObject:item];
+    }];
+    return spaced;
+}
+
+- (UIImage *)navBarTemplateImageNamed:(NSString *)imageName {
+    UIImage *img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    if (!img) return nil;
+    CGSize size = CGSizeMake(kNavBarIconGlyphSize, kNavBarIconGlyphSize);
+    UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
+    format.scale = [UIScreen mainScreen].scale;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+    UIImage *resized = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
+        [img drawInRect:CGRectMake(0, 0, size.width, size.height)];
+    }];
+    return [resized imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+}
+
+- (UIBarButtonItem *)makeNavBarIconItemWithImageName:(NSString *)imageName action:(SEL)action {
+    UIButton *btn = [self makeNavBarIconButton];
+    [btn setImage:[self navBarTemplateImageNamed:imageName] forState:UIControlStateNormal];
+    btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+    return [[UIBarButtonItem alloc] initWithCustomView:btn];
+}
+
+/// SF Symbols require iOS 13, and there is no bundled list/grid asset, so draw an
+/// equivalent template glyph for older systems instead of dropping the toggle.
+- (UIImage *)viewModeFallbackGlyphShowingGrid:(BOOL)showGrid {
+    CGSize size = CGSizeMake(kNavBarViewModeGlyphSize, kNavBarViewModeGlyphSize);
+    UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
+    format.scale = [UIScreen mainScreen].scale;
+    format.opaque = NO;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+    UIImage *glyph = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
+        [[UIColor blackColor] setFill];
+        if (showGrid) {
+            const CGFloat gap = 3.0;
+            CGFloat side = (size.width - gap) / 2.0;
+            for (NSInteger row = 0; row < 2; row++) {
+                for (NSInteger col = 0; col < 2; col++) {
+                    CGRect rect = CGRectMake(col * (side + gap), row * (side + gap), side, side);
+                    [[UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:1.5] fill];
+                }
+            }
+        } else {
+            const CGFloat barHeight = 2.5;
+            const CGFloat bulletWidth = 2.5;
+            const CGFloat bulletSpacing = 2.0;
+            CGFloat rowGap = (size.height - barHeight * 3) / 2.0;
+            CGFloat lineX = bulletWidth + bulletSpacing;
+            for (NSInteger row = 0; row < 3; row++) {
+                CGFloat y = row * (barHeight + rowGap);
+                [[UIBezierPath bezierPathWithRect:CGRectMake(0, y, bulletWidth, barHeight)] fill];
+                CGRect line = CGRectMake(lineX, y, size.width - lineX, barHeight);
+                [[UIBezierPath bezierPathWithRoundedRect:line cornerRadius:barHeight / 2.0] fill];
+            }
+        }
+    }];
+    return [glyph imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+}
+
+- (UIImage *)viewModeBarButtonSymbol {
+    BOOL showGrid = !self.gridModeEnabled;
+    if (@available(iOS 13.0, *)) {
+        NSString *name = showGrid ? @"square.grid.2x2" : @"list.bullet";
+        UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:kNavBarViewModeGlyphSize
+                                                                                              weight:UIImageSymbolWeightRegular];
+        return [UIImage systemImageNamed:name withConfiguration:config];
+    }
+    return [self viewModeFallbackGlyphShowingGrid:showGrid];
+}
+
+- (UIBarButtonItem *)makeViewModeBarButtonItem {
+    UIButton *btn = [self makeNavBarIconButton];
+    [btn setImage:[self viewModeBarButtonSymbol] forState:UIControlStateNormal];
+    [btn addTarget:self action:@selector(toggleViewMode:) forControlEvents:UIControlEventTouchUpInside];
+    NSString *label = self.gridModeEnabled
+        ? NSLocalizedString(@"Switch to List View", @"Seafile")
+        : NSLocalizedString(@"Switch to Grid View", @"Seafile");
+    btn.accessibilityLabel = label;
+    return [[UIBarButtonItem alloc] initWithCustomView:btn];
+}
+
+- (void)updateViewModeBarButtonImage {
+    if (!self.viewModeItem) return;
+    UIButton *btn = (UIButton *)self.viewModeItem.customView;
+    if (![btn isKindOfClass:[UIButton class]]) return;
+    [btn setImage:[self viewModeBarButtonSymbol] forState:UIControlStateNormal];
+    btn.accessibilityLabel = self.gridModeEnabled
+        ? NSLocalizedString(@"Switch to List View", @"Seafile")
+        : NSLocalizedString(@"Switch to Grid View", @"Seafile");
+}
+
+- (void)toggleViewMode:(id)sender {
+    if ([self isRepoRootDirectory]) return;
+    // Leave editing before flipping the visible scroll view; inset cleanup
+    // also clears both scroll views in adjustContentInsetForCustomToolbar:.
+    if (self.editing) {
+        [self editDone:nil];
+    }
+    self.gridModeEnabled = !self.gridModeEnabled;
+    SeafFileBrowseSetGridModeEnabled(self.gridModeEnabled);
+    [self.selectionFeedback selectionChanged];
+    [self.selectionFeedback prepare];
+    [UIView transitionWithView:self.view
+                      duration:0.2
+                       options:UIViewAnimationOptionTransitionCrossDissolve
+                    animations:^{
+        [self applyViewMode];
+    } completion:^(BOOL finished) {
+        if ([self isGridModeActive]) {
+            [self.collectionView reloadData];
+        } else {
+            [self.tableView reloadData];
+        }
+    }];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    if ([self isGridModeActive]) {
+        [self updateCollectionViewLayout];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -251,6 +565,23 @@ enum {
     if (self.navigationController) {
         self.navigationController.interactivePopGestureRecognizer.delegate = self;
         self.navigationController.interactivePopGestureRecognizer.enabled = YES;
+    }
+
+    // Parent VCs on the nav stack keep a stale gridModeEnabled from viewDidLoad;
+    // re-sync with the global preference when returning from a child directory.
+    BOOL preferredGrid = SeafFileBrowseGridModeEnabled();
+    if (self.gridModeEnabled != preferredGrid) {
+        self.gridModeEnabled = preferredGrid;
+        [self applyViewMode];
+    }
+
+    // UIViewController no longer provides UITableViewController's
+    // clearsSelectionOnViewWillAppear; clear list selection on return.
+    if (![self isGridModeActive]) {
+        NSIndexPath *selected = [self.tableView indexPathForSelectedRow];
+        if (selected) {
+            [self.tableView deselectRowAtIndexPath:selected animated:animated];
+        }
     }
         
     [self checkUploadfiles];
@@ -316,7 +647,7 @@ enum {
             }
         }
     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        
+        [self updateCollectionViewLayout];
     }];
 }
 
@@ -362,8 +693,8 @@ enum {
         
         UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
         self.doneItem = customBarItem;
-        self.editItem = [self getBarItem:@"more" action:@selector(editSheet:) size:26];
-        self.editItem.customView.tintColor = [SeafTheme secondaryText];
+        // Equal 44pt hit targets + equal glyph size; no FixedSpace so inter-item gaps stay uniform.
+        self.editItem = [self makeNavBarIconItemWithImageName:@"more" action:@selector(editSheet:)];
 
         // Determine whether to show search button based on server type and current level
         SeafConnection *conn = directory.connection;
@@ -381,17 +712,16 @@ enum {
             shouldShowSearch = YES;
         }
 
-        if (shouldShowSearch) {
-            self.searchItem = [self getBarItem:@"fileNav_search" action:@selector(searchAction:) size:20];
-            self.searchItem.customView.tintColor = [SeafTheme secondaryText];
-            // Add a fixed width space item to increase button spacing
-            UIBarButtonItem *spaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
-            spaceItem.width = 20; // Set spacing width
-
-            self.rightItems = [NSArray arrayWithObjects:self.editItem, spaceItem, self.searchItem, nil];
-        } else {
-            self.rightItems = [NSArray arrayWithObjects:self.editItem,nil];
+        NSMutableArray *items = [NSMutableArray arrayWithObjects:self.editItem, nil];
+        if (!isRoot) {
+            self.viewModeItem = [self makeViewModeBarButtonItem];
+            [items addObject:self.viewModeItem];
         }
+        if (shouldShowSearch) {
+            self.searchItem = [self makeNavBarIconItemWithImageName:@"fileNav_search" action:@selector(searchAction:)];
+            [items addObject:self.searchItem];
+        }
+        self.rightItems = [self navBarRightItemsByInsertingEqualSpacing:items];
 
         _selectNoneItem = [[SeafEditNavRightItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") imageName:@"ic_checkbox_unchecked" target:self action:@selector(selectAll:)];
         
@@ -413,6 +743,97 @@ enum {
     [self.loadingView updatePosition];
 }
 
+
+#pragma mark - UICollectionView Data Source & Delegate
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    if ([self isRepoRootDirectory]) return 0;
+    return self.allItems.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    SeafGridCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"SeafGridCell" forIndexPath:indexPath];
+    cell.cellIndexPath = indexPath;
+    cell.isUserEditing = self.editing;
+    if (self.editing) {
+        BOOL selected = [collectionView.indexPathsForSelectedItems containsObject:indexPath];
+        [cell updateCheckboxForSelected:selected];
+    }
+
+    NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:nil];
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        SeafFile *file = (SeafFile *)entry;
+        [file loadCache];
+        file.delegate = self;
+        file.udelegate = self;
+        [cell configureWithFile:file];
+    } else if ([entry isKindOfClass:[SeafDir class]]) {
+        [cell configureWithDir:(SeafDir *)entry];
+    } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
+        SeafUploadFile *ufile = (SeafUploadFile *)entry;
+        ufile.delegate = self;
+        __weak typeof(cell) weakCell = cell;
+        [cell configureWithUploadFile:ufile completion:nil];
+        [ufile iconWithCompletion:^(UIImage *image) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                SeafGridCell *strongCell = weakCell;
+                if (strongCell && [strongCell.cellIndexPath isEqual:indexPath] && image) {
+                    BOOL media = ufile.isImageFile || ufile.isVideoFile;
+                    [strongCell setThumbnailImage:image mediaPreview:media];
+                }
+            });
+        }];
+    }
+    return cell;
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView shouldSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:nil];
+    if (self.editing && [entry isKindOfClass:[SeafUploadFile class]]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (self.navigationController.topViewController != self) return;
+    _selectedindex = indexPath;
+    if (self.editing) {
+        SeafGridCell *cell = (SeafGridCell *)[collectionView cellForItemAtIndexPath:indexPath];
+        cell.isUserEditing = YES;
+        [cell updateCheckboxForSelected:YES];
+        [self noneSelected:NO];
+        [self updateToolButtonsState];
+        return;
+    }
+    [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
+    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (!self.editing) return;
+    SeafGridCell *cell = (SeafGridCell *)[collectionView cellForItemAtIndexPath:indexPath];
+    [cell updateCheckboxForSelected:NO];
+    if ([collectionView indexPathsForSelectedItems].count == 0) {
+        [self noneSelected:YES];
+    } else {
+        [self noneSelected:NO];
+    }
+    [self updateToolButtonsState];
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didEndDisplayingCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath {
+    if ([cell isKindOfClass:[SeafGridCell class]]) {
+        [(SeafGridCell *)cell resetCellFile];
+    }
+}
+
+- (UIView *)cellViewForIndexPath:(NSIndexPath *)indexPath {
+    if ([self isGridModeActive]) {
+        return [self.collectionView cellForItemAtIndexPath:indexPath];
+    }
+    return [self.tableView cellForRowAtIndexPath:indexPath];
+}
 
 #pragma mark - TableView Data Source & Delegate
 
@@ -530,8 +951,12 @@ enum {
     if ([_curEntry conformsToProtocol:@protocol(SeafPreView)]) {
         [(id<SeafPreView>)_curEntry setDelegate:self];
         if ([_curEntry isKindOfClass:[SeafFile class]] && ![(SeafFile *)_curEntry hasCache]) {
-            SeafCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-            [self updateCellDownloadStatus:cell file:(SeafFile *)_curEntry waiting:true];
+            UIView *cellView = [self cellViewForIndexPath:indexPath];
+            if ([cellView isKindOfClass:[SeafCell class]]) {
+                [self updateCellDownloadStatus:(SeafCell *)cellView file:(SeafFile *)_curEntry waiting:true];
+            } else if ([cellView isKindOfClass:[SeafGridCell class]]) {
+                [(SeafGridCell *)cellView updateDownloadStatusForFile:(SeafFile *)_curEntry waiting:YES];
+            }
         }
 
         id<SeafPreView> item = (id<SeafPreView>)_curEntry;
@@ -600,8 +1025,8 @@ enum {
            }];
 
            // anchor from the tapped cell to keep style consistent
-           UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-           [sheet showFromView:cell];
+           UIView *cellView = [self cellViewForIndexPath:indexPath];
+           [sheet showFromView:cellView ?: self.view];
            return;
        }
 
@@ -794,13 +1219,14 @@ enum {
 #pragma mark - Pull to Refresh
 
 - (void)refreshControlChanged {
-    if (!self.tableView.isDragging) {
+    UIScrollView *scrollView = [self currentContentScrollView];
+    if (!scrollView.isDragging) {
         [self pullToRefresh];
     }
 }
 
 - (void)pullToRefresh {
-    [self.tableView reloadData];
+    [self reloadTable];
     if (self.searchDisplayController.active)
         return;
     if (![self checkNetworkStatus]) {
@@ -808,15 +1234,16 @@ enum {
         return;
     }
     
-    self.tableView.accessibilityElementsHidden = YES;
-    UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
+    UIScrollView *scrollView = [self currentContentScrollView];
+    scrollView.accessibilityElementsHidden = YES;
+    UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, scrollView.refreshControl);
     self.state = STATE_LOADING;
     self.directory.delegate = self;
     [self.directory loadContent:YES];
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-    if (self.tableView.refreshControl.isRefreshing) {
+    if (scrollView.refreshControl.isRefreshing) {
         [self pullToRefresh];
     }
 }
@@ -826,7 +1253,10 @@ enum {
     dispatch_async(dispatch_get_main_queue(), ^{
         @strongify(self);
         [self.tableView.refreshControl endRefreshing];
-        self.tableView.accessibilityElementsHidden = NO;
+        [self.gridRefreshControl endRefreshing];
+        BOOL grid = [self isGridModeActive];
+        self.tableView.accessibilityElementsHidden = grid;
+        self.collectionView.accessibilityElementsHidden = !grid;
     });
 }
 
@@ -885,6 +1315,7 @@ enum {
     }
     
     [_directory setDelegate:self];
+    [self applyViewMode];
     [self refreshView];
     
     UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:directory title:nil target:self action:@selector(backButtonTapped)]];
@@ -932,7 +1363,7 @@ enum {
     }
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.editing) {
-            if (![self.tableView indexPathsForSelectedRows])
+            if (![self selectedEntryIndexPaths])
                 [self noneSelected:YES];
             else
                 [self noneSelected:NO];
@@ -1042,6 +1473,11 @@ enum {
     _allItems = nil;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.tableView reloadData];
+        if ([self isGridModeActive]) {
+            [self.collectionView reloadData];
+        } else {
+            self.collectionNeedsReload = YES;
+        }
     });
 }
 
@@ -1081,8 +1517,16 @@ enum {
     for (row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
         NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
-        if (![entry isKindOfClass:[SeafUploadFile class]])
-            [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
+        if (![entry isKindOfClass:[SeafUploadFile class]]) {
+            if ([self isGridModeActive]) {
+                [self.collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionNone];
+                SeafGridCell *cell = (SeafGridCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+                cell.isUserEditing = YES;
+                [cell updateCheckboxForSelected:YES];
+            } else {
+                [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
+            }
+        }
     }
     [self noneSelected:NO];
     [self updateToolButtonsState];
@@ -1093,7 +1537,13 @@ enum {
     long count = self.allItems.count;
     for (int row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+        if ([self isGridModeActive]) {
+            [self.collectionView deselectItemAtIndexPath:indexPath animated:YES];
+            SeafGridCell *cell = (SeafGridCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+            [cell updateCheckboxForSelected:NO];
+        } else {
+            [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+        }
     }
     [self noneSelected:YES];
     [self updateToolButtonsState];
@@ -1111,6 +1561,9 @@ enum {
         [self.navigationController.toolbar sizeToFit];
         self.tabBarController.tabBar.hidden = YES;
         [self setupCustomTabTool];
+        // Drop any leftover selection from a previous edit session or
+        // non-edit selectItem: calls before multi-select begins.
+        [self clearCollectionViewSelection];
         [self noneSelected:YES];
         [self.photoItem setEnabled:NO];
         [self.navigationController setToolbarHidden:YES animated:animated];
@@ -1138,8 +1591,22 @@ enum {
         }];
     }
 
-    [super setEditing:editing animated:animated];
     [self.tableView setEditing:editing animated:animated];
+    if (!editing) {
+        // Must clear before disabling multi-select; otherwise selected items
+        // survive into the next edit session (select-all → Done → long-press).
+        [self clearCollectionViewSelection];
+    }
+    self.collectionView.allowsMultipleSelection = editing;
+    for (UICollectionViewCell *visible in self.collectionView.visibleCells) {
+        if ([visible isKindOfClass:[SeafGridCell class]]) {
+            SeafGridCell *gridCell = (SeafGridCell *)visible;
+            gridCell.isUserEditing = editing;
+            if (!editing) {
+                [gridCell updateCheckboxForSelected:NO];
+            }
+        }
+    }
 }
 
 // Method to remove custom toolbar when no longer needed
@@ -1202,7 +1669,7 @@ enum {
             break;
 
         case EDITOP_COPY: { //for selected item
-            NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+            NSArray *idxs = [self selectedEntryIndexPaths];
             NSMutableArray *names = [NSMutableArray new];
             for (NSIndexPath *indexPath in idxs) {
                 if (indexPath.row >= self.allItems.count) continue;
@@ -1215,7 +1682,7 @@ enum {
             break;
         }
         case EDITOP_MOVE: { //for selected item
-            NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+            NSArray *idxs = [self selectedEntryIndexPaths];
             NSMutableArray *names = [NSMutableArray new];
             for (NSIndexPath *indexPath in idxs) {
                 if (indexPath.row >= self.allItems.count) continue;
@@ -1228,7 +1695,7 @@ enum {
             break;
         }
         case EDITOP_DELETE: {//for selected item
-            NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+            NSArray *idxs = [self selectedEntryIndexPaths];
             if (!idxs) return;
             NSMutableArray *entries = [[NSMutableArray alloc] init];
             for (NSIndexPath *indexPath in idxs) {
@@ -1277,7 +1744,7 @@ enum {
         self.navigationItem.leftBarButtonItem = self.doneItem;
     
     } else {
-        NSArray *selectedRows = [self.tableView indexPathsForSelectedRows];
+        NSArray *selectedRows = [self selectedEntryIndexPaths];
         NSInteger selectedCount = selectedRows.count;
         
         // Update label text on done button
@@ -1492,7 +1959,7 @@ enum {
 
     // Collect selected file names for title display in the destination picker
     NSMutableArray<NSString *> *selectedNames = [NSMutableArray new];
-    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+    NSArray *idxs = [self selectedEntryIndexPaths];
     for (NSIndexPath *indexPath in idxs) {
         if (indexPath.row >= self.allItems.count) continue;
         SeafBase *item = (SeafBase *)[self.allItems objectAtIndex:indexPath.row];
@@ -1697,7 +2164,7 @@ enum {
 #pragma mark - Share & Export
 
 - (void)exportSelected {
-    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+    NSArray *idxs = [self selectedEntryIndexPaths];
     if (!idxs) return;
     NSMutableArray *entries = [[NSMutableArray alloc] init];
     for (NSIndexPath *indexPath in idxs) {
@@ -1985,6 +2452,13 @@ enum {
         return;
     }
 
+    if ([[NSProcessInfo processInfo].arguments containsObject:@"-UI_TEST_FAIL_PROFILE_LOAD"]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load file profile", @"Seafile")];
+        });
+        return;
+    }
+
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Loading...", @"Seafile")];
 
     SeafSdocService *service = [[SeafSdocService alloc] initWithConnection:file.connection];
@@ -2015,6 +2489,13 @@ enum {
 
             SeafFileProfileAggregate *aggTyped = (SeafFileProfileAggregate *)agg;
             BOOL metaEnabled = [aggTyped.metadataConfig[@"enabled"] boolValue];
+            if ([[NSProcessInfo processInfo].arguments containsObject:@"-UI_TEST_METADATA_DISABLED"]) {
+                metaEnabled = NO;
+            }
+            if ([[NSProcessInfo processInfo].arguments containsObject:@"-UI_TEST_EMPTY_PROFILE"]) {
+                [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"No file profile data", @"Seafile")];
+                return;
+            }
             SeafSdocProfileSheetViewController *vc =
                 [[SeafSdocProfileSheetViewController alloc] initWithRows:rows
                                                              connection:file.connection
@@ -2239,7 +2720,7 @@ enum {
     cell.imageView.image = [UIImage imageForMimeType:file.mime ext:file.name.pathExtension.lowercaseString];
     [file iconWithCompletion:^(UIImage *image) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (cell.cellIndexPath == indexPath) {
+            if ([cell.cellIndexPath isEqual:indexPath]) {
                 cell.imageView.image = image;
             }
         });
@@ -2438,10 +2919,14 @@ enum {
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
     if (indexPath) {
-        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        if (!cell) return;
         @try {
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            if ([self isGridModeActive]) {
+                [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
+            } else {
+                UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+                if (!cell) return;
+                [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            }
         } @catch(NSException *exception) {
             Warning("Failed to reload cell %@: %@", indexPath, exception);
         }
@@ -2458,15 +2943,18 @@ enum {
     return self.tableView;
 }
 
-- (SeafCell *)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath
+- (id)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath
 {
     NSUInteger index = [self indexOfEntry:entry];
-    if (index == NSNotFound || index >= self.allItems.count) // Add safety check
+    if (index == NSNotFound || index >= self.allItems.count)
         return nil;
     @try {
         NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
         if (indexPath) *indexPath = path;
-        return (SeafCell *)[[self currentTableView] cellForRowAtIndexPath:path];
+        if ([self isGridModeActive]) {
+            return [self.collectionView cellForItemAtIndexPath:path];
+        }
+        return (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
     } @catch(NSException *exception) {
         Warning("Something wrong %@", exception);
         return nil;
@@ -2494,25 +2982,78 @@ enum {
 - (void)updateEntryCell:(SeafFile *)entry
 {
     @try {
-        NSIndexPath *path = nil;
-        SeafCell *cell = [self getEntryCell:entry indexPath:&path];
-        if (cell) {
-            [self updateCellContent:cell file:entry];
-        } else {
-            // If the pointer changed, locate by uniqueKey and refresh that row
-            NSIndexPath *ip = [self indexPathForFileByIdentity:entry];
-            if (ip) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    @try {
-                        [self.tableView reloadRowsAtIndexPaths:@[ip] withRowAnimation:UITableViewRowAnimationNone];
-                    } @catch(NSException *exception) {
-                        Warning("Failed to reload cell at %@: %@", ip, exception);
-                    }
-                });
+        NSIndexPath *path = [self indexPathForFileByIdentity:entry];
+        if (!path) {
+            NSUInteger index = [self indexOfEntry:entry];
+            if (index == NSNotFound || index >= self.allItems.count) return;
+            path = [NSIndexPath indexPathForRow:index inSection:0];
+        }
+
+        BOOL updated = NO;
+        if ([self isGridModeActive]) {
+            UICollectionViewCell *cvCell = [self.collectionView cellForItemAtIndexPath:path];
+            if ([cvCell isKindOfClass:[SeafGridCell class]]) {
+                [(SeafGridCell *)cvCell configureWithFile:entry];
+                updated = YES;
             }
+        } else {
+            UITableViewCell *tvCell = [self.tableView cellForRowAtIndexPath:path];
+            if ([tvCell isKindOfClass:[SeafCell class]]) {
+                [self updateCellContent:(SeafCell *)tvCell file:entry];
+                updated = YES;
+            }
+        }
+
+        if (!updated) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self reloadIndex:path];
+            });
         }
     } @catch(NSException *exception) {
         Warning("updateEntryCell exception: %@", exception);
+    }
+}
+
+/// Refresh only the thumbnail/icon on a visible cell — avoids `configureWithFile`'s
+/// `resetCellFile` (which cancels in-flight thumb tasks) and skips file-download HUD paths.
+- (void)updateEntryCellThumbnail:(SeafFile *)entry
+{
+    if (!entry) return;
+    @try {
+        NSIndexPath *path = nil;
+        id cell = [self getEntryCell:entry indexPath:&path];
+        // Prefer thumb cache (warmed after download). Avoid `icon` here: it can
+        // re-enqueue downloads and falls back to a type icon unsuitable for media layout.
+        UIImage *thumb = entry.thumb;
+        if ([cell isKindOfClass:[SeafGridCell class]]) {
+            if (thumb) {
+                BOOL media = entry.isImageFile || entry.isVideoFile;
+                [(SeafGridCell *)cell setThumbnailImage:thumb mediaPreview:media];
+            } else {
+                NSIndexPath *ip = path ?: [self indexPathForFileByIdentity:entry];
+                if (ip) {
+                    [self reloadIndex:ip];
+                }
+            }
+            return;
+        }
+        if ([cell isKindOfClass:[SeafCell class]]) {
+            if (thumb) {
+                ((SeafCell *)cell).imageView.image = thumb;
+            } else {
+                NSIndexPath *ip = path ?: [self indexPathForFileByIdentity:entry];
+                if (ip) {
+                    [self reloadIndex:ip];
+                }
+            }
+            return;
+        }
+        NSIndexPath *ip = path ?: [self indexPathForFileByIdentity:entry];
+        if (ip) {
+            [self reloadIndex:ip];
+        }
+    } @catch(NSException *exception) {
+        Warning("updateEntryCellThumbnail exception: %@", exception);
     }
 }
 
@@ -2550,7 +3091,7 @@ enum {
 #pragma mark - SeafDirDelegate
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dstDir
 {
-    NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
+    NSArray *selectedIndexPaths = [self selectedEntryIndexPaths];
     NSMutableArray *entries = [NSMutableArray new];
     // Prefer the cached entries captured at the moment user tapped Copy/Move,
     // this is more reliable on iPad where table selection state might change.
@@ -2650,6 +3191,12 @@ enum {
     return nil;
 }
 
+- (void)thumbnailDownload:(id)entry complete:(BOOL)success
+{
+    if (!success || ![entry isKindOfClass:[SeafFile class]]) return;
+    [self updateEntryCellThumbnail:(SeafFile *)entry];
+}
+
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
@@ -2660,8 +3207,12 @@ enum {
         // Still update the cell’s visible progress
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
         [photo setProgress:progress];
-        SeafCell *cell = [self getEntryCell:(SeafFile *)entry indexPath:nil];
-        [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
+        id cell = [self getEntryCell:(SeafFile *)entry indexPath:nil];
+        if ([cell isKindOfClass:[SeafCell class]]) {
+            [self updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)entry waiting:false];
+        } else if ([cell isKindOfClass:[SeafGridCell class]]) {
+            [(SeafGridCell *)cell updateDownloadStatusForFile:(SeafFile *)entry waiting:NO];
+        }
     }
     // Aggregate progress update
     [self updateAggregateProgressForEntry:entry progress:progress];
@@ -2857,12 +3408,22 @@ enum {
 - (void)updateFileCell:(SeafUploadFile *)file result:(BOOL)res progress:(float)progress completed:(BOOL)completed
 {
     NSIndexPath *indexPath = nil;
-    SeafCell *cell = [self getEntryCell:file indexPath:&indexPath];
+    id cell = [self getEntryCell:file indexPath:&indexPath];
     if (!cell) return;
+    if ([cell isKindOfClass:[SeafGridCell class]]) {
+        SeafGridCell *gridCell = (SeafGridCell *)cell;
+        if (!completed && res) {
+            [gridCell updateUploadProgress:progress uploaded:NO filesize:file.filesize timestamp:file.lastFinishTimestamp];
+        } else if (indexPath) {
+            [self reloadIndex:indexPath];
+        }
+        return;
+    }
+    SeafCell *listCell = (SeafCell *)cell;
     if (!completed && res) {
-        cell.progressView.hidden = false;
-        cell.detailTextLabel.text = nil;
-        [cell.progressView setProgress:progress];
+        listCell.progressView.hidden = false;
+        listCell.detailTextLabel.text = nil;
+        [listCell.progressView setProgress:progress];
     } else if (indexPath) {
         [self reloadIndex:indexPath];
     }
@@ -2975,10 +3536,34 @@ enum {
     if (index == NSNotFound)
         return;
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-    [[self currentTableView] selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
+    if ([self isGridModeActive]) {
+        // Scroll only — do not selectItem:. Grid multi-select reuses
+        // indexPathsForSelectedItems; a lingering selection here would be
+        // counted into the next long-press edit session.
+        @try {
+            [self.collectionView scrollToItemAtIndexPath:indexPath
+                                        atScrollPosition:UICollectionViewScrollPositionCenteredVertically
+                                                animated:NO];
+        } @catch (NSException *exception) {
+            Warning("scroll to item failed: %@", exception);
+        }
+    } else {
+        [[self currentTableView] selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
+    }
 }
 
 - (void)refreshDownloadStatus {
+    if ([self isGridModeActive]) {
+        for (UICollectionViewCell *cell in self.collectionView.visibleCells) {
+            if (![cell isKindOfClass:[SeafGridCell class]]) continue;
+            NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
+            id entry = [self getDentrybyIndexPath:indexPath tableView:nil];
+            if ([entry isKindOfClass:[SeafFile class]]) {
+                [(SeafGridCell *)cell updateDownloadStatusForFile:(SeafFile *)entry waiting:NO];
+            }
+        }
+        return;
+    }
     NSArray *visibleCells = [self.tableView visibleCells];
     for (UITableViewCell *cell in visibleCells) {
         if ([cell isKindOfClass:[SeafCell class]]) {
@@ -2994,6 +3579,11 @@ enum {
 - (void)refreshEncryptedThumb {
     if ([self.connection isEncrypted:self.directory.repoId] && [self.connection isDecrypted:self.directory.repoId]) {
         [self.tableView reloadData];
+        if ([self isGridModeActive]) {
+            [self.collectionView reloadData];
+        } else {
+            self.collectionNeedsReload = YES;
+        }
     }
 }
 
@@ -3146,6 +3736,64 @@ enum {
     return _searchController;
 }
 
+/// Non-search placeholder used as tableHeaderView when the directory is not the repo root.
+- (UIView *)directoryTableHeaderPlaceholder {
+    return [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 10.0)];
+}
+
+- (void)setCollectionViewSearchBarInset:(CGFloat)top {
+    if (!self.collectionView) return;
+    UIEdgeInsets inset = self.collectionView.contentInset;
+    if (fabs(inset.top - top) < 0.5) return;
+    inset.top = top;
+    self.collectionView.contentInset = inset;
+    self.collectionView.scrollIndicatorInsets = inset;
+}
+
+/// Install the search bar on a visible host. Grid mode hides tableView, so the bar
+/// is pinned to self.view instead of tableHeaderView.
+- (void)presentSearchBar {
+    UISearchBar *bar = self.searchController.searchBar;
+    [bar sizeToFit];
+    if ([self isGridModeActive]) {
+        if (self.tableView.tableHeaderView == bar) {
+            self.tableView.tableHeaderView = [self directoryTableHeaderPlaceholder];
+        }
+        CGRect frame = bar.frame;
+        frame.origin = CGPointZero;
+        frame.size.width = CGRectGetWidth(self.view.bounds);
+        bar.frame = frame;
+        bar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        if (bar.superview != self.view) {
+            [self.view addSubview:bar];
+        }
+        [self.view bringSubviewToFront:bar];
+        [self setCollectionViewSearchBarInset:CGRectGetHeight(bar.frame)];
+    } else {
+        if (bar.superview == self.view) {
+            [bar removeFromSuperview];
+        }
+        [self setCollectionViewSearchBarInset:0];
+        self.tableView.tableHeaderView = bar;
+    }
+}
+
+/// Remove the search bar from whichever host it was attached to.
+- (void)dismissSearchBar {
+    UISearchBar *bar = _searchController.searchBar;
+    if (bar.superview == self.view) {
+        [bar removeFromSuperview];
+    }
+    [self setCollectionViewSearchBarInset:0];
+    if (![self.directory isKindOfClass:[SeafRepos class]]) {
+        self.tableView.tableHeaderView = [self directoryTableHeaderPlaceholder];
+    } else {
+        self.tableView.tableHeaderView = nil;
+    }
+    // Ensure list/grid visibility matches the current mode after a grid search session.
+    [self applyViewMode];
+}
+
 - (void)customSearchDismissAction:(UIButton *)sender {
     // Disable animations, similar to searchBarCancelButtonClicked
     [UIView setAnimationsEnabled:NO];
@@ -3158,12 +3806,7 @@ enum {
         self.searchController.active = NO;
     }
 
-    // Immediately hide search bar (tableView.tableHeaderView), similar to searchCancelled logic
-    if (![self.directory isKindOfClass:[SeafRepos class]]) {
-        self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 10.0)];
-    } else {
-        self.tableView.tableHeaderView = nil;
-    }
+    [self dismissSearchBar];
 
     // Restore animation settings, similar to searchCancelled logic (synchronously)
     [UIView setAnimationsEnabled:YES];
@@ -3171,8 +3814,8 @@ enum {
     if (self.navigationController && self.navigationController.navigationBar) {
         self.navigationController.navigationBar.alpha = 1.0;
     }
-    // Table content fade-in
     self.tableView.alpha = 1.0;
+    self.collectionView.alpha = 1.0;
 }
 
 // Handle search cancellation notification
@@ -3185,27 +3828,23 @@ enum {
         self.searchController.active = NO;
     }
     
-    // Immediately hide search bar without animation
-    if (![self.directory isKindOfClass:[SeafRepos class]]) {
-        self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 10.0)];
-    } else {
-        self.tableView.tableHeaderView = nil;
-    }
+    [self dismissSearchBar];
     // Restore animation settings
     [UIView setAnimationsEnabled:YES];
     
-    // Add fade-in effect for table content
+    // Add fade-in effect for content
     self.tableView.alpha = 0.9;
+    self.collectionView.alpha = 0.9;
     
-    // Add fade-in animation for navigation bar and table content
+    // Add fade-in animation for navigation bar and content
     [UIView animateWithDuration:0.3 animations:^{
         // Navigation bar fade-in
         if (self.navigationController && self.navigationController.navigationBar) {
             self.navigationController.navigationBar.alpha = 1.0;
         }
         
-        // Table content fade-in
         self.tableView.alpha = 1.0;
+        self.collectionView.alpha = 1.0;
     }];
 }
 
@@ -3312,10 +3951,17 @@ enum {
 
     // Create second row buttons
     for (int i = 0; i < secondRowTitles.count; i++) {
+        NSInteger tag = i + 5 + 1001;
         UIView *buttonView = [self createTabButtonWithTitle:secondRowTitles[i]
                                                    iconName:secondRowIcons[i]
                                                      width:80.0
-                                                      tag:i + 5 + 1001];
+                                                      tag:tag];
+        if (tag == 1008) { // ToolButtonProfile
+            buttonView.isAccessibilityElement = YES;
+            buttonView.accessibilityIdentifier = @"profile_properties_toolbar_button";
+            buttonView.accessibilityLabel = secondRowTitles[i];
+            buttonView.accessibilityTraits = UIAccessibilityTraitButton;
+        }
         [customToolView addSubview:buttonView];
     }
 
@@ -3449,7 +4095,7 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     UIView *buttonView = gesture.view;
     
     // Get required info and save selected items
-    NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
+    NSArray *selectedIndexPaths = [self selectedEntryIndexPaths];
     NSMutableArray *selectedItems = [NSMutableArray new];
     for (NSIndexPath *indexPath in selectedIndexPaths) {
         id item = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
@@ -3638,7 +4284,7 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 
 // Method to update tool buttons state
 - (void)updateToolButtonsState {
-    NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
+    NSArray *selectedIndexPaths = [self selectedEntryIndexPaths];
     // Get selected items
     NSMutableArray *selectedItems = [NSMutableArray new];
     for (NSIndexPath *indexPath in selectedIndexPaths) {
@@ -3704,19 +4350,18 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     }
 }
 
-// Adjust content insets to avoid custom toolbar overlap
+// Adjust content insets to avoid custom toolbar overlap.
+// Apply to both scroll views so an async edit-exit after a view-mode toggle
+// cannot leave bottom inset on the scroll view that is no longer current.
 - (void)adjustContentInsetForCustomToolbar:(BOOL)showing {
-    if (showing) {
-        CGFloat toolbarHeight = self.customToolView.frame.size.height;
-        UIEdgeInsets contentInset = self.tableView.contentInset;
+    CGFloat toolbarHeight = showing ? self.customToolView.frame.size.height : 0;
+    NSArray<UIScrollView *> *scrollViews = @[self.tableView, self.collectionView];
+    for (UIScrollView *scrollView in scrollViews) {
+        if (!scrollView) continue;
+        UIEdgeInsets contentInset = scrollView.contentInset;
         contentInset.bottom = toolbarHeight;
-        self.tableView.contentInset = contentInset;
-        self.tableView.scrollIndicatorInsets = contentInset;
-    } else {
-        UIEdgeInsets contentInset = self.tableView.contentInset;
-        contentInset.bottom = 0;
-        self.tableView.contentInset = contentInset;
-        self.tableView.scrollIndicatorInsets = contentInset;
+        scrollView.contentInset = contentInset;
+        scrollView.scrollIndicatorInsets = contentInset;
     }
 }
 
@@ -3725,24 +4370,35 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
         CGPoint p = [gestureRecognizer locationInView:self.tableView];
         NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
-        if (indexPath) {
-            // Only trigger edit mode if we're not already editing
-            if (!self.editing) {
-                [self editStart:nil];
-                
-                // Get the entry at this index path to check if it's an uploadFile
-                NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
-                
-                // Only select if it's not an upload file
-                if (![entry isKindOfClass:[SeafUploadFile class]]) {
-                    // Select the cell that was long pressed
-                    [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
-                    _selectedindex = indexPath;
-                    // Update selection status
-                    [self noneSelected:NO];
-                    [self updateToolButtonsState];
-                }
+        [self beginEditingAtIndexPath:indexPath];
+    }
+}
+
+- (void)handleGridLongPress:(UILongPressGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+        CGPoint p = [gestureRecognizer locationInView:self.collectionView];
+        NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:p];
+        [self beginEditingAtIndexPath:indexPath];
+    }
+}
+
+- (void)beginEditingAtIndexPath:(NSIndexPath *)indexPath {
+    if (!indexPath) return;
+    if (!self.editing) {
+        [self editStart:nil];
+        NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:nil];
+        if (![entry isKindOfClass:[SeafUploadFile class]]) {
+            if ([self isGridModeActive]) {
+                [self.collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionNone];
+                SeafGridCell *cell = (SeafGridCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+                cell.isUserEditing = YES;
+                [cell updateCheckboxForSelected:YES];
+            } else {
+                [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
             }
+            _selectedindex = indexPath;
+            [self noneSelected:NO];
+            [self updateToolButtonsState];
         }
     }
 }
@@ -3776,8 +4432,7 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 #pragma mark - Search Action
 
 - (void)searchAction:(id)sender {
-    // Set search bar as table header view
-    self.tableView.tableHeaderView = self.searchController.searchBar;
+    [self presentSearchBar];
     
     // Ensure status bar style is set correctly before activating search
     if (@available(iOS 13.0, *)) {
@@ -3836,9 +4491,14 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 #pragma mark - SeafGalleryHeroProvider
 
 - (UIView *)gallerySourceViewForItem:(id<SeafPreView>)item {
-    SeafCell *cell = [self getEntryCell:item indexPath:NULL];
-    if (!cell) return nil;
-    return cell.imageView;
+    id cell = [self getEntryCell:item indexPath:NULL];
+    if ([cell isKindOfClass:[SeafGridCell class]]) {
+        return [(SeafGridCell *)cell thumbnailView];
+    }
+    if ([cell isKindOfClass:[SeafCell class]]) {
+        return ((SeafCell *)cell).imageView;
+    }
+    return nil;
 }
 
 - (CGRect)gallerySourceFrameInWindowForItem:(id<SeafPreView>)item {
@@ -3852,16 +4512,23 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     if (index == NSNotFound || index >= self.allItems.count) return;
     NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
     @try {
-        // Make sure the row is on screen so cellForRowAtIndexPath: returns
-        // a non-nil cell during the subsequent source-view lookup.
-        if (![[self.tableView indexPathsForVisibleRows] containsObject:path]) {
-            [self.tableView scrollToRowAtIndexPath:path
-                                  atScrollPosition:UITableViewScrollPositionNone
-                                          animated:NO];
+        if ([self isGridModeActive]) {
+            if (![[self.collectionView indexPathsForVisibleItems] containsObject:path]) {
+                [self.collectionView scrollToItemAtIndexPath:path
+                                              atScrollPosition:UICollectionViewScrollPositionCenteredVertically
+                                                      animated:NO];
+            }
+            [self.collectionView layoutIfNeeded];
+        } else {
+            if (![[self.tableView indexPathsForVisibleRows] containsObject:path]) {
+                [self.tableView scrollToRowAtIndexPath:path
+                                      atScrollPosition:UITableViewScrollPositionNone
+                                              animated:NO];
+            }
+            [self.tableView layoutIfNeeded];
         }
-        [self.tableView layoutIfNeeded];
     } @catch (NSException *exception) {
-        Warning("scrollToRowAtIndexPath failed: %@", exception);
+        Warning("scroll to item failed: %@", exception);
     }
 }
 

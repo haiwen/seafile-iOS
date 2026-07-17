@@ -219,6 +219,10 @@
 }
 
 - (void)finishDownloadThumb:(BOOL)success{
+    [self finishDownloadThumb:success forTask:nil];
+}
+
+- (void)finishDownloadThumb:(BOOL)success forTask:(SeafThumb *)task{
     Debug("finishDownloadThumb: %@ success: %d", self.name, success);
     if (success) {
         // A fresh success supersedes any earlier failure record.
@@ -227,20 +231,34 @@
     // NOTE: do NOT negative-cache here on failure. Whether a failure is permanent
     // (HTTP 4xx) vs transient (5xx, cancel, timeout, offline) is only known at the
     // download site, which records the failure with the right policy.
-    if (self.thumbCompleteBlock)
-        self.thumbCompleteBlock(success);
-    _thumbtask = nil;
-    // Mutate thumbTaskForQueue on the main thread to match iconForFile's
-    // check-then-enqueue, so the queue slot is never written from two threads at once.
+
+    // Thumb download may finish on a background queue after decode/warm, while
+    // thumbTaskForQueue is read and written from the main queue; hop before
+    // touching it or invoking UI-facing callbacks.
     @weakify(self);
     dispatch_async(dispatch_get_main_queue(), ^{
         @strongify(self);
         if (!self) return;
-        self.thumbTaskForQueue = nil;
+        // Clear so a failed thumb can be re-enqueued on the next icon/thumb request,
+        // but never clear a task that superseded the one reporting completion.
+        if (!task || self.thumbTaskForQueue == task) {
+            self.thumbTaskForQueue = nil;
+        }
+        self->_thumbtask = nil;
+        if (self.thumbCompleteBlock) {
+            self.thumbCompleteBlock(success);
+        }
         // Only refresh UI on success. Failure + refresh previously re-entered iconForFile
         // and re-enqueued forever (especially for PDF 500 HTML error pages).
-        if (success) {
-            [self.delegate download:self complete:false];
+        if (!success) {
+            return;
+        }
+        id del = self.delegate;
+        if ([del respondsToSelector:@selector(thumbnailDownload:complete:)]) {
+            [del thumbnailDownload:self complete:YES];
+        } else {
+            // Backward compatible for delegates that only handle download:complete:.
+            [del download:self complete:false];
         }
     });
 }

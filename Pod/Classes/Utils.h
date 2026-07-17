@@ -111,6 +111,11 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 
 /// Resize an image to fit within a specified square dimension.
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
+
+/// Force-decode a UIImage into a bitmap so the first UIImageView composite
+/// does not hitch on the main thread. Safe / preferred to call off-main.
++ (UIImage *)decodedImageWithImage:(UIImage *)image;
+
 /// Load an image from a path, optionally using a cache.
 + (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 

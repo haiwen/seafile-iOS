@@ -39,6 +39,8 @@ enum SET_REPO_PASSWORD_RET {
 - (void)download:(SeafBase *)entry progress:(float)progress;///< Notifies delegate of download progress.
 - (void)download:(SeafBase *)entry complete:(BOOL)updated;///< Notifies delegate when download is complete.
 - (void)download:(SeafBase *)entry failed:(NSError *)error;///< Notifies delegate when download fails.
+@optional
+- (void)thumbnailDownload:(SeafBase *)entry complete:(BOOL)success;///< Thumbnail-only completion (no file-download side effects).
 @end
 
 /**

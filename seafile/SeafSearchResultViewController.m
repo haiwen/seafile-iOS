@@ -331,6 +331,12 @@
 }
 
 #pragma mark - SeafDentryDelegate
+- (void)thumbnailDownload:(id)entry complete:(BOOL)success
+{
+    if (!success || ![entry isKindOfClass:[SeafFile class]]) return;
+    [self updateEntryCellThumbnail:(SeafFile *)entry];
+}
+
 - (void)download:(SeafBase *)entry complete:(BOOL)updated {
     [self.masterVC.detailViewController download:entry complete:updated];
     [SVProgressHUD dismiss];
@@ -451,6 +457,22 @@
         cell.imageView.image = sdir.icon;
         [self setCellSaparatorAndCorner:cell andIndexPath:path];
     }
+}
+
+- (void)updateEntryCellThumbnail:(SeafFile *)entry
+{
+    if (!entry) return;
+    NSUInteger index = [self.searchResults indexOfObject:entry];
+    if (index == NSNotFound) return;
+    NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
+    SeafCell *cell = [self.tableView cellForRowAtIndexPath:path];
+    if (!cell) return;
+    UIImage *thumb = entry.thumb;
+    if (thumb) {
+        cell.imageView.image = thumb;
+        return;
+    }
+    [self.tableView reloadRowsAtIndexPaths:@[path] withRowAnimation:UITableViewRowAnimationNone];
 }
 
 // Retrieves the cell for a given entry from the table view.

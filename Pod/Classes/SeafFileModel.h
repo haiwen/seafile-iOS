@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)download:(id)file complete:(BOOL)updated;
 - (void)download:(id)file failed:(NSError *)error;
 - (void)download:(id)file progress:(float)progress;
+@optional
+- (void)thumbnailDownload:(id)file complete:(BOOL)success;
 @end
 
 @interface SeafFileModel : SeafBaseModel

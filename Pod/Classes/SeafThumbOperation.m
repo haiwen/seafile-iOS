@@ -12,6 +12,7 @@
 #import "SeafStorage.h"
 #import "SeafBase.h"
 #import "SeafRepos.h"
+#import "SeafCacheManager.h"
 #import "Utils.h"
 #import "Debug.h"
 #import "SeafCacheManager.h"
@@ -138,13 +139,26 @@
         target = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld", self.file.name, self.file.mtime]];
     }
     
-    @synchronized (self) {
-        if (self.file.thumb) {
-            [self finishDownloadThumbOperation:YES];
-            return;
-        }
+    BOOL hasDiskThumb = [Utils fileExistsAtPath:target];
+    if (hasDiskThumb) {
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) return;
+            UIImage *warmed = [[SeafCacheManager sharedManager] warmThumbCacheAtPath:target];
+            if (strongSelf.isCancelled) {
+                [strongSelf finishDownloadThumbOperation:NO];
+                return;
+            }
+            [strongSelf finishDownloadThumbOperation:(warmed != nil)];
+        });
+        return;
     }
-    
+    if (self.file.thumb) {
+        [self finishDownloadThumbOperation:YES];
+        return;
+    }
+
     __weak typeof(self) weakSelf = self;
     self.thumbTask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
         return [NSURL fileURLWithPath:target];
@@ -216,7 +230,17 @@
                 return;
             }
 
-            [strongSelf finishDownloadThumbOperation:YES];
+            // Decode + warm memory cache off the main thread so UI refresh
+            // (thumbnailDownload:) can set a ready-to-composite bitmap.
+            NSString *cachePath = target;
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                UIImage *warmed = [[SeafCacheManager sharedManager] warmThumbCacheAtPath:cachePath];
+                if (strongSelf.isCancelled) {
+                    [strongSelf finishDownloadThumbOperation:NO];
+                    return;
+                }
+                [strongSelf finishDownloadThumbOperation:(warmed != nil)];
+            });
         }
     }];
     
@@ -233,7 +257,10 @@
 
 - (void)finishDownloadThumbOperation:(BOOL)success
 {
-    [self.file finishDownloadThumb:success];
+    if (_operationCompleted) {
+        return;
+    }
+    [self.file finishDownloadThumb:success forTask:self.thumb];
     [self completeOperation];
 }
 

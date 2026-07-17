@@ -644,6 +644,23 @@
     }
 }
 
+- (void)updateEntryCellThumbnail:(SeafFile *)entry
+{
+    if (!entry) return;
+    SeafCell *cell = [self getEntryCell:entry];
+    if (!cell) return;
+    UIImage *thumb = entry.thumb;
+    if (thumb) {
+        cell.imageView.image = thumb;
+        return;
+    }
+    NSUInteger index = [_cellDataArray indexOfObject:entry];
+    if (index != NSNotFound) {
+        NSIndexPath *ip = [NSIndexPath indexPathForRow:index inSection:0];
+        [self.tableView reloadRowsAtIndexPaths:@[ip] withRowAnimation:UITableViewRowAnimationNone];
+    }
+}
+
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
@@ -651,6 +668,13 @@
     [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
     [self.detailViewController download:entry progress:progress];
 }
+
+- (void)thumbnailDownload:(id)entry complete:(BOOL)success
+{
+    if (!success || ![entry isKindOfClass:[SeafFile class]]) return;
+    [self updateEntryCellThumbnail:(SeafFile *)entry];
+}
+
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
     [self updateEntryCell:(SeafBase *)entry];

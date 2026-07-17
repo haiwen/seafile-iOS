@@ -186,6 +186,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
                                                                target:self
                                                                action:@selector(onSaveTapped)];
     saveItem.tintColor = [SeafTheme accentOrange];
+    saveItem.accessibilityIdentifier = @"profile_save_button";
     self.navigationItem.rightBarButtonItem = saveItem;
     
     // Init service
@@ -736,6 +737,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onDateTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
+        wrapper.accessibilityIdentifier = [NSString stringWithFormat:@"editor_date_%@", key];
+        wrapper.accessibilityTraits = UIAccessibilityTraitButton;
         objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         objc_setAssociatedObject(wrapper, kAssocMetadataDict, metadata, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         
@@ -825,6 +828,11 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     
     // Tap to open full-screen editor
     if (editable) {
+        wrapper.isAccessibilityElement = YES;
+        wrapper.accessibilityIdentifier = [NSString stringWithFormat:@"editor_longtext_%@", key];
+        wrapper.accessibilityTraits = UIAccessibilityTraitButton;
+        textLabel.isAccessibilityElement = NO;
+
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onLongTextTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
@@ -1108,6 +1116,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         [row addGestureRecognizer:tap];
         objc_setAssociatedObject(row, kAssocMetadataKey, fieldKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
         objc_setAssociatedObject(row, kAssocMetadataDict, opt, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        row.accessibilityIdentifier = [NSString stringWithFormat:@"editor_select_%@_%@", fieldKey, name];
+        row.accessibilityTraits = UIAccessibilityTraitButton;
     } else {
         row.userInteractionEnabled = NO;
         radio.enabled = NO;
@@ -1168,6 +1178,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onMultiSelectTapped:)];
         label.userInteractionEnabled = YES;
         [label addGestureRecognizer:tap];
+        label.accessibilityIdentifier = [NSString stringWithFormat:@"editor_multiselect_%@", key];
+        label.accessibilityTraits = UIAccessibilityTraitButton;
         objc_setAssociatedObject(label, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         objc_setAssociatedObject(label, kAssocSelectOptions, options, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         objc_setAssociatedObject(label, kAssocSelectedValues, [selectedNames mutableCopy], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -1250,6 +1262,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
             UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onCollaboratorTapped:)];
             label.userInteractionEnabled = YES;
             [label addGestureRecognizer:tap];
+            label.accessibilityIdentifier = [NSString stringWithFormat:@"editor_collaborator_%@", key];
+            label.accessibilityTraits = UIAccessibilityTraitButton;
             objc_setAssociatedObject(label, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         }
         
@@ -1265,6 +1279,8 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onCollaboratorTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
+        wrapper.accessibilityIdentifier = [NSString stringWithFormat:@"editor_collaborator_%@", key];
+        wrapper.accessibilityTraits = UIAccessibilityTraitButton;
         objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     
@@ -1412,6 +1428,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     // Chip flow layout container (align Android: FlexboxLayout with layout_detail_tag chips)
     UIView *wrapper = [[UIView alloc] init];
     wrapper.translatesAutoresizingMaskIntoConstraints = NO;
+    wrapper.accessibilityIdentifier = [NSString stringWithFormat:@"editor_tags_%@", key];
     
     UIStackView *verticalStack = [[UIStackView alloc] init];
     verticalStack.axis = UILayoutConstraintAxisVertical;
@@ -1461,6 +1478,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         [addButton.widthAnchor constraintEqualToConstant:24].active = YES;
         [addButton.heightAnchor constraintEqualToConstant:24].active = YES;
         [addButton addTarget:self action:@selector(onTagAddTapped:) forControlEvents:UIControlEventTouchUpInside];
+        addButton.accessibilityIdentifier = @"editor_tags_add_button";
         objc_setAssociatedObject(addButton, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         // Extra spacing before the plus button (12pt vs 6pt between chips)
         if (currentRow.arrangedSubviews.count > 0) {
@@ -1651,6 +1669,15 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 #pragma mark - Save (align Android save + parseParams + parseTagField)
 
 - (void)onSaveTapped {
+    if ([[NSProcessInfo processInfo].arguments containsObject:@"-UI_TEST_FAIL_PROFILE_SAVE"]) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Error", @"")
+                                                                      message:NSLocalizedString(@"Save failed", @"")
+                                                               preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"") style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+
     if (self.contentMap.count == 0) {
         [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"No changes", @"")];
         return;
