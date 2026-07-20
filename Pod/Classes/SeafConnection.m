@@ -325,6 +325,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return version != nil && [version compare:@"7.0.0" options:NSNumericSearch] != NSOrderedAscending;
 }
 
+- (BOOL)isNewThumbnailApiSupported {
+    NSString *version = self.serverVersion;
+    return version != nil && [version compare:@"14.0.0" options:NSNumericSearch] != NSOrderedAscending;
+}
+
 - (NSDictionary *)serverInfo
 {
     return [_settings objectForKey:@"serverInfo"];
@@ -919,12 +924,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self loginWithUsername:username password:password otp:nil rememberDevice:false];
 }
 
+static const int kSeafThumbnailApiSize = 256;
+
+- (NSString *)buildThumbnailRequestPathForFile:(SeafFile *)sFile requestedSize:(int)requestedSize {
+    NSString *filePath = sFile.path;
+    if ([filePath hasPrefix:@"/"]) {
+        filePath = [filePath substringFromIndex:1];
+    }
+
+    if (self.isNewThumbnailApiSupported) {
+        // 14.0+: /thumbnail/{repo_id}/{size}/{path}
+        return [NSString stringWithFormat:@"/thumbnail/%@/%d/%@",
+                sFile.repoId, kSeafThumbnailApiSize, filePath.escapedUrl];
+    }
+    // <= 13.0: /api2/repos/{repo_id}/thumbnail/?size={size}&p={path}
+    return [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@",
+            sFile.repoId, requestedSize, sFile.path.escapedUrl];
+}
+
 - (NSString *)buildThumbnailImageUrlFromSFile:(SeafFile *)sFile {
-    NSString *urlString = [NSString stringWithFormat:@"/api2/repos/%@/thumbnail/?p=%@&size=128", sFile.repoId, sFile.path];
-    
-    NSString *encodedURL = [self encodeStringToURLFormat:urlString];
-    
-    return encodedURL;
+    int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
+    NSString *path = [self buildThumbnailRequestPathForFile:sFile requestedSize:size];
+    return [self encodeStringToURLFormat:path];
 }
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form

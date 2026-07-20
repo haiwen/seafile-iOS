@@ -14,6 +14,41 @@
 #import "SeafStorage.h"
 #import "SeafRealmManager.h"
 
+// Tunables for the thumbnail failure policy.
+static const NSInteger kSeafThumbMaxServerFailures = 5;    // stop retrying after this many 5xx / bad-body failures
+static const NSTimeInterval kSeafThumbRetryBackoff = 60.0; // min seconds between retries after a server failure
+static const NSUInteger kSeafThumbFailRecordCountLimit = 200;
+
+@interface SeafThumbFailRecord : NSObject
+@property (nonatomic, assign) NSInteger serverFailures;   // count of 5xx / non-image-body failures
+@property (nonatomic, assign) NSTimeInterval lastFailure; // time of last failure (referenceDate)
+@property (nonatomic, assign) BOOL permanent;             // 4xx: definitively not thumbnailable
+@end
+@implementation SeafThumbFailRecord
+@end
+
+// Negative cache for failed thumbnail downloads (keyed by repo+path+oid+mtime+size).
+// Prevents infinite re-enqueue when the server keeps failing and the UI refreshes.
+static NSCache<NSString *, SeafThumbFailRecord *> *SeafThumbFailRecords(void) {
+    static NSCache<NSString *, SeafThumbFailRecord *> *records;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        records = [[NSCache alloc] init];
+        records.countLimit = kSeafThumbFailRecordCountLimit;
+    });
+    return records;
+}
+
+static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
+    NSString *oid = file.oid.length ? file.oid : @"noid";
+    return [NSString stringWithFormat:@"%@|%@|%@|%lld|%d",
+            file.repoId ?: @"",
+            file.path ?: @"",
+            oid,
+            file.mtime,
+            THUMB_SIZE * (int)[[UIScreen mainScreen] scale]];
+}
+
 @implementation SeafCacheManager (Thumb)
 
 // Check if it is an image type
@@ -28,7 +63,47 @@
     return [Utils isVideoFile:file.name];
 }
 
-/// Return icon: if it's an image/video, try to get the thumbnail, otherwise return the default icon
+- (void)markThumbDownloadPermanentlyFailedForFile:(SeafFile *)file
+{
+    if (!file) return;
+    NSString *key = SeafThumbFailKeyForFile(file);
+    NSCache<NSString *, SeafThumbFailRecord *> *records = SeafThumbFailRecords();
+    SeafThumbFailRecord *record = [records objectForKey:key] ?: [SeafThumbFailRecord new];
+    record.permanent = YES;
+    [records setObject:record forKey:key];
+}
+
+- (void)markThumbDownloadTransientlyFailedForFile:(SeafFile *)file
+{
+    if (!file) return;
+    NSString *key = SeafThumbFailKeyForFile(file);
+    NSCache<NSString *, SeafThumbFailRecord *> *records = SeafThumbFailRecords();
+    SeafThumbFailRecord *record = [records objectForKey:key] ?: [SeafThumbFailRecord new];
+    record.serverFailures += 1;
+    record.lastFailure = [NSDate timeIntervalSinceReferenceDate];
+    [records setObject:record forKey:key];
+}
+
+- (void)clearThumbDownloadFailedForFile:(SeafFile *)file
+{
+    if (!file) return;
+    NSString *key = SeafThumbFailKeyForFile(file);
+    [SeafThumbFailRecords() removeObjectForKey:key];
+}
+
+- (BOOL)shouldSkipThumbDownloadForFile:(SeafFile *)file
+{
+    if (!file) return NO;
+    NSString *key = SeafThumbFailKeyForFile(file);
+    SeafThumbFailRecord *record = [SeafThumbFailRecords() objectForKey:key];
+    if (!record) return NO;
+    if (record.permanent) return YES;                                    // 4xx: never retry this version
+    if (record.serverFailures >= kSeafThumbMaxServerFailures) return YES; // gave up after repeated 5xx
+    NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - record.lastFailure;
+    return elapsed < kSeafThumbRetryBackoff;                             // within backoff window: skip for now
+}
+
+/// Return icon: if it's an image/video/PDF, try to get the thumbnail, otherwise return the default icon
 - (UIImage *_Nullable)iconForFile:(SeafFile *)file
 {
     if (!file.oid) {
@@ -37,12 +112,15 @@
             file.oid = cacheOid;
         }
     }
-    if ((file.isImageFile || file.isVideoFile)) {
+    if (file.isImageFile || file.isVideoFile || file.isPdfFile || file.isSdocFile) {
         if (![file.connection isEncrypted:file.repoId]) {
             if (!file.isDeleted) {
                 UIImage *img = [self thumbForFile:file];
                 if (img) {
                     return img;
+                }
+                else if ([self shouldSkipThumbDownloadForFile:file]) {
+                    return nil;
                 }
                 else if (!file.thumbTaskForQueue) {
                     SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:file];
