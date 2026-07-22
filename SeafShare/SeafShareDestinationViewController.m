@@ -4,7 +4,8 @@
 //
 //  Destination picker for Share Extension.
 //  UI structure copied from SeafDestinationPickerViewController (move file page),
-//  adapted for 2-tab share flow aligned with Android.
+//  adapted for Libraries / Starred / Recent share flow.
+//  Starred taps navigate into Libraries at the chosen path.
 //
 
 #import "SeafShareDestinationViewController.h"
@@ -594,34 +595,39 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
         [self popupSetRepoPassword:repo handler:^{
             __strong typeof(weakSelf) selfRef = weakSelf;
             if (!selfRef) return;
-            [selfRef pushRememberedPathStackStartingFromRepo:repo];
+            [selfRef pushPathStackForRepoRoot:repo path:selfRef.startPath animated:NO];
         }];
         return;
     }
 
-    [self pushRememberedPathStackStartingFromRepo:repo];
+    [self pushPathStackForRepoRoot:repo path:self.startPath animated:NO];
 }
 
-- (void)pushRememberedPathStackStartingFromRepo:(SeafRepo *)repo {
-    [self pushShareDirViewControllerForDir:repo animated:NO];
+/// Push library root, then each path segment, onto the Libraries child nav stack.
+/// Caller must ensure the stack is at root (or freshly created) before calling.
+- (void)pushPathStackForRepoRoot:(SeafDir *)repoRoot path:(NSString *)path animated:(BOOL)animated {
+    if (!repoRoot || !self.childNavController) return;
 
-    NSString *path = self.startPath.length > 0 ? self.startPath : @"/";
-    if ([path isEqualToString:@"/"]) return;
+    [self pushShareDirViewControllerForDir:repoRoot animated:animated];
 
-    NSArray<NSString *> *comps = [path componentsSeparatedByString:@"/"];
+    NSString *normalizedPath = path.length > 0 ? path : @"/";
+    if ([normalizedPath isEqualToString:@"/"]) return;
+
+    NSString *libraryName = repoRoot.name ?: repoRoot.repoName ?: @"";
+    NSArray<NSString *> *comps = [normalizedPath componentsSeparatedByString:@"/"];
     NSMutableString *accum = [NSMutableString stringWithString:@""];
     for (NSString *seg in comps) {
         if (seg.length == 0) continue;
         [accum appendFormat:@"/%@", seg];
         SeafDir *levelDir = [[SeafDir alloc] initWithConnection:self.connection
                                                             oid:nil
-                                                         repoId:repo.repoId
+                                                         repoId:repoRoot.repoId
                                                            perm:nil
                                                            name:seg
                                                            path:[accum copy]
                                                           mtime:0];
-        levelDir.repoName = repo.name;
-        [self pushShareDirViewControllerForDir:levelDir animated:NO];
+        levelDir.repoName = libraryName;
+        [self pushShareDirViewControllerForDir:levelDir animated:animated];
     }
 }
 
@@ -632,11 +638,71 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
     [self.childNavController pushViewController:vc animated:animated];
 }
 
+#pragma mark - Starred → Libraries Navigation
+
+/// Jump from a starred library/directory into the Libraries tab at that path.
+/// Requires the library to already be in the local repo cache — same precondition as
+/// startUploadToDir: — so we never open a browsable path that later cannot upload.
+- (void)navigateLibrariesToDirectory:(SeafDir *)dir {
+    if (!dir || dir.repoId.length == 0) {
+        [self alertWithTitle:NSLocalizedString(@"Unable to load library information, please try again", @"Seafile")];
+        return;
+    }
+
+    SeafRepo *repo = [self.connection getRepo:dir.repoId];
+    if (!repo) {
+        [self alertWithTitle:NSLocalizedString(@"Unable to load library information, please try again", @"Seafile")];
+        return;
+    }
+
+    NSString *path = dir.path.length > 0 ? dir.path : @"/";
+
+    if (repo.passwordRequired && ![self.connection getRepoPassword:repo.repoId]) {
+        __weak typeof(self) weakSelf = self;
+        [self popupSetRepoPassword:repo handler:^{
+            __strong typeof(weakSelf) selfRef = weakSelf;
+            if (!selfRef) return;
+            [selfRef finishNavigateLibrariesToRepoRoot:repo path:path];
+        }];
+        return;
+    }
+
+    [self finishNavigateLibrariesToRepoRoot:repo path:path];
+}
+
+- (void)finishNavigateLibrariesToRepoRoot:(SeafDir *)repoRoot path:(NSString *)path {
+    self.currentTab = SeafShareTabLibraries;
+    [self updateUnderlineForIndex:SeafShareTabLibraries];
+
+    // Restore new-folder button (hidden/disabled on Starred / Recent).
+    if (self.navigationItem.rightBarButtonItems.count > 1) {
+        UIBarButtonItem *plusItem = self.navigationItem.rightBarButtonItems[1];
+        plusItem.enabled = YES;
+        plusItem.tintColor = nil;
+    }
+
+    [self showLibrariesTab];
+
+    // Clear any previous browse stack so we don't append onto it.
+    if (self.childNavController.viewControllers.count > 1) {
+        [self.childNavController popToRootViewControllerAnimated:NO];
+    }
+
+    [self pushPathStackForRepoRoot:repoRoot path:path animated:NO];
+    [self updateFixedHeaderVisibility];
+}
+
 - (void)showStarredTab {
     [self hideAllTabContents];
 
     if (!self.starredVC) {
         self.starredVC = [[SeafShareStarredViewController alloc] initWithConnection:self.connection];
+        __weak typeof(self) weakSelf = self;
+        self.starredVC.directoryTapHandler = ^(SeafDir *dir) {
+            __strong typeof(weakSelf) selfRef = weakSelf;
+            if (!selfRef) return;
+            [selfRef navigateLibrariesToDirectory:dir];
+        };
 
         [self addChildViewController:self.starredVC];
         self.starredVC.view.translatesAutoresizingMaskIntoConstraints = NO;

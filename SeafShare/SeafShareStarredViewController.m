@@ -2,14 +2,11 @@
 //  SeafShareStarredViewController.m
 //  SeafShare
 //
-//  Starred directory picker for share extension.
-//  Uses SeafShareDestCell (the same extension-owned cell as the Recent tab) so the
-//  trailing checkbox renders reliably inside the app extension.
-//  Selection logic:
-//  - is_dir && !deleted → selectable with checkbox (encrypted libraries included)
-//  - others → dimmed, not selectable
-//  Encrypted libraries are selectable; SeafShareDestinationViewController prompts for
-//  the library password before uploading (mirrors the Libraries browse tab).
+//  Starred directory list for share extension.
+//  Uses SeafShareDestCell (the same extension-owned cell as the Recent tab).
+//  Tappable rows (library / directory, not deleted) notify the parent via
+//  directoryTapHandler so the destination picker can jump to Libraries.
+//  Files and deleted items are dimmed and not tappable.
 //
 
 #import "SeafShareStarredViewController.h"
@@ -54,29 +51,11 @@
 
 - (BOOL)isItemSelectableAtIndex:(NSInteger)index {
     if (index < 0 || index >= (NSInteger)self.starredItems.count) return NO;
-    return [self isEntrySelectable:self.starredItems[index]];
+    return [self isEntryTappable:self.starredItems[index]];
 }
 
 - (SeafDir *)selectedDirectory {
-    if (self.selectedIndex < 0 || self.selectedIndex >= (NSInteger)self.starredItems.count) {
-        return nil;
-    }
-
-    NSObject *entry = self.starredItems[self.selectedIndex];
-    if (![self isEntrySelectable:entry]) {
-        return nil;
-    }
-
-    if ([entry isKindOfClass:[SeafStarredRepo class]]) {
-        SeafStarredRepo *starredRepo = (SeafStarredRepo *)entry;
-        SeafRepo *repo = [self.connection getRepo:starredRepo.repoId];
-        return repo ?: (SeafDir *)starredRepo;
-    }
-
-    if ([entry isKindOfClass:[SeafStarredDir class]]) {
-        return (SeafDir *)entry;
-    }
-
+    // Starred no longer selects an upload target; navigate to Libraries instead.
     return nil;
 }
 
@@ -152,7 +131,7 @@
 
 #pragma mark - Helpers
 
-- (BOOL)isEntrySelectable:(NSObject *)entry {
+- (BOOL)isEntryTappable:(NSObject *)entry {
     if ([entry isKindOfClass:[SeafStarredFile class]]) {
         return NO;
     }
@@ -160,11 +139,29 @@
         return NO;
     }
     SeafBase *base = (SeafBase *)entry;
-    // Encrypted libraries stay selectable; the password is verified in the upload flow.
     if (base.isDeleted) {
         return NO;
     }
     return YES;
+}
+
+/// Resolve a tappable starred entry to a SeafDir for Libraries navigation.
+- (SeafDir *)directoryForEntry:(NSObject *)entry {
+    if (![self isEntryTappable:entry]) {
+        return nil;
+    }
+
+    if ([entry isKindOfClass:[SeafStarredRepo class]]) {
+        SeafStarredRepo *starredRepo = (SeafStarredRepo *)entry;
+        SeafRepo *repo = [self.connection getRepo:starredRepo.repoId];
+        return repo ?: (SeafDir *)starredRepo;
+    }
+
+    if ([entry isKindOfClass:[SeafStarredDir class]]) {
+        return (SeafDir *)entry;
+    }
+
+    return nil;
 }
 
 - (void)updateCellContent:(SeafShareDestCell *)cell file:(SeafStarredFile *)sfile {
@@ -242,21 +239,16 @@
         [self updateCellContent:cell dir:(SeafDir *)entry];
     }
 
-    BOOL selectable = [self isEntrySelectable:entry];
-    // Non-selectable rows (files, and deleted dirs/files) are dimmed.
-    CGFloat contentAlpha = selectable ? 1.0f : 0.4f;
+    BOOL tappable = [self isEntryTappable:entry];
+    // Non-tappable rows (files, and deleted dirs/files) are dimmed.
+    CGFloat contentAlpha = tappable ? 1.0f : 0.4f;
     cell.iconView.alpha = contentAlpha;
     cell.titleLabel.alpha = contentAlpha;
     cell.subtitleLabel.alpha = contentAlpha;
 
-    if (selectable) {
-        cell.checkboxView.hidden = NO;
-        BOOL isSelected = (indexPath.row == self.selectedIndex);
-        [cell updateCheckboxImageForSelected:isSelected];
-    } else {
-        cell.checkboxView.hidden = YES;
-        cell.checkboxView.image = nil;
-    }
+    // No checkbox — tapping navigates to Libraries instead of selecting.
+    cell.checkboxView.hidden = YES;
+    cell.checkboxView.image = nil;
 
     // Keep separator on every row, including the last (rounded card still clips at bottom).
     cell.separatorInset = UIEdgeInsetsMake(0,
@@ -276,11 +268,14 @@
     }
 
     NSObject *entry = self.starredItems[indexPath.row];
-    if (![self isEntrySelectable:entry]) {
+    SeafDir *dir = [self directoryForEntry:entry];
+    if (!dir) {
         return;
     }
 
-    [self handleSelectionAtIndexPath:indexPath inTableView:tableView];
+    if (self.directoryTapHandler) {
+        self.directoryTapHandler(dir);
+    }
 }
 
 #pragma mark - SeafDentryDelegate
