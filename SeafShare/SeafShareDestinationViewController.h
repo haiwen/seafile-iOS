@@ -9,9 +9,10 @@
 //  - Fixed return header
 //  - Dual rounded buttons in bottom bar
 //
-//  Two tabs aligned with Android VersatileShareToSeafileSelectorActivity:
+//  Tabs aligned with Android VersatileShareToSeafileSelectorActivity:
 //  - Libraries (browse repos/dirs)
-//  - Starred (select starred dirs)
+//  - Starred (tap jumps into Libraries at that path)
+//  - Recent (select recently used dirs)
 //
 
 #import <UIKit/UIKit.h>
