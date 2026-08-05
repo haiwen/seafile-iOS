@@ -241,7 +241,9 @@
         if (!self) return;
         // Clear so a failed thumb can be re-enqueued on the next icon/thumb request,
         // but never clear a task that superseded the one reporting completion.
-        if (!task || self.thumbTaskForQueue == task) {
+        // A nil task means the caller owns no queue slot (e.g. thumbs generated
+        // locally from an already-decrypted file), so it must not clear one.
+        if (task && self.thumbTaskForQueue == task) {
             self.thumbTaskForQueue = nil;
         }
         self->_thumbtask = nil;

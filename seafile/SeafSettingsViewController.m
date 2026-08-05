@@ -25,6 +25,7 @@
 #import "UIViewController+Extend.h"
 #import "FileSizeFormatter.h"
 #import "ExtentedString.h"
+#import "Utils.h"
 #import "Debug.h"
 #import "SeafPrivacyPolicyViewController.h"
 #import "SeafBackupGuideViewController.h"
@@ -55,7 +56,8 @@ enum CAMERA_CELL{
     CELL_CAMERA_HEIC,
     CELL_CAMERA_USEJPG,
     CELL_CAMERA_DESTINATION,
-    CELL_CAMERA_UPLOADING,
+    /// Programmatic row; visible only when photo access is Limited.
+    CELL_CAMERA_MANAGE_PHOTOS,
 };
 
 enum UPDOWNLOAD_CELL{
@@ -196,23 +198,24 @@ enum {
 // Checks the authorization status of the photo library.
 - (void)checkPhotoLibraryAuthorizationStatus
 {
-    Debug("Current AuthorizationStatus:%ld", (long)[PHPhotoLibrary authorizationStatus]);
+    PHAuthorizationStatus status = [Utils photoLibraryAuthorizationStatus];
+    Debug("Current AuthorizationStatus:%ld", (long)status);
 
-    if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusNotDetermined) {
-        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+    if(status == PHAuthorizationStatusNotDetermined) {
+        [Utils requestPhotoLibraryAuthorization:^(PHAuthorizationStatus newStatus) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (status == PHAuthorizationStatusAuthorized) {
+                if ([Utils isPhotoLibraryAccessible:newStatus]) {
                     self.autoSync = _autoSyncSwitch.on;
                 } else {
                     _autoSyncSwitch.on = false;
                 }
             });
         }];
-    } else if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusRestricted ||
-              [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusDenied) {
+    } else if(status == PHAuthorizationStatusRestricted ||
+              status == PHAuthorizationStatusDenied) {
         [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
         _autoSyncSwitch.on = false;
-    } else if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusAuthorized) {
+    } else if([Utils isPhotoLibraryAccessible:status]) {
         self.autoSync = _autoSyncSwitch.on;
     }
 }
@@ -241,13 +244,13 @@ enum {
         };
 
         // Check permissions
-        PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
-        if (status == PHAuthorizationStatusAuthorized) {
+        PHAuthorizationStatus status = [Utils photoLibraryAuthorizationStatus];
+        if ([Utils isPhotoLibraryAccessible:status]) {
             proceed();
         } else if (status == PHAuthorizationStatusNotDetermined) {
-            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus newStatus) {
+            [Utils requestPhotoLibraryAuthorization:^(PHAuthorizationStatus newStatus) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (newStatus == PHAuthorizationStatusAuthorized) {
+                    if ([Utils isPhotoLibraryAccessible:newStatus]) {
                         proceed();
                     } else {
                         // Denied, turn switch off
@@ -339,12 +342,8 @@ enum {
         LAContext *context = [[LAContext alloc] init];
         if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
             Warning("TouchID unavailable: %@", error);
-            if (@available(iOS 11.0, *)) {
-                if (context.biometryType == LABiometryTypeFaceID) {
-                    [self alertWithTitle:STR_19];
-                } else {
-                    [self alertWithTitle:STR_15];
-                }
+            if (context.biometryType == LABiometryTypeFaceID) {
+                [self alertWithTitle:STR_19];
             } else {
                 [self alertWithTitle:STR_15];
             }
@@ -363,15 +362,10 @@ enum {
         self.backgroundSync = _backgroundSyncSwitch.on;
         return;
     }
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+    CLAuthorizationStatus status = self.locationManager.authorizationStatus;
     Debug("AuthorizationStatus: %d", status);
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (status == kCLAuthorizationStatusNotDetermined) {
-        if (ios8) {
-            [self.locationManager requestAlwaysAuthorization];
-        } else {
-            [appdelegate startSignificantChangeUpdates];
-        }
+        [self.locationManager requestAlwaysAuthorization];
         return;
     }
     if (status != kCLAuthorizationStatusAuthorizedAlways) {
@@ -394,12 +388,8 @@ enum {
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     
     LAContext *lac = [[LAContext alloc] init];
-    if (@available(iOS 11.0, *)) {
-        if (lac.biometryType == LABiometryTypeFaceID) {
-            _enableTouchIDLabel.text = NSLocalizedString(@"Enable FaceID", @"Seafile");
-        } else {
-            _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
-        }
+    if (lac.biometryType == LABiometryTypeFaceID) {
+        _enableTouchIDLabel.text = NSLocalizedString(@"Enable FaceID", @"Seafile");
     } else {
         _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
     }
@@ -625,6 +615,18 @@ enum {
     return indexPath.section == SECTION_DISPLAY && indexPath.row == 0;
 }
 
+- (BOOL)shouldShowManageSelectedPhotosRow
+{
+    return [Utils photoLibraryAuthorizationStatus] == PHAuthorizationStatusLimited;
+}
+
+- (BOOL)isManageSelectedPhotosIndexPath:(NSIndexPath *)indexPath
+{
+    return indexPath.section == SECTION_CAMERA
+        && indexPath.row == CELL_CAMERA_MANAGE_PHOTOS
+        && [self shouldShowManageSelectedPhotosRow];
+}
+
 /// Maps a logical section index to the corresponding storyboard section index.
 /// SECTION_DISPLAY is fully programmatic (no storyboard counterpart),
 /// so sections after it are shifted by -1.
@@ -655,13 +657,20 @@ enum {
     if (section == SECTION_DISPLAY) {
         return 1;
     }
-    return [super tableView:tableView numberOfRowsInSection:[self storyboardSectionForSection:section]];
+    NSInteger count = [super tableView:tableView numberOfRowsInSection:[self storyboardSectionForSection:section]];
+    if (section == SECTION_CAMERA && [self shouldShowManageSelectedPhotosRow]) {
+        count += 1;
+    }
+    return count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if ([self isAppearanceIndexPath:indexPath]) {
         return [self appearanceCell];
+    }
+    if ([self isManageSelectedPhotosIndexPath:indexPath]) {
+        return [self manageSelectedPhotosCell];
     }
     return [super tableView:tableView cellForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
 }
@@ -671,7 +680,7 @@ enum {
     if (indexPath.section == SECTION_WIKI && ![self shouldShowWikiSection]) {
         return 0;
     }
-    if ([self isAppearanceIndexPath:indexPath]) {
+    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
         return 50;
     }
     return [super tableView:tableView heightForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
@@ -679,7 +688,7 @@ enum {
 
 - (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([self isAppearanceIndexPath:indexPath]) {
+    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
         return 1;
     }
     return [super tableView:tableView indentationLevelForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
@@ -699,6 +708,15 @@ enum {
     [segmented addTarget:self action:@selector(appearanceSegmentedChanged:) forControlEvents:UIControlEventValueChanged];
     [segmented sizeToFit];
     cell.accessoryView = segmented;
+    return cell;
+}
+
+- (UITableViewCell *)manageSelectedPhotosCell
+{
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    cell.textLabel.text = NSLocalizedString(@"Manage Selected Photos", @"Seafile");
+    cell.textLabel.font = [UIFont systemFontOfSize:17.0];
+    cell.textLabel.textColor = [SeafTheme primaryText];
     return cell;
 }
 
@@ -724,9 +742,10 @@ enum {
     if ([self isAppearanceIndexPath:indexPath]) {
         cell.accessoryType = UITableViewCellAccessoryNone;
     } else
-    // Check if this is the logout cell or the privacy policy cell
+    // Check if this is the logout cell, privacy policy, or manage-selected-photos cell
     if (indexPath.section == SECTION_LOGOUT ||
-        (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY)) {
+        (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY) ||
+        [self isManageSelectedPhotosIndexPath:indexPath]) {
         // Create a custom accessory view with the chevron shifted 5px to the left
         // Instead of using the standard accessory type
         cell.accessoryType = UITableViewCellAccessoryNone;
@@ -736,9 +755,7 @@ enum {
         
         // Create a chevron image view
         UIImage *chevronImage = nil;
-        if (@available(iOS 13.0, *)) {
-            chevronImage = [UIImage systemImageNamed:@"chevron.right"];
-        }
+        chevronImage = [UIImage systemImageNamed:@"chevron.right"];
         if (!chevronImage) {
             chevronImage = [UIImage imageNamed:@"arrowright2"];
         }
@@ -896,6 +913,8 @@ enum {
             } else {
                 [self alertWithTitle:NSLocalizedString(@"Auto upload should be enabled first.", @"Seafile")];
             }
+        } else if ([self isManageSelectedPhotosIndexPath:indexPath]) {
+            [Utils presentLimitedLibraryPickerFromViewController:self];
         }
     } else if (indexPath.section == SECTION_UPDOWNLOAD) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
@@ -929,7 +948,7 @@ enum {
         _state = (int)indexPath.row;
         switch ((indexPath.row)) {
             case CELL_SERVER:
-                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/", _connection.address]]];
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/", _connection.address]] options:@{} completionHandler:nil];
                 break;
             case CELL_PRIVACY:
                 [self privacyPolicyVC];
@@ -1127,8 +1146,9 @@ enum {
 
 #pragma mark - CLLocationManagerDelegate
 
-- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+- (void)locationManagerDidChangeAuthorization:(CLLocationManager *)manager
 {
+    CLAuthorizationStatus status = manager.authorizationStatus;
     Debug("AuthorizationStatus: %d", status);
     if (status != kCLAuthorizationStatusAuthorizedAlways) {
         _backgroundSyncSwitch.on = false;

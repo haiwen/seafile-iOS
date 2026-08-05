@@ -8,6 +8,8 @@
 
 @import LocalAuthentication;
 
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
 #import "StartViewController.h"
 #import "SeafAccountViewController.h"
 #import "SeafAppDelegate.h"
@@ -53,8 +55,7 @@
 {
     [super viewDidLoad];
 
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeNone;
+    self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Accounts", @"Seafile");
     
@@ -97,7 +98,7 @@
 // Handles the import of a client certificate
 - (void)handleImprotCertificate
 {
-    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"public.data"] inMode:UIDocumentPickerModeImport];
+    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeData] asCopy:YES];
     documentPicker.delegate = self;
     documentPicker.modalPresentationStyle = UIModalPresentationFormSheet;
     [self presentViewController:documentPicker animated:YES completion:nil];
@@ -424,11 +425,11 @@
 }
 
 // Handles the document picked by the user for importing
-- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentAtURL:(NSURL *)url {
-    Debug("Improt file %u url: %@ %d", (unsigned)controller.documentPickerMode , url, [[NSFileManager defaultManager] fileExistsAtPath:url.path]);
-    if (controller.documentPickerMode != UIDocumentPickerModeImport)
-        return;
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    NSURL *url = urls.firstObject;
+    if (!url) return;
 
+    Debug("Improt file url: %@ %d", url, [[NSFileManager defaultManager] fileExistsAtPath:url.path]);
     [self importCertificate:url];
 }
 

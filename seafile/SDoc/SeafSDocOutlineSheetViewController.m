@@ -63,8 +63,7 @@
 
 - (CGFloat)safeBottomInset
 {
-    CGFloat safeBottom = 0;
-    if (@available(iOS 11.0, *)) { safeBottom = self.view.safeAreaInsets.bottom; }
+    CGFloat safeBottom = self.view.safeAreaInsets.bottom;
     return safeBottom;
 }
 
@@ -79,7 +78,7 @@
         self.modalPresentationStyle = UIModalPresentationOverFullScreen;
         // For iPad popover, provide a reasonable preferred size so the outline list
         // looks like a lightweight panel instead of a full-screen view.
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
             CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
             CGFloat height = MIN(480.0, screenH * 0.6);
             self.preferredContentSize = CGSizeMake(420.0, height);
@@ -305,7 +304,7 @@
     UIImage *tipImage = [UIImage imageNamed:@"tip_no_items"];
     if (tipImage) {
         img.image = tipImage;
-    } else if (@available(iOS 13.0, *)) {
+    } else {
         img.image = [UIImage systemImageNamed:@"tray"];
         img.tintColor = [SeafTheme tertiaryText];
     }

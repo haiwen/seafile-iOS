@@ -101,8 +101,7 @@
     self.title = NSLocalizedString(@"Starred", @"Seafile");
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.edgesForExtendedLayout = UIRectEdgeAll;
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
@@ -866,7 +865,7 @@
 
 - (void)showLoadingView {
     // Get the key window for proper centering in the entire screen
-    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *keyWindow = [SeafAppDelegate activeWindow];
     [self.loadingView showInView:keyWindow];
 }
 

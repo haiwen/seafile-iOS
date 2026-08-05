@@ -7,6 +7,7 @@
 //
 
 #import <Photos/Photos.h>
+#import <UserNotifications/UserNotifications.h>
 #import "SVProgressHUD.h"
 #import "AFNetworking.h"
 
@@ -401,7 +402,10 @@
 
 
 #if !(TARGET_IPHONE_SIMULATOR)
-    [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
+    UNAuthorizationOptions options = UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge;
+    [[UNUserNotificationCenter currentNotificationCenter] requestAuthorizationWithOptions:options completionHandler:^(BOOL granted, NSError *error) {
+        if (error) Warning("Failed to request notification authorization: %@", error);
+    }];
     [[UIApplication sharedApplication] registerForRemoteNotifications];
 #endif
 
@@ -411,7 +415,7 @@
     }
     NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
     if (dict) {
-        [self application:application didReceiveRemoteNotification:dict];
+        [self handleRemoteNotification:dict];
     } else {
         [self.startVC performSelector:@selector(selectDefaultAccount:) withObject:^(bool success) {} afterDelay:0.5f];
     }
@@ -422,24 +426,19 @@
     self.expirationHandler = ^{
         @strongify(self);
         Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
-        if (@available(iOS 13.0, *)) {
-            if (self.bgTask != UIBackgroundTaskInvalid) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [[UIApplication sharedApplication] endBackgroundTask:self.bgTask];
-                    self.bgTask = UIBackgroundTaskInvalid;
-                });
+        if (self.bgTask != UIBackgroundTaskInvalid) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[UIApplication sharedApplication] endBackgroundTask:self.bgTask];
+                self.bgTask = UIBackgroundTaskInvalid;
+            });
+        }
+
+        self.needReset = YES;
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            if (conn.accountIdentifier) {
+                SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+                [accountQueue pauseAllTasks];
             }
-            
-            self.needReset = YES;
-            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-                if (conn.accountIdentifier) {
-                    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
-                    [accountQueue pauseAllTasks];
-                }
-            }
-        } else {
-            //not work in iOS 13, and while call in app  become active next time
-            [self startBackgroundTask];
         }
     };
 
@@ -507,7 +506,13 @@
     Debug("error=%@", error);
 }
 
-- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+    [self handleRemoteNotification:userInfo];
+    completionHandler(UIBackgroundFetchResultNoData);
+}
+
+- (void)handleRemoteNotification:(NSDictionary *)userInfo
 {
     NSString *status __attribute__((unused)) = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
     NSString *badgeStr = [[userInfo objectForKey:@"aps"] objectForKey:@"badge"];
@@ -589,7 +594,6 @@
     if (!self.background)
         return;
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    [application cancelAllLocalNotifications];
     self.background = false;
     if (self.autoBackToDefaultAccount) {
         self.autoBackToDefaultAccount = false;
@@ -665,8 +669,7 @@
     [SeafTabBarStyler applyStandardAppearanceToTabBar:_tabbarController.tabBar];
     _tabbarController.navigationController.navigationBar.backgroundColor = [SeafTheme primarySurface];
     _tabbarController.delegate = self;
-    if (ios7)
-        _tabbarController.view.backgroundColor = [SeafTheme primaryBackgroundColor];
+    _tabbarController.view.backgroundColor = [SeafTheme primaryBackgroundColor];
 
     // Ensure consistent tab bar appearance on iOS 15+.
     // Without this, scrollEdgeAppearance defaults to transparent, causing the
@@ -951,6 +954,34 @@ new identifier is "'mtime' + 'repoId' + 'path'"
 + (UIViewController *)topViewController {
     SeafAppDelegate *delegate = (SeafAppDelegate*)[UIApplication sharedApplication].delegate;
     return  [delegate topViewController];
+}
+
++ (UIWindow *)activeWindow {
+    UIWindow *foregroundWindow = nil;
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if (![scene isKindOfClass:[UIWindowScene class]])
+            continue;
+        BOOL isForeground = (scene.activationState == UISceneActivationStateForegroundActive);
+        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            if (window.isKeyWindow)
+                return window;
+            if (isForeground && !foregroundWindow && !window.hidden)
+                foregroundWindow = window;
+        }
+    }
+    if (foregroundWindow)
+        return foregroundWindow;
+    // Before any scene is active the delegate's window is the only one available.
+    return ((SeafAppDelegate *)[UIApplication sharedApplication].delegate).window;
+}
+
++ (CGFloat)statusBarHeight {
+    return [self activeWindow].windowScene.statusBarManager.statusBarFrame.size.height;
+}
+
++ (UIInterfaceOrientation)activeInterfaceOrientation {
+    UIWindowScene *scene = [self activeWindow].windowScene;
+    return scene ? scene.interfaceOrientation : UIInterfaceOrientationPortrait;
 }
 
 // Finds the topmost view controller in the navigation stack to handle certain UI actions.

@@ -33,7 +33,7 @@
 #define rgb(r, g, b) rgba(r, g, b, 1.0f)
 
 #ifndef iPad
-#define iPad (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+#define iPad (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad)
 #endif
 
 #pragma mark - Helpers
@@ -259,10 +259,8 @@ static BOOL disableCustomEasing = NO;
     UIEdgeInsets titleInsets = UIEdgeInsetsMake(0, 10, 0, 0);
     
     if (style == SFActionSheetButtonStyleCancel) {
-        if (@available(iOS 11.0, *)) {
-            buttonHeight += [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom;
-            titleInsets = UIEdgeInsetsMake(0, 10, [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom, 0);
-        }
+        buttonHeight += [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom;
+        titleInsets = UIEdgeInsetsMake(0, 10, [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom, 0);
     }
     
     SeafSectionButton *b = [[SeafSectionButton alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.bounds), buttonHeight)];
@@ -337,6 +335,10 @@ static BOOL disableCustomEasing = NO;
     BOOL _anchoredAtPoint;
     CGPoint _anchorPoint;// The point at which the action sheet is anchored
     SFActionSheetArrowDirection _anchoredArrowDirection;// The direction of the arrow when the action sheet is anchored
+    BOOL _observingDeviceOrientation;
+
+    NSUInteger _interactionSuspendCount;// Show/move/dismiss nest their suspend calls, so this has to be counted
+    __weak UIView *_interactionSuspendedWindow;
 }
 
 @property (nonatomic, strong) NSArray *sections;// Array of sections within the action sheet
@@ -471,8 +473,37 @@ static BOOL disableCustomEasing = NO;
     return [SeafActionSheetLayer class];
 }
 
+- (void)startObservingDeviceOrientation
+{
+    if (_observingDeviceOrientation) {
+        return;
+    }
+    _observingDeviceOrientation = YES;
+    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(orientationChanged)
+                                                 name:UIDeviceOrientationDidChangeNotification
+                                               object:nil];
+}
+
+- (void)stopObservingDeviceOrientation
+{
+    if (!_observingDeviceOrientation) {
+        return;
+    }
+    _observingDeviceOrientation = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIDeviceOrientationDidChangeNotification
+                                                  object:nil];
+    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
+}
+
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [self stopObservingDeviceOrientation];
+    // Never leave the window unresponsive if the sheet goes away mid-animation.
+    if (_interactionSuspendCount > 0) {
+        _interactionSuspendedWindow.userInteractionEnabled = YES;
+    }
 }
 
 - (void)setBackgroundColor:(UIColor *)backgroundColor {
@@ -574,15 +605,15 @@ static BOOL disableCustomEasing = NO;
 
 - (void)showAnimated:(BOOL)animated {
 
-    [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+    [self suspendInteraction];
 
     [self layoutSheetInitial:YES];
 
     void (^completion)(void) = ^{
-        [[UIApplication sharedApplication] endIgnoringInteractionEvents];
+        [self resumeInteraction];
     };
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged) name:UIApplicationDidChangeStatusBarFrameNotification object:nil];
+    [self startObservingDeviceOrientation];
     [self layoutForVisible:!animated];
     [[self topWindow] addSubview:self];
 
@@ -688,7 +719,7 @@ static BOOL disableCustomEasing = NO;
 
 // Show from specific point with source rectangle and animation
 - (void)showFromPoint:(CGPoint)point sourceRect:(CGRect)sourceRect arrowDirection:(SFActionSheetArrowDirection)arrowDirection animated:(BOOL)animated {
-    [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+    [self suspendInteraction];
 
     // Automatically adjust arrow direction based on screen space
     if (point.y > kScreenHeight - 320 - 50) {
@@ -724,10 +755,10 @@ static BOOL disableCustomEasing = NO;
     }
 
     void (^completion)(void) = ^{
-        [[UIApplication sharedApplication] endIgnoringInteractionEvents];
+        [self resumeInteraction];
     };
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged) name:UIApplicationDidChangeStatusBarFrameNotification object:nil];
+    [self startObservingDeviceOrientation];
 
     // Initial state: scale to 0 and set animation anchor point to source button position
     if (animated) {
@@ -803,7 +834,7 @@ static BOOL disableCustomEasing = NO;
 
 // Move to specified point
 - (void)moveToPoint:(CGPoint)point arrowDirection:(SFActionSheetArrowDirection)arrowDirection animated:(BOOL)animated {
-    [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+    [self suspendInteraction];
 
     disableCustomEasing = YES;
 
@@ -874,7 +905,7 @@ static BOOL disableCustomEasing = NO;
     };
 
     void (^completion)(void) = ^{
-        [[UIApplication sharedApplication] endIgnoringInteractionEvents];
+        [self resumeInteraction];
     };
 
     if (animated) {
@@ -958,7 +989,7 @@ static BOOL disableCustomEasing = NO;
 #pragma mark Dismissal
 
 - (void)dismissAnimated:(BOOL)animated {
-    [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+    [self suspendInteraction];
 
     void (^completion)(void) = ^{
         // Reset transform and anchor point
@@ -972,9 +1003,9 @@ static BOOL disableCustomEasing = NO;
         _anchoredArrowDirection = 0;
         _anchorPoint = CGPointZero;
 
-        [[NSNotificationCenter defaultCenter] removeObserver:self];
+        [self stopObservingDeviceOrientation];
 
-        [[UIApplication sharedApplication] endIgnoringInteractionEvents];
+        [self resumeInteraction];
     };
 
     if (animated) {
@@ -997,6 +1028,26 @@ static BOOL disableCustomEasing = NO;
 
 - (UIView *)topWindow {
     return [SeafAppDelegate topViewController].view.window;
+}
+
+// Show/move/dismiss nest their calls, and -orientationChanged re-enters via -moveToPoint:,
+// so the suspensions have to be counted the way the old UIApplication API did it.
+- (void)suspendInteraction {
+    if (_interactionSuspendCount == 0) {
+        _interactionSuspendedWindow = [self topWindow];
+        _interactionSuspendedWindow.userInteractionEnabled = NO;
+    }
+    _interactionSuspendCount++;
+}
+
+- (void)resumeInteraction {
+    if (_interactionSuspendCount == 0)
+        return;
+    _interactionSuspendCount--;
+    if (_interactionSuspendCount == 0) {
+        _interactionSuspendedWindow.userInteractionEnabled = YES;
+        _interactionSuspendedWindow = nil;
+    }
 }
 
 /*

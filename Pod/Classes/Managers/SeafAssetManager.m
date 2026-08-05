@@ -6,18 +6,9 @@
 #import <Photos/Photos.h>
 #import <ImageIO/ImageIO.h>
 #import "FileMimeType.h"
-#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h> // Used for iOS 14/macOS 11 and later
-#import <MobileCoreServices/MobileCoreServices.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "SeafMotionPhotoComposer.h"
 #import "SeafVideoConverter.h"
-
-#ifndef kUTTypeHEIC
-#define kUTTypeHEIC CFSTR("public.heic")
-#endif
-
-#ifndef kUTTypeHEIF
-#define kUTTypeHEIF CFSTR("public.heif")
-#endif
 
 // Live Photo retry mechanism constants
 // Used to ensure paired video resource is available for newly captured Live Photos
@@ -187,11 +178,11 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
     
     BOOL needsJpgConversion = [file useJpgForStaticPhoto];
     
-    [[PHImageManager defaultManager] requestImageDataForAsset:file.model.asset 
+    [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:file.model.asset
                                                     options:options 
                                               resultHandler:^(NSData * _Nullable imageData, 
                                                            NSString * _Nullable dataUTI, 
-                                                           UIImageOrientation orientation, 
+                                                           CGImagePropertyOrientation orientation,
                                                            NSDictionary * _Nullable info) {
         if (!imageData) {
             NSError *noDataError = [NSError errorWithDomain:@"SeafAssetManager"
@@ -244,12 +235,8 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
     NSString *uti = resource.uniformTypeIdentifier;
     if (!uti) return NO;
     
-    if (@available(iOS 14.0, *)) {
-        UTType *type = [UTType typeWithIdentifier:uti];
-        return [type conformsToType:UTTypeHEIC];
-    } else {
-        return UTTypeConformsTo((__bridge CFStringRef)uti, kUTTypeHEIC);
-    }
+    UTType *type = [UTType typeWithIdentifier:uti];
+    return [type conformsToType:UTTypeHEIC];
 }
 
 /// Convert in-memory HEIC data to JPEG data, preserving metadata.
@@ -260,7 +247,7 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
     if (!source) return nil;
     
     NSMutableData *jpegData = [NSMutableData data];
-    CGImageDestinationRef dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)jpegData, kUTTypeJPEG, 1, NULL);
+    CGImageDestinationRef dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)jpegData, (__bridge CFStringRef)UTTypeJPEG.identifier, 1, NULL);
     if (!dest) {
         CFRelease(source);
         return nil;
@@ -283,26 +270,14 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
     CFStringRef sourceType = CGImageSourceGetType(source);
     BOOL success = NO;
 
-    if (@available(iOS 14.0, *)) {
-        UTType *type = [UTType typeWithIdentifier:(__bridge NSString *)sourceType];
-        if ([type conformsToType:UTTypeHEIC]) {
-            CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)destinationURL, (__bridge CFStringRef)UTTypeJPEG.identifier, 1, NULL);
-            if (destination) {
-                NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.9};
-                CGImageDestinationAddImageFromSource(destination, source, 0, (__bridge CFDictionaryRef)options);
-                success = CGImageDestinationFinalize(destination);
-                CFRelease(destination);
-            }
-        }
-    } else {
-        if (UTTypeConformsTo(sourceType, kUTTypeHEIC)) {
-            CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)destinationURL, kUTTypeJPEG, 1, NULL);
-            if (destination) {
-                NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.9};
-                CGImageDestinationAddImageFromSource(destination, source, 0, (__bridge CFDictionaryRef)options);
-                success = CGImageDestinationFinalize(destination);
-                CFRelease(destination);
-            }
+    UTType *type = [UTType typeWithIdentifier:(__bridge NSString *)sourceType];
+    if ([type conformsToType:UTTypeHEIC]) {
+        CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)destinationURL, (__bridge CFStringRef)UTTypeJPEG.identifier, 1, NULL);
+        if (destination) {
+            NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.9};
+            CGImageDestinationAddImageFromSource(destination, source, 0, (__bridge CFDictionaryRef)options);
+            success = CGImageDestinationFinalize(destination);
+            CFRelease(destination);
         }
     }
 
@@ -351,12 +326,8 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
     // Create HEIC
     NSMutableData *heicData = [NSMutableData data];
     CGImageDestinationRef dest = NULL;
-    if (@available(iOS 14.0, *)) {
-        dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)heicData,
-                                                 (__bridge CFStringRef)UTTypeHEIC.identifier, 1, NULL);
-    } else {
-        dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)heicData, kUTTypeHEIC, 1, NULL);
-    }
+    dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)heicData,
+                                             (__bridge CFStringRef)UTTypeHEIC.identifier, 1, NULL);
     if (!dest) return nil;
     
     props[(__bridge NSString *)kCGImageDestinationLossyCompressionQuality] = @0.9;

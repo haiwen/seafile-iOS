@@ -1,5 +1,5 @@
 def shared
-  platform :ios, '11.0'
+  platform :ios, '14.0'
   pod 'Seafile', :path => "./"
   pod 'AFNetworking', '~> 4.0.0'
   pod 'OpenSSL-Universal', '1.0.2.17'
@@ -12,10 +12,6 @@ target :"seafileApp" do
   pod 'SVProgressHUD', :git => 'https://github.com/SVProgressHUD/SVProgressHUD', :tag =>'1.1.3'
   pod 'SWTableViewCell', :git => 'https://github.com/haiwen/SWTableViewCell.git', :branch => 'master'
   pod 'MWPhotoBrowser', :git => 'https://github.com/haiwen/MWPhotoBrowser.git', :branch => 'master'
-  # Pinned to a specific commit so locally-applied theming/localization
-  # changes are not lost on `pod install`. Bump the SHA when picking up
-  # new upstream commits from haiwen/QBImagePickerController.
-  pod 'QBImagePickerController', :git => 'https://github.com/haiwen/QBImagePickerController.git', :commit => '4a678e072d10304a6660cf721d99d558c07f0d4c'
   pod 'WechatOpenSDK', '~> 1.8.7.1'
   shared
 end
@@ -44,10 +40,12 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      config.build_settings['ENABLE_BITCODE'] = 'YES'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      # OpenSSL-Universal and WechatOpenSDK ship fat .a archives without an
+      # arm64-simulator slice, so simulator builds must stay x86_64.
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = "arm64"
-      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 11.0
-          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '11.0'
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 14.0
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
       end
     end
     if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"

@@ -63,16 +63,10 @@ static const NSInteger kTitleMaxLines = 2;
 
     _thumbnailContainer = [[UIView alloc] init];
     _thumbnailContainer.translatesAutoresizingMaskIntoConstraints = NO;
-    if (@available(iOS 13.0, *)) {
-        _thumbnailContainer.backgroundColor = [UIColor tertiarySystemFillColor];
-    } else {
-        _thumbnailContainer.backgroundColor = [SeafTheme fill];
-    }
+    _thumbnailContainer.backgroundColor = [UIColor tertiarySystemFillColor];
     _thumbnailContainer.layer.cornerRadius = kThumbnailCornerRadius;
     _thumbnailContainer.clipsToBounds = YES;
-    if (@available(iOS 13.0, *)) {
-        _thumbnailContainer.layer.cornerCurve = kCACornerCurveContinuous;
-    }
+    _thumbnailContainer.layer.cornerCurve = kCACornerCurveContinuous;
     [self.contentView addSubview:_thumbnailContainer];
 
     _thumbnailView = [[UIImageView alloc] init];
@@ -98,10 +92,8 @@ static const NSInteger kTitleMaxLines = 2;
     _progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
     _progressView.translatesAutoresizingMaskIntoConstraints = NO;
     _progressView.hidden = YES;
-    if (@available(iOS 13.0, *)) {
-        _progressView.trackTintColor = [SeafColor_Label colorWithAlphaComponent:0.12];
-        _progressView.progressTintColor = [SeafTheme accentOrange];
-    }
+    _progressView.trackTintColor = [SeafColor_Label colorWithAlphaComponent:0.12];
+    _progressView.progressTintColor = [SeafTheme accentOrange];
     [_thumbnailContainer addSubview:_progressView];
 
     // Same cache checkmark presentation as SeafCell (list): original asset, 15pt in 21pt slot.
@@ -117,11 +109,7 @@ static const NSInteger kTitleMaxLines = 2;
     _downloadStatusImageView.contentMode = UIViewContentModeScaleAspectFit;
     [_cacheStatusView addSubview:_downloadStatusImageView];
 
-    if (@available(iOS 13.0, *)) {
-        _downloadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
-    } else {
-        _downloadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    }
+    _downloadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
     _downloadingIndicator.translatesAutoresizingMaskIntoConstraints = NO;
     _downloadingIndicator.hidesWhenStopped = YES;
     [_cacheStatusView addSubview:_downloadingIndicator];
@@ -237,10 +225,7 @@ static const NSInteger kTitleMaxLines = 2;
 
 + (UIFont *)titleFont {
     UIFont *base = [UIFont systemFontOfSize:13.0 weight:UIFontWeightRegular];
-    if (@available(iOS 11.0, *)) {
-        return [[UIFontMetrics metricsForTextStyle:UIFontTextStyleFootnote] scaledFontForFont:base];
-    }
-    return [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    return [[UIFontMetrics metricsForTextStyle:UIFontTextStyleFootnote] scaledFontForFont:base];
 }
 
 + (CGFloat)thumbnailAspectRatio {
@@ -308,16 +293,14 @@ static const NSInteger kTitleMaxLines = 2;
     // Keep the same asset + light/dark rules as SeafCell (list mode).
     NSString *imageName = selected ? @"ic_checkbox_checked" : @"ic_checkbox_unchecked";
     UIImage *image = [UIImage imageNamed:imageName];
-    if (@available(iOS 13.0, *)) {
-        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-            self.checkboxImageView.tintColor = selected
-                ? [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.7]
-                : [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.2];
-        } else {
-            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-            self.checkboxImageView.tintColor = nil;
-        }
+    if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+        image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        self.checkboxImageView.tintColor = selected
+            ? [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.7]
+            : [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.2];
+    } else {
+        image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        self.checkboxImageView.tintColor = nil;
     }
     self.checkboxImageView.image = image;
     // Soft brand-colored veil instead of a systemBlue border.
@@ -335,11 +318,9 @@ static const NSInteger kTitleMaxLines = 2;
 
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
     [super traitCollectionDidChange:previousTraitCollection];
-    if (@available(iOS 13.0, *)) {
-        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]
-            && self.isUserEditing) {
-            [self updateCheckboxForSelected:self.isSelected];
-        }
+    if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]
+        && self.isUserEditing) {
+        [self updateCheckboxForSelected:self.isSelected];
     }
     if (previousTraitCollection
         && self.traitCollection.preferredContentSizeCategory != previousTraitCollection.preferredContentSizeCategory) {
@@ -431,6 +412,7 @@ static const NSInteger kTitleMaxLines = 2;
         [self.cellSeafFile cancelNotDisplayThumb];
         self.cellSeafFile = nil;
     }
+    self.cellUploadFile = nil;
 }
 
 - (void)configureWithDir:(SeafDir *)dir {
@@ -468,6 +450,7 @@ static const NSInteger kTitleMaxLines = 2;
 
 - (void)configureWithUploadFile:(SeafUploadFile *)file completion:(void (^)(UIImage *))completion {
     [self resetCellFile];
+    self.cellUploadFile = file;
     self.titleLabel.text = file.name;
     // Start with a centered type icon; real photo/video previews arrive asynchronously.
     self.thumbnailView.image = [UIImage imageForMimeType:file.mime ext:file.name.pathExtension.lowercaseString];

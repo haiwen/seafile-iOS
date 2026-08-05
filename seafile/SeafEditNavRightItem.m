@@ -20,7 +20,7 @@
     [customView addGestureRecognizer:tapGesture];
     
     // Adjust offset for iPad
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+    if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         CGRect frame = customView.frame;
         frame.origin.x = -16;
         customView.frame = frame;

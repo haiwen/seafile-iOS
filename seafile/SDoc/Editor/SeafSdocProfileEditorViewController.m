@@ -737,8 +737,11 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onDateTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
+        wrapper.isAccessibilityElement = YES;
         wrapper.accessibilityIdentifier = [NSString stringWithFormat:@"editor_date_%@", key];
         wrapper.accessibilityTraits = UIAccessibilityTraitButton;
+        wrapper.accessibilityLabel = displayDate;
+        dateLabel.isAccessibilityElement = NO;
         objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
         objc_setAssociatedObject(wrapper, kAssocMetadataDict, metadata, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         
@@ -1076,9 +1079,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     static const CGFloat kStatusChipHeight = 22.0;
     chipBg.layer.cornerRadius = kStatusChipHeight * 0.5; // true capsule
     chipBg.layer.masksToBounds = YES;
-    if (@available(iOS 13.0, *)) {
-        chipBg.layer.cornerCurve = kCACornerCurveContinuous;
-    }
+    chipBg.layer.cornerCurve = kCACornerCurveContinuous;
 
     UILabel *chip = [[UILabel alloc] init];
     chip.translatesAutoresizingMaskIntoConstraints = NO;
@@ -1279,8 +1280,10 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onCollaboratorTapped:)];
         wrapper.userInteractionEnabled = YES;
         [wrapper addGestureRecognizer:tap];
+        wrapper.isAccessibilityElement = YES;
         wrapper.accessibilityIdentifier = [NSString stringWithFormat:@"editor_collaborator_%@", key];
         wrapper.accessibilityTraits = UIAccessibilityTraitButton;
+        wrapper.accessibilityLabel = [[userInfos valueForKey:@"name"] componentsJoinedByString:@", "];
         objc_setAssociatedObject(wrapper, kAssocMetadataKey, key, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     

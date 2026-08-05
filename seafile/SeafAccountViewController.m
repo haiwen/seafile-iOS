@@ -219,8 +219,7 @@
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeNone;
+    self.edgesForExtendedLayout = UIRectEdgeNone;
     // Setup flexible margins for subviews for proper resizing behavior.
     for (UIView *v in self.view.subviews) {
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin

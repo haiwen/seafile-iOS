@@ -10,7 +10,7 @@
 #import "Debug.h"
 #import "Utils.h"
 #import "SeafStorage.h"
-#import <MobileCoreServices/UTCoreTypes.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "SeafUploadFile.h"
 
 @interface SeafInputItemsProvider()
@@ -90,11 +90,11 @@
     NSItemProvider *itemProvider = self.pendingProviders[self.currentIndex];
     Debug("Processing item %ld/%lu: %@", (long)(self.currentIndex + 1), (unsigned long)self.pendingProviders.count, itemProvider);
     
-    if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeItem] || 
+    if ([itemProvider hasItemConformingToTypeIdentifier:UTTypeItem.identifier] ||
         [itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
         
         // Image or ics need to call with "public.url" as identifier
-        NSString *typeIdentifier = (NSString *)kUTTypeItem;
+        NSString *typeIdentifier = UTTypeItem.identifier;
         if ([itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
             typeIdentifier = @"public.url";
         }

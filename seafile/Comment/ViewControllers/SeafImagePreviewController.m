@@ -62,10 +62,7 @@
     [_scrollView addSubview:_imageView];
     
     // Loading indicator
-    UIActivityIndicatorViewStyle st = UIActivityIndicatorViewStyleWhiteLarge;
-    if (@available(iOS 13.0, *)) {
-        st = UIActivityIndicatorViewStyleLarge;
-    }
+    UIActivityIndicatorViewStyle st = UIActivityIndicatorViewStyleLarge;
     _indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:st];
     _indicator.color = [UIColor whiteColor];
     _indicator.translatesAutoresizingMaskIntoConstraints = NO;

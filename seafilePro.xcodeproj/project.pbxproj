@@ -52,7 +52,6 @@
 		571D8CE21677881400F1A22C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827315A833FA00097CEC /* Foundation.framework */; };
 		571D8CE31677881400F1A22C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827515A833FA00097CEC /* CoreGraphics.framework */; };
 		571D8CE41677881400F1A22C /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827715A833FA00097CEC /* CoreData.framework */; };
-		571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		5725186217AE7D010078CD12 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186117AE7D000078CD12 /* Security.framework */; };
 		574D3D8E1DFA6EF90093C18C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
 		574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 574F61F51BDB5DB300014EBA /* SeafButtonCell.m */; };
@@ -78,7 +77,6 @@
 		57D189D0182E0A380029A797 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
 		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57E5E7B31CC219C8004B7125 /* SeafEventCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E5E7B11CC219C8004B7125 /* SeafEventCell.m */; };
-		57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
 		57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F143921B886B96009C1BC8 /* CoreLocation.framework */; };
 		57F476EC1C00623300047395 /* SeafPhotoThumb.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F476EB1C00623300047395 /* SeafPhotoThumb.m */; };
 		5857E9CB1FAFCAD5004F124D /* SeafProviderItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857E9CA1FAFCAD5004F124D /* SeafProviderItem.m */; };
@@ -110,7 +108,6 @@
 		6190E4AB5FA163FDE14FC156 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
 		71AC72A87A85B3EFF84A135D /* SeafShareRecentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D0B6635DFA56E717BD59C5FC /* SeafShareRecentViewController.m */; };
 		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
-		7C10A9BE94BBC7A32A1F7789 /* qb_add_photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 79C932333EE0D9ED38CB6CBD /* qb_add_photo.png */; };
 		802DCB31045AA4739B30E9C3 /* SeafGridCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AE4155C45EE03AE3C5A516F /* SeafGridCell.m */; };
 		8A5355EAD61E5915D6E405CB /* local-image-nomal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */; };
 		A00F9663183F2D3C5D4A04C4 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
@@ -619,7 +616,6 @@
 		CC01359F6352B607AF67F125 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
 		D39F0DA10361CD52EAD6E7D5 /* SeafWikiViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27192FBD78A91A8AE45E053D /* SeafWikiViewController.m */; };
 		D9BE2094AD9B16A02584A3C2 /* libPods-seafileApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */; };
-		DB4097410DC1643F77058678 /* qb_add_photo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = CABEB66125FA6F66D728AB57 /* qb_add_photo@2x.png */; };
 		DE940CA1A2BA2DD43C20EA2C /* libPods-SeafFileProviderUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */; };
 		E0FED1E93CBE02FB9B335ADB /* libPods-SeafFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3583928919818364B46034EA /* libPods-SeafFileProvider.a */; };
 		E5C6A2114E5D69744EE4E837 /* SeafWikiWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ACB60280293B649179470147 /* SeafWikiWebViewController.m */; };
@@ -765,12 +761,6 @@
 		F5DF74D824FE83DB004CAB1E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = F5DF747824FE83DB004CAB1E /* InfoPlist.strings */; };
 		F5DF74D924FE83DB004CAB1E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = F5DF747824FE83DB004CAB1E /* InfoPlist.strings */; };
 		F5DF74DE24FE83DB004CAB1E /* DownloadingProgress_iPhone.strings in Resources */ = {isa = PBXBuildFile; fileRef = F5DF747A24FE83DB004CAB1E /* DownloadingProgress_iPhone.strings */; };
-		F5DF74E024FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */; };
-		F5DF74E124FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */; };
-		F5DF74E224FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */; };
-		F5DF74E324FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */; };
-		F5DF74E424FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */; };
-		F5DF74E524FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */; };
 		F5DF74E624FE83DB004CAB1E /* share2.png in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748724FE83DB004CAB1E /* share2.png */; };
 		F5DF74E724FE83DB004CAB1E /* share2.png in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748724FE83DB004CAB1E /* share2.png */; };
 		F5DF74E824FE83DB004CAB1E /* share2.png in Resources */ = {isa = PBXBuildFile; fileRef = F5DF748724FE83DB004CAB1E /* share2.png */; };
@@ -1075,7 +1065,6 @@
 		F5DF76D924FE8728004CAB1E /* seafile-appstore-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F5DF76D824FE8728004CAB1E /* seafile-appstore-Info.plist */; };
 		F5E621EF20D16666001EDA7A /* NSError+SeafFileProvierError.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E621EE20D16666001EDA7A /* NSError+SeafFileProvierError.m */; };
 		F5EAAE93218419120068BFE3 /* SeafPrivacyPolicyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5EAAE92218419120068BFE3 /* SeafPrivacyPolicyViewController.m */; };
-		F8DC64882469FFB0C02F99C7 /* qb_add_photo@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 391E3ED98EC6BAF7AAFE0646 /* qb_add_photo@3x.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -1168,7 +1157,6 @@
 		3583928919818364B46034EA /* libPods-SeafFileProvider.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafFileProvider.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		358939F02FEA86EA4E4F0617 /* SeafWebViewBridge.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWebViewBridge.h; sourceTree = "<group>"; };
 		362172CD8635113D89225C86 /* SeafShareBaseListViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafShareBaseListViewController.m; sourceTree = "<group>"; };
-		391E3ED98EC6BAF7AAFE0646 /* qb_add_photo@3x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "qb_add_photo@3x.png"; sourceTree = "<group>"; };
 		43390AE2399E768C3997820A /* SeafSdocProfileEditorViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafSdocProfileEditorViewController.m; sourceTree = "<group>"; };
 		492C6C1B7591DFE8AF317708 /* Pods-SeafShare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafShare.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare.release.xcconfig"; sourceTree = "<group>"; };
 		4A5E88CC22AD3102008146BA /* SeafActivitiesCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActivitiesCell.h; sourceTree = "<group>"; };
@@ -1183,7 +1171,6 @@
 		571ABF511625DF31005C9B08 /* DownloadingProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadingProgressView.h; sourceTree = "<group>"; };
 		571ABF521625DF31005C9B08 /* DownloadingProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = DownloadingProgressView.m; sourceTree = "<group>"; };
 		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		5725186117AE7D000078CD12 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		572B0A7515D16C1C00798C6E /* StartViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StartViewController.h; sourceTree = "<group>"; };
 		572B0A7615D16C1C00798C6E /* StartViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StartViewController.m; sourceTree = "<group>"; };
@@ -1247,7 +1234,6 @@
 		57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafTextEditorViewController.h; sourceTree = "<group>"; };
 		57E5E7B11CC219C8004B7125 /* SeafEventCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafEventCell.m; sourceTree = "<group>"; };
 		57E5E7B21CC219C8004B7125 /* SeafEventCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafEventCell.h; sourceTree = "<group>"; };
-		57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		57F143921B886B96009C1BC8 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		57F476EA1C00623300047395 /* SeafPhotoThumb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhotoThumb.h; sourceTree = "<group>"; };
 		57F476EB1C00623300047395 /* SeafPhotoThumb.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoThumb.m; sourceTree = "<group>"; };
@@ -1278,7 +1264,6 @@
 		6E02F45D400A774F24C9DCD7 /* SeafImagePickerHelper.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafImagePickerHelper.h; sourceTree = "<group>"; };
 		71B308DC2DFEC09F58232B49 /* Pods-SeafFileProviderUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafFileProviderUI.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI.debug.xcconfig"; sourceTree = "<group>"; };
 		7919C0097090FEE2B1354667 /* SeafSafariStyleToolbar.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafSafariStyleToolbar.h; sourceTree = "<group>"; };
-		79C932333EE0D9ED38CB6CBD /* qb_add_photo.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = qb_add_photo.png; sourceTree = "<group>"; };
 		7AE4155C45EE03AE3C5A516F /* SeafGridCell.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafGridCell.m; sourceTree = "<group>"; };
 		7CBFDB38700E047D95A5293D /* SeafSdocProfileEditorViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafSdocProfileEditorViewController.h; sourceTree = "<group>"; };
 		7F320B5A628F92203C751439 /* local-image-nomal@3x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "local-image-nomal@3x.png"; sourceTree = "<group>"; };
@@ -1481,7 +1466,6 @@
 		BAFF000000000000FFFE0003 /* SeafPhotoHeroAnimator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoHeroAnimator.m; sourceTree = "<group>"; };
 		C13ECBB3BA090DCC9DE16F17 /* SeafShareDestinationViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafShareDestinationViewController.m; sourceTree = "<group>"; };
 		C4F1E50C23EF5EA130AE4EA9 /* SeafShareDestCell.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafShareDestCell.h; sourceTree = "<group>"; };
-		CABEB66125FA6F66D728AB57 /* qb_add_photo@2x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "qb_add_photo@2x.png"; sourceTree = "<group>"; };
 		D0B6635DFA56E717BD59C5FC /* SeafShareRecentViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafShareRecentViewController.m; sourceTree = "<group>"; };
 		D337E3A761DBD14989ADC49C /* SeafWikiViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWikiViewController.h; sourceTree = "<group>"; };
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
@@ -1556,7 +1540,6 @@
 		F5DF747F24FE83DB004CAB1E /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F5DF748024FE83DB004CAB1E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F5DF748124FE83DB004CAB1E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = QBImagePickerController.bundle; sourceTree = "<group>"; };
 		F5DF748324FE83DB004CAB1E /* nb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nb; path = nb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F5DF748424FE83DB004CAB1E /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F5DF748524FE83DB004CAB1E /* is */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = is; path = is.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1651,8 +1634,6 @@
 				57814AFA1AA8B55000D1D5D8 /* PhotosUI.framework in Frameworks */,
 				57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */,
 				5725186217AE7D010078CD12 /* Security.framework in Frameworks */,
-				57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */,
-				571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */,
 				571D8CDD1677881400F1A22C /* MessageUI.framework in Frameworks */,
 				571D8CDE1677881400F1A22C /* SystemConfiguration.framework in Frameworks */,
 				571D8CDF1677881400F1A22C /* QuickLook.framework in Frameworks */,
@@ -1960,13 +1941,11 @@
 				57F143921B886B96009C1BC8 /* CoreLocation.framework */,
 				57814AF71AA8B55000D1D5D8 /* Photos.framework */,
 				57814AF91AA8B55000D1D5D8 /* PhotosUI.framework */,
-				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				57DB827715A833FA00097CEC /* CoreData.framework */,
 				57DB827515A833FA00097CEC /* CoreGraphics.framework */,
 				576B9918186142EC00A16ED6 /* CoreText.framework */,
 				57DB827315A833FA00097CEC /* Foundation.framework */,
 				5765533D161D44A2005E5327 /* MessageUI.framework */,
-				571F5147168C80380055D69B /* MobileCoreServices.framework */,
 				57B66EAF15BA513E00C2B41B /* QuartzCore.framework */,
 				576B9EC015DD394600802D07 /* QuickLook.framework */,
 				5725186117AE7D000078CD12 /* Security.framework */,
@@ -2375,7 +2354,6 @@
 				F5DF747624FE83DB004CAB1E /* Localizable.strings */,
 				F5DF747824FE83DB004CAB1E /* InfoPlist.strings */,
 				F5DF747A24FE83DB004CAB1E /* DownloadingProgress_iPhone.strings */,
-				F5DF748224FE83DB004CAB1E /* QBImagePickerController.bundle */,
 				F5DF748624FE83DB004CAB1E /* images */,
 			);
 			path = "Supporting Files";
@@ -2466,9 +2444,6 @@
 				F5DF74BC24FE83DB004CAB1E /* plus2@2x.png */,
 				F5DF74BD24FE83DB004CAB1E /* red.png */,
 				F5DF74BE24FE83DB004CAB1E /* export2@2x.png */,
-				79C932333EE0D9ED38CB6CBD /* qb_add_photo.png */,
-				CABEB66125FA6F66D728AB57 /* qb_add_photo@2x.png */,
-				391E3ED98EC6BAF7AAFE0646 /* qb_add_photo@3x.png */,
 			);
 			path = images;
 			sourceTree = "<group>";
@@ -2890,7 +2865,6 @@
 				F52111A321E1C12000D93BB8 /* SeafCell.xib in Resources */,
 				F521118021E1C12000D93BB8 /* DownloadingProgress_iPad.xib in Resources */,
 				F5DF75D024FE83DB004CAB1E /* tab-message@2x.png in Resources */,
-				F5DF74E024FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				F5DF758824FE83DB004CAB1E /* tab-message.png in Resources */,
 				F5DF758224FE83DB004CAB1E /* tab-home@2x.png in Resources */,
 				BAE666882D83246B0079D4D7 /* action_open.png in Resources */,
@@ -2905,9 +2879,6 @@
 				F5DF753424FE83DB004CAB1E /* group.png in Resources */,
 				F5DF75AC24FE83DB004CAB1E /* refresh2.png in Resources */,
 				4A5E88D022AD3102008146BA /* SeafActivitiesCell.xib in Resources */,
-				7C10A9BE94BBC7A32A1F7789 /* qb_add_photo.png in Resources */,
-				DB4097410DC1643F77058678 /* qb_add_photo@2x.png in Resources */,
-				F8DC64882469FFB0C02F99C7 /* qb_add_photo@3x.png in Resources */,
 				EFF07ACD1DE00B509BC14A22 /* local-image-nomal@2x.png in Resources */,
 				A00F9663183F2D3C5D4A04C4 /* local-image-nomal@3x.png in Resources */,
 			);
@@ -2972,7 +2943,6 @@
 				F5DF751124FE83DB004CAB1E /* arrowmore@3x.png in Resources */,
 				F5DF74FF24FE83DB004CAB1E /* tab-account.png in Resources */,
 				F52111BD21E1C12000D93BB8 /* FailToPreview_iPhone.xib in Resources */,
-				F5DF74E124FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				F5DF757D24FE83DB004CAB1E /* ImageError.png in Resources */,
 				F5DF756B24FE83DB004CAB1E /* ellipsis2@2x.png in Resources */,
 				F5DF757124FE83DB004CAB1E /* checkmask2@2x.png in Resources */,
@@ -3072,7 +3042,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F5DF74E224FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				BA83DEBC2DB5C80F0073EAA8 /* detail_photo_describe.png in Resources */,
 				BA83DEBD2DB5C80F0073EAA8 /* detail_photo_size.png in Resources */,
 				BA83DEBE2DB5C80F0073EAA8 /* detail_photo_user.png in Resources */,
@@ -3281,7 +3250,6 @@
 				F5DF762D24FE83DC004CAB1E /* red.png in Resources */,
 				F5DF751324FE83DB004CAB1E /* arrowmore@3x.png in Resources */,
 				F5DF750124FE83DB004CAB1E /* tab-account.png in Resources */,
-				F5DF74E324FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				F5DF757F24FE83DB004CAB1E /* ImageError.png in Resources */,
 				F5DF756D24FE83DB004CAB1E /* ellipsis2@2x.png in Resources */,
 				F5DF757324FE83DB004CAB1E /* checkmask2@2x.png in Resources */,
@@ -3439,7 +3407,6 @@
 				F5DF761724FE83DC004CAB1E /* more_dot@3x.png in Resources */,
 				BA8AC7F32D8192D800F8DE57 /* ic_checkbox_checked.png in Resources */,
 				BA8AC7F42D8192D800F8DE57 /* ic_checkbox_unchecked.png in Resources */,
-				F5DF74E524FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				F5DF759F24FE83DB004CAB1E /* arrowleft.png in Resources */,
 				F5DF762F24FE83DC004CAB1E /* red.png in Resources */,
 				F5DF762924FE83DC004CAB1E /* plus2@2x.png in Resources */,
@@ -3647,7 +3614,6 @@
 				BA0DB2C22D8831B500237211 /* arrowLeft_black.png in Resources */,
 				F5DF75B624FE83DB004CAB1E /* unstar2@2x.png in Resources */,
 				F52111B121E1C12000D93BB8 /* SeafButtonCell.xib in Resources */,
-				F5DF74E424FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				F5DF75FE24FE83DC004CAB1E /* share2@2x.png in Resources */,
 				F5DF74F024FE83DB004CAB1E /* seafile-logo.png in Resources */,
 				F52111A221E1C12000D93BB8 /* FolderView_iPhone.storyboard in Resources */,
@@ -3857,14 +3823,12 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/MWPhotoBrowser/MWPhotoBrowser.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/QBImagePickerController/QBImagePicker.bundle",
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/MWPhotoBrowser.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/QBImagePicker.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SVProgressHUD.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Seafile.bundle",
 			);
@@ -4249,13 +4213,17 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/Supporting Files/seafile-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"SEAFILE_APP=1",
+				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 4.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
@@ -4285,13 +4253,17 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/Supporting Files/seafile-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"SEAFILE_APP=1",
+				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 4.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
@@ -4324,7 +4296,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -4334,7 +4306,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -4365,14 +4337,14 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -4404,7 +4376,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -4414,7 +4386,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProviderUI/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 4.0.5;
@@ -4447,14 +4419,14 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProviderUI/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 4.0.5;
@@ -4497,7 +4469,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/SeafShare $(SRCROOT)/common/Classes $(SRCROOT)/seafile";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -4535,7 +4507,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/SeafShare $(SRCROOT)/common/Classes $(SRCROOT)/seafile";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -4570,7 +4542,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				COPY_PHASE_STRIP = NO;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -4591,7 +4563,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
@@ -4627,7 +4599,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				COPY_PHASE_STRIP = YES;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -4640,7 +4612,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
@@ -4680,7 +4652,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -4720,7 +4692,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -4755,7 +4727,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				EXCLUDED_ARCHS = "";
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -4766,7 +4738,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafShare/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -4801,7 +4773,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 55LCTZ5354;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				EXCLUDED_ARCHS = "";
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
@@ -4809,7 +4781,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafShare/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 4.0.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -4827,7 +4799,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 55LCTZ5354;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -4848,7 +4820,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 55LCTZ5354;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

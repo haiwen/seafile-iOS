@@ -20,12 +20,13 @@
 #import "SeafImagePickerHelper.h"
 #import "SVProgressHUD.h"
 #import "Constants.h"
+#import "Debug.h"
 #import "SeafNavigationBarStyler.h"
 #import "SeafLoadingView.h"
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <PhotosUI/PhotosUI.h>
-#import <MobileCoreServices/MobileCoreServices.h>
+
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <string.h>
 
@@ -74,7 +75,11 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 // Insert-image (sdoc local image) state
 @property (nonatomic, strong) SeafDocsCommentService *imageService;
 @property (nonatomic, assign) BOOL isUploadingImages;
+/// Items waiting while an upload is already in flight (avoids silent drop).
+@property (nonatomic, strong) NSMutableArray<NSDictionary *> *pendingUploadImageItems;
 @property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
+/// Toolbar button used to anchor ActionSheet / PHPicker / DocumentPicker on iPad.
+@property (nonatomic, weak) UIView *insertImageAnchor;
 
 // Native loading overlay shown while WKWebView loads the SDoc page
 @property (nonatomic, strong) SeafLoadingView *loadingView;
@@ -126,9 +131,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 - (void)setupAppearance
 {
     self.hidesBottomBarWhenPushed = YES;
-    if ([self respondsToSelector:@selector(setEdgesForExtendedLayout:)]) {
-        self.edgesForExtendedLayout = UIRectEdgeNone;
-    }
+    self.edgesForExtendedLayout = UIRectEdgeNone;
     self.view.backgroundColor = [SeafTheme primarySurface];
 }
 
@@ -240,17 +243,11 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     self.webView.navigationDelegate = self;
     self.webView.backgroundColor = [SeafTheme primarySurface];
     self.webView.translatesAutoresizingMaskIntoConstraints = NO;
-    if (@available(iOS 11.0, *)) {
-        self.webView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-    }
+    self.webView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     [self.view addSubview:self.webView];
 
     NSLayoutYAxisAnchor *topAnchor = nil;
-    if (@available(iOS 11.0, *)) {
-        topAnchor = self.view.safeAreaLayoutGuide.topAnchor;
-    } else {
-        topAnchor = self.topLayoutGuide.bottomAnchor;
-    }
+    topAnchor = self.view.safeAreaLayoutGuide.topAnchor;
     NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithArray:@[
         [self.webView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.webView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
@@ -311,11 +308,9 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 - (UIImage *)symbolImageNamed:(NSString *)name fallback:(UIImage *)fallback
 {
-    if (@available(iOS 13.0, *)) {
-        UIImageSymbolConfiguration *cfg = [UIImageSymbolConfiguration configurationWithPointSize:16 weight:UIImageSymbolWeightRegular];
-        UIImage *img = [UIImage systemImageNamed:name withConfiguration:cfg];
-        if (img) return img;
-    }
+    UIImageSymbolConfiguration *cfg = [UIImageSymbolConfiguration configurationWithPointSize:16 weight:UIImageSymbolWeightRegular];
+    UIImage *img = [UIImage systemImageNamed:name withConfiguration:cfg];
+    if (img) return img;
     return fallback;
 }
 
@@ -476,6 +471,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 - (void)presentInsertImageActionSheetFromAnchor:(UIView *)anchor
 {
     [self.view endEditing:YES];
+    self.insertImageAnchor = anchor;
 
     UIAlertController *sheet = [UIAlertController
         alertControllerWithTitle:nil
@@ -546,7 +542,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     if (![UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) return;
     UIImagePickerController *picker = [UIImagePickerController new];
     picker.sourceType = UIImagePickerControllerSourceTypeCamera;
-    picker.mediaTypes = @[(NSString *)kUTTypeImage];
+    picker.mediaTypes = @[UTTypeImage.identifier];
     picker.delegate = self;
     picker.modalPresentationStyle = UIModalPresentationFullScreen;
     [self presentViewController:picker animated:YES completion:nil];
@@ -558,32 +554,35 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
         _imagePickerHelper = [[SeafImagePickerHelper alloc] init];
         _imagePickerHelper.delegate = self;
         _imagePickerHelper.allowsMultipleSelection = YES;
-        _imagePickerHelper.mediaType = QBImagePickerMediaTypeImage;
+        _imagePickerHelper.mediaType = SeafImagePickerMediaTypeImage;
         _imagePickerHelper.maximumNumberOfSelection = 20;
     }
-    [_imagePickerHelper presentFromViewController:self barButtonItem:nil sourceView:nil];
+    [_imagePickerHelper presentFromViewController:self
+                                   barButtonItem:nil
+                                      sourceView:self.insertImageAnchor];
 }
 
 - (void)presentDocumentPicker
 {
-    UIDocumentPickerViewController *picker;
-    if (@available(iOS 14.0, *)) {
-        picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeImage]
-                                                                          asCopy:YES];
-    } else {
-        picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[(NSString *)kUTTypeImage]
-                                                                           inMode:UIDocumentPickerModeImport];
-    }
+    UIDocumentPickerViewController *picker =
+        [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeImage] asCopy:YES];
     picker.allowsMultipleSelection = YES;
     picker.delegate = self;
+    if (IsIpad()) {
+        picker.modalPresentationStyle = UIModalPresentationPopover;
+        UIView *anchor = self.insertImageAnchor ?: self.view;
+        picker.popoverPresentationController.sourceView = anchor;
+        picker.popoverPresentationController.sourceRect = anchor.bounds;
+        picker.popoverPresentationController.permittedArrowDirections =
+            UIPopoverArrowDirectionDown | UIPopoverArrowDirectionUp;
+    }
     [self presentViewController:picker animated:YES completion:nil];
 }
 
 #pragma mark - SeafImagePickerHelperDelegate
 
 /// Shared image data processing: extract filename, transcode HEIC→JPEG, determine MIME,
-/// and append the result to the shared `items` array. Called from both iOS 13+ and pre-iOS 13
-/// PHImageManager callbacks to eliminate code duplication.
+/// and append the result to the shared `items` array.
 - (void)processImageData:(NSData *)imageData
                  dataUTI:(NSString *)dataUTI
                    asset:(PHAsset *)asset
@@ -645,11 +644,27 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     dispatch_group_leave(group);
 }
 
-- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingAssets:(NSArray<PHAsset *> *)assets
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper
+    didFinishPickingAssets:(NSArray<PHAsset *> *)assets
+                  fileURLs:(NSArray<NSURL *> *)fileURLs
 {
-    if (assets.count == 0) return;
+    if (assets.count == 0 && fileURLs.count == 0) return;
 
-    NSMutableArray<NSDictionary *> *items = [NSMutableArray array];
+    // Materialize provider files first (kept in selection/completion order from helper).
+    // Asset reads are async; merge both into a single upload so neither batch is dropped
+    // by isUploadingImages.
+    NSArray<NSDictionary *> *fileItems = [self imageItemsFromFileURLs:fileURLs];
+
+    if (assets.count == 0) {
+        if (fileItems.count == 0) {
+            [self showToast:NSLocalizedString(@"Failed to read image", @"Seafile")];
+            return;
+        }
+        [self uploadAndInsertImagesWithItems:fileItems];
+        return;
+    }
+
+    NSMutableArray<NSDictionary *> *assetItems = [NSMutableArray array];
     NSObject *lock = [NSObject new];
     dispatch_group_t group = dispatch_group_create();
     NSUInteger order = 0;
@@ -661,36 +676,66 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     for (PHAsset *asset in assets) {
         NSUInteger idx = order++;
         dispatch_group_enter(group);
-        if (@available(iOS 13.0, *)) {
-            [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation __unused orientation, NSDictionary * _Nullable info) {
-                [self processImageData:imageData dataUTI:dataUTI asset:asset index:idx lock:lock items:items group:group];
-            }];
-        } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [[PHImageManager defaultManager] requestImageDataForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation __unused orientation, NSDictionary * _Nullable info) {
-                [self processImageData:imageData dataUTI:dataUTI asset:asset index:idx lock:lock items:items group:group];
-            }];
-#pragma clang diagnostic pop
-        }
+        [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation __unused orientation, NSDictionary * _Nullable info) {
+            [self processImageData:imageData dataUTI:dataUTI asset:asset index:idx lock:lock items:assetItems group:group];
+        }];
     }
 
+    __weak typeof(self) weakSelf = self;
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
-        NSArray *sorted = [items sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+
+        NSArray *sorted = [assetItems sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
             return [a[@"_order"] compare:b[@"_order"]];
         }];
-        NSMutableArray *clean = [NSMutableArray arrayWithCapacity:sorted.count];
+        NSMutableArray *merged = [NSMutableArray arrayWithCapacity:sorted.count + fileItems.count];
         for (NSDictionary *d in sorted) {
             NSMutableDictionary *m = [d mutableCopy];
             [m removeObjectForKey:@"_order"];
-            [clean addObject:m.copy];
+            [merged addObject:m.copy];
         }
-        if (clean.count == 0) {
-            [self showToast:NSLocalizedString(@"Failed to read image", nil)];
+        if (fileItems.count > 0) {
+            [merged addObjectsFromArray:fileItems];
+        }
+        if (merged.count == 0) {
+            [strongSelf showToast:NSLocalizedString(@"Failed to read image", @"Seafile")];
             return;
         }
-        [self uploadAndInsertImagesWithItems:clean];
+        [strongSelf uploadAndInsertImagesWithItems:merged];
     });
+}
+
+- (NSArray<NSDictionary *> *)imageItemsFromFileURLs:(NSArray<NSURL *> *)fileURLs
+{
+    if (fileURLs.count == 0) return @[];
+
+    NSMutableArray<NSDictionary *> *items = [NSMutableArray arrayWithCapacity:fileURLs.count];
+    for (NSURL *url in fileURLs) {
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        if (data.length == 0) continue;
+        NSString *fileName = url.lastPathComponent ?: [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
+        NSString *mime = [self mimeTypeForURL:url] ?: @"image/jpeg";
+        NSData *payload = data;
+        if ([self isHEICMime:mime] || [fileName.pathExtension.lowercaseString hasPrefix:@"heic"] || [fileName.pathExtension.lowercaseString hasPrefix:@"heif"]) {
+            UIImage *img = [UIImage imageWithData:data];
+            NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
+            if (jpeg.length > 0) {
+                payload = jpeg;
+                mime = @"image/jpeg";
+                fileName = [[fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+            }
+        }
+        [items addObject:@{ @"data": payload,
+                             @"fileName": fileName,
+                             @"mime": mime }];
+    }
+    return items.copy;
+}
+
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFailWithMessage:(NSString *)message
+{
+    [self showToast:message.length ? message : NSLocalizedString(@"Failed to load selected photos", @"Seafile")];
 }
 
 #pragma mark - Camera picker delegates (UIImagePickerController)
@@ -777,7 +822,13 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 - (void)uploadAndInsertImagesWithItems:(NSArray<NSDictionary *> *)items
 {
     if (items.count == 0) return;
-    if (self.isUploadingImages) return;
+    if (self.isUploadingImages) {
+        if (!self.pendingUploadImageItems) {
+            self.pendingUploadImageItems = [NSMutableArray array];
+        }
+        [self.pendingUploadImageItems addObjectsFromArray:items];
+        return;
+    }
     if (!self.pageOptions || ![self.pageOptions canUse]) {
         [self showToast:NSLocalizedString(@"Server error, please refresh", nil)];
         return;
@@ -802,20 +853,26 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
         if (relativePaths.count == 0) {
             [sself showToast:NSLocalizedString(@"Upload failed", nil)];
-            return;
+        } else {
+            NSMutableArray<NSDictionary *> *imageNodes = [NSMutableArray arrayWithCapacity:relativePaths.count];
+            for (NSString *p in relativePaths) {
+                if (p.length > 0) [imageNodes addObject:@{ @"src": p }];
+            }
+            if (imageNodes.count == 0) {
+                [sself showToast:NSLocalizedString(@"Upload failed", nil)];
+            } else {
+                [sself triggerJsSdocEditorMenuWithType:@"local-image" images:imageNodes.copy];
+                if (failedCount > 0) {
+                    NSString *fmt = NSLocalizedString(@"%lu image(s) failed to upload", nil);
+                    [sself showToast:[NSString stringWithFormat:fmt, (unsigned long)failedCount]];
+                }
+            }
         }
-        NSMutableArray<NSDictionary *> *imageNodes = [NSMutableArray arrayWithCapacity:relativePaths.count];
-        for (NSString *p in relativePaths) {
-            if (p.length > 0) [imageNodes addObject:@{ @"src": p }];
-        }
-        if (imageNodes.count == 0) {
-            [sself showToast:NSLocalizedString(@"Upload failed", nil)];
-            return;
-        }
-        [sself triggerJsSdocEditorMenuWithType:@"local-image" images:imageNodes.copy];
-        if (failedCount > 0) {
-            NSString *fmt = NSLocalizedString(@"%lu image(s) failed to upload", nil);
-            [sself showToast:[NSString stringWithFormat:fmt, (unsigned long)failedCount]];
+
+        NSArray *pending = sself.pendingUploadImageItems.copy;
+        [sself.pendingUploadImageItems removeAllObjects];
+        if (pending.count > 0) {
+            [sself uploadAndInsertImagesWithItems:pending];
         }
     }];
 }
@@ -927,7 +984,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 {
     if (!vc) return;
     // On iPad, present outline as a popover anchored to the outline button for better UX
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+    if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         vc.modalPresentationStyle = UIModalPresentationPopover;
         UIPopoverPresentationController *popover = vc.popoverPresentationController;
         UIView *sourceView = self.btnOutline ?: self.bottomBar ?: self.view;
@@ -1077,9 +1134,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     [super viewDidLayoutSubviews];
     if (!self.webView) return;
     UIEdgeInsets contentInset = UIEdgeInsetsZero;
-    if (@available(iOS 11.0, *)) {
-        [self refreshBottomBarHeight];
-    }
+    [self refreshBottomBarHeight];
     self.webView.scrollView.contentInset = contentInset;
     self.webView.scrollView.scrollIndicatorInsets = contentInset;
 }
@@ -1132,16 +1187,14 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     NSString *clearHost = [[NSUserDefaults standardUserDefaults] objectForKey:@"SEAF_COOKIE_CLEAR_HOST"];
     NSString *currentHost = [NSURL URLWithString:_file.connection.address].host;
     if (clearHost.length > 0 && currentHost.length > 0 && [clearHost isEqualToString:currentHost]) {
-        if (@available(iOS 11.0, *)) {
-            WKHTTPCookieStore *store = WKWebsiteDataStore.defaultDataStore.httpCookieStore;
-            [store getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
-                for (NSHTTPCookie *c in cookies) {
-                    if ([c.domain containsString:currentHost]) {
-                        [store deleteCookie:c completionHandler:nil];
-                    }
+        WKHTTPCookieStore *store = WKWebsiteDataStore.defaultDataStore.httpCookieStore;
+        [store getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
+            for (NSHTTPCookie *c in cookies) {
+                if ([c.domain containsString:currentHost]) {
+                    [store deleteCookie:c completionHandler:nil];
                 }
-            }];
-        }
+            }
+        }];
         NSHTTPCookieStorage *cookieStorage = NSHTTPCookieStorage.sharedHTTPCookieStorage;
         for (NSHTTPCookie *each in cookieStorage.cookies) {
             if ([each.domain containsString:currentHost]) {
@@ -1345,7 +1398,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
             if ([payload isKindOfClass:[NSString class]]) [self showToast:(NSString *)payload];
         } else if ([action isEqualToString:@"page.finish"]) {
         } else if ([action isEqualToString:@"page.status.height.get"]) {
-            CGFloat h = UIApplication.sharedApplication.statusBarFrame.size.height;
+            CGFloat h = [SeafAppDelegate statusBarHeight];
             [self sendBridgeCallback:[@(h) stringValue] forCallbackId:callbackId];
         } else if ([action isEqualToString:@"sdoc.editor.content.select"]) {
             // Handle selection change
@@ -1474,19 +1527,12 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 - (CGFloat)currentSafeAreaBottomInset
 {
-    if (@available(iOS 11.0, *)) {
-        return self.view.safeAreaInsets.bottom;
-    }
-    return 0;
+    return self.view.safeAreaInsets.bottom;
 }
 
 - (NSLayoutYAxisAnchor *)contentBottomAnchor
 {
-    if (@available(iOS 11.0, *)) {
-        return self.view.safeAreaLayoutGuide.bottomAnchor;
-    } else {
-        return self.bottomLayoutGuide.topAnchor;
-    }
+    return self.view.safeAreaLayoutGuide.bottomAnchor;
 }
 
 - (void)applyKeyboardHeight:(CGFloat)keyboardHeight duration:(NSTimeInterval)duration curve:(UIViewAnimationCurve)curve

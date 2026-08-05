@@ -15,11 +15,6 @@
 
 #define kPrimaryBackgroundColor [SeafTheme primaryBackgroundColor]
 
-#define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)
-#define ios8 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8)
-#define ios9 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 9)
-#define ios10 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 10)
-
 #define HEADER_HEIGHT    24
 
 #define BAR_COLOR        [SeafTheme barColor]
@@ -52,35 +47,12 @@
     blue:((float)(rgbValue & 0xFF))/255.0 \
     alpha:1.0]
 
-// ── iOS 13+ Dynamic Color Compatibility ──────────────────────────────────────
-// Uses a proper if (@available) guard that Clang recognises, avoiding
-// -Wunguarded-availability-new warnings from the ternary @available pattern.
+// ── Dynamic system colors ────────────────────────────────────────────────────
 
-NS_INLINE UIColor * _Nonnull SeafDynamicColor(SEL dynamicSel, UIColor * _Nonnull fallback) {
-    if (@available(iOS 13.0, *)) {
-        UIColor *color = ((UIColor *(*)(id, SEL))[UIColor methodForSelector:dynamicSel])(UIColor.class, dynamicSel);
-        if (color) return color;
-    }
-    return fallback;
-}
-
-#define SeafColor_SystemBackground \
-    SeafDynamicColor(@selector(systemBackgroundColor), [UIColor whiteColor])
-
-#define SeafColor_SecondarySystemBackground \
-    SeafDynamicColor(@selector(secondarySystemBackgroundColor), [UIColor colorWithWhite:0.95 alpha:1])
-
-#define SeafColor_Label \
-    SeafDynamicColor(@selector(labelColor), [UIColor blackColor])
-
-#define SeafColor_SecondaryLabel \
-    SeafDynamicColor(@selector(secondaryLabelColor), [UIColor grayColor])
-
-#define SeafColor_TertiaryLabel \
-    SeafDynamicColor(@selector(tertiaryLabelColor), [UIColor lightGrayColor])
-
-#define SeafColor_Separator \
-    SeafDynamicColor(@selector(separatorColor), [UIColor lightGrayColor])
-
-#define SeafColor_SystemGray \
-    SeafDynamicColor(@selector(systemGrayColor), [UIColor grayColor])
+#define SeafColor_SystemBackground          [UIColor systemBackgroundColor]
+#define SeafColor_SecondarySystemBackground [UIColor secondarySystemBackgroundColor]
+#define SeafColor_Label                     [UIColor labelColor]
+#define SeafColor_SecondaryLabel            [UIColor secondaryLabelColor]
+#define SeafColor_TertiaryLabel             [UIColor tertiaryLabelColor]
+#define SeafColor_Separator                 [UIColor separatorColor]
+#define SeafColor_SystemGray                [UIColor systemGrayColor]

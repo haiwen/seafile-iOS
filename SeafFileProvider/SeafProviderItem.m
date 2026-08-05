@@ -5,7 +5,7 @@
 //  Created by Wei W on 11/5/17.
 //  Copyright © 2017 Seafile. All rights reserved.
 //
-#import <MobileCoreServices/MobileCoreServices.h>
+
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "SeafProviderItem.h"
 #import "SeafGlobal.h"
@@ -57,7 +57,7 @@
 - (NSString *)typeIdentifier
 {
     if (!_item.filename) {
-        return (NSString *)kUTTypeFolder;
+        return UTTypeFolder.identifier;
     }
     static NSDictionary *extensionTypes = nil;
     static dispatch_once_t onceToken;
@@ -70,7 +70,7 @@
     
     //If there is no extension, return generic data type
     if (extension.length == 0) {
-        return (NSString *)kUTTypeData;
+        return UTTypeData.identifier;
     }
     
     // Lookup predefined type
@@ -80,18 +80,15 @@
     }
     
     //Try system UTI recognition
-    NSString *uti = (NSString *)CFBridgingRelease(UTTypeCreatePreferredIdentifierForTag(
-        kUTTagClassFilenameExtension,
-        (__bridge CFStringRef)extension,
-        NULL
-    ));
+    UTType *uttype = [UTType typeWithFilenameExtension:extension];
+    NSString *uti = uttype.identifier;
     
     if (uti && ![uti hasPrefix:@"dyn."]) {
         return uti;
     }
     
     //If all else fails, return generic data type
-    return (NSString *)kUTTypeData;
+    return UTTypeData.identifier;
 }
 
 - (NSFileProviderItemCapabilities)capabilities

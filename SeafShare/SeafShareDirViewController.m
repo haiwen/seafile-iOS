@@ -62,8 +62,7 @@
     
     [SeafTheme applyPreferenceToViewController:self];
     
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.edgesForExtendedLayout = UIRectEdgeAll;
     
     // All lists use plain style so section headers stick to the top while scrolling.
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
@@ -177,8 +176,7 @@
 - (void)updateCardCornerMask {
     if (![self isFileListCardMode]) return;
     UITableView *tv = self.tableView;
-    CGFloat top = 0.0;
-    if (@available(iOS 11.0, *)) top = tv.adjustedContentInset.top;
+    CGFloat top = tv.adjustedContentInset.top;
     CGFloat x = SEAF_CARD_HORIZONTAL_PADDING;
     CGFloat w = tv.bounds.size.width - 2 * SEAF_CARD_HORIZONTAL_PADDING;
     CGFloat y = tv.contentOffset.y + top;
@@ -190,7 +188,7 @@
         CALayer *mask = [CALayer layer];
         mask.backgroundColor = [UIColor blackColor].CGColor;
         mask.cornerRadius = SEAF_CELL_CORNER;
-        if (@available(iOS 13.0, *)) mask.cornerCurve = kCACornerCurveContinuous;
+        mask.cornerCurve = kCACornerCurveContinuous;
         self.cardCornerMaskLayer = mask;
         self.tableView.layer.mask = mask;
         self.tableView.showsHorizontalScrollIndicator = NO;
@@ -588,7 +586,7 @@
 
 - (UIActivityIndicatorView *)loadingView {
     if (!_loadingView) {
-        _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
         _loadingView.color = [SeafTheme primaryText];
         _loadingView.hidesWhenStopped = YES;
     }
@@ -603,19 +601,17 @@
 }
 
 - (void)updateTableInsets {
-    if (@available(iOS 11.0, *)) {
-        CGFloat bottomInset = self.view.safeAreaInsets.bottom;
-        UIEdgeInsets inset = self.tableView.contentInset;
-        inset.bottom = bottomInset;
-        self.tableView.contentInset = inset;
-        // In card mode the table is clipped to a rounded rect inset by
-        // SEAF_CARD_HORIZONTAL_PADDING, so pull the scroll indicator in to keep it visible.
-        UIEdgeInsets indicatorInset = inset;
-        if ([self isFileListCardMode]) {
-            indicatorInset.right = SEAF_CARD_HORIZONTAL_PADDING;
-        }
-        self.tableView.scrollIndicatorInsets = indicatorInset;
+    CGFloat bottomInset = self.view.safeAreaInsets.bottom;
+    UIEdgeInsets inset = self.tableView.contentInset;
+    inset.bottom = bottomInset;
+    self.tableView.contentInset = inset;
+    // In card mode the table is clipped to a rounded rect inset by
+    // SEAF_CARD_HORIZONTAL_PADDING, so pull the scroll indicator in to keep it visible.
+    UIEdgeInsets indicatorInset = inset;
+    if ([self isFileListCardMode]) {
+        indicatorInset.right = SEAF_CARD_HORIZONTAL_PADDING;
     }
+    self.tableView.scrollIndicatorInsets = indicatorInset;
 }
 
 #pragma mark - Navigation helpers implementation

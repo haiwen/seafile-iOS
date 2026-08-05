@@ -57,7 +57,6 @@
 #import "SeafPhotoGalleryViewController.h"
 #import "SeafGridCell.h"
 #import "SeafFileViewType.h"
-#import <MobileCoreServices/MobileCoreServices.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <AVKit/AVKit.h>
 #import <AVFoundation/AVFoundation.h>
@@ -234,8 +233,7 @@ enum {
     longPress.minimumPressDuration = 0.5; // Set duration to 0.5 seconds
     [self.tableView addGestureRecognizer:longPress];
     
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.edgesForExtendedLayout = UIRectEdgeAll;
 
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
@@ -276,10 +274,8 @@ enum {
     self.selectionCoordinator = [[SeafSelectionActionCoordinator alloc] initWithHostViewController:self];
 
     // Configure view controller for status bar appearance during search
-    if (@available(iOS 13.0, *)) {
-        // This ensures status bar uses proper background during search
-        self.modalPresentationCapturesStatusBarAppearance = YES;
-    }
+    // This ensures status bar uses proper background during search
+    self.modalPresentationCapturesStatusBarAppearance = YES;
 
     UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
     self.tableView.refreshControl = refreshControl;
@@ -458,51 +454,11 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     return [[UIBarButtonItem alloc] initWithCustomView:btn];
 }
 
-/// SF Symbols require iOS 13, and there is no bundled list/grid asset, so draw an
-/// equivalent template glyph for older systems instead of dropping the toggle.
-- (UIImage *)viewModeFallbackGlyphShowingGrid:(BOOL)showGrid {
-    CGSize size = CGSizeMake(kNavBarViewModeGlyphSize, kNavBarViewModeGlyphSize);
-    UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
-    format.scale = [UIScreen mainScreen].scale;
-    format.opaque = NO;
-    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
-    UIImage *glyph = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
-        [[UIColor blackColor] setFill];
-        if (showGrid) {
-            const CGFloat gap = 3.0;
-            CGFloat side = (size.width - gap) / 2.0;
-            for (NSInteger row = 0; row < 2; row++) {
-                for (NSInteger col = 0; col < 2; col++) {
-                    CGRect rect = CGRectMake(col * (side + gap), row * (side + gap), side, side);
-                    [[UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:1.5] fill];
-                }
-            }
-        } else {
-            const CGFloat barHeight = 2.5;
-            const CGFloat bulletWidth = 2.5;
-            const CGFloat bulletSpacing = 2.0;
-            CGFloat rowGap = (size.height - barHeight * 3) / 2.0;
-            CGFloat lineX = bulletWidth + bulletSpacing;
-            for (NSInteger row = 0; row < 3; row++) {
-                CGFloat y = row * (barHeight + rowGap);
-                [[UIBezierPath bezierPathWithRect:CGRectMake(0, y, bulletWidth, barHeight)] fill];
-                CGRect line = CGRectMake(lineX, y, size.width - lineX, barHeight);
-                [[UIBezierPath bezierPathWithRoundedRect:line cornerRadius:barHeight / 2.0] fill];
-            }
-        }
-    }];
-    return [glyph imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-}
-
 - (UIImage *)viewModeBarButtonSymbol {
-    BOOL showGrid = !self.gridModeEnabled;
-    if (@available(iOS 13.0, *)) {
-        NSString *name = showGrid ? @"square.grid.2x2" : @"list.bullet";
-        UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:kNavBarViewModeGlyphSize
-                                                                                              weight:UIImageSymbolWeightRegular];
-        return [UIImage systemImageNamed:name withConfiguration:config];
-    }
-    return [self viewModeFallbackGlyphShowingGrid:showGrid];
+    NSString *name = self.gridModeEnabled ? @"list.bullet" : @"square.grid.2x2";
+    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:kNavBarViewModeGlyphSize
+                                                                                          weight:UIImageSymbolWeightRegular];
+    return [UIImage systemImageNamed:name withConfiguration:config];
 }
 
 - (UIBarButtonItem *)makeViewModeBarButtonItem {
@@ -695,6 +651,11 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         self.doneItem = customBarItem;
         // Equal 44pt hit targets + equal glyph size; no FixedSpace so inter-item gaps stay uniform.
         self.editItem = [self makeNavBarIconItemWithImageName:@"more" action:@selector(editSheet:)];
+        if ([self.editItem.customView isKindOfClass:[UIButton class]]) {
+            UIButton *moreBtn = (UIButton *)self.editItem.customView;
+            moreBtn.accessibilityIdentifier = @"directory_more_button";
+            moreBtn.accessibilityLabel = NSLocalizedString(@"More", @"Seafile");
+        }
 
         // Determine whether to show search button based on server type and current level
         SeafConnection *conn = directory.connection;
@@ -777,7 +738,10 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         [ufile iconWithCompletion:^(UIImage *image) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 SeafGridCell *strongCell = weakCell;
-                if (strongCell && [strongCell.cellIndexPath isEqual:indexPath] && image) {
+                // Match on the upload entry, not just the index path: an upload
+                // finishing or the directory re-sorting can leave the same index
+                // path showing a different file by the time this lands.
+                if (strongCell && strongCell.cellUploadFile == ufile && image) {
                     BOOL media = ufile.isImageFile || ufile.isVideoFile;
                     [strongCell setThumbnailImage:image mediaPreview:media];
                 }
@@ -1397,7 +1361,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 - (void)showLoadingView
 {
     // Get the key window for proper centering in the entire screen
-    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *keyWindow = [SeafAppDelegate activeWindow];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         // Only show loading view if still in loading state
         if (self.state == STATE_LOADING) {
@@ -1785,9 +1749,13 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     for (SeafBase * entry in items) {
         if ([entry isKindOfClass:[SeafDir class]] || [entry isKindOfClass:[SeafUploadFile class]]) {
             [self updateToolButton:ToolButtonShare enabled:NO];
-            break;
+            return;
         }
     }
+    // Deselecting the folder (or dropping back under the limit) makes the
+    // remaining selection shareable again, so re-enable rather than only ever
+    // disabling.
+    [self updateToolButton:ToolButtonShare enabled:YES];
 }
 
 // Present actions for directory (Create new folder/file/library):
@@ -1992,7 +1960,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         _imagePickerHelper = [[SeafImagePickerHelper alloc] init];
         _imagePickerHelper.delegate = self;
         _imagePickerHelper.allowsMultipleSelection = YES;
-        _imagePickerHelper.mediaType = QBImagePickerMediaTypeAny;
+        _imagePickerHelper.mediaType = SeafImagePickerMediaTypeAny;
     }
     return _imagePickerHelper;
 }
@@ -2014,7 +1982,6 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 - (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingAssets:(NSArray<PHAsset *> *)assets {
     if (assets.count == 0) return;
     NSSet *nameSet = [self getExistedNameSet];
-    NSMutableArray *identifiers = [[NSMutableArray alloc] init];
     int duplicated = 0;
     // ============ Live Photo / Motion Photo upload setting ============
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
@@ -2026,22 +1993,35 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
             NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             if ([nameSet containsObject:uploadName])
                 duplicated++;
-            [identifiers addObject:photoAsset.localIdentifier];
-        } else
+        } else {
             Warning("Failed to get asset url %@", asset);
+        }
     }
     if (duplicated > 0) {
         NSString *title = duplicated == 1 ? STR_12 : STR_13;
         @weakify(self);
         [self alertWithTitle:title message:nil yes:^{
             @strongify(self);
-            [self uploadPickedAssetsIdentifier:identifiers overwrite:true];
+            [self uploadPickedAssets:assets overwrite:YES];
         } no:^{
             @strongify(self);
-            [self uploadPickedAssetsIdentifier:identifiers overwrite:false];
+            [self uploadPickedAssets:assets overwrite:NO];
         }];
-    } else
-        [self uploadPickedAssetsIdentifier:identifiers overwrite:false];
+    } else {
+        [self uploadPickedAssets:assets overwrite:NO];
+    }
+}
+
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFinishPickingFileURLs:(NSArray<NSURL *> *)fileURLs {
+    if (fileURLs.count == 0) return;
+    [self uploadFilesAtURLs:fileURLs];
+}
+
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFailWithMessage:(NSString *)message {
+    if (message.length == 0) {
+        message = NSLocalizedString(@"Failed to load selected photos", @"Seafile");
+    }
+    [self alertWithTitle:message];
 }
 
 - (NSMutableSet *)getExistedNameSet
@@ -2054,7 +2034,9 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         } else if ([obj isKindOfClass:[SeafBase class]]) {
             name = ((SeafBase *)obj).name;
         }
-        [nameSet addObject:name];
+        if (name) {
+            [nameSet addObject:name];
+        }
     }
     return nameSet;
 }
@@ -2070,8 +2052,8 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     return [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
 }
 
-- (void)uploadPickedAssetsIdentifier:(NSArray *)identifiers overwrite:(BOOL)overwrite {
-    if (identifiers.count == 0) return;
+- (void)uploadPickedAssets:(NSArray<PHAsset *> *)assets overwrite:(BOOL)overwrite {
+    if (assets.count == 0) return;
     
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *uploadDir = [self.connection uniqueUploadDir];
@@ -2080,13 +2062,16 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
     BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
 
+    // Build SeafPhotoAsset for each PHAsset once (avoid repeated creation).
+    NSMutableArray<SeafPhotoAsset *> *photoAssets = [NSMutableArray arrayWithCapacity:assets.count];
+    for (PHAsset *asset in assets) {
+        [photoAssets addObject:[[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO]];
+    }
+
     if (overwrite) {
         NSMutableArray *newItems = [self.directory.items mutableCopy];
         NSMutableSet *uploadingFilenames = [NSMutableSet set];
-        for (NSString *localIdentifier in identifiers) {
-            PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
-            PHAsset *asset = [result firstObject];
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
+        for (SeafPhotoAsset *photoAsset in photoAssets) {
             // Get upload filename based on Live Photo and JPG format settings
             NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             if (uploadName) {
@@ -2110,10 +2095,9 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         }
     }
     
-    for (NSString *localIdentifier in identifiers) {
-        PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
-        PHAsset *asset = [result firstObject];
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
+    for (NSUInteger i = 0; i < assets.count; i++) {
+        PHAsset *asset = assets[i];
+        SeafPhotoAsset *photoAsset = photoAssets[i];
         
         // Get upload filename based on Live Photo and JPG format settings
         NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
@@ -2520,13 +2504,8 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
 #pragma mark - File Picker
 - (void)selectFileToUpload {
-    UIDocumentPickerViewController *documentPicker;
-    if (@available(iOS 14.0, *)) {
-        UTType *type = [UTType typeWithIdentifier:@"public.item"];
-        documentPicker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[type] asCopy:YES];
-    } else {
-        documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[(NSString *)kUTTypeItem] inMode:UIDocumentPickerModeImport];
-    }
+    UIDocumentPickerViewController *documentPicker =
+        [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeItem] asCopy:YES];
     documentPicker.delegate = self;
     documentPicker.allowsMultipleSelection = YES;
     [self presentViewController:documentPicker animated:YES completion:nil];
@@ -3026,9 +3005,15 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         // re-enqueue downloads and falls back to a type icon unsuitable for media layout.
         UIImage *thumb = entry.thumb;
         if ([cell isKindOfClass:[SeafGridCell class]]) {
+            SeafGridCell *gridCell = (SeafGridCell *)cell;
+            // Match upload-thumb path: directory reload/reuse can leave the same
+            // index path showing a different file by the time this lands.
+            if (gridCell.cellSeafFile != entry) {
+                return;
+            }
             if (thumb) {
                 BOOL media = entry.isImageFile || entry.isVideoFile;
-                [(SeafGridCell *)cell setThumbnailImage:thumb mediaPreview:media];
+                [gridCell setThumbnailImage:thumb mediaPreview:media];
             } else {
                 NSIndexPath *ip = path ?: [self indexPathForFileByIdentity:entry];
                 if (ip) {
@@ -3038,8 +3023,12 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
             return;
         }
         if ([cell isKindOfClass:[SeafCell class]]) {
+            SeafCell *listCell = (SeafCell *)cell;
+            if (listCell.cellSeafFile != entry) {
+                return;
+            }
             if (thumb) {
-                ((SeafCell *)cell).imageView.image = thumb;
+                listCell.imageView.image = thumb;
             } else {
                 NSIndexPath *ip = path ?: [self indexPathForFileByIdentity:entry];
                 if (ip) {
@@ -3614,25 +3603,16 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
         // Apply a 38px leading margin to the UISearchBar to indent its content (the searchTextField)
         // This makes space for our custom back button (30px width) and its 8px leading offset.
-        if (@available(iOS 11.0, *)) {
-            _searchController.searchBar.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 42, 0, 0);
-        } else {
-            // Fallback for older iOS versions if needed, though UISearchController is iOS 8+
-            _searchController.searchBar.layoutMargins = UIEdgeInsetsMake(0, 42, 0, 0);
-        }
+        _searchController.searchBar.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 42, 0, 0);
         
         // Configure search bar appearance like system search.
         // Light mode restores the pre-dark-theme look; dark mode keeps the system color.
         UIColor *searchBarBg;
-        if (@available(iOS 13.0, *)) {
-            searchBarBg = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull tc) {
-                return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-                    ? [UIColor secondarySystemBackgroundColor]
-                    : [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
-            }];
-        } else {
-            searchBarBg = [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
-        }
+        searchBarBg = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull tc) {
+            return tc.userInterfaceStyle == UIUserInterfaceStyleDark
+                ? [UIColor secondarySystemBackgroundColor]
+                : [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
+        }];
         _searchController.searchBar.barTintColor = searchBarBg;
         _searchController.searchBar.backgroundColor = searchBarBg;
         
@@ -3644,52 +3624,45 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         _searchController.searchBar.tintColor = BAR_COLOR;
         
         // Set placeholder text style and color
-        if (@available(iOS 13.0, *)) {
-            UITextField *searchField = _searchController.searchBar.searchTextField;
-            searchField.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
-            // The default rounded border adds a system fill overlay that tints our color
-            // (white renders as gray). Drop it and restore the pill shape manually so the
-            // background color takes effect.
-            searchField.borderStyle = UITextBorderStyleNone;
-            searchField.layer.cornerRadius = 10.0;
-            searchField.clipsToBounds = YES;
-            // Light mode restores the pre-dark-theme white field; dark mode keeps the system color.
-            searchField.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull tc) {
-                return tc.userInterfaceStyle == UIUserInterfaceStyleDark
-                    ? [UIColor tertiarySystemGroupedBackgroundColor]
-                    : [UIColor whiteColor];
-            }];
+        UITextField *searchField = _searchController.searchBar.searchTextField;
+        searchField.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
+        // The default rounded border adds a system fill overlay that tints our color
+        // (white renders as gray). Drop it and restore the pill shape manually so the
+        // background color takes effect.
+        searchField.borderStyle = UITextBorderStyleNone;
+        searchField.layer.cornerRadius = 10.0;
+        searchField.clipsToBounds = YES;
+        // Light mode restores the pre-dark-theme white field; dark mode keeps the system color.
+        searchField.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull tc) {
+            return tc.userInterfaceStyle == UIUserInterfaceStyleDark
+                ? [UIColor tertiarySystemGroupedBackgroundColor]
+                : [UIColor whiteColor];
+        }];
 
-            // Add custom search icon to the left of the text field
-            UIImage *searchIcon = [[UIImage imageNamed:@"fileNav_search"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-            UIImageView *searchIconImageView = [[UIImageView alloc] initWithImage:searchIcon];
-            searchIconImageView.tintColor = [SeafTheme secondaryText];
-            searchIconImageView.contentMode = UIViewContentModeScaleAspectFit;
+        // Add custom search icon to the left of the text field
+        UIImage *searchIcon = [[UIImage imageNamed:@"fileNav_search"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImageView *searchIconImageView = [[UIImageView alloc] initWithImage:searchIcon];
+        searchIconImageView.tintColor = [SeafTheme secondaryText];
+        searchIconImageView.contentMode = UIViewContentModeScaleAspectFit;
 
-            // Scale the icon with Dynamic Type so its proportion to the text stays consistent
-            // in large-text mode. Sizing the container to the icon lets UITextField center it
-            // vertically regardless of the (possibly enlarged) field height.
-            CGFloat iconSize = [[UIFontMetrics defaultMetrics] scaledValueForValue:16.0];
-            UIView *leftViewContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, iconSize, iconSize)];
-            searchIconImageView.frame = leftViewContainer.bounds;
-            searchIconImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            [leftViewContainer addSubview:searchIconImageView];
+        // Scale the icon with Dynamic Type so its proportion to the text stays consistent
+        // in large-text mode. Sizing the container to the icon lets UITextField center it
+        // vertically regardless of the (possibly enlarged) field height.
+        CGFloat iconSize = [[UIFontMetrics defaultMetrics] scaledValueForValue:16.0];
+        UIView *leftViewContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, iconSize, iconSize)];
+        searchIconImageView.frame = leftViewContainer.bounds;
+        searchIconImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [leftViewContainer addSubview:searchIconImageView];
 
-            searchField.leftView = leftViewContainer;
-            searchField.leftViewMode = UITextFieldViewModeAlways;
-        } else {
-            // For older iOS versions
-            _searchController.searchBar.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
-        }
+        searchField.leftView = leftViewContainer;
+        searchField.leftViewMode = UITextFieldViewModeAlways;
         
         // Configure custom appearance for search presentation
         if (@available(iOS 15.0, *)) {
             [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
             
             // For search bar, we can only set these properties
-            if (@available(iOS 13.0, *)) {
-                // System default styling will now largely apply to the text field
-            }
+            // System default styling will now largely apply to the text field
             _searchController.searchBar.tintColor = BAR_COLOR;
         }
         
@@ -3715,9 +3688,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         // Align to the search field's vertical center (not the bar's) — the field is not
         // centered within the bar, so centering on the bar makes the button sit too low.
         UIView *verticalCenterView = _searchController.searchBar;
-        if (@available(iOS 13.0, *)) {
-            verticalCenterView = _searchController.searchBar.searchTextField;
-        }
+        verticalCenterView = _searchController.searchBar.searchTextField;
         [NSLayoutConstraint activateConstraints:@[
             [customBackButton.leadingAnchor constraintEqualToAnchor:_searchController.searchBar.leadingAnchor constant:12],
             [customBackButton.centerYAnchor constraintEqualToAnchor:verticalCenterView.centerYAnchor],
@@ -3857,25 +3828,18 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     
     // Get key window first since the view will be added to it
     UIWindow *keyWindow = nil;
-    if (@available(iOS 13.0, *)) {
-        NSArray<UIWindowScene *> *scenes = UIApplication.sharedApplication.connectedScenes.allObjects;
-        for (UIWindowScene *scene in scenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                keyWindow = scene.windows.firstObject;
-                break;
-            }
+    NSArray<UIWindowScene *> *scenes = UIApplication.sharedApplication.connectedScenes.allObjects;
+    for (UIWindowScene *scene in scenes) {
+        if (scene.activationState == UISceneActivationStateForegroundActive) {
+            keyWindow = scene.windows.firstObject;
+            break;
         }
-    } else {
-        keyWindow = UIApplication.sharedApplication.keyWindow;
     }
     
     // Calculate custom view size and position using keyWindow coordinates
     CGFloat toolHeight = kCustomTabToolTotalHeight;
     
-    CGFloat pureHomeIndicator = 0;
-    if (@available(iOS 11.0, *)) {
-        pureHomeIndicator = keyWindow.safeAreaInsets.bottom;
-    }
+    CGFloat pureHomeIndicator = keyWindow.safeAreaInsets.bottom;
 
     // Use keyWindow bounds since the view is added to keyWindow
     CGRect frame = CGRectMake(0,
@@ -4435,10 +4399,8 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     [self presentSearchBar];
     
     // Ensure status bar style is set correctly before activating search
-    if (@available(iOS 13.0, *)) {
-        // Force status bar to update appearance
-        [self setNeedsStatusBarAppearanceUpdate];
-    }
+    // Force status bar to update appearance
+    [self setNeedsStatusBarAppearanceUpdate];
     
     // Activate search bar
     [self.searchController.searchBar becomeFirstResponder];

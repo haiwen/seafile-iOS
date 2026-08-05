@@ -106,11 +106,7 @@
         // Setup checkmark icon view (hidden by default)
         UIImage *iconImage = [UIImage imageNamed:@"popup_window_icon"];
         if (!iconImage) {
-            if (@available(iOS 13.0, *)) {
-                iconImage = [UIImage systemImageNamed:@"checkmark"];
-            } else {
-                iconImage = [UIImage imageNamed:@"checkmask2"];
-            }
+            iconImage = [UIImage systemImageNamed:@"checkmark"];
         }
         UIImageView *checkIcon = [[UIImageView alloc] initWithImage:iconImage];
         

@@ -201,11 +201,7 @@
         
         visibilityButton.frame = CGRectMake(0, 0, 30, 30); // Consistent with SeafMkLibAlertController
         visibilityButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-        if (@available(iOS 13.0, *)) {
-            visibilityButton.tintColor = [UIColor secondaryLabelColor];
-        } else {
-            visibilityButton.tintColor = [UIColor grayColor];
-        }
+        visibilityButton.tintColor = [UIColor secondaryLabelColor];
         
         // Add target to the UIViewController instance (self)
         [visibilityButton addTarget:self action:@selector(alertTextFieldToggleVisibility:) forControlEvents:UIControlEventTouchUpInside];
@@ -293,12 +289,8 @@
     LAContext *context = [[LAContext alloc] init];
     if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
         Warning("TouchID unavailable: %@", error);
-        if (@available(iOS 11.0, *)) {
-            if (context.biometryType == LABiometryTypeFaceID) {
-                [self alertWithTitle:STR_19];
-            } else {
-                [self alertWithTitle:STR_15];
-            }
+        if (context.biometryType == LABiometryTypeFaceID) {
+            [self alertWithTitle:STR_19];
         } else {
             [self alertWithTitle:STR_15];
         }
@@ -355,14 +347,15 @@
 }
 
 - (void)checkPhotoLibraryAuth:(void (^)(void))handler {
-    if ([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusRestricted || [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusDenied) {
+    PHAuthorizationStatus status = [Utils photoLibraryAuthorizationStatus];
+    if (status == PHAuthorizationStatusRestricted || status == PHAuthorizationStatusDenied) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
         });
         return;
     }
-    [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-        if (status == PHAuthorizationStatusAuthorized) {
+    [Utils requestPhotoLibraryAuthorization:^(PHAuthorizationStatus newStatus) {
+        if ([Utils isPhotoLibraryAccessible:newStatus]) {
             if (handler) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     handler();

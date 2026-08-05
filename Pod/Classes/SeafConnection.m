@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import <AssertMacros.h>
-
 #import "SeafConnection.h"
 #import "SeafRepos.h"
 #import "SeafDir.h"
@@ -85,13 +83,11 @@ static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
 }
 
 BOOL SeafServerTrustIsValid(SecTrustRef serverTrust) {
-    BOOL isValid = NO;
-    SecTrustResultType result;
-    __Require_noErr_Quiet(SecTrustEvaluate(serverTrust, &result), _out);
-
-    isValid = (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed);
-
-_out:
+    CFErrorRef error = NULL;
+    BOOL isValid = SecTrustEvaluateWithError(serverTrust, &error);
+    if (error) {
+        CFRelease(error);
+    }
     return isValid;
 }
 
@@ -1312,7 +1308,7 @@ static const int kSeafThumbnailApiSize = 256;
             return;
         }
         
-        url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
+        url = [[url stringByRemovingPercentEncoding] escapedUrlPath];
         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
         NSURLSessionDownloadTask *task = [self.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:avatar.path];
@@ -1469,7 +1465,7 @@ static const int kSeafThumbnailApiSize = 256;
 - (void)checkAutoSync
 {
     if (!self.authorized) return;
-    if (self.isAutoSync && [PHPhotoLibrary authorizationStatus] != PHAuthorizationStatusAuthorized) {
+    if (self.isAutoSync && ![Utils isPhotoLibraryAccessible:[Utils photoLibraryAuthorizationStatus]]) {
         self.autoSync = false;
         return;
     }

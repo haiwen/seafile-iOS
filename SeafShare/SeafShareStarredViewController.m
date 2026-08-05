@@ -169,11 +169,7 @@
     UIColor *textColor;
     if (sfile.isDeleted) {
         detailText = NSLocalizedString(@"Removed", @"Seafile");
-        if (@available(iOS 13.0, *)) {
-            textColor = UIColor.systemRedColor;
-        } else {
-            textColor = [UIColor redColor];
-        }
+        textColor = UIColor.systemRedColor;
     } else {
         detailText = sfile.starredDetailText;
         textColor = Utils.cellDetailTextTextColor;
@@ -191,11 +187,7 @@
     UIColor *textColor;
     if (entry.isDeleted) {
         detailText = NSLocalizedString(@"Removed", @"Seafile");
-        if (@available(iOS 13.0, *)) {
-            textColor = UIColor.systemRedColor;
-        } else {
-            textColor = [UIColor redColor];
-        }
+        textColor = UIColor.systemRedColor;
     } else {
         detailText = [entry detailText];
         textColor = Utils.cellDetailTextTextColor;

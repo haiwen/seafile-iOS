@@ -166,9 +166,7 @@
     // via centerImageInScrollView for precise Aspect Fit centering. Leaving this as
     // 'automatic' causes UIKit to add safeAreaInsets on top of our centering inset,
     // which leads to inconsistent image positioning on page transitions.
-    if (@available(iOS 11.0, *)) {
-        self.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-    }
+    self.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     [self.view addSubview:self.scrollView];
 
     // Create an image view — frame will be set precisely by configureForImage:
@@ -247,14 +245,10 @@
     
     UIColor *badgeBgLight = [[UIColor colorWithRed:242/255.0 green:242/255.0 blue:249/255.0 alpha:1.0] colorWithAlphaComponent:0.75];
     UIColor *badgeBg;
-    if (@available(iOS 13.0, *)) {
-        UIColor *badgeBgDark = [[UIColor colorWithRed: 44/255.0 green: 44/255.0 blue: 46/255.0 alpha:1.0] colorWithAlphaComponent:0.75];
-        badgeBg = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
-            return traits.userInterfaceStyle == UIUserInterfaceStyleDark ? badgeBgDark : badgeBgLight;
-        }];
-    } else {
-        badgeBg = badgeBgLight;
-    }
+    UIColor *badgeBgDark = [[UIColor colorWithRed: 44/255.0 green: 44/255.0 blue: 46/255.0 alpha:1.0] colorWithAlphaComponent:0.75];
+    badgeBg = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
+        return traits.userInterfaceStyle == UIUserInterfaceStyleDark ? badgeBgDark : badgeBgLight;
+    }];
     UIView *contentView = [[UIView alloc] initWithFrame:self.livePhotoBadge.bounds];
     contentView.backgroundColor = badgeBg;
     contentView.layer.cornerRadius = badgeHeight / 2.0;
@@ -266,12 +260,10 @@
     [self.livePhotoBadge addSubview:contentView];
 
     UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake(leftPadding, (badgeHeight - iconSize) / 2.0, iconSize, iconSize)];
-    if (@available(iOS 13.0, *)) {
-        UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:iconSize weight:UIImageSymbolWeightRegular];
-        UIImage *livePhotoSymbol = [UIImage systemImageNamed:@"livephoto" withConfiguration:config];
-        iconView.image = livePhotoSymbol;
-        iconView.tintColor = [SeafTheme secondaryText];
-    }
+    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:iconSize weight:UIImageSymbolWeightRegular];
+    UIImage *livePhotoSymbol = [UIImage systemImageNamed:@"livephoto" withConfiguration:config];
+    iconView.image = livePhotoSymbol;
+    iconView.tintColor = [SeafTheme secondaryText];
     iconView.contentMode = UIViewContentModeScaleAspectFit;
     iconView.tag = 101;
     [contentView addSubview:iconView];
@@ -1254,9 +1246,7 @@
     self.isZooming = YES;
 
     UIEdgeInsets safeArea = UIEdgeInsetsZero;
-    if (@available(iOS 11.0, *)) {
-        safeArea = self.view.safeAreaInsets;
-    }
+    safeArea = self.view.safeAreaInsets;
     Debug(@"[ZoomBug] WILL_BEGIN_ZOOMING file=%@ "
           @"view.bounds=%@ safeArea=%@ "
           @"scrollView.frame=%@ scrollView.bounds=%@ "
@@ -1782,10 +1772,8 @@
         CGFloat topMargin = 12.0;
         CGFloat topOffset = topMargin;
         CGFloat leftOffset = leftMargin;
-        if (@available(iOS 11.0, *)) {
-            topOffset += self.view.safeAreaInsets.top;
-            leftOffset += self.view.safeAreaInsets.left;
-        }
+        topOffset += self.view.safeAreaInsets.top;
+        leftOffset += self.view.safeAreaInsets.left;
         
         CGRect badgeFrame = self.livePhotoBadge.frame;
         badgeFrame.origin.x = leftOffset;
@@ -1916,11 +1904,7 @@
     
     // Activity Indicator
     UIActivityIndicatorViewStyle indicatorStyle;
-    if (@available(iOS 13.0, *)) {
-        indicatorStyle = UIActivityIndicatorViewStyleLarge;
-    } else {
-        indicatorStyle = UIActivityIndicatorViewStyleWhiteLarge;
-    }
+    indicatorStyle = UIActivityIndicatorViewStyleLarge;
     self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:indicatorStyle];
     self.activityIndicator.hidesWhenStopped = YES;
     self.activityIndicator.center = self.view.center; // Center in the main view initially

@@ -210,12 +210,15 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)failedDownload:(NSError *_Nullable)error;
 
+/// For callers that own no queue slot: notifies delegates without touching
+/// `thumbTaskForQueue`. Anything enqueued through the thumb queue must use
+/// `finishDownloadThumb:forTask:` so its slot is released.
 - (void)finishDownloadThumb:(BOOL)success;
 
 /// `task` identifies the thumb task reporting completion. Only the task that is
 /// still the file's current one is allowed to clear `thumbTaskForQueue`, so a
 /// completion racing with cancel + re-enqueue cannot drop the newer task.
-/// Pass nil for paths that complete without going through the thumb queue.
+/// Pass nil only for paths that complete without going through the thumb queue.
 - (void)finishDownloadThumb:(BOOL)success forTask:(SeafThumb *_Nullable)task;
 
 // Public interfaces

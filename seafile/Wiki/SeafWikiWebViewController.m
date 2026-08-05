@@ -583,12 +583,8 @@
         });
     } else if ([action isEqualToString:@"page.status.height.get"]) {
         CGFloat h = 0;
-        if (@available(iOS 13.0, *)) {
-            UIWindowScene *scene = self.view.window.windowScene;
-            h = scene.statusBarManager.statusBarFrame.size.height;
-        } else {
-            h = UIApplication.sharedApplication.statusBarFrame.size.height;
-        }
+        UIWindowScene *scene = self.view.window.windowScene;
+        h = scene.statusBarManager.statusBarFrame.size.height;
         [self sendBridgeCallback:[@(h) stringValue] forCallbackId:callbackId];
     }
 }

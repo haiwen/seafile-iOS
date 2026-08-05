@@ -130,26 +130,17 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
     self.title = @"Seafile";
 
     // Left: back button (iOS 26 auto-applies Liquid Glass pill to standard UIBarButtonItem)
-    if (@available(iOS 13.0, *)) {
-        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"chevron.left"]
-                                                                                 style:UIBarButtonItemStylePlain
-                                                                                target:self
-                                                                                action:@selector(onBack:)];
-    } else {
-        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile")
-                                                                                 style:UIBarButtonItemStylePlain
-                                                                                target:self
-                                                                                action:@selector(onBack:)];
-    }
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"chevron.left"]
+                                                                             style:UIBarButtonItemStylePlain
+                                                                            target:self
+                                                                            action:@selector(onBack:)];
 
     // Right: circular new-folder button + blue pill "确定" button
     // Smaller SF Symbol so the Liquid Glass chrome stays circular (wide icons stretch into a pill).
     UIImage *folderIcon = nil;
-    if (@available(iOS 13.0, *)) {
-        UIImageSymbolConfiguration *symbolConfig =
-            [UIImageSymbolConfiguration configurationWithPointSize:15 weight:UIImageSymbolWeightRegular];
-        folderIcon = [UIImage systemImageNamed:@"folder.badge.plus" withConfiguration:symbolConfig];
-    }
+    UIImageSymbolConfiguration *symbolConfig =
+        [UIImageSymbolConfiguration configurationWithPointSize:15 weight:UIImageSymbolWeightRegular];
+    folderIcon = [UIImage systemImageNamed:@"folder.badge.plus" withConfiguration:symbolConfig];
     UIBarButtonItem *plusItem = [[UIBarButtonItem alloc] initWithImage:folderIcon
                                                                 style:UIBarButtonItemStylePlain
                                                                target:self

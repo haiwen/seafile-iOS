@@ -18,15 +18,8 @@
 #import "SeafDataTaskManager.h"
 #import "SeafStorage.h"
 #import "SeafRealmManager.h"
-#import <MobileCoreServices/MobileCoreServices.h>
 
-#ifndef kUTTypeHEIC
-#define kUTTypeHEIC CFSTR("public.heic")
-#endif
 
-#ifndef kUTTypeHEIF
-#define kUTTypeHEIF CFSTR("public.heif")
-#endif
 
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
@@ -395,44 +388,14 @@
     options.version = PHImageRequestOptionsVersionCurrent; // Get the most current version
     options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
 
-    if (@available(iOS 13, *)) {
-        [manager requestImageDataAndOrientationForAsset:self.model.asset
-                                                options:options
-                                          resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation orientation, NSDictionary * _Nullable info) {
-            NSError *error = [info objectForKey:PHImageErrorKey];
-            if (completion) {
-                completion(imageData, error);
-            }
-        }];
-    } else {
-        [manager requestImageForAsset:self.model.asset
-                           targetSize:PHImageManagerMaximumSize
-                          contentMode:PHImageContentModeDefault
-                              options:options
-                        resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
-            NSError *error = [info objectForKey:PHImageErrorKey];
-            NSData *data = nil;
-            if (result) {
-                if ([[info objectForKey:PHImageResultIsDegradedKey] boolValue]) {
-                    // Skip degraded image
-                    return;
-                }
-                // Try to get HEIC data if possible, otherwise JPEG
-                NSString *uti = [self.model.asset valueForKey:@"uniformTypeIdentifier"];
-                if (uti && (UTTypeConformsTo((__bridge CFStringRef)uti, kUTTypeHEIC) || UTTypeConformsTo((__bridge CFStringRef)uti, kUTTypeHEIF))) {
-                    data = UIImageJPEGRepresentation(result, 0.9);
-                } else if (CGImageGetAlphaInfo(result.CGImage) == kCGImageAlphaNone || CGImageGetAlphaInfo(result.CGImage) == kCGImageAlphaNoneSkipLast || CGImageGetAlphaInfo(result.CGImage) == kCGImageAlphaNoneSkipFirst) {
-                    data = UIImageJPEGRepresentation(result, 0.9);
-                } else {
-                    data = UIImagePNGRepresentation(result);
-                }
-
-            }
-            if (completion) {
-                completion(data, error);
-            }
-        }];
-    }
+    [manager requestImageDataAndOrientationForAsset:self.model.asset
+                                            options:options
+                                      resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation orientation, NSDictionary * _Nullable info) {
+        NSError *error = [info objectForKey:PHImageErrorKey];
+        if (completion) {
+            completion(imageData, error);
+        }
+    }];
 }
 
 #pragma mark - Cleanup Methods

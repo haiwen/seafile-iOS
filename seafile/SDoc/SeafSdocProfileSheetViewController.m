@@ -1,6 +1,7 @@
 //  SeafSdocProfileSheetViewController.m
 
 #import "SeafSdocProfileSheetViewController.h"
+#import "SeafAppDelegate.h"
 #import "SeafSdocProfileEditorViewController.h"
 #import "SeafTagChipView.h"
 #import "SeafSdocService.h"
@@ -425,7 +426,7 @@ static NSSet *SeafChipTypes(void)
         nav.modalPresentationStyle = UIModalPresentationFullScreen;
         
         // Find the presenting VC to present the editor from
-        UIViewController *presenter = [UIApplication sharedApplication].keyWindow.rootViewController;
+        UIViewController *presenter = [SeafAppDelegate activeWindow].rootViewController;
         while (presenter.presentedViewController) {
             presenter = presenter.presentedViewController;
         }
@@ -655,20 +656,16 @@ static NSSet *SeafChipTypes(void)
         UIImage *img = nil;
         // Use checkbox-filled style per design spec
         if (checked) {
-            if (@available(iOS 13.0, *)) {
-                // Use SF Symbol checkmark.square.fill for filled checkbox style
-                UIImage *base = [UIImage systemImageNamed:@"checkmark.square.fill"];
-                if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-            }
+            // Use SF Symbol checkmark.square.fill for filled checkbox style
+            UIImage *base = [UIImage systemImageNamed:@"checkmark.square.fill"];
+            if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
             if (!img) {
                 UIImage *base = [UIImage imageNamed:@"ic_checkbox_checked"];
                 if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
             }
         } else {
-            if (@available(iOS 13.0, *)) {
-                UIImage *base = [UIImage systemImageNamed:@"square"]; // hollow square, transparent center
-                if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-            }
+            UIImage *base = [UIImage systemImageNamed:@"square"]; // hollow square, transparent center
+            if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
             if (!img) {
                 UIImage *base = [UIImage imageNamed:@"ic_checkbox_unchecked"];
                 if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
