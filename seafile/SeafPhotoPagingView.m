@@ -66,9 +66,7 @@
         // the nav-bar / status-bar safe area gets stacked on top of our
         // contentSize math, pushing pages down and breaking page width.
         // Force-disable to keep contentSize == pageCount * pageWidth.
-        if (@available(iOS 11.0, *)) {
-            self.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-        }
+        self.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     }
     return self;
 }

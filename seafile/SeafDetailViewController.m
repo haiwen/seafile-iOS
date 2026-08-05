@@ -44,8 +44,6 @@ enum SHARE_STATUS {
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
 @interface SeafDetailViewController ()<MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate, WKNavigationDelegate, SeafFileUpdateDelegate>
-@property (strong, nonatomic) UIPopoverController *masterPopoverController;
-
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (nonatomic, strong) WKWebView *webView;
@@ -278,8 +276,8 @@ enum SHARE_STATUS {
     CGFloat y = 64;
     if (IsIpad()) {
         y = 0;
-    } else if (@available(iOS 11.0, *)) {
-        y = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
+    } else {
+        y = 44 + [SeafAppDelegate activeWindow].safeAreaInsets.top;
     }
     
     // Calculate bottom margin to account for toolbar, including safe area
@@ -287,9 +285,7 @@ enum SHARE_STATUS {
     if (self.toolbarView && !self.toolbarView.hidden) {
         CGFloat toolbarHeight = 36; // Toolbar standard height
         CGFloat safeAreaBottom = 0;
-        if (@available(iOS 11.0, *)) {
-            safeAreaBottom = self.view.safeAreaInsets.bottom; // Get bottom safe area inset
-        }
+        safeAreaBottom = self.view.safeAreaInsets.bottom; // Get bottom safe area inset
         bottomMargin = toolbarHeight + safeAreaBottom; // Total height occupied by toolbar
     }
     
@@ -393,13 +389,12 @@ enum SHARE_STATUS {
         default:
             break;
     }
-    if (@available(iOS 13.0, *)) {
-        if ([self isPortrait]) {
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModePrimaryHidden; // Adjust split view controller display mode for portrait
-        } else {
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible; // Adjust split view controller display mode for landscape
-        }
+    if ([self isPortrait]) {
+        self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeSecondaryOnly; // Adjust split view controller display mode for portrait
+    } else {
+        self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeOneBesideSecondary; // Adjust split view controller display mode for landscape
     }
+
     
     // Ensure toolbar always stays on top layer
     if (self.toolbarView) {
@@ -410,8 +405,7 @@ enum SHARE_STATUS {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.edgesForExtendedLayout = UIRectEdgeAll;
     self.view.backgroundColor = [SeafTheme primarySurface];
     // Do any additional setup after loading the view, typically from a nib.
 
@@ -515,19 +509,14 @@ enum SHARE_STATUS {
     CGFloat layoutY = 0;
     if (!IsIpad()) {
         layoutY = 64;
-        if (@available(iOS 11.0, *)) {
-            layoutY = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
-        }
+        layoutY = 44 + [SeafAppDelegate activeWindow].safeAreaInsets.top;
     }
     
     // Calculate bottom margin to avoid toolbar overlap
     CGFloat layoutBottomMargin = 0;
     if (self.toolbarView && !self.toolbarView.hidden) {
         CGFloat toolbarHeight = 36;
-        CGFloat safeAreaBottom = 0;
-        if (@available(iOS 11.0, *)) {
-            safeAreaBottom = self.view.safeAreaInsets.bottom;
-        }
+        CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
         layoutBottomMargin = toolbarHeight + safeAreaBottom;
     }
     
@@ -537,8 +526,7 @@ enum SHARE_STATUS {
         if (IsIpad()) {
             self.mwPhotoBrowser.view.frame = r;// Adjust photo browser frame for iPad
         } else {
-            UIDeviceOrientation orientation = (UIDeviceOrientation)[UIApplication sharedApplication].statusBarOrientation;// Get current device orientation
-            if (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown) {
+            if (UIInterfaceOrientationIsPortrait([SeafAppDelegate activeInterfaceOrientation])) {
                 self.mwPhotoBrowser.view.frame = r;// Adjust photo browser frame for portrait orientation
             } else {
                 self.mwPhotoBrowser.view.frame = CGRectMake(self.view.frame.origin.x, 32, self.view.frame.size.width, self.view.frame.size.height - 32);// Adjust photo browser frame for landscape orientation
@@ -568,11 +556,8 @@ enum SHARE_STATUS {
     // Position the toolbar at the bottom of the screen
     if (self.toolbarView) {
         CGFloat toolbarHeight = 36; // Reduced height from 44 to 36
-        CGFloat safeAreaBottom = 0;
+        CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
         
-        if (@available(iOS 11.0, *)) {
-            safeAreaBottom = self.view.safeAreaInsets.bottom;
-        }
         
         CGRect toolbarFrame = CGRectMake(0,
                                       self.view.bounds.size.height - toolbarHeight - safeAreaBottom,
@@ -596,30 +581,14 @@ enum SHARE_STATUS {
 
 #pragma mark - Split view
 
-- (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
-{
-    [self.navigationItem setLeftBarButtonItem:barButtonItem animated:NO];// Set left bar button item when hiding the view controller
-    self.masterPopoverController = popoverController;
-}
-
 - (void)splitViewController:(UISplitViewController *)splitController willShowViewController:(UIViewController *)viewController invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
 {
-    // Called when the view is shown again in the split view, invalidating the button and popover controller.
     [self.navigationItem setLeftBarButtonItem:nil animated:NO];
-    self.masterPopoverController = nil;
 }
 
 - (BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
 {
     return !UIInterfaceOrientationIsLandscape(orientation); // Determine if the view controller should be hidden based on orientation
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-    if (self.masterPopoverController != nil) {
-        [self.masterPopoverController dismissPopoverAnimated:YES];// Dismiss the master popover controller if it exists
-    }
-    [super viewWillDisappear:animated];
 }
 
 #pragma mark - SeafDentryDelegate
@@ -971,7 +940,6 @@ enum SHARE_STATUS {
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
-    if (!ios7 && index < 0) index = 0;
     if (index < 0 || index >= 1) {
         return nil;
     }
@@ -980,7 +948,7 @@ enum SHARE_STATUS {
 
 #pragma -mark QLPreviewControllerDelegate
 
-- (QLPreviewItemEditingMode)previewController:(QLPreviewController *)controller editingModeForPreviewItem:(id<QLPreviewItem>)previewItem  API_AVAILABLE(ios(13.0)){
+- (QLPreviewItemEditingMode)previewController:(QLPreviewController *)controller editingModeForPreviewItem:(id<QLPreviewItem>)previewItem {
     if ([previewItem isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)previewItem;
         if ([file.mime isEqualToString:@"application/pdf"]) {
@@ -1108,12 +1076,7 @@ enum SHARE_STATUS {
 }
 
 - (BOOL)isPortrait {
-    UIDeviceOrientation orientation = (UIDeviceOrientation)[UIApplication sharedApplication].statusBarOrientation;
-    if (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown) {
-        return true;
-    } else {
-        return false;
-    }
+    return UIInterfaceOrientationIsPortrait([SeafAppDelegate activeInterfaceOrientation]);
 }
 
 - (UITextView *)textView {
@@ -1138,7 +1101,7 @@ enum SHARE_STATUS {
 }
 
 - (NSAttributedString *)attributedTextOfPreViewItem {
-    NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithFileURL:self.preViewItem.previewItemURL options:@{NSDocumentTypeDocumentAttribute : NSPlainTextDocumentType} documentAttributes:nil error:nil];
+    NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithURL:self.preViewItem.previewItemURL options:@{NSDocumentTypeDocumentAttribute : NSPlainTextDocumentType} documentAttributes:nil error:nil];
     [attributedText addAttributes:@{
         NSFontAttributeName : [UIFont systemFontOfSize:14.0],
         NSForegroundColorAttributeName : [SeafTheme primaryText]
@@ -1150,11 +1113,8 @@ enum SHARE_STATUS {
 - (void)setupToolbar {
     // Bottom action bar - including bottom safe area
     CGFloat toolbarH = 36; // Reduced height from 44 to 36
-    CGFloat safeAreaBottom = 0;
+    CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
     
-    if (@available(iOS 11.0, *)) {
-        safeAreaBottom = self.view.safeAreaInsets.bottom;
-    }
     
     CGRect tbFrame = CGRectMake(0,
                                 self.view.bounds.size.height - toolbarH - safeAreaBottom,
@@ -1382,8 +1342,6 @@ enum SHARE_STATUS {
 // Set the preview item and refresh the view.
 - (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
-    if (self.masterPopoverController != nil)
-        [self.masterPopoverController dismissPopoverAnimated:YES];
     if (item) Debug("preview %@", item.previewItemTitle);
     self.masterVc = c;
     self.photos = nil;
@@ -1403,8 +1361,6 @@ enum SHARE_STATUS {
 - (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     [self clearPreView];
-    if (self.masterPopoverController != nil)
-        [self.masterPopoverController dismissPopoverAnimated:YES];// Dismiss popover if exists
     self.masterVc = c;
     NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
     for (id<SeafPreView> file in items) {

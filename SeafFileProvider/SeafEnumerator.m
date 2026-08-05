@@ -46,50 +46,48 @@
                    startingAtPage:(NSFileProviderPage)page
 {
     Debug("%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
-    if (@available(iOS 11.0, *)) {
-        if ([_itemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
-            NSArray *accounts = self.getRootProviderItems;
-            if (accounts.count == 0) {
-                [observer finishEnumeratingWithError:[NSError fileProvierErrorNoAccount]];
-            } else {
-                [observer didEnumerateItems:accounts];
-                [observer finishEnumeratingUpToPage:nil];
-            }
-        } else if ([_itemIdentifier isEqualToString: NSFileProviderWorkingSetContainerItemIdentifier]) {
-            Debug("WorkingSetItemIdentifier %@", _item.itemIdentifier);
-            NSMutableArray *items = [NSMutableArray array];
-            NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
-            for (NSDictionary *dict in filesStorage.allValues) {
-                SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
-                SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-                [items addObject:providerItem];
-            }
-            [observer didEnumerateItems:items];
+    if ([_itemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
+        NSArray *accounts = self.getRootProviderItems;
+        if (accounts.count == 0) {
+            [observer finishEnumeratingWithError:[NSError fileProvierErrorNoAccount]];
+        } else {
+            [observer didEnumerateItems:accounts];
+            [observer finishEnumeratingUpToPage:nil];
+        }
+    } else if ([_itemIdentifier isEqualToString: NSFileProviderWorkingSetContainerItemIdentifier]) {
+        Debug("WorkingSetItemIdentifier %@", _item.itemIdentifier);
+        NSMutableArray *items = [NSMutableArray array];
+        NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
+        for (NSDictionary *dict in filesStorage.allValues) {
+            SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
+            SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+            [items addObject:providerItem];
+        }
+        [observer didEnumerateItems:items];
+        [observer finishEnumeratingUpToPage:nil];
+        return;
+    } else {
+        if (_item.isAccountRoot && _item.isTouchIdEnabled) {
+            [observer finishEnumeratingWithError:[NSError fileProvierErrorNotAuthenticated]];
+            return;
+        }
+
+        if (_item.isFile) {
+            [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:_item]]];
             [observer finishEnumeratingUpToPage:nil];
             return;
-        } else {
-            if (_item.isAccountRoot && _item.isTouchIdEnabled) {
-                [observer finishEnumeratingWithError:[NSError fileProvierErrorNotAuthenticated]];
-                return;
-            }
-            
-            if (_item.isFile) {
-                [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:_item]]];
-                [observer finishEnumeratingUpToPage:nil];
-                return;
-            }
-            
-            SeafDir *dir = (SeafDir *)[_item toSeafObj];
-            [dir loadContentSuccess: ^(SeafDir *d) {
-                [self enumerateItemsForObserver:observer startingAtPage:page inSeafDir:d];
-            } failure:^(SeafDir *d, NSError *error) {
-                if (d.hasCache) {
-                    [self enumerateItemsForObserver:observer startingAtPage:page inSeafDir:d];
-                } else {
-                    [observer finishEnumeratingWithError:[NSError fileProvierErrorServerUnreachable]];
-                }
-            }];
         }
+
+        SeafDir *dir = (SeafDir *)[_item toSeafObj];
+        [dir loadContentSuccess: ^(SeafDir *d) {
+            [self enumerateItemsForObserver:observer startingAtPage:page inSeafDir:d];
+        } failure:^(SeafDir *d, NSError *error) {
+            if (d.hasCache) {
+                [self enumerateItemsForObserver:observer startingAtPage:page inSeafDir:d];
+            } else {
+                [observer finishEnumeratingWithError:[NSError fileProvierErrorServerUnreachable]];
+            }
+        }];
     }
 }
 
@@ -131,13 +129,12 @@
 }
 
 - (void)getItemsFromSeafDir:(SeafDir *)dir startingAtPage:(NSFileProviderPage)page result:(void (^)(NSArray *items, BOOL isLastPage))resultBlock {
-    if (@available(iOS 11.0, *)) {
-        if (NSFileProviderInitialPageSortedByDate == page) {
-            [dir reSortItemsByMtime];
-        } else {
-            [dir reSortItemsByName];
-        }
+    if (NSFileProviderInitialPageSortedByDate == page) {
+        [dir reSortItemsByMtime];
+    } else {
+        [dir reSortItemsByName];
     }
+
     
     NSInteger numPage = [[NSString stringWithUTF8String:[page bytes]] integerValue];
     NSInteger start = numPage * self.maxItemCount;
@@ -157,13 +154,11 @@
 - (void)enumerateChangesForObserver:(id<NSFileProviderChangeObserver>)observer fromSyncAnchor:(NSFileProviderSyncAnchor)syncAnchor {
     NSMutableArray *itemsUpdate = [NSMutableArray array];
     
-    if (@available(iOS 11.0, *)) {
-        if (_itemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
-            NSDictionary *filesStorage = [SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER];
-            for (NSDictionary *dict in filesStorage.allValues) {
-                SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
-                [itemsUpdate addObject:[[SeafProviderItem alloc] initWithSeafItem:item]];
-            }
+    if (_itemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+        NSDictionary *filesStorage = [SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER];
+        for (NSDictionary *dict in filesStorage.allValues) {
+            SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
+            [itemsUpdate addObject:[[SeafProviderItem alloc] initWithSeafItem:item]];
         }
     }
     for (SeafProviderItem *item in [SeafFileProviderUtility.shared allUpdateItems]) {

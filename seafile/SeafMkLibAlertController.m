@@ -178,9 +178,7 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
         self.alertView.layer.cornerRadius = 14.0; // Standard rounded corners for iPad
     } else {
         self.alertView.layer.cornerRadius = 14.0;
-        if (@available(iOS 11.0, *)) {
-            self.alertView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
-        }
+        self.alertView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
     }
 
     self.titleLabel = [[UILabel alloc] init];

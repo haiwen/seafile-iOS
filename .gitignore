@@ -2,7 +2,10 @@ Example/AFNetworking Mac Example.xcodeproj/xcuserdata/
 Example/AFNetworking iOS Example.xcodeproj/xcuserdata/
 seafilePro.xcodeproj/project.xcworkspace
 seafilePro.xcodeproj/xcuserdata
-seafilePro.xcodeproj/xcshareddata
+# Keep shared schemes under version control: they are what makes the UI test
+# target runnable on a fresh clone and in CI.
+seafilePro.xcodeproj/xcshareddata/*
+!seafilePro.xcodeproj/xcshareddata/xcschemes/
 *~
 *.bak
 .DS_Store

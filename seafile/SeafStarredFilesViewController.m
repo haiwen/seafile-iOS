@@ -101,8 +101,7 @@
     self.title = NSLocalizedString(@"Starred", @"Seafile");
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.edgesForExtendedLayout = UIRectEdgeAll;
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
@@ -644,6 +643,23 @@
     }
 }
 
+- (void)updateEntryCellThumbnail:(SeafFile *)entry
+{
+    if (!entry) return;
+    SeafCell *cell = [self getEntryCell:entry];
+    if (!cell) return;
+    UIImage *thumb = entry.thumb;
+    if (thumb) {
+        cell.imageView.image = thumb;
+        return;
+    }
+    NSUInteger index = [_cellDataArray indexOfObject:entry];
+    if (index != NSNotFound) {
+        NSIndexPath *ip = [NSIndexPath indexPathForRow:index inSection:0];
+        [self.tableView reloadRowsAtIndexPaths:@[ip] withRowAnimation:UITableViewRowAnimationNone];
+    }
+}
+
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
@@ -651,6 +667,13 @@
     [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
     [self.detailViewController download:entry progress:progress];
 }
+
+- (void)thumbnailDownload:(id)entry complete:(BOOL)success
+{
+    if (!success || ![entry isKindOfClass:[SeafFile class]]) return;
+    [self updateEntryCellThumbnail:(SeafFile *)entry];
+}
+
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
     [self updateEntryCell:(SeafBase *)entry];
@@ -842,7 +865,7 @@
 
 - (void)showLoadingView {
     // Get the key window for proper centering in the entire screen
-    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *keyWindow = [SeafAppDelegate activeWindow];
     [self.loadingView showInView:keyWindow];
 }
 

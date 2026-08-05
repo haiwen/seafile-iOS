@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import <AssertMacros.h>
-
 #import "SeafConnection.h"
 #import "SeafRepos.h"
 #import "SeafDir.h"
@@ -85,13 +83,11 @@ static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
 }
 
 BOOL SeafServerTrustIsValid(SecTrustRef serverTrust) {
-    BOOL isValid = NO;
-    SecTrustResultType result;
-    __Require_noErr_Quiet(SecTrustEvaluate(serverTrust, &result), _out);
-
-    isValid = (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed);
-
-_out:
+    CFErrorRef error = NULL;
+    BOOL isValid = SecTrustEvaluateWithError(serverTrust, &error);
+    if (error) {
+        CFRelease(error);
+    }
     return isValid;
 }
 
@@ -323,6 +319,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (BOOL)isNewActivitiesApiSupported {
     NSString *version = self.serverVersion;
     return version != nil && [version compare:@"7.0.0" options:NSNumericSearch] != NSOrderedAscending;
+}
+
+- (BOOL)isNewThumbnailApiSupported {
+    NSString *version = self.serverVersion;
+    return version != nil && [version compare:@"14.0.0" options:NSNumericSearch] != NSOrderedAscending;
 }
 
 - (NSDictionary *)serverInfo
@@ -919,12 +920,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self loginWithUsername:username password:password otp:nil rememberDevice:false];
 }
 
+static const int kSeafThumbnailApiSize = 256;
+
+- (NSString *)buildThumbnailRequestPathForFile:(SeafFile *)sFile requestedSize:(int)requestedSize {
+    NSString *filePath = sFile.path;
+    if ([filePath hasPrefix:@"/"]) {
+        filePath = [filePath substringFromIndex:1];
+    }
+
+    if (self.isNewThumbnailApiSupported) {
+        // 14.0+: /thumbnail/{repo_id}/{size}/{path}
+        return [NSString stringWithFormat:@"/thumbnail/%@/%d/%@",
+                sFile.repoId, kSeafThumbnailApiSize, filePath.escapedUrl];
+    }
+    // <= 13.0: /api2/repos/{repo_id}/thumbnail/?size={size}&p={path}
+    return [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@",
+            sFile.repoId, requestedSize, sFile.path.escapedUrl];
+}
+
 - (NSString *)buildThumbnailImageUrlFromSFile:(SeafFile *)sFile {
-    NSString *urlString = [NSString stringWithFormat:@"/api2/repos/%@/thumbnail/?p=%@&size=128", sFile.repoId, sFile.path];
-    
-    NSString *encodedURL = [self encodeStringToURLFormat:urlString];
-    
-    return encodedURL;
+    int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
+    NSString *path = [self buildThumbnailRequestPathForFile:sFile requestedSize:size];
+    return [self encodeStringToURLFormat:path];
 }
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form
@@ -1291,7 +1308,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             return;
         }
         
-        url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
+        url = [[url stringByRemovingPercentEncoding] escapedUrlPath];
         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
         NSURLSessionDownloadTask *task = [self.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:avatar.path];
@@ -1448,7 +1465,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)checkAutoSync
 {
     if (!self.authorized) return;
-    if (self.isAutoSync && [PHPhotoLibrary authorizationStatus] != PHAuthorizationStatusAuthorized) {
+    if (self.isAutoSync && ![Utils isPhotoLibraryAccessible:[Utils photoLibraryAuthorizationStatus]]) {
         self.autoSync = false;
         return;
     }

@@ -54,6 +54,7 @@
     cancelBtn.titleLabel.font = [UIFont systemFontOfSize:16];
     cancelBtn.translatesAutoresizingMaskIntoConstraints = NO;
     [cancelBtn addTarget:self action:@selector(onCancelTapped) forControlEvents:UIControlEventTouchUpInside];
+    cancelBtn.accessibilityIdentifier = @"date_selector_cancel_button";
     [toolbar addSubview:cancelBtn];
 
     UIButton *doneBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -61,6 +62,7 @@
     doneBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
     doneBtn.translatesAutoresizingMaskIntoConstraints = NO;
     [doneBtn addTarget:self action:@selector(onDoneTapped) forControlEvents:UIControlEventTouchUpInside];
+    doneBtn.accessibilityIdentifier = @"date_selector_done_button";
     [toolbar addSubview:doneBtn];
 
     UILabel *titleLabel = [UILabel new];
@@ -72,9 +74,7 @@
 
     self.datePicker = [[UIDatePicker alloc] init];
     self.datePicker.datePickerMode = UIDatePickerModeDateAndTime;
-    if (@available(iOS 13.4, *)) {
-        self.datePicker.preferredDatePickerStyle = UIDatePickerStyleWheels;
-    }
+    self.datePicker.preferredDatePickerStyle = UIDatePickerStyleWheels;
     if (self.initialDate) {
         self.datePicker.date = self.initialDate;
     }

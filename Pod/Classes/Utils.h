@@ -58,8 +58,8 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 /// Write image data with metadata to a specified path.
 + (BOOL)writeDataWithMeta:(NSData *)imageData toPath:(NSString*)filePath;
 
-/// Write a CIImage to a file path, available from iOS 10.
-+ (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath API_AVAILABLE(ios(10.0));
+/// Write a CIImage to a file path.
++ (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath;
 
 /// Get the size of a file at a specific path.
 + (long long)fileSizeAtPath1:(NSString*)filePath;
@@ -85,6 +85,12 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 /// Check if a filename indicates a video file.
 + (BOOL)isVideoFile:(NSString *)name;
 
+/// Check if a filename indicates a PDF file.
++ (BOOL)isPdfFile:(NSString *)name;
+
+/// Check if a filename indicates an sdoc file.
++ (BOOL)isSdocFile:(NSString *)name;
+
 /// Check if a file extension is that of a video file.
 + (BOOL)isVideoExt:(NSString *)ext;
 
@@ -105,6 +111,11 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 
 /// Resize an image to fit within a specified square dimension.
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
+
+/// Force-decode a UIImage into a bitmap so the first UIImageView composite
+/// does not hitch on the main thread. Safe / preferred to call off-main.
++ (UIImage *)decodedImageWithImage:(UIImage *)image;
+
 /// Load an image from a path, optionally using a cache.
 + (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 
@@ -161,5 +172,21 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 
 /// Check if the app is running in the main app.
 + (BOOL)isMainApp;
+
+#pragma mark - Photo library authorization
+
+/// Current photo library authorization status for read-write access.
++ (PHAuthorizationStatus)photoLibraryAuthorizationStatus;
+
+/// Request read-write access to the photo library.
++ (void)requestPhotoLibraryAuthorization:(void (^)(PHAuthorizationStatus status))handler;
+
+/// Whether the status permits reading the photo library.
+/// Limited access counts as usable: the user granted a subset of their photos.
++ (BOOL)isPhotoLibraryAccessible:(PHAuthorizationStatus)status;
+
+/// Present the system limited-library picker so the user can add/remove selected photos.
+/// No-op unless the current authorization status is Limited.
++ (void)presentLimitedLibraryPickerFromViewController:(UIViewController *)viewController;
 
 @end

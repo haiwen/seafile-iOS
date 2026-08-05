@@ -106,7 +106,7 @@
 - (void)showLoadingView
 {
     if (!self.loadingView) {
-        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
         self.loadingView.color = [SeafTheme primaryText];
         self.loadingView.hidesWhenStopped = YES;
         [self.view addSubview:self.loadingView];

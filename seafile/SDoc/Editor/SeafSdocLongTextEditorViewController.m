@@ -41,6 +41,7 @@
                                         style:UIBarButtonItemStylePlain
                                        target:self
                                        action:@selector(onCancel)];
+    self.navigationItem.leftBarButtonItem.accessibilityIdentifier = @"profile_longtext_cancel_button";
     
     // Done button (right, blue) — align Android: toolbar done
     UIBarButtonItem *doneItem =
@@ -49,6 +50,7 @@
                                        target:self
                                        action:@selector(onDone)];
     doneItem.tintColor = [UIColor systemBlueColor];
+    doneItem.accessibilityIdentifier = @"profile_longtext_done_button";
     self.navigationItem.rightBarButtonItem = doneItem;
     
     // Full-screen text view — align Android: EditText with wrap_content, 24dp padding, 16sp

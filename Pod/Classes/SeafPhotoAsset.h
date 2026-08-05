@@ -23,7 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *name;
 
 /**
- ALAssetURL
+ Stable local URL derived from the PHAsset identifier.
+ Name retained for historical reasons; this is not an AssetsLibrary ALAsset URL.
  */
 @property (nonatomic, strong) NSURL *ALAssetURL;
 

@@ -184,6 +184,7 @@
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
     SeafThumbOperation *operation = [[SeafThumbOperation alloc] initWithSeafFile:thumb.file];
+    operation.thumb = thumb;
     [self.thumbQueue addOperation:operation];
 }
 - (void)cancelAllCommentImageTasks
@@ -604,8 +605,16 @@
 }
 
 - (void)removeThumbTask:(SeafThumb * _Nonnull)thumb {
+    SeafFile *file = thumb.file;
+    if (!file) return;
+    // Operations are always created from the requesting task's own file object, so
+    // identity is exact. Matching on oid or repo+path instead would also hit
+    // operations owned by a different SeafFile instance for the same path (search
+    // results, starred list, file list all build separate instances); cancelling
+    // those leaves their thumbTaskForQueue set forever, since a cancelled operation
+    // never reports completion, and their thumbnail would never load again.
     for (SeafThumbOperation *op in self.thumbQueue.operations) {
-        if ([op.file.oid isEqual:thumb.file.oid]) {
+        if (op.file == file) {
             [op cancel];
             break;
         }
@@ -843,7 +852,9 @@
             // Thumb operations might not need KVO in the same way, but if they do, remove observers.
             // [self safelyRemoveObserversFromOperation:op]; // Assuming SeafThumbOperation inherits from SeafBaseOperation and has observersAdded/Removed
             [op cancel];
-            SeafThumb *thumb = [[SeafThumb alloc] initWithSeafFile:op.file]; // Assuming op.file is accessible and valid
+            // Reuse the original task so the file's thumbTaskForQueue still matches
+            // the operation recreated on resume.
+            SeafThumb *thumb = op.thumb ?: [[SeafThumb alloc] initWithSeafFile:op.file];
             if (thumb) {
                 @synchronized (self.pausedThumbTasks) {
                      if (![self.pausedThumbTasks containsObject:thumb]) { // Check for existence if necessary, depends on SeafThumb's isEqual

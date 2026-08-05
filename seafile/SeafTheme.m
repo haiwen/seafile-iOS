@@ -81,33 +81,26 @@ static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
 + (void)applyPreferenceToWindow:(UIWindow *)window
 {
     if (!window) return;
-    if (@available(iOS 13.0, *)) {
-        window.overrideUserInterfaceStyle = [self userInterfaceStyleForPreference:[self currentPreference]];
-    }
+    window.overrideUserInterfaceStyle = [self userInterfaceStyleForPreference:[self currentPreference]];
 }
 
 + (void)applyPreferenceToViewController:(UIViewController *)viewController
 {
     if (!viewController) return;
-    if (@available(iOS 13.0, *)) {
-        // Extensions: when the main app has no stored preference (fresh install or
-        // cleared app-group defaults), fall back to Light instead of following the
-        // host so share/action UIs match pre-dark-mode behavior.
-        NSNumber *stored = [[self sharedDefaults] objectForKey:kSeafThemePreferenceKey];
-        UIUserInterfaceStyle style = stored
-            ? [self userInterfaceStyleForPreference:[self currentPreference]]
-            : UIUserInterfaceStyleLight;
-        viewController.overrideUserInterfaceStyle = style;
-        if (viewController.navigationController) {
-            viewController.navigationController.overrideUserInterfaceStyle = style;
-        }
-    } else {
-        // Pre-iOS 13: force Light to preserve pre-dark-mode behavior.
-        // overrideUserInterfaceStyle is unavailable; no-op is effectively Light since we only ship Light assets.
+    // Extensions: when the main app has no stored preference (fresh install or
+    // cleared app-group defaults), fall back to Light instead of following the
+    // host so share/action UIs match pre-dark-mode behavior.
+    NSNumber *stored = [[self sharedDefaults] objectForKey:kSeafThemePreferenceKey];
+    UIUserInterfaceStyle style = stored
+        ? [self userInterfaceStyleForPreference:[self currentPreference]]
+        : UIUserInterfaceStyleLight;
+    viewController.overrideUserInterfaceStyle = style;
+    if (viewController.navigationController) {
+        viewController.navigationController.overrideUserInterfaceStyle = style;
     }
 }
 
-+ (UIUserInterfaceStyle)userInterfaceStyleForPreference:(SeafThemePreference)preference API_AVAILABLE(ios(13.0))
++ (UIUserInterfaceStyle)userInterfaceStyleForPreference:(SeafThemePreference)preference
 {
     switch (preference) {
         case SeafThemePreferenceLight: return UIUserInterfaceStyleLight;
@@ -121,12 +114,9 @@ static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
 
 + (UIColor *)dynamicColorWithLight:(UIColor *)light dark:(UIColor *)dark
 {
-    if (@available(iOS 13.0, *)) {
-        return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
-            return traits.userInterfaceStyle == UIUserInterfaceStyleDark ? dark : light;
-        }];
-    }
-    return light;
+    return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
+        return traits.userInterfaceStyle == UIUserInterfaceStyleDark ? dark : light;
+    }];
 }
 
 #pragma mark - Brand / legacy tokens
@@ -134,14 +124,11 @@ static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
 + (UIColor *)primaryBackgroundColor
 {
     UIColor *light = [UIColor colorWithRed:247.0/255.0 green:247.0/255.0 blue:247.0/255.0 alpha:1.0];
-    if (@available(iOS 13.0, *)) {
-        return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
-            return traits.userInterfaceStyle == UIUserInterfaceStyleDark
-                ? [UIColor systemGroupedBackgroundColor]
-                : light;
-        }];
-    }
-    return light;
+    return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
+        return traits.userInterfaceStyle == UIUserInterfaceStyleDark
+            ? [UIColor systemGroupedBackgroundColor]
+            : light;
+    }];
 }
 
 + (UIColor *)barColor
@@ -184,53 +171,44 @@ static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
 
 + (UIColor *)primarySurface
 {
-    if (@available(iOS 13.0, *)) return [UIColor secondarySystemGroupedBackgroundColor];
-    return [UIColor whiteColor];
+    return [UIColor secondarySystemGroupedBackgroundColor];
 }
 
 + (UIColor *)secondarySurface
 {
-    if (@available(iOS 13.0, *)) return [UIColor secondarySystemBackgroundColor];
-    return [UIColor colorWithRed:247.0/255.0 green:247.0/255.0 blue:247.0/255.0 alpha:1.0];
+    return [UIColor secondarySystemBackgroundColor];
 }
 
 + (UIColor *)groupedSurface
 {
     UIColor *light = [UIColor colorWithRed:247.0/255.0 green:247.0/255.0 blue:247.0/255.0 alpha:1.0];
-    if (@available(iOS 13.0, *)) {
-        return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
-            return traits.userInterfaceStyle == UIUserInterfaceStyleDark
-                ? [UIColor systemGroupedBackgroundColor]
-                : light;
-        }];
-    }
-    return light;
+    return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traits) {
+        return traits.userInterfaceStyle == UIUserInterfaceStyleDark
+            ? [UIColor systemGroupedBackgroundColor]
+            : light;
+    }];
 }
 
 + (UIColor *)elevatedSurface
 {
-    if (@available(iOS 13.0, *)) return [UIColor tertiarySystemBackgroundColor];
-    return [UIColor whiteColor];
+    return [UIColor tertiarySystemBackgroundColor];
 }
 
 #pragma mark - Text
 
 + (UIColor *)primaryText
 {
-    if (@available(iOS 13.0, *)) return [UIColor labelColor];
-    return [UIColor blackColor];
+    return [UIColor labelColor];
 }
 
 + (UIColor *)secondaryText
 {
-    if (@available(iOS 13.0, *)) return [UIColor secondaryLabelColor];
-    return [UIColor darkGrayColor];
+    return [UIColor secondaryLabelColor];
 }
 
 + (UIColor *)tertiaryText
 {
-    if (@available(iOS 13.0, *)) return [UIColor tertiaryLabelColor];
-    return [UIColor lightGrayColor];
+    return [UIColor tertiaryLabelColor];
 }
 
 + (UIColor *)operationText
@@ -249,22 +227,19 @@ static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
 
 + (UIColor *)placeholderText
 {
-    if (@available(iOS 13.0, *)) return [UIColor placeholderTextColor];
-    return [UIColor lightGrayColor];
+    return [UIColor placeholderTextColor];
 }
 
 #pragma mark - Lines / fills
 
 + (UIColor *)separator
 {
-    if (@available(iOS 13.0, *)) return [UIColor separatorColor];
-    return [UIColor colorWithWhite:0.85 alpha:1.0];
+    return [UIColor separatorColor];
 }
 
 + (UIColor *)fill
 {
-    if (@available(iOS 13.0, *)) return [UIColor systemFillColor];
-    return [UIColor colorWithWhite:0.90 alpha:1.0];
+    return [UIColor systemFillColor];
 }
 
 @end

@@ -59,7 +59,6 @@
     } cancel:^(UIViewController *c) {
         [delegate cancelChoose:c];
     } chooseRepo:chooseRepo];
-    return self;
 }
 
 - (void)cancel:(id)sender
@@ -91,8 +90,7 @@
         [self applyRoundedCornersIfNeeded];
     }
 
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.edgesForExtendedLayout = UIRectEdgeAll;
     [self.navigationItem setHidesBackButton:[self.directory isKindOfClass:[SeafRepos class]]];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStylePlain target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
@@ -464,7 +462,7 @@
     if (!self.useDestinationStyle) return;
     CGFloat radius = 16.0;
     self.tableView.layer.cornerRadius = radius;
-    if (@available(iOS 13.0, *)) self.tableView.layer.cornerCurve = kCACornerCurveContinuous;
+    self.tableView.layer.cornerCurve = kCACornerCurveContinuous;
     self.tableView.clipsToBounds = YES;
     for (UIView *sub in self.tableView.subviews) {
         NSString *cls = NSStringFromClass([sub class]);

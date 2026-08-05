@@ -126,6 +126,7 @@ static NSString *const kTagSelectorCellId = @"TagSelectorCell";
     cancelBtn.titleLabel.font = [UIFont systemFontOfSize:16];
     cancelBtn.translatesAutoresizingMaskIntoConstraints = NO;
     [cancelBtn addTarget:self action:@selector(onCancelTapped) forControlEvents:UIControlEventTouchUpInside];
+    cancelBtn.accessibilityIdentifier = @"tag_selector_cancel_button";
     [toolbar addSubview:cancelBtn];
 
     UIButton *doneBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -133,6 +134,7 @@ static NSString *const kTagSelectorCellId = @"TagSelectorCell";
     doneBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
     doneBtn.translatesAutoresizingMaskIntoConstraints = NO;
     [doneBtn addTarget:self action:@selector(onDoneTapped) forControlEvents:UIControlEventTouchUpInside];
+    doneBtn.accessibilityIdentifier = @"tag_selector_done_button";
     [toolbar addSubview:doneBtn];
 
     UILabel *titleLabel = [UILabel new];
@@ -223,6 +225,7 @@ static NSString *const kTagSelectorCellId = @"TagSelectorCell";
     NSString *color = tag[@"_tag_color"] ?: @"";
     BOOL selected = [self.selectedIdSet containsObject:tagId];
     [cell configureWithName:name color:color selected:selected];
+    cell.accessibilityIdentifier = [NSString stringWithFormat:@"tag_selector_cell_%@", tagId];
     return cell;
 }
 

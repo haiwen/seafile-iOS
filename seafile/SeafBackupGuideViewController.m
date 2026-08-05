@@ -393,9 +393,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     UIImage *selectedImage;
 
     UIColor *unselectedTint = [SeafTheme tertiaryText];
-    if (@available(iOS 13.0, *)) {
-        unselectedTint = [unselectedTint resolvedColorWithTraitCollection:self.traitCollection];
-    }
+    unselectedTint = [unselectedTint resolvedColorWithTraitCollection:self.traitCollection];
     if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
         unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:unselectedTint renderingMode:UIImageRenderingModeAlwaysOriginal];
         selectedImage = [[UIImage systemImageNamed:@"checkmark.circle.fill"] imageWithTintColor:[SeafTheme accentOrange] renderingMode:UIImageRenderingModeAlwaysOriginal];

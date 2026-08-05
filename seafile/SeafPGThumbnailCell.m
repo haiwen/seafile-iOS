@@ -29,11 +29,7 @@
     [self.contentView addSubview:self.thumbnailImageView];
 
     UIActivityIndicatorViewStyle thumbStyle;
-    if (@available(iOS 13.0, *)) {
-        thumbStyle = UIActivityIndicatorViewStyleMedium;
-    } else {
-        thumbStyle = UIActivityIndicatorViewStyleGray;
-    }
+    thumbStyle = UIActivityIndicatorViewStyleMedium;
     self.loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:thumbStyle];
     self.loadingIndicator.hidesWhenStopped = YES;
     self.loadingIndicator.center = CGPointMake(self.contentView.bounds.size.width / 2, self.contentView.bounds.size.height / 2);

@@ -219,17 +219,50 @@
 }
 
 - (void)finishDownloadThumb:(BOOL)success{
+    [self finishDownloadThumb:success forTask:nil];
+}
+
+- (void)finishDownloadThumb:(BOOL)success forTask:(SeafThumb *)task{
     Debug("finishDownloadThumb: %@ success: %d", self.name, success);
-    if (self.thumbCompleteBlock)
-        self.thumbCompleteBlock(success);
-    _thumbtask = nil;
-    if (success || _icon || self.image) {
-        @weakify(self);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            @strongify(self);
-            [self.delegate download:self complete:false];
-        });
+    if (success) {
+        // A fresh success supersedes any earlier failure record.
+        [[SeafCacheManager sharedManager] clearThumbDownloadFailedForFile:self];
     }
+    // NOTE: do NOT negative-cache here on failure. Whether a failure is permanent
+    // (HTTP 4xx) vs transient (5xx, cancel, timeout, offline) is only known at the
+    // download site, which records the failure with the right policy.
+
+    // Thumb download may finish on a background queue after decode/warm, while
+    // thumbTaskForQueue is read and written from the main queue; hop before
+    // touching it or invoking UI-facing callbacks.
+    @weakify(self);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @strongify(self);
+        if (!self) return;
+        // Clear so a failed thumb can be re-enqueued on the next icon/thumb request,
+        // but never clear a task that superseded the one reporting completion.
+        // A nil task means the caller owns no queue slot (e.g. thumbs generated
+        // locally from an already-decrypted file), so it must not clear one.
+        if (task && self.thumbTaskForQueue == task) {
+            self.thumbTaskForQueue = nil;
+        }
+        self->_thumbtask = nil;
+        if (self.thumbCompleteBlock) {
+            self.thumbCompleteBlock(success);
+        }
+        // Only refresh UI on success. Failure + refresh previously re-entered iconForFile
+        // and re-enqueued forever (especially for PDF 500 HTML error pages).
+        if (!success) {
+            return;
+        }
+        id del = self.delegate;
+        if ([del respondsToSelector:@selector(thumbnailDownload:complete:)]) {
+            [del thumbnailDownload:self complete:YES];
+        } else {
+            // Backward compatible for delegates that only handle download:complete:.
+            [del download:self complete:false];
+        }
+    });
 }
 
 - (void)setThumbCompleteBlock:(nullable SeafThumbCompleteBlock)block
@@ -268,6 +301,16 @@
 - (BOOL)isVideoFile
 {
     return [Utils isVideoFile:self.name];
+}
+
+- (BOOL)isPdfFile
+{
+    return [Utils isPdfFile:self.name];
+}
+
+- (BOOL)isSdocFile
+{
+    return [Utils isSdocFile:self.name];
 }
 
 - (BOOL)isWebOpenFile {

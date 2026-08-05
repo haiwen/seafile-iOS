@@ -17,7 +17,7 @@
 #import <dirent.h>
 #import <sys/xattr.h>
 #import <Photos/Photos.h>
-#import <MobileCoreServices/MobileCoreServices.h>
+#import <PhotosUI/PhotosUI.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <UniversalDetector/UniversalDetector.h>
 
@@ -333,6 +333,16 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
     return [Utils isVideoExt:name.pathExtension.lowercaseString];
 }
 
++ (BOOL)isPdfFile:(NSString *)name
+{
+    return [name.pathExtension.lowercaseString isEqualToString:@"pdf"];
+}
+
++ (BOOL)isSdocFile:(NSString *)name
+{
+    return [name.pathExtension.lowercaseString isEqualToString:@"sdoc"];
+}
+
 + (BOOL)isVideoExt:(NSString *)ext
 {
     static NSString *videoexts[] = {@"mp4", @"mov", @"m4v", nil};
@@ -560,8 +570,8 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
     NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
     for (NSString *component in components) {
         NSArray *subcomponents = [component componentsSeparatedByString:@"="];
-        [parameters setObject:[[subcomponents objectAtIndex:1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]
-                       forKey:[[subcomponents objectAtIndex:0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+        [parameters setObject:[[subcomponents objectAtIndex:1] stringByRemovingPercentEncoding]
+                       forKey:[[subcomponents objectAtIndex:0] stringByRemovingPercentEncoding]];
     }
     return parameters;
 }
@@ -683,7 +693,11 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 
     CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), imageRef);
     CGImageRef decompressedImageRef = CGBitmapContextCreateImage(context);
-    UIImage *decompressedImage = [UIImage imageWithCGImage:decompressedImageRef];
+    // The bitmap holds raw pixels, so carry over scale and orientation; dropping
+    // them would resize and rotate images that carry EXIF orientation.
+    UIImage *decompressedImage = [UIImage imageWithCGImage:decompressedImageRef
+                                                     scale:image.scale
+                                               orientation:image.imageOrientation];
 
     CGContextRelease(context);
     CGImageRelease(decompressedImageRef);
@@ -752,7 +766,8 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 }
 
 + (NSURL *)generateFileTempPath:(NSString *)name {
-    NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[name stringByAddingPercentEscapesUsingEncoding:NSUTF16StringEncoding]];
+    NSString *escapedName = [name stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
+    NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:escapedName];
     NSURL *tempURL = [NSURL fileURLWithPath:tempPath isDirectory:NO];
     if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {
         NSError *error;
@@ -857,11 +872,7 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 + (long long)currentTimestampAsLongLong {
     NSTimeInterval timeStamp;
     
-    if (@available(iOS 13.0, *)) {
-        timeStamp = [[NSDate now] timeIntervalSince1970];
-    } else {
-        timeStamp = [[NSDate date] timeIntervalSince1970];
-    }
+    timeStamp = [[NSDate now] timeIntervalSince1970];
     
     long long timeStampLongLong = (long long)timeStamp;
     
@@ -869,10 +880,7 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 }
 
 + (UIColor *)cellDetailTextTextColor {
-    if (@available(iOS 13.0, *)) {
-        return [UIColor secondaryLabelColor];
-    }
-    return [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
+    return [UIColor secondaryLabelColor];
 }
 
 + (NSDictionary *)checkNetworkReachability {
@@ -915,6 +923,37 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 + (BOOL)isMainApp {
     NSString *bundleId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
     return [bundleId isEqualToString:APP_ID];
+}
+
+#pragma mark - Photo library authorization
+
++ (PHAuthorizationStatus)photoLibraryAuthorizationStatus
+{
+    return [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+}
+
++ (void)requestPhotoLibraryAuthorization:(void (^)(PHAuthorizationStatus status))handler
+{
+    [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelReadWrite
+                                               handler:^(PHAuthorizationStatus status) {
+        if (handler) handler(status);
+    }];
+}
+
++ (BOOL)isPhotoLibraryAccessible:(PHAuthorizationStatus)status
+{
+    return status == PHAuthorizationStatusAuthorized || status == PHAuthorizationStatusLimited;
+}
+
++ (void)presentLimitedLibraryPickerFromViewController:(UIViewController *)viewController
+{
+    if (!viewController) {
+        return;
+    }
+    if ([self photoLibraryAuthorizationStatus] != PHAuthorizationStatusLimited) {
+        return;
+    }
+    [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:viewController];
 }
 
 @end

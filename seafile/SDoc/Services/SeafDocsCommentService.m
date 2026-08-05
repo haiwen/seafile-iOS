@@ -152,15 +152,8 @@ static NSString * const kSeafDocsCommentServiceErrorDomain = @"SeafDocsCommentSe
     }
     NSString *finalUpdatedAt = updatedAt;
     if (finalUpdatedAt.length == 0) {
-        if (@available(iOS 10.0, *)) {
-            NSISO8601DateFormatter *fmt = [NSISO8601DateFormatter new];
-            finalUpdatedAt = [fmt stringFromDate:[NSDate date]];
-        } else {
-            NSDateFormatter *df = [NSDateFormatter new];
-            df.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
-            df.dateFormat = @"yyyy-MM-dd'T'HH:mm:ssZ";
-            finalUpdatedAt = [df stringFromDate:[NSDate date]];
-        }
+        NSISO8601DateFormatter *fmt = [NSISO8601DateFormatter new];
+        finalUpdatedAt = [fmt stringFromDate:[NSDate date]];
     }
     params[@"author"] = finalAuthor;
     params[@"updated_at"] = finalUpdatedAt;

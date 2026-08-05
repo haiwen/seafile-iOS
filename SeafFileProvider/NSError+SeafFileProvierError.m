@@ -8,64 +8,35 @@
 
 #import "NSError+SeafFileProvierError.h"
 #import <FileProvider/FileProvider.h>
-#import "Utils.h"
 
 @implementation NSError (SeafFileProvierError)
 
 + (NSError *)fileProvierErrorServerUnreachable {
-    if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorServerUnreachable userInfo:nil];
-    } else {
-        return [Utils defaultError];
-    }
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorServerUnreachable userInfo:nil];
 }
 
 + (NSError *)fileProvierErrorNotAuthenticated {
-    if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:@{@"reason" : @"notAuthenticated"}];
-    } else {
-        return [Utils defaultError];
-    }
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:@{@"reason" : @"notAuthenticated"}];
 }
 
 + (NSError *)fileProvierErrorNoAccount {
-    if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:@{@"reason" : @"noAccount"}];
-    } else {
-        return [Utils defaultError];
-    }
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:@{@"reason" : @"noAccount"}];
 }
 
 + (NSError *)fileProvierErrorNoSuchItem {
-    if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
-    } else {
-        return [Utils defaultError];
-    }
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
 }
 
 + (NSError *)fileProvierErrorPageExpired {
-    if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorPageExpired userInfo:nil];
-    } else {
-        return [Utils defaultError];
-    }
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorPageExpired userInfo:nil];
 }
 
 + (NSError *)fileProvierErrorFilenameCollision {
-    if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorFilenameCollision userInfo:nil];
-    } else {
-        return [Utils defaultError];
-    }
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorFilenameCollision userInfo:nil];
 }
 
 + (NSError *)fileProvierErrorInsufficientQuota {
-    if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorInsufficientQuota userInfo:nil];
-    } else {
-        return [Utils defaultError];
-    }
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorInsufficientQuota userInfo:nil];
 }
 
 + (NSError *)fileProvierErrorFeatureUnsupported {

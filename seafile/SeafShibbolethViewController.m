@@ -418,7 +418,7 @@
 // Lazily initialized progress view
 - (UIProgressView *)progressView {
     if (!_progressView) {
-        CGFloat y = [[UIApplication sharedApplication] statusBarFrame].size.height + self.navigationController.navigationBar.frame.size.height;
+        CGFloat y = [SeafAppDelegate statusBarHeight] + self.navigationController.navigationBar.frame.size.height;
         if (IsIpad()) {
             y = self.navigationController.navigationBar.frame.size.height;
         }

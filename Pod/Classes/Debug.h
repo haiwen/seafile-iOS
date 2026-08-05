@@ -71,16 +71,16 @@
 #define Warning(fmt, args...) NSLog(@"#%d %s:[WARNING]" fmt, __LINE__, __FUNCTION__, ##args)
 
 #define STR_CANCEL NSLocalizedString(@"Cancel", @"Seafile")
-static inline BOOL IsIpad()
+static inline BOOL IsIpad(void)
 {
     return ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad);
 }
 
-static inline NSString *actionSheetCancelTitle()
+static inline NSString *actionSheetCancelTitle(void)
 {
     return IsIpad() ? nil : STR_CANCEL;
 }
 
-static inline NSBundle *SeafileBundle() {
+static inline NSBundle *SeafileBundle(void) {
     return [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"Seafile" ofType:@"bundle"]];
 }

@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)download:(id)file complete:(BOOL)updated;
 - (void)download:(id)file failed:(NSError *)error;
 - (void)download:(id)file progress:(float)progress;
+@optional
+- (void)thumbnailDownload:(id)file complete:(BOOL)success;
 @end
 
 @interface SeafFileModel : SeafBaseModel
@@ -60,6 +62,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /** Determine if the file is a video */
 - (BOOL)isVideoFile;
+
+/** Determine if the file is a PDF */
+- (BOOL)isPdfFile;
+
+/** Determine if the file is an sdoc */
+- (BOOL)isSdocFile;
 
 /** Determine if the file is editable */
 - (BOOL)isEditable;

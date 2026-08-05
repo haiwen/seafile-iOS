@@ -129,6 +129,7 @@ extern NSNotificationName const SeafServerInfoUpdatedNotification;
 @property (readonly) BOOL isWikiEnabled;///< Whether wiki should be shown (server supported AND client switch enabled).
 @property (nonatomic) BOOL wikiSwitchEnabled;///< Client-side wiki toggle (persisted per account, default NO).
 @property (readonly) BOOL isNewActivitiesApiSupported;///< Indicates whether the new activities API is supported.
+@property (readonly) BOOL isNewThumbnailApiSupported;///< Server >= 14.0 uses new thumbnail API: /thumbnail/{repo_id}/{size}/{path}
 @property (readonly) NSData* _Nullable clientIdentityKey;///< Client identity key for secure communications.
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;///< Indicates whether syncing should occur over WiFi only.
@@ -538,6 +539,14 @@ Checks the auto synchronization settings and updates the connection’s synchron
     Connetion clear upload cache
  */
 - (void)clearUploadCache;
+
+/**
+ * Build thumbnail GET request path for use with buildRequest:.
+ * 14.0+: /thumbnail/{repo_id}/256/{path}
+ * <= 13.0: /api2/repos/{repo_id}/thumbnail/?size={requestedSize}&p={path}
+ */
+- (NSString *_Nullable)buildThumbnailRequestPathForFile:(SeafFile *_Nullable)sFile
+                                          requestedSize:(int)requestedSize;
 
 /**
  *

@@ -32,6 +32,10 @@ typedef enum {
 - (void)download:(id _Nullable)entry complete:(BOOL)updated;
 - (void)download:(id _Nullable)entry failed:(NSError *_Nullable)error;
 - (void)download:(id _Nonnull )entry progress:(float)progress;
+@optional
+/// Thumbnail-only completion. Prefer this over `download:complete:` so UI can
+/// refresh the cell image without file-download side effects (HUD, etc.).
+- (void)thumbnailDownload:(id _Nullable)entry complete:(BOOL)success;
 @end
 
 @protocol SeafShareDelegate <NSObject>

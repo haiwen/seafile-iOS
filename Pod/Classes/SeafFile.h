@@ -17,7 +17,7 @@
 #import "SeafFilePreviewHandler.h"
 
 
-#define THUMB_SIZE 96
+#define THUMB_SIZE 256
 
 @class SeafFile;
 @class SeafThumb;
@@ -83,7 +83,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (strong, nonatomic) SeafUploadFile * _Nullable ufile;
 @property (assign, nonatomic) BOOL isDownloading;// Checks if the file is currently being downloaded.
 @property (assign, nonatomic) BOOL downloaded;// Checks if the file is downloaded.
-@property (strong, nonatomic) SeafThumb * _Nullable thumbTaskForQueue;
+@property (strong, atomic) SeafThumb * _Nullable thumbTaskForQueue;
 
 @property (strong, nonatomic) NSURL * _Nullable preViewURL;
 @property (strong, nonatomic) NSURL * _Nullable exportURL;
@@ -108,6 +108,18 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @return YES if the file is a video, otherwise NO.
  */
 - (BOOL)isVideoFile;
+
+/**
+ * Checks if the file is a PDF file.
+ * @return YES if the file is a PDF, otherwise NO.
+ */
+- (BOOL)isPdfFile;
+
+/**
+ * Checks if the file is an sdoc file.
+ * @return YES if the file is an sdoc, otherwise NO.
+ */
+- (BOOL)isSdocFile;
 
 /**
  * Checks if the file is starred.
@@ -198,7 +210,16 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)failedDownload:(NSError *_Nullable)error;
 
+/// For callers that own no queue slot: notifies delegates without touching
+/// `thumbTaskForQueue`. Anything enqueued through the thumb queue must use
+/// `finishDownloadThumb:forTask:` so its slot is released.
 - (void)finishDownloadThumb:(BOOL)success;
+
+/// `task` identifies the thumb task reporting completion. Only the task that is
+/// still the file's current one is allowed to clear `thumbTaskForQueue`, so a
+/// completion racing with cancel + re-enqueue cannot drop the newer task.
+/// Pass nil only for paths that complete without going through the thumb queue.
+- (void)finishDownloadThumb:(BOOL)success forTask:(SeafThumb *_Nullable)task;
 
 // Public interfaces
 - (void)unload;

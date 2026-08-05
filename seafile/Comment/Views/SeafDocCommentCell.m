@@ -103,7 +103,7 @@ static NSString *sha1String(NSString *s)
     return out;
 }
 
-static NSString *commentImageCacheDir()
+static NSString *commentImageCacheDir(void)
 {
     static NSString *dir;
     static dispatch_once_t onceToken;
@@ -165,10 +165,8 @@ static NSString *commentImageCacheDir()
         // Android-style Resolved icon (12dp)
         _resolvedImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
         _resolvedImageView.contentMode = UIViewContentModeScaleAspectFit;
-        if (@available(iOS 13.0, *)) {
-            _resolvedImageView.image = [UIImage systemImageNamed:@"checkmark.circle.fill"];
-            _resolvedImageView.tintColor = [UIColor systemGreenColor];
-        }
+        _resolvedImageView.image = [UIImage systemImageNamed:@"checkmark.circle.fill"];
+        _resolvedImageView.tintColor = [UIColor systemGreenColor];
         _resolvedImageView.hidden = YES;
         [self.contentView addSubview:_resolvedImageView];
 
@@ -473,13 +471,8 @@ static NSString *commentImageCacheDir()
         self.contentView.backgroundColor = [SeafTheme secondarySurface];
         
         // Prefer using the icon
-        if (@available(iOS 13.0, *)) {
-            self.resolvedImageView.hidden = NO;
-            self.resolvedLabel.hidden = YES;
-        } else {
-            self.resolvedImageView.hidden = YES;
-            self.resolvedLabel.hidden = NO;
-        }
+        self.resolvedImageView.hidden = NO;
+        self.resolvedLabel.hidden = YES;
     } else {
         self.contentView.backgroundColor = [SeafTheme groupedSurface];
         

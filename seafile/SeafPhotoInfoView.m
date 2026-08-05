@@ -34,9 +34,7 @@ static const NSInteger kProfileLoadingTag = 997;
         // area; default `.automatic` would later apply the screen's
         // safe-area top inset and silently shift contentOffset.y, cropping
         // the top of the panel until the user pulls down. Opt out.
-        if (@available(iOS 11.0, *)) {
-            self.infoScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-        }
+        self.infoScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
         [self addSubview:self.infoScrollView];
     }
     return self;
@@ -380,11 +378,7 @@ static const NSInteger kProfileLoadingTag = 997;
     loadingContainer.tag = kProfileLoadingTag;
 
     UIActivityIndicatorView *spinner;
-    if (@available(iOS 13.0, *)) {
-        spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
-    } else {
-        spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    }
+    spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
     // Center spinner in the reserved area
     spinner.center = CGPointMake(loadingContainer.bounds.size.width / 2.0, reservedHeight / 2.0);
     spinner.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
@@ -670,9 +664,7 @@ static const NSInteger kProfileLoadingTag = 997;
             NSDictionary *v = values.firstObject ?: @{};
             BOOL checked = [v[@"checked"] boolValue];
             UIImage *cbImg = nil;
-            if (@available(iOS 13.0, *)) {
-                cbImg = checked ? [UIImage systemImageNamed:@"checkmark.square.fill"] : [UIImage systemImageNamed:@"square"];
-            }
+            cbImg = checked ? [UIImage systemImageNamed:@"checkmark.square.fill"] : [UIImage systemImageNamed:@"square"];
             if (!cbImg) {
                 cbImg = checked ? [UIImage imageNamed:@"ic_checkbox_checked"] : [UIImage imageNamed:@"ic_checkbox_unchecked"];
             }

@@ -38,11 +38,7 @@
         _textView.layer.cornerRadius = 8.0;
         _textView.layer.borderColor = UIColor.clearColor.CGColor;
         _textView.layer.borderWidth = 0;
-        if (@available(iOS 13.0, *)) {
-            _textView.backgroundColor = [UIColor tertiarySystemGroupedBackgroundColor];
-        } else {
-            _textView.backgroundColor = [SeafTheme secondarySurface];
-        }
+        _textView.backgroundColor = [UIColor tertiarySystemGroupedBackgroundColor];
         _textView.textColor = [SeafTheme primaryText];
         _textView.textContainerInset = UIEdgeInsetsMake(4, 8, 4, 8);
         _textView.tintColor = [UIColor colorWithRed:255.0/255.0 green:102.0/255.0 blue:0.0/255.0 alpha:1.0];
@@ -74,8 +70,7 @@
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    CGFloat safeBottom = 0;
-    if (@available(iOS 11.0, *)) safeBottom = self.safeAreaInsets.bottom;
+    CGFloat safeBottom = self.safeAreaInsets.bottom;
     
     // Image button 48dp × 48dp, send button 48dp high, vertical margins 6dp
     CGFloat baseHeight = 48.0 + 6.0 + 6.0; // 48pt button height + 6pt top/bottom margins

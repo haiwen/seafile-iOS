@@ -12,6 +12,7 @@
 #import "SeafThumbOperation.h"
 #import "SeafDir.h"
 #import "Debug.h"
+#import "Utils.h"
 #import "SeafStorage.h"
 #import <AFNetworking/AFNetworking.h>
 #import "SeafUploadFileModel.h"
@@ -111,7 +112,9 @@
         if (thumb.file) {
             // Notify SeafFile that its thumbnail download has failed.
             // This will update the file's state and inform its delegate.
-            [thumb.file finishDownloadThumb:NO];
+            // Report as this task so the file releases the slot it just took and
+            // can re-enqueue once the network is back.
+            [thumb.file finishDownloadThumb:NO forTask:thumb];
         } else {
             Debug(@"[SeafDataTaskManager] Thumb task has no associated file. Cannot mark as failed.");
         }
