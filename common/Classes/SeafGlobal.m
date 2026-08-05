@@ -324,15 +324,13 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 // Notify FileProvider extension to refresh root
 - (void)notifyFileProviderRootChanged
 {
-    if (@available(iOS 11.0, *)) {
-        [[NSFileProviderManager defaultManager]
-            signalEnumeratorForContainerItemIdentifier:NSFileProviderRootContainerItemIdentifier
-            completionHandler:^(NSError * _Nullable error) {
-                if (error) {
-                    Debug("Signal FileProvider root error: %@", error);
-                }
-            }];
-    }
+    [[NSFileProviderManager defaultManager]
+        signalEnumeratorForContainerItemIdentifier:NSFileProviderRootContainerItemIdentifier
+        completionHandler:^(NSError * _Nullable error) {
+            if (error) {
+                Debug("Signal FileProvider root error: %@", error);
+            }
+        }];
 }
 
 - (NSArray *)publicAccounts {

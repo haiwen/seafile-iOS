@@ -69,11 +69,7 @@ static CGFloat const kHorizontalInset  = 20.0;
     self.alertContainer.clipsToBounds = YES;
 
     // Use system grouped background so it looks correct in both light & dark mode
-    if (@available(iOS 13.0, *)) {
-        self.alertContainer.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor];
-    } else {
-        self.alertContainer.backgroundColor = [UIColor whiteColor];
-    }
+    self.alertContainer.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor];
     [self.view addSubview:self.alertContainer];
 
     [NSLayoutConstraint activateConstraints:@[
@@ -88,9 +84,7 @@ static CGFloat const kHorizontalInset  = 20.0;
     titleLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
     titleLabel.font = [UIFont boldSystemFontOfSize:17];
     titleLabel.textAlignment = NSTextAlignmentCenter;
-    if (@available(iOS 13.0, *)) {
-        titleLabel.textColor = [UIColor labelColor];
-    }
+    titleLabel.textColor = [UIColor labelColor];
     [self.alertContainer addSubview:titleLabel];
 
     // ── File name ──
@@ -130,11 +124,7 @@ static CGFloat const kHorizontalInset  = 20.0;
     // ── Separator ──
     UIView *separator = [[UIView alloc] init];
     separator.translatesAutoresizingMaskIntoConstraints = NO;
-    if (@available(iOS 13.0, *)) {
-        separator.backgroundColor = [UIColor separatorColor];
-    } else {
-        separator.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1.0];
-    }
+    separator.backgroundColor = [UIColor separatorColor];
     [self.alertContainer addSubview:separator];
 
     // ── Cancel button ──

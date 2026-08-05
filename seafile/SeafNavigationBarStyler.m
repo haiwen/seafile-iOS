@@ -16,9 +16,7 @@
 + (void)applyStandardAppearanceToNavigationController:(UINavigationController *)navigationController {
     NSDictionary *titleAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
     navigationController.navigationBar.titleTextAttributes = titleAttributes;
-    if (@available(iOS 11.0, *)) {
-        navigationController.navigationBar.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
-    }
+    navigationController.navigationBar.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
 
     navigationController.navigationBar.barStyle = UIBarStyleDefault;
 

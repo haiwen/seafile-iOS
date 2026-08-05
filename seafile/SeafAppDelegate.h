@@ -79,4 +79,13 @@ enum {
 + (UIViewController *)topViewController;
 + (void)checkOpenLink:(SeafFileViewController *)c;
 
+/// The window currently presenting UI. Use instead of -[UIApplication keyWindow].
++ (UIWindow *)activeWindow;
+
+/// Height of the status bar, or 0 while no window is attached yet.
++ (CGFloat)statusBarHeight;
+
+/// Interface orientation of the active window, portrait when none can be resolved.
++ (UIInterfaceOrientation)activeInterfaceOrientation;
+
 @end

@@ -16,6 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) UIImageView *thumbnailView;
 @property (nonatomic, strong) NSIndexPath *cellIndexPath;
 @property (nonatomic, strong, nullable) SeafFile *cellSeafFile;
+/// Upload entry this cell currently shows. Async icon callbacks must check it,
+/// since an index path can be reassigned to a different upload before they land.
+@property (nonatomic, strong, nullable) SeafUploadFile *cellUploadFile;
 @property (nonatomic, assign) BOOL isUserEditing;
 
 /// Preview aspect ratio (width / height). Currently 1:1 for a Files-like grid.

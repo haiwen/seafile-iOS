@@ -3,7 +3,7 @@
 //  seafilePro
 //
 //  Central theme helper: semantic color tokens + user-selected Light/Dark/System preference.
-//  iOS 13+ returns dynamic colors; pre-iOS 13 returns the existing static light-mode colors.
+//  Color tokens resolve dynamically against the current Light/Dark trait collection.
 //
 
 #import <Foundation/Foundation.h>

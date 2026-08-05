@@ -137,12 +137,8 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 - (void)setupLoadingIndicator {
     if (self.loadingIndicator) return;
     UIActivityIndicatorView *indicator;
-    if (@available(iOS 13.0, *)) {
-        indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
-        indicator.color = [UIColor whiteColor];
-    } else {
-        indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-    }
+    indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+    indicator.color = [UIColor whiteColor];
     indicator.hidesWhenStopped = YES;
     indicator.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:indicator];
@@ -267,17 +263,13 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 - (void)setupPlayerViewController {
     self.playerViewController = [[AVPlayerViewController alloc] init];
     // Ensure the player view controller automatically updates the Now Playing info center
-    if (@available(iOS 10.0, *)) {
-        self.playerViewController.updatesNowPlayingInfoCenter = YES;
-    }
+    self.playerViewController.updatesNowPlayingInfoCenter = YES;
     [self addChildViewController:self.playerViewController];
     [self.view addSubview:self.playerViewController.view];
     [self.playerViewController didMoveToParentViewController:self];
     
     // Allow picture-in-picture mode (iOS 14+)
-    if (@available(iOS 14.0, *)) {
-        self.playerViewController.allowsPictureInPicturePlayback = YES;
-    }
+    self.playerViewController.allowsPictureInPicturePlayback = YES;
 }
 
 - (void)startPlayback {
@@ -607,9 +599,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     }
 
     // Assign to player item. This replaces any existing external metadata we may have set earlier.
-    if (@available(iOS 12.2, *)) {
-        self.playerItem.externalMetadata = metadataItems;
-    }
+    self.playerItem.externalMetadata = metadataItems;
 
 }
 

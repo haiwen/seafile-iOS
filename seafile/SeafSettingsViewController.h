@@ -15,6 +15,4 @@
 
 @property (strong, nonatomic) SeafConnection *connection;
 
-- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status;
-
 @end

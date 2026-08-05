@@ -128,16 +128,12 @@ static const CGFloat kSeafEdgeBounceDetectionPx = 1.0;
 }
 
 /// Returns the inset that UIScrollView actually applies to its scrollable
-/// range. On iOS 11+ this includes safe-area / system additions; on older
-/// systems we fall back to the raw `contentInset`. Centering is implemented
+/// range, including safe-area / system additions. Centering is implemented
 /// via `contentInset` (see `SeafPhotoContentViewController centerImageInScrollView`),
 /// so any edge math that ignores this value will compute the wrong edges
 /// for content smaller than `bounds` on the relevant axis.
 - (UIEdgeInsets)effectiveContentInset {
-    if (@available(iOS 11.0, *)) {
-        return self.adjustedContentInset;
-    }
-    return self.contentInset;
+    return self.adjustedContentInset;
 }
 
 - (BOOL)isAtLeftHorizontalEdge {

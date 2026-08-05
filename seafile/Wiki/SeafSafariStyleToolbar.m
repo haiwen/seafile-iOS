@@ -359,13 +359,11 @@
     [super traitCollectionDidChange:previousTraitCollection];
 
     // Update border colors for dark/light mode switch
-    if (@available(iOS 13.0, *)) {
-        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
-            CGColorRef borderColor = [UIColor.separatorColor colorWithAlphaComponent:0.3].CGColor;
-            _backContainer.layer.borderColor = borderColor;
-            _titleContainer.layer.borderColor = borderColor;
-            _moreContainer.layer.borderColor = borderColor;
-        }
+    if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
+        CGColorRef borderColor = [UIColor.separatorColor colorWithAlphaComponent:0.3].CGColor;
+        _backContainer.layer.borderColor = borderColor;
+        _titleContainer.layer.borderColor = borderColor;
+        _moreContainer.layer.borderColor = borderColor;
     }
 }
 

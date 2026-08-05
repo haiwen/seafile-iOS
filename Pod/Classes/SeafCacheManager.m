@@ -22,12 +22,19 @@
 // limit does.
 #define DEFAULT_TotalCostLimit 120*1024*1024
 #define DEFAULT_CountLimit 250
+// The thumb queue allows 20 downloads at once; letting every one of them decode
+// simultaneously spikes memory far past the cache limit on a memory warning.
+#define THUMB_WARM_MAX_CONCURRENCY 4
 
 @interface SeafCacheManager ()
 
 @property (nonatomic, strong) NSCache *thumbMemoryCache;
 @property (nonatomic, strong) NSCache *imageMemoryCache;
 @property (nonatomic, strong) dispatch_queue_t cacheQueue;
+// Bounds concurrent decodes: the NSCache cost limit only caps retained images,
+// not the source data and intermediate bitmaps alive during decoding.
+@property (nonatomic, strong) NSOperationQueue *thumbWarmQueue;
+@property (nonatomic, strong) NSMutableSet<NSString *> *warmingThumbPaths;
 @property (nonatomic, copy) NSString *fileCachePath;
 @property (nonatomic, copy) NSString *thumbDiskCachePath;
 @property (nonatomic, copy) NSString *imageDiskCachePath; // URL 图片磁盘缓存目录
@@ -56,6 +63,12 @@
         _thumbMemoryCache.totalCostLimit = DEFAULT_TotalCostLimit;
         _thumbMemoryCache.countLimit = DEFAULT_CountLimit;
         _thumbMemoryCache.evictsObjectsWithDiscardedContent = YES;
+
+        _thumbWarmQueue = [[NSOperationQueue alloc] init];
+        _thumbWarmQueue.name = @"com.seafile.thumbWarmQueue";
+        _thumbWarmQueue.maxConcurrentOperationCount = THUMB_WARM_MAX_CONCURRENCY;
+        _thumbWarmQueue.qualityOfService = NSQualityOfServiceUtility;
+        _warmingThumbPaths = [NSMutableSet set];
 
         _imageMemoryCache = [[NSCache alloc] init];
         _imageMemoryCache.totalCostLimit = 50 * 1024 * 1024; // 与评论页一致的约束
@@ -112,6 +125,47 @@
     image = [Utils decodedImageWithImage:image] ?: image;
     [self saveThumbToCache:image key:path];
     return image;
+}
+
+- (void)warmThumbCacheInBackgroundAtPath:(NSString *)path {
+    if (path.length == 0) {
+        return;
+    }
+    @synchronized (self.warmingThumbPaths) {
+        if ([self.warmingThumbPaths containsObject:path]) {
+            return;
+        }
+        [self.warmingThumbPaths addObject:path];
+    }
+    __weak typeof(self) weakSelf = self;
+    [self.thumbWarmQueue addOperationWithBlock:^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        // Another warm may have populated the cache while this one waited for a slot.
+        if (![strongSelf getThumbFromCache:path]) {
+            [strongSelf warmThumbCacheAtPath:path];
+        }
+        @synchronized (strongSelf.warmingThumbPaths) {
+            [strongSelf.warmingThumbPaths removeObject:path];
+        }
+    }];
+}
+
+- (void)warmThumbCacheAtPath:(NSString *)path
+                  completion:(void (^)(UIImage *_Nullable image))completion {
+    if (path.length == 0) {
+        if (completion) completion(nil);
+        return;
+    }
+    __weak typeof(self) weakSelf = self;
+    [self.thumbWarmQueue addOperationWithBlock:^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        UIImage *image = nil;
+        if (strongSelf) {
+            image = [strongSelf getThumbFromCache:path] ?: [strongSelf warmThumbCacheAtPath:path];
+        }
+        if (completion) completion(image);
+    }];
 }
 
 - (NSUInteger)costForImage:(UIImage *)image {

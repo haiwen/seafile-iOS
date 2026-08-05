@@ -170,9 +170,7 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
         // Warm the cache off the main thread so the next access is hitch-free.
         thumb = [UIImage imageWithContentsOfFile:thumbpath];
         if (thumb) {
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                [[SeafCacheManager sharedManager] warmThumbCacheAtPath:thumbpath];
-            });
+            [[SeafCacheManager sharedManager] warmThumbCacheInBackgroundAtPath:thumbpath];
         } else {
             Debug(@"Thumbnail at path %@ is corrupted or invalid, deleting it.", thumbpath);
             NSError *error = nil;

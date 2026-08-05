@@ -31,16 +31,14 @@
     if (@available(iOS 16.0, *)) {
         return;
     }
-    if (@available(iOS 13.0, *)) {
-        //fix searchbar's frame
-        UIView *backgroundView = [self performSelector:NSSelectorFromString(@"_backgroundView")];
-        if (backgroundView) {
-            CGFloat statusBarHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
-            CGRect frame = backgroundView.frame;
-            frame.origin.y = -statusBarHeight;
-            frame.size.height = frame.size.height + statusBarHeight;
-            backgroundView.frame = frame;
-        }
+    //fix searchbar's frame
+    UIView *backgroundView = [self performSelector:NSSelectorFromString(@"_backgroundView")];
+    if (backgroundView) {
+        CGFloat statusBarHeight = self.window.windowScene.statusBarManager.statusBarFrame.size.height;
+        CGRect frame = backgroundView.frame;
+        frame.origin.y = -statusBarHeight;
+        frame.size.height = frame.size.height + statusBarHeight;
+        backgroundView.frame = frame;
     }
 }
 

@@ -17,7 +17,7 @@
 #import "Debug.h"
 #import "NSError+SeafFileProvierError.h"
 #import "SeafStorage.h"
-#import <MobileCoreServices/MobileCoreServices.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "SeafFileProviderUtility.h"
 #import "SeafThumb.h"
 #import "SeafDataTaskManager.h"
@@ -32,9 +32,7 @@
 
 - (NSFileCoordinator *)fileCoordinator {
     NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
-    if (@available(iOS 11.0, *)) {
-        [fileCoordinator setPurposeIdentifier:APP_ID];
-    }
+    [fileCoordinator setPurposeIdentifier:APP_ID];
     return fileCoordinator;
 }
 
@@ -71,11 +69,7 @@
 
 - (NSURL *)rootURL
 {
-    if (@available(iOS 11.0, *)) {
-        return [[NSFileProviderManager defaultManager] documentStorageURL];
-    } else {
-        return self.documentStorageURL;
-    }
+    return [[NSFileProviderManager defaultManager] documentStorageURL];
 }
 
 - (nullable NSURL *)URLForItemWithPersistentIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
@@ -96,7 +90,7 @@
     if (pathComponents.count == 1) {
         ret = self.rootURL;
     } else if (pathComponents.count == 2) {
-        BOOL isFolder = [[pathComponents objectAtIndex:1] isEqualToString:(NSString *)kUTTypeFolder];
+        BOOL isFolder = [[pathComponents objectAtIndex:1] isEqualToString:UTTypeFolder.identifier];
         ret = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:isFolder];
     } else {
         NSURL *url = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:true];
@@ -165,11 +159,7 @@
 
 - (NSURL *)getPlaceholderURLForURL:(NSURL *)url
 {
-    if (@available(iOS 11.0, *)) {
-        return [NSFileProviderManager placeholderURLForURL:url];
-    } else {
-        return [NSFileProviderExtension placeholderURLForURL:url];
-    }
+    return [NSFileProviderManager placeholderURLForURL:url];
 }
 
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler
@@ -189,14 +179,7 @@
     Debug(@"placeholderURL:%@ url:%@", placeholderURL, url);
     NSError *error = nil;
     SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-    if (@available(iOS 11.0, *)) {
-        [NSFileProviderManager writePlaceholderAtURL:placeholderURL withMetadata:providerItem error:&error];
-    } else {
-        NSDictionary *metadata = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                  providerItem.filename, @"filename", providerItem.typeIdentifier, @"typeIdentifier",
-                                  providerItem.documentSize, @"documentSize", nil];
-        [NSFileProviderExtension writePlaceholderAtURL:placeholderURL withMetadata:metadata error:&error];
-    }
+    [NSFileProviderManager writePlaceholderAtURL:placeholderURL withMetadata:providerItem error:&error];
     if (error) Warning("Failed to write placeholder: %@", error);
     completionHandler(error);
 }
@@ -645,15 +628,13 @@
 }
 
 - (void)signalEnumerator:(NSArray<NSFileProviderItemIdentifier> *)itemIdentifiers {
-    if (@available(iOS 11.0, *)) {
-        SeafFileProviderUtility.shared.currentAnchor += 1;
-        for (NSString *identifier in itemIdentifiers) {
-            [NSFileProviderManager.defaultManager signalEnumeratorForContainerItemIdentifier:identifier completionHandler:^(NSError * _Nullable error) {
-                if (error) {
-                    Debug("signalEnumerator itemIdentifier: %@ error: %@", identifier, error);
-                }
-            }];
-        }
+    SeafFileProviderUtility.shared.currentAnchor += 1;
+    for (NSString *identifier in itemIdentifiers) {
+        [NSFileProviderManager.defaultManager signalEnumeratorForContainerItemIdentifier:identifier completionHandler:^(NSError * _Nullable error) {
+            if (error) {
+                Debug("signalEnumerator itemIdentifier: %@ error: %@", identifier, error);
+            }
+        }];
     }
 }
 

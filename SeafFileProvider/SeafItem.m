@@ -16,7 +16,7 @@
 
 static APLRUCache *_cache = nil;
 
-static APLRUCache *cache() {
+static APLRUCache *cache(void) {
     if (!_cache) {
         _cache = [[APLRUCache alloc] initWithCapacity:5000];
     }

@@ -192,15 +192,10 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     }
     self.title = [NSString stringWithFormat:@"%@%@", action, namePart];
 
-    // Left: back chevron style (works for modal). Prefer SF Symbol when available, fallback to text.
+    // Left: back chevron style (works for modal).
     UIButton *backBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     backBtn.translatesAutoresizingMaskIntoConstraints = NO;
-    UIImage *backImg = nil;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-    if (@available(iOS 13.0, *)) {
-        backImg = [UIImage systemImageNamed:@"chevron.left"];
-    }
-#endif
+    UIImage *backImg = [UIImage systemImageNamed:@"chevron.left"];
     if (backImg) {
         [backBtn setImage:backImg forState:UIControlStateNormal];
     }
@@ -811,7 +806,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     if (!self.recentTableView) return;
     CGFloat radius = 16.0;
     self.recentTableView.layer.cornerRadius = radius;
-    if (@available(iOS 13.0, *)) self.recentTableView.layer.cornerCurve = kCACornerCurveContinuous;
+    self.recentTableView.layer.cornerCurve = kCACornerCurveContinuous;
     self.recentTableView.clipsToBounds = YES;
     for (UIView *sub in self.recentTableView.subviews) {
         NSString *cls = NSStringFromClass([sub class]);

@@ -7,6 +7,7 @@
 //
 
 #import "SeafPhotoGalleryViewController.h"
+#import "SeafAppDelegate.h"
 #import "SeafNavigationBarStyler.h"
 #import "SeafPhotoContentViewController.h"
 #import "Constants.h"
@@ -684,11 +685,8 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     CGRect bounds = self.view.bounds;
     CGFloat stripHeight = 45; // Use the fixed strip height
     CGFloat toolbarHeight = 44;
-    CGFloat safeAreaBottom = 0;
+    CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
     
-    if (@available(iOS 11.0, *)) {
-        safeAreaBottom = self.view.safeAreaInsets.bottom;
-    }
 
     Debug(@"[ZoomBug] gallery.viewDidLayoutSubviews bounds=%@ safeArea=%@ "
           @"isChromeHidden=%d prevPagingFrame=%@",
@@ -2388,11 +2386,8 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 - (void)setupToolbar {
     // Bottom toolbar (5 buttons) - including bottom safe area
     CGFloat toolbarH = 44;
-    CGFloat safeAreaBottom = 0;
+    CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
     
-    if (@available(iOS 11.0, *)) {
-        safeAreaBottom = self.view.safeAreaInsets.bottom;
-    }
     
     CGRect tbFrame = CGRectMake(0,
                                 self.view.bounds.size.height - toolbarH - safeAreaBottom,
@@ -2577,9 +2572,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         CGFloat safeAreaBottom = 0;
         CGFloat stripHeight = 45; // Use fixed strip height
         
-        if (@available(iOS 11.0, *)) {
-            safeAreaBottom = self.view.safeAreaInsets.bottom;
-        }
+        safeAreaBottom = self.view.safeAreaInsets.bottom;
         
         // Calculate target frame for thumbnail collection
         CGRect targetThumbnailFrame = CGRectMake(0,
@@ -2633,11 +2626,8 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         CGRect bounds = self.view.bounds;
         CGFloat stripHeight = 45; // Use fixed strip height
         CGFloat toolbarHeight = 44;
-        CGFloat safeAreaBottom = 0;
+        CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
         
-        if (@available(iOS 11.0, *)) {
-            safeAreaBottom = self.view.safeAreaInsets.bottom;
-        }
         
         // Calculate target frame for thumbnail collection
         CGRect targetThumbnailFrame = CGRectMake(0,
@@ -3380,10 +3370,7 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
     if (self.isChromeHidden) {
         return UIStatusBarStyleLightContent;
     }
-    if (@available(iOS 13.0, *)) {
-        return UIStatusBarStyleDarkContent;
-    }
-    return UIStatusBarStyleDefault;
+    return UIStatusBarStyleDarkContent;
 }
 
 - (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
@@ -3682,18 +3669,7 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
 }
 
 - (UIWindow *)heroReferenceWindow {
-    UIWindow *window = self.view.window;
-    if (window) return window;
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
-                for (UIWindow *w in ((UIWindowScene *)scene).windows) {
-                    if (w.isKeyWindow) return w;
-                }
-            }
-        }
-    }
-    return [UIApplication sharedApplication].keyWindow;
+    return self.view.window ?: [SeafAppDelegate activeWindow];
 }
 
 #pragma mark - Hero navigation factory

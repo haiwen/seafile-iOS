@@ -51,8 +51,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafSyncInfoCell" bundle:nil]
          forCellReuseIdentifier:cellIdentifier];
 
-    if ([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.edgesForExtendedLayout = UIRectEdgeAll;
 
     if (self.detailType == DOWNLOAD_DETAIL) {
         self.navigationItem.title = NSLocalizedString(@"Downloading", @"Seafile");

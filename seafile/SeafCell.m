@@ -119,16 +119,14 @@
 {
     NSString *imageName = selected ? @"ic_checkbox_checked" : @"ic_checkbox_unchecked";
     UIImage *image = [UIImage imageNamed:imageName];
-    if (@available(iOS 13.0, *)) {
-        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-            self.checkboxImageView.tintColor = selected
-                ? [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.7]
-                : [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.2];
-        } else {
-            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-            self.checkboxImageView.tintColor = nil;
-        }
+    if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+        image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        self.checkboxImageView.tintColor = selected
+            ? [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.7]
+            : [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.2];
+    } else {
+        image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        self.checkboxImageView.tintColor = nil;
     }
     self.checkboxImageView.image = image;
 }
@@ -160,11 +158,9 @@
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
 {
     [super traitCollectionDidChange:previousTraitCollection];
-    if (@available(iOS 13.0, *)) {
-        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]
-            && self.isUserEditing) {
-            [self updateCheckboxImageForSelected:self.isSelected];
-        }
+    if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]
+        && self.isUserEditing) {
+        [self updateCheckboxImageForSelected:self.isSelected];
     }
 }
 

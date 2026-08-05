@@ -13,13 +13,14 @@
 
 - (NSString *)escapedUrl
 {
-    return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes
-                                         (
-                                          NULL,
-                                          (__bridge CFStringRef)self,
-                                          NULL,
-                                          (CFStringRef)@"!*'();:@&=+$,?%#[]",
-                                          kCFStringEncodingUTF8));
+    // `/` must stay unescaped: callers pass whole URL paths through here, see -escapedUrlPath.
+    static NSCharacterSet *allowed;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        allowed = [NSCharacterSet characterSetWithCharactersInString:
+                   @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~/"];
+    });
+    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowed];
 }
 
 - (NSString *)escapedPostForm

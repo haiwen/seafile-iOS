@@ -50,9 +50,7 @@ static inline UIEdgeInsets SeafAccountSeparatorInset(void) {
 - (instancetype)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
     if (self) {
-        if (@available(iOS 13.0, *)) {
-            self.modalInPresentation = true;
-        }
+        self.modalInPresentation = true;
     }
     return self;
 }

@@ -74,9 +74,7 @@
 
     self.datePicker = [[UIDatePicker alloc] init];
     self.datePicker.datePickerMode = UIDatePickerModeDateAndTime;
-    if (@available(iOS 13.4, *)) {
-        self.datePicker.preferredDatePickerStyle = UIDatePickerStyleWheels;
-    }
+    self.datePicker.preferredDatePickerStyle = UIDatePickerStyleWheels;
     if (self.initialDate) {
         self.datePicker.date = self.initialDate;
     }

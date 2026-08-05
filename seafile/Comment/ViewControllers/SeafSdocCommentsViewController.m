@@ -30,11 +30,7 @@ static NSTimeInterval const kRelatedUsersCacheTTL = 300.0; // 5 minutes
 static NSMutableDictionary<NSString *, NSArray<NSDictionary *> *> *gRelatedUsersCache;
 static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
-@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-, UIAdaptivePresentationControllerDelegate
-#endif
->
+@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate, UIAdaptivePresentationControllerDelegate>
 
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
@@ -89,9 +85,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     _tableView.dataSource = self;
     _tableView.delegate = self;
     // Allow dismissing keyboard by dragging
-    if (@available(iOS 7.0, *)) {
-        _tableView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
-    }
+    _tableView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
     // Provide estimated height to reduce synchronous measurements on first render
     _tableView.estimatedRowHeight = 120.0;
     [_tableView registerClass:SeafDocCommentCell.class forCellReuseIdentifier:kSeafDocCommentCellId];
@@ -99,11 +93,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
     _refreshControl = [UIRefreshControl new];
     [_refreshControl addTarget:self action:@selector(onPullRefresh) forControlEvents:UIControlEventValueChanged];
-    if (@available(iOS 10.0, *)) {
-        _tableView.refreshControl = _refreshControl;
-    } else {
-        [_tableView addSubview:_refreshControl];
-    }
+    _tableView.refreshControl = _refreshControl;
 
     _emptyView = [self buildEmptyView];
 
@@ -151,7 +141,6 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     // loading indicator
     if (!_loadingIndicator) {
         UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleMedium;
-        if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium; else style = UIActivityIndicatorViewStyleGray;
         _loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:style];
         _loadingIndicator.hidesWhenStopped = YES;
         _loadingIndicator.translatesAutoresizingMaskIntoConstraints = NO;
@@ -187,8 +176,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 {
     CGSize sz = self.view.bounds.size;
     CGFloat inputContentH = [_inputViewBar intrinsicContentSize].height;
-    CGFloat safeBottom = 0;
-    if (@available(iOS 11.0, *)) safeBottom = self.view.safeAreaInsets.bottom;
+    CGFloat safeBottom = self.view.safeAreaInsets.bottom;
 
     // Input bar intrinsic now returns pure content height:
     // - No keyboard: add safeBottom, align to bottom without being covered by Home Indicator
@@ -247,7 +235,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     UIImage *tipImage = [UIImage imageNamed:@"tip_no_items"];
     if (tipImage) {
         img.image = tipImage;
-    } else if (@available(iOS 13.0, *)) {
+    } else {
         img.image = [UIImage systemImageNamed:@"tray"];
         img.tintColor = [SeafTheme tertiaryText];
     }
@@ -316,37 +304,16 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
 - (void)onTapPhoto
 {
-    // Simple image picker: PHPicker preferred
-    __weak typeof(self) wself = self;
-    void (^presentLegacyPicker)(void) = ^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            __strong typeof(wself) sself = wself; if (!sself) return;
-            UIImagePickerController *picker = [UIImagePickerController new];
-            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-            picker.modalPresentationStyle = UIModalPresentationFullScreen;
-            picker.delegate = (id<UINavigationControllerDelegate, UIImagePickerControllerDelegate>)sself;
-            [sself presentViewController:picker animated:YES completion:nil];
-        });
-    };
-    if (@available(iOS 14.0, *)) {
-        PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init];
-        config.selectionLimit = 1;
-        config.filter = [PHPickerFilter imagesFilter];
-        PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
-        picker.delegate = (id<PHPickerViewControllerDelegate>)self;
-        [self presentViewController:picker animated:YES completion:nil];
-    } else {
-        PHAuthorizationStatus st = [PHPhotoLibrary authorizationStatus];
-        if (st == PHAuthorizationStatusAuthorized) {
-            presentLegacyPicker();
-        } else if (st == PHAuthorizationStatusNotDetermined) {
-            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-                if (status == PHAuthorizationStatusAuthorized) presentLegacyPicker();
-            }];
-        } else {
-            // no-op
-        }
+    // PHPicker runs out of process and needs no photo library authorization.
+    PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init];
+    config.selectionLimit = 1;
+    config.filter = [PHPickerFilter imagesFilter];
+    PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
+    picker.delegate = (id<PHPickerViewControllerDelegate>)self;
+    if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        picker.modalPresentationStyle = UIModalPresentationFormSheet;
     }
+    [self presentViewController:picker animated:YES completion:nil];
 }
 
 - (void)onTapSend:(NSString *)text
@@ -630,9 +597,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
                 NSMutableArray<SeafDocCommentItem *> *arr = [NSMutableArray arrayWithCapacity:list.count];
                 // Use local date formatters to avoid thread-safety issues with shared singletons
                 NSISO8601DateFormatter *isoFmt = nil;
-                if (@available(iOS 10.0, *)) {
-                    isoFmt = [NSISO8601DateFormatter new];
-                }
+                isoFmt = [NSISO8601DateFormatter new];
                 NSDateFormatter *fallbackFmt = [NSDateFormatter new];
                 fallbackFmt.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
                 NSArray<NSString *> *fmts = @[ @"yyyy-MM-dd'T'HH:mm:ssXXXXX",
@@ -655,9 +620,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
                     NSDate *createdAt = nil;
                     if (time.length > 0) {
-                        if (@available(iOS 10.0, *)) {
-                            createdAt = [isoFmt dateFromString:time];
-                        }
+                        createdAt = [isoFmt dateFromString:time];
                         if (!createdAt) {
                             for (NSString *f in fmts) {
                                 fallbackFmt.dateFormat = f;
@@ -712,7 +675,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         BOOL isPullRefreshing = NO;
         if (_refreshControl) {
             isPullRefreshing = _refreshControl.isRefreshing;
-        } else if (@available(iOS 10.0, *)) {
+        } else {
             isPullRefreshing = _tableView.refreshControl.isRefreshing;
         }
         // For first load or non pull-to-refresh, use local loadingIndicator to avoid center HUD animation impacting the first frame
@@ -758,12 +721,10 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 {
     if (timeStr.length == 0) return nil;
     NSDate *date = nil;
-    if (@available(iOS 10.0, *)) {
-        static NSISO8601DateFormatter *isoFmt;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{ isoFmt = [NSISO8601DateFormatter new]; });
-        date = [isoFmt dateFromString:timeStr];
-    }
+    static NSISO8601DateFormatter *isoFmt;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ isoFmt = [NSISO8601DateFormatter new]; });
+    date = [isoFmt dateFromString:timeStr];
     if (!date) {
         // common fallback patterns
         NSArray<NSString *> *fmts = @[ @"yyyy-MM-dd'T'HH:mm:ssXXXXX",
@@ -796,12 +757,10 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 {
     if (timeStr.length == 0) return nil;
     NSDate *date = nil;
-    if (@available(iOS 10.0, *)) {
-        static NSISO8601DateFormatter *isoFmt;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{ isoFmt = [NSISO8601DateFormatter new]; });
-        date = [isoFmt dateFromString:timeStr];
-    }
+    static NSISO8601DateFormatter *isoFmt;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ isoFmt = [NSISO8601DateFormatter new]; });
+    date = [isoFmt dateFromString:timeStr];
     if (!date) {
         NSArray<NSString *> *fmts = @[ @"yyyy-MM-dd'T'HH:mm:ssXXXXX",
                                        @"yyyy-MM-dd HH:mm:ss",
@@ -836,12 +795,10 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 {
     if (timeStr.length == 0) return nil;
     NSDate *date = nil;
-    if (@available(iOS 10.0, *)) {
-        static NSISO8601DateFormatter *isoFmt;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{ isoFmt = [NSISO8601DateFormatter new]; });
-        date = [isoFmt dateFromString:timeStr];
-    }
+    static NSISO8601DateFormatter *isoFmt;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ isoFmt = [NSISO8601DateFormatter new]; });
+    date = [isoFmt dateFromString:timeStr];
     if (!date) {
         // common fallback patterns
         NSArray<NSString *> *fmts = @[ @"yyyy-MM-dd'T'HH:mm:ssXXXXX",
@@ -981,10 +938,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     NSIndexPath *ip = objc_getAssociatedObject(sender, @"comment_indexPath");
     SeafDocCommentItem *item = objc_getAssociatedObject(sender, @"comment_item");
     [self _dismissCustomSheet:sender];
-    if (@available(iOS 10.0, *)) {
-        UIImpactFeedbackGenerator *gen = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
-        [gen impactOccurred];
-    }
+    UIImpactFeedbackGenerator *gen = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+    [gen impactOccurred];
     if (!ip || !item) return;
         [self markResolved:item atIndexPath:ip];
 }
@@ -994,10 +949,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     NSIndexPath *ip = objc_getAssociatedObject(sender, @"comment_indexPath");
     SeafDocCommentItem *item = objc_getAssociatedObject(sender, @"comment_item");
     [self _dismissCustomSheet:sender];
-    if (@available(iOS 10.0, *)) {
-        UIImpactFeedbackGenerator *gen = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
-        [gen impactOccurred];
-    }
+    UIImpactFeedbackGenerator *gen = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+    [gen impactOccurred];
     if (!ip || !item) return;
     [self deleteComment:item atIndexPath:ip];
 }
@@ -1038,76 +991,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 }
 
 #pragma mark - Image picker delegates
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info
-{
-    UIImage *image = info[UIImagePickerControllerOriginalImage];
-    NSURL *url = info[UIImagePickerControllerImageURL];
-    [picker dismissViewControllerAnimated:YES completion:nil];
-    if (!image) return;
-    // Immediately insert attachment as square with width = 2/5 of input text area (no stretch; crop center)
-    [self.view layoutIfNeeded];
-    CGFloat inputTextWidth = MAX(0.0, self->_inputViewBar.textView.bounds.size.width);
-    CGFloat showW = floor(MAX(48.0, inputTextWidth * 0.4));
-    CGFloat showH = showW; // square
-    UIImage *squareImg = [self squareImageFrom:image targetSide:showW];
-    SeafImageAttachment *att = [SeafImageAttachment new];
-    att.image = squareImg ?: image;
-    att.bounds = CGRectMake(0, 0, showW, showH);
-    NSAttributedString *imgAttr = [NSAttributedString attributedStringWithAttachment:att];
-    NSMutableAttributedString *cur = [[NSMutableAttributedString alloc] initWithAttributedString:self->_inputViewBar.textView.attributedText ?: [[NSAttributedString alloc] initWithString:@""]];
-    // Ensure one blank line before the image
-    if (cur.length > 0) {
-        unichar lastChar = [[cur string] characterAtIndex:cur.length - 1];
-        if (lastChar != '\n') {
-            [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-        } else {
-            // If there is exactly one trailing newline, add one more to make a blank line
-            if (cur.length >= 2) {
-                unichar prevChar = [[cur string] characterAtIndex:cur.length - 2];
-                if (prevChar != '\n') {
-                    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
-                }
-            } else {
-                [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
-            }
-        }
-    }
-    [cur appendAttributedString:imgAttr];
-    // Ensure one blank line after the image
-    [cur appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n\n"]];
-    // Enforce consistent font for all text runs to avoid font size changing
-    UIFont *baseFont = self->_inputViewBar.textView.font ?: [UIFont systemFontOfSize:17];
-    [cur addAttribute:NSFontAttributeName value:baseFont range:NSMakeRange(0, cur.length)];
-    self->_inputViewBar.textView.attributedText = cur.copy;
-    self->_inputViewBar.textView.typingAttributes = @{ NSFontAttributeName: baseFont };
-    [self updateSendEnabledState];
-
- 
-
-    // Add delete overlay for this attachment and layout
-    [self addDeleteOverlayForAttachment:att];
-
-    // Add loading overlay for upload progress
-    [self addLoadingOverlayForAttachment:att];
-
-    // Recalculate input bar height immediately after inserting image
-    [self->_inputViewBar invalidateIntrinsicContentSize];
-    [self->_inputViewBar setNeedsLayout];
-    [self layoutBottomBarForKeyboardHeight:self.currentKeyboardOverlap animated:NO];
-
-    NSData *data = UIImageJPEGRepresentation(image, 0.9);
-    if (!data) return;
-    NSString *fileName = url.lastPathComponent ?: @"image.jpg";
-    self.pendingUploads += 1;
-    [self uploadImageData:data fileName:fileName mime:@"image/jpeg" forAttachment:att];
-}
-
-- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
-{
-    [picker dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)picker:(PHPickerViewController *)picker didFinishPicking:(NSArray<PHPickerResult *> *)results API_AVAILABLE(ios(14.0))
+- (void)picker:(PHPickerViewController *)picker didFinishPicking:(NSArray<PHPickerResult *> *)results
 {
     [picker dismissViewControllerAnimated:YES completion:nil];
     if (results.count == 0) return;
@@ -1542,11 +1426,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     }
     self.mentionSheetVC = vc;
     self.isMentionSheetPresented = YES;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-    if (@available(iOS 13.0, *)) {
-        vc.presentationController.delegate = self;
-    }
-#endif
+    vc.presentationController.delegate = self;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
@@ -1561,15 +1441,13 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     [self.mentionView hide];
 }
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController API_AVAILABLE(ios(13.0))
+- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController
 {
     if (presentationController.presentedViewController == self.mentionSheetVC) {
         self.isMentionSheetPresented = NO;
         self.mentionSheetVC = nil;
     }
 }
-#endif
 
 - (void)onKeyboard:(NSNotification *)notification
 {
@@ -1583,8 +1461,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     CGFloat overlap = MAX(0.0, CGRectGetMaxY(self.view.bounds) - CGRectGetMinY(end));
     self.currentKeyboardOverlap = overlap;
 
-    CGFloat safeBottom = 0;
-    if (@available(iOS 11.0, *)) safeBottom = self.view.safeAreaInsets.bottom;
+    CGFloat safeBottom = self.view.safeAreaInsets.bottom;
 
     // Compute target contentOffset during keyboard animation so the list shift matches the input bar
     UIEdgeInsets oldInsets = _tableView.contentInset;
@@ -1722,10 +1599,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         self.attachmentDeleteButtons = [NSMapTable strongToWeakObjectsMapTable];
     }
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
-    if (@available(iOS 13.0, *)) {
-        [btn setImage:[UIImage systemImageNamed:@"xmark.circle.fill"] forState:UIControlStateNormal];
-        btn.tintColor = [UIColor systemGrayColor];
-    }
+    [btn setImage:[UIImage systemImageNamed:@"xmark.circle.fill"] forState:UIControlStateNormal];
+    btn.tintColor = [UIColor systemGrayColor];
     btn.frame = CGRectMake(0, 0, 20, 20);
     btn.contentEdgeInsets = UIEdgeInsetsZero;
     btn.backgroundColor = [SeafTheme primarySurface];
@@ -1751,13 +1626,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     overlay.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.3];
     overlay.userInteractionEnabled = NO;
     UIActivityIndicatorViewStyle style = UIActivityIndicatorViewStyleMedium;
-    if (@available(iOS 13.0, *)) style = UIActivityIndicatorViewStyleMedium; else style = UIActivityIndicatorViewStyleWhite;
     UIActivityIndicatorView *spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:style];
-    if (@available(iOS 13.0, *)) {
-        spinner.color = [UIColor whiteColor];
-    } else {
-        spinner.color = [UIColor whiteColor];
-    }
+    spinner.color = [UIColor whiteColor];
     spinner.translatesAutoresizingMaskIntoConstraints = NO;
     [spinner startAnimating];
     [overlay addSubview:spinner];

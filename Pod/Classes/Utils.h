@@ -58,8 +58,8 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 /// Write image data with metadata to a specified path.
 + (BOOL)writeDataWithMeta:(NSData *)imageData toPath:(NSString*)filePath;
 
-/// Write a CIImage to a file path, available from iOS 10.
-+ (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath API_AVAILABLE(ios(10.0));
+/// Write a CIImage to a file path.
++ (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath;
 
 /// Get the size of a file at a specific path.
 + (long long)fileSizeAtPath1:(NSString*)filePath;
@@ -172,5 +172,21 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 
 /// Check if the app is running in the main app.
 + (BOOL)isMainApp;
+
+#pragma mark - Photo library authorization
+
+/// Current photo library authorization status for read-write access.
++ (PHAuthorizationStatus)photoLibraryAuthorizationStatus;
+
+/// Request read-write access to the photo library.
++ (void)requestPhotoLibraryAuthorization:(void (^)(PHAuthorizationStatus status))handler;
+
+/// Whether the status permits reading the photo library.
+/// Limited access counts as usable: the user granted a subset of their photos.
++ (BOOL)isPhotoLibraryAccessible:(PHAuthorizationStatus)status;
+
+/// Present the system limited-library picker so the user can add/remove selected photos.
+/// No-op unless the current authorization status is Limited.
++ (void)presentLimitedLibraryPickerFromViewController:(UIViewController *)viewController;
 
 @end

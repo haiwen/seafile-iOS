@@ -198,11 +198,9 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
 // the trait collection changes. Re-resolve it whenever the appearance flips.
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
     [super traitCollectionDidChange:previousTraitCollection];
-    if (@available(iOS 13.0, *)) {
-        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
-            self.contentView.layer.borderColor = [UIColor separatorColor].CGColor;
-            self.publishBadge.layer.borderColor = [UIColor separatorColor].CGColor;
-        }
+    if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
+        self.contentView.layer.borderColor = [UIColor separatorColor].CGColor;
+        self.publishBadge.layer.borderColor = [UIColor separatorColor].CGColor;
     }
 }
 

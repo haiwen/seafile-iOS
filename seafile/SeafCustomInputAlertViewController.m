@@ -53,9 +53,7 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
             _alertView.layer.cornerRadius = 14.0; // Standard corner radius for alerts/sheets
         } else {
             _alertView.layer.cornerRadius = 14.0;
-            if (@available(iOS 11.0, *)) {
-                _alertView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
-            }
+            _alertView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
         }
     }
     return _alertView;
