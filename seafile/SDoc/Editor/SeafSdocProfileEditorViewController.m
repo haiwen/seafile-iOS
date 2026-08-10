@@ -1669,6 +1669,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
 #pragma mark - Save (align Android save + parseParams + parseTagField)
 
 - (void)onSaveTapped {
+#if DEBUG
     if ([[NSProcessInfo processInfo].arguments containsObject:@"-UI_TEST_FAIL_PROFILE_SAVE"]) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Error", @"")
                                                                       message:NSLocalizedString(@"Save failed", @"")
@@ -1677,6 +1678,7 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
         [self presentViewController:alert animated:YES completion:nil];
         return;
     }
+#endif
 
     if (self.contentMap.count == 0) {
         [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"No changes", @"")];

@@ -2452,12 +2452,14 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         return;
     }
 
+#if DEBUG
     if ([[NSProcessInfo processInfo].arguments containsObject:@"-UI_TEST_FAIL_PROFILE_LOAD"]) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load file profile", @"Seafile")];
         });
         return;
     }
+#endif
 
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Loading...", @"Seafile")];
 
@@ -2489,6 +2491,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
             SeafFileProfileAggregate *aggTyped = (SeafFileProfileAggregate *)agg;
             BOOL metaEnabled = [aggTyped.metadataConfig[@"enabled"] boolValue];
+#if DEBUG
             if ([[NSProcessInfo processInfo].arguments containsObject:@"-UI_TEST_METADATA_DISABLED"]) {
                 metaEnabled = NO;
             }
@@ -2496,6 +2499,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
                 [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"No file profile data", @"Seafile")];
                 return;
             }
+#endif
             SeafSdocProfileSheetViewController *vc =
                 [[SeafSdocProfileSheetViewController alloc] initWithRows:rows
                                                              connection:file.connection

@@ -14,8 +14,12 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <UIKit/UIKit.h>
 
-// Grid view shows many large thumbs at once (THUMB_SIZE=256 → ~2MB decoded @3x).
-// 20MB only kept ~8–9 images and forced constant disk re-decode while scrolling.
+// Grid view keeps many decoded thumbs alive at once. The limit is sized for the
+// worst case, a <= 13.0 server at @3x: those thumbs are requested at
+// THUMB_SIZE * scale = 768px, ~2MB decoded each, and 20MB only held ~8-9 of them
+// before scrolling forced constant disk re-decode. On 14.0+ the API caps thumbs
+// at 256px (~256KB decoded), so there the count limit binds long before the cost
+// limit does.
 #define DEFAULT_TotalCostLimit 120*1024*1024
 #define DEFAULT_CountLimit 250
 
