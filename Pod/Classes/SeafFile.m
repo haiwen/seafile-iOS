@@ -212,12 +212,6 @@
     [self downloadFailed:error];
 }
 
-- (void)cancelThumb
-{
-    [_thumbtask cancel];
-    _thumbtask = nil;
-}
-
 - (void)finishDownloadThumb:(BOOL)success{
     [self finishDownloadThumb:success forTask:nil];
 }
@@ -244,7 +238,6 @@
         if (!task || self.thumbTaskForQueue == task) {
             self.thumbTaskForQueue = nil;
         }
-        self->_thumbtask = nil;
         if (self.thumbCompleteBlock) {
             self.thumbCompleteBlock(success);
         }

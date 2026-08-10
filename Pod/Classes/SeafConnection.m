@@ -64,11 +64,14 @@ static NSArray * AFCertificateTrustChainForServerTrust(SecTrustRef serverTrust) 
 
 static AFSecurityPolicy *SeafPolicyFromCert(SecCertificateRef cert)
 {
+    if (!cert) return nil;
     AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey];
     policy.allowInvalidCertificates = YES;
     policy.validatesDomainName = NO;
     SecTrustRef clientTrust = AFUTTrustWithCertificate(cert);
+    if (!clientTrust) return nil;
     NSArray * certificates = AFCertificateTrustChainForServerTrust(clientTrust);
+    CFRelease(clientTrust);
     [policy setPinnedCertificates:[NSSet setWithArray:certificates]];
     return policy;
 }
@@ -80,8 +83,18 @@ static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
     } else
         Debug("Load cert file from %@", path);
     NSData *certData = [NSData dataWithContentsOfFile:path];
+    if (!certData) {
+        Warning("Failed to read cert file %@", path);
+        return nil;
+    }
     SecCertificateRef cert = SecCertificateCreateWithData(NULL, (__bridge CFDataRef)(certData));
-    return SeafPolicyFromCert(cert);
+    if (!cert) {
+        Warning("Cert file %@ is not a valid DER certificate", path);
+        return nil;
+    }
+    AFSecurityPolicy *policy = SeafPolicyFromCert(cert);
+    CFRelease(cert);
+    return policy;
 }
 
 BOOL SeafServerTrustIsValid(SecTrustRef serverTrust) {
@@ -659,12 +672,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:challenge.protectionSpace.host] error:nil];
                 if ([challenge.protectionSpace.host isEqualToString:self.host]) {
                     SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
-                    AFSecurityPolicy *policy = SeafPolicyFromCert(cer);
-                    if (policy.SSLPinningMode != AFSSLPinningModeNone && ![self.address hasPrefix:@"https://"]) {
-                        Warning("Invalid Security Policy, A security policy configured with `%lu` can only be applied on a manager with a secure base URL (i.e. https)", (unsigned long)policy.SSLPinningMode);
-                    } else {
-                        self.policy = SeafPolicyFromCert(cer);
-                    }
+                    self.policy = SeafPolicyFromCert(cer);
                 }
                 return NSURLSessionAuthChallengeUseCredential;
             } else {
@@ -718,7 +726,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)setPolicy:(AFSecurityPolicy *)policy
 {
     _policy = policy;
-    _sessionMgr.securityPolicy = _policy;
+    // Deliberately not assigned to _sessionMgr.securityPolicy: AFHTTPSessionManager throws
+    // when a pinning policy meets a non-https baseURL, and the address can be http while a
+    // certificate is still stored for the host. The challenge block below validates every
+    // server trust through _policy, so the manager never needs the policy itself.
     __weak typeof(self) weakSelf = self;
 
     [_sessionMgr setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
@@ -926,6 +937,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 static const int kSeafThumbnailApiSize = 256;
 
+// The two APIs carry the path differently, so the leading slash is stripped for
+// one and kept for the other on purpose: 14.0+ puts the path in URL segments,
+// where a leading slash would leave an empty segment, while <= 13.0 passes it as
+// the `p` query parameter, which Seahub expects to be repo-absolute. `escapedUrl`
+// leaves `/` unescaped so both forms stay routable. 14.0+ also serves only
+// kSeafThumbnailApiSize, so requestedSize applies to the legacy API alone.
 - (NSString *)buildThumbnailRequestPathForFile:(SeafFile *)sFile requestedSize:(int)requestedSize {
     NSString *filePath = sFile.path;
     if ([filePath hasPrefix:@"/"]) {
@@ -940,12 +957,6 @@ static const int kSeafThumbnailApiSize = 256;
     // <= 13.0: /api2/repos/{repo_id}/thumbnail/?size={size}&p={path}
     return [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@",
             sFile.repoId, requestedSize, sFile.path.escapedUrl];
-}
-
-- (NSString *)buildThumbnailImageUrlFromSFile:(SeafFile *)sFile {
-    int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
-    NSString *path = [self buildThumbnailRequestPathForFile:sFile requestedSize:size];
-    return [self encodeStringToURLFormat:path];
 }
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form
@@ -1341,7 +1352,11 @@ static const int kSeafThumbnailApiSize = 256;
 - (void)saveCertificate:(NSURLProtectionSpace *)protectionSpace
 {
     SecCertificateRef cer = SecTrustGetCertificateAtIndex(protectionSpace.serverTrust, 0);
-    NSData* data = (__bridge NSData*) SecCertificateCopyData(cer);
+    if (!cer) {
+        Warning("No certificate in the server trust of %@", protectionSpace.host);
+        return;
+    }
+    NSData* data = (__bridge_transfer NSData*) SecCertificateCopyData(cer);
     NSString *path = [self certPathForHost:protectionSpace.host];
     BOOL ret = [data writeToFile:path atomically:YES];
     if (!ret) {

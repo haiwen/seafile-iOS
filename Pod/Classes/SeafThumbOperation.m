@@ -15,7 +15,6 @@
 #import "SeafCacheManager.h"
 #import "Utils.h"
 #import "Debug.h"
-#import "SeafCacheManager.h"
 #import "SeafCacheManager+Thumb.h"
 #import <AFNetworking/AFHTTPSessionManager.h> // For AFHTTPSessionManager
 #import <AFNetworking/AFNetworkReachabilityManager.h> // For AFNetworkReachabilityManager

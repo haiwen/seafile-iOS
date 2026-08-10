@@ -542,17 +542,12 @@ Checks the auto synchronization settings and updates the connection’s synchron
 
 /**
  * Build thumbnail GET request path for use with buildRequest:.
- * 14.0+: /thumbnail/{repo_id}/256/{path}
+ * The returned path is already percent-escaped, so do not encode it again.
+ * 14.0+: /thumbnail/{repo_id}/256/{path} (requestedSize is ignored, the API only serves 256)
  * <= 13.0: /api2/repos/{repo_id}/thumbnail/?size={requestedSize}&p={path}
  */
 - (NSString *_Nullable)buildThumbnailRequestPathForFile:(SeafFile *_Nullable)sFile
                                           requestedSize:(int)requestedSize;
-
-/**
- *
-    Build starred thumbnail image url string
- */
-- (NSString *_Nullable)buildThumbnailImageUrlFromSFile:(SeafFile *_Nullable)sFile;
 
 - (void)cleanupOrphanedFileStatuses;
 
