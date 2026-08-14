@@ -306,6 +306,11 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
         if ([type isEqual:@"file"]) {
             newItem = [[SeafFile alloc] initWithConnection:self.connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId name:name path:path mtime:[[itemInfo objectForKey:@"mtime"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
+            // Keep "" rather than nil when the listing carries no thumbnail source, so
+            // the thumb gate can tell "server listed none" from "unknown" (search
+            // results, entries not built from a listing). See SeafFile.thumbnailURLStr.
+            NSString *thumbSrc = [itemInfo objectForKey:@"encoded_thumbnail_src"];
+            ((SeafFile *)newItem).thumbnailURLStr = [thumbSrc isKindOfClass:[NSString class]] ? thumbSrc : @"";
             SeafRepo *repo = [self.connection getRepo:self.repoId];
             if ([self.name isEqualToString:repo.name]) {
                 newItem.fullPath = [NSString stringWithFormat:@"/%@", self.name];
@@ -403,7 +408,10 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (NSString *)url
 {
-    NSString *requestStr = [NSString stringWithFormat:API_URL_V21"/repos/%@/dir/?p=%@", self.repoId, [self.path escapedUrl]];
+    // with_thumbnail=true makes Seahub add encoded_thumbnail_src to every file it
+    // can thumbnail on this deployment; video/sdoc only get one when
+    // thumbnail-server is enabled. Consumed by SeafFile.thumbnailURLStr.
+    NSString *requestStr = [NSString stringWithFormat:API_URL_V21"/repos/%@/dir/?p=%@&with_thumbnail=true", self.repoId, [self.path escapedUrl]];
     return requestStr;
 }
 

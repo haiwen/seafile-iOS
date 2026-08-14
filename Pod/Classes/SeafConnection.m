@@ -329,14 +329,83 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self setAttribute:[NSNumber numberWithBool:wikiSwitchEnabled] forKey:@"wikiSwitchEnabled"];
 }
 
+// Compare dotted server versions segment by segment. Each segment keeps only its
+// digits and a missing segment counts as 0, so "14.0" and "14.0-dev" both equal
+// "14.0.0". NSNumericSearch alone sorts the shorter string first and would send
+// such servers to the legacy APIs; the Android client pads the same way.
+static NSComparisonResult SeafCompareVersion(NSString *lhs, NSString *rhs)
+{
+    NSArray<NSString *> *l = [lhs componentsSeparatedByString:@"."];
+    NSArray<NSString *> *r = [rhs componentsSeparatedByString:@"."];
+    NSCharacterSet *nonDigits = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+    NSUInteger count = MAX(l.count, r.count);
+    for (NSUInteger i = 0; i < count; i++) {
+        NSString *ls = i < l.count ? [[l[i] componentsSeparatedByCharactersInSet:nonDigits] componentsJoinedByString:@""] : @"";
+        NSString *rs = i < r.count ? [[r[i] componentsSeparatedByCharactersInSet:nonDigits] componentsJoinedByString:@""] : @"";
+        long long lv = ls.length ? ls.longLongValue : 0;
+        long long rv = rs.length ? rs.longLongValue : 0;
+        if (lv < rv) return NSOrderedAscending;
+        if (lv > rv) return NSOrderedDescending;
+    }
+    return NSOrderedSame;
+}
+
+static BOOL SeafServerVersionAtLeast(NSString *version, NSString *minVersion)
+{
+    return version.length > 0 && SeafCompareVersion(version, minVersion) != NSOrderedAscending;
+}
+
 - (BOOL)isNewActivitiesApiSupported {
-    NSString *version = self.serverVersion;
-    return version != nil && [version compare:@"7.0.0" options:NSNumericSearch] != NSOrderedAscending;
+    return SeafServerVersionAtLeast(self.serverVersion, @"7.0.0");
+}
+
+static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvailable";
+
+- (BOOL)isThumbnailServerAvailable {
+    return [[_settings objectForKey:kSeafThumbnailServerAvailableKey] boolValue];
 }
 
 - (BOOL)isNewThumbnailApiSupported {
-    NSString *version = self.serverVersion;
-    return version != nil && [version compare:@"14.0.0" options:NSNumericSearch] != NSOrderedAscending;
+    // 14.0+ serves /thumbnail/{repo}/{size}/{path} itself. Older servers, and dev
+    // servers whose reported version is stale, may still route that path to a
+    // thumbnail-server, and that is the only component that generates video and
+    // sdoc thumbs. Seahub's own legacy api2 endpoint rejects both types, so when
+    // the ping probe found a thumbnail-server, prefer its path regardless of version.
+    return SeafServerVersionAtLeast(self.serverVersion, @"14.0.0") || self.isThumbnailServerAvailable;
+}
+
+// thumbnail-server answers GET /thumbnail/ping with a text body "pong". Seahub has
+// no such route (404 or a login page), so only a 200 whose body is exactly "pong"
+// counts. A transport failure leaves the stored value alone, so an offline launch
+// does not flip a working configuration. Runs whenever server-info is refreshed.
+- (void)probeThumbnailServer
+{
+    NSMutableURLRequest *request = [[self buildRequest:@"/thumbnail/ping" method:@"GET" form:nil] mutableCopy];
+    request.timeoutInterval = 10.0;
+    request.cachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+    __weak typeof(self) weakSelf = self;
+    // A plain data task on the manager's session: the manager's JSON response
+    // serializer would reject the text body, while the session itself still applies
+    // the account's certificate policy through its challenge handler.
+    NSURLSessionDataTask *task = [self.sessionMgr.session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        if (error || ![response isKindOfClass:[NSHTTPURLResponse class]]) {
+            Debug("thumbnail-server probe got no answer: %@", error);
+            return;
+        }
+        NSString *body = data.length ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : @"";
+        body = [body stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        BOOL available = ((NSHTTPURLResponse *)response).statusCode == 200 && [body isEqualToString:@"pong"];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            BOOL previous = strongSelf.isThumbnailServerAvailable;
+            [strongSelf setAttribute:@(available) forKey:kSeafThumbnailServerAvailableKey];
+            if (previous != available) {
+                Debug("thumbnail-server %@ at %@", available ? @"detected" : @"not found", strongSelf.address);
+            }
+        });
+    }];
+    [task resume];
 }
 
 - (NSDictionary *)serverInfo
@@ -931,15 +1000,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self loginWithUsername:username password:password otp:nil rememberDevice:false];
 }
 
-static const int kSeafThumbnailApiSize = 256;
+// Requested thumbnail size for both APIs, see SEAF_THUMB_PIXEL_SIZE. Never derive
+// it from the screen scale: thumbnail-server (13.0+) only serves 256/512/1024 and
+// answers any other size with 400, which the client records as a failure.
+static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 
 // The two APIs carry the path differently, so the leading slash is stripped for
 // one and kept for the other on purpose: 14.0+ puts the path in URL segments,
 // where a leading slash would leave an empty segment, while <= 13.0 passes it as
 // the `p` query parameter, which Seahub expects to be repo-absolute. `escapedUrl`
-// leaves `/` unescaped so both forms stay routable. 14.0+ also serves only
-// kSeafThumbnailApiSize, so requestedSize applies to the legacy API alone.
-- (NSString *)buildThumbnailRequestPathForFile:(SeafFile *)sFile requestedSize:(int)requestedSize {
+// leaves `/` unescaped so both forms stay routable.
+- (NSString *)buildThumbnailRequestPathForFile:(SeafFile *)sFile {
     NSString *filePath = sFile.path;
     if ([filePath hasPrefix:@"/"]) {
         filePath = [filePath substringFromIndex:1];
@@ -952,7 +1023,7 @@ static const int kSeafThumbnailApiSize = 256;
     }
     // <= 13.0: /api2/repos/{repo_id}/thumbnail/?size={size}&p={path}
     return [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@",
-            sFile.repoId, requestedSize, sFile.path.escapedUrl];
+            sFile.repoId, kSeafThumbnailApiSize, sFile.path.escapedUrl];
 }
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form
@@ -1152,6 +1223,7 @@ static const int kSeafThumbnailApiSize = 256;
              if (handler)
                  handler (true);
          }
+         [self probeThumbnailServer];
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {

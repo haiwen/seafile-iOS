@@ -4,6 +4,7 @@
 //
 
 #import "SeafGridCell.h"
+#import "Utils.h"
 #import "SeafFile.h"
 #import "SeafDir.h"
 #import "SeafUploadFile.h"
@@ -333,7 +334,7 @@ static const NSInteger kTitleMaxLines = 2;
     [super prepareForReuse];
     [self resetCellFile];
     self.titleLabel.text = nil;
-    self.thumbnailView.image = nil;
+    [Utils setThumbImage:nil onImageView:self.thumbnailView style:SeafThumbPreviewStyleIcon];
     self.thumbnailView.contentMode = UIViewContentModeScaleAspectFit;
     [self applyIconLayoutMode:NO];
     [self setStatusVisible:NO downloading:NO];
@@ -369,13 +370,12 @@ static const NSInteger kTitleMaxLines = 2;
     }
 }
 
-- (void)applyThumbnailContentModeForMedia:(BOOL)isMedia {
-    [self applyIconLayoutMode:!isMedia];
-    if (isMedia) {
-        self.thumbnailView.contentMode = UIViewContentModeScaleAspectFill;
-    } else {
-        self.thumbnailView.contentMode = UIViewContentModeScaleAspectFit;
-    }
+// Layout for a preview style. The image itself, including the top crop of the
+// Document style, is set through +[Utils setThumbImage:onImageView:style:].
+- (void)applyThumbnailPreviewStyle:(SeafThumbPreviewStyle)style {
+    BOOL iconMode = (style == SeafThumbPreviewStyleIcon);
+    [self applyIconLayoutMode:iconMode];
+    self.thumbnailView.contentMode = iconMode ? UIViewContentModeScaleAspectFit : UIViewContentModeScaleAspectFill;
 }
 
 #pragma mark - Status
@@ -418,8 +418,8 @@ static const NSInteger kTitleMaxLines = 2;
 - (void)configureWithDir:(SeafDir *)dir {
     [self resetCellFile];
     self.titleLabel.text = dir.name;
-    self.thumbnailView.image = dir.icon;
-    [self applyThumbnailContentModeForMedia:NO];
+    [Utils setThumbImage:dir.icon onImageView:self.thumbnailView style:SeafThumbPreviewStyleIcon];
+    [self applyThumbnailPreviewStyle:SeafThumbPreviewStyleIcon];
     [self setStatusVisible:NO downloading:NO];
     self.progressView.hidden = YES;
     self.accessibilityStatusText = NSLocalizedString(@"Folder", @"Seafile");
@@ -430,22 +430,22 @@ static const NSInteger kTitleMaxLines = 2;
     [self resetCellFile];
     self.cellSeafFile = file;
     self.titleLabel.text = file.name;
-    // file.icon also enqueues thumbnail download for image/video when missing.
+    // file.icon also enqueues the thumbnail download when it is missing.
     UIImage *icon = file.icon;
-    self.thumbnailView.image = icon;
-    // Only use full-bleed media layout once a real thumbnail is available;
-    // otherwise keep the centered type icon (avoids stretching placeholders).
-    BOOL isMediaType = file.isImageFile || file.isVideoFile;
-    BOOL hasRealThumb = isMediaType && (file.thumb != nil);
-    [self applyThumbnailContentModeForMedia:hasRealThumb];
+    // Full-bleed layout only once a real thumbnail is available; otherwise keep the
+    // centered type icon (avoids stretching placeholders). Photos/videos crop from
+    // the center, pdf/sdoc pages from the top.
+    SeafThumbPreviewStyle style = [Utils thumbPreviewStyleForFileName:file.name hasThumb:(file.thumb != nil)];
+    [Utils setThumbImage:icon onImageView:self.thumbnailView style:style];
+    [self applyThumbnailPreviewStyle:style];
     [self updateDownloadStatusForFile:file waiting:NO];
     self.progressView.hidden = YES;
     [self refreshAccessibility];
 }
 
-- (void)setThumbnailImage:(UIImage *)image mediaPreview:(BOOL)mediaPreview {
-    self.thumbnailView.image = image;
-    [self applyThumbnailContentModeForMedia:mediaPreview];
+- (void)setThumbnailImage:(UIImage *)image style:(SeafThumbPreviewStyle)style {
+    [Utils setThumbImage:image onImageView:self.thumbnailView style:style];
+    [self applyThumbnailPreviewStyle:style];
 }
 
 - (void)configureWithUploadFile:(SeafUploadFile *)file completion:(void (^)(UIImage *))completion {
@@ -453,8 +453,9 @@ static const NSInteger kTitleMaxLines = 2;
     self.cellUploadFile = file;
     self.titleLabel.text = file.name;
     // Start with a centered type icon; real photo/video previews arrive asynchronously.
-    self.thumbnailView.image = [UIImage imageForMimeType:file.mime ext:file.name.pathExtension.lowercaseString];
-    [self applyThumbnailContentModeForMedia:NO];
+    [Utils setThumbImage:[UIImage imageForMimeType:file.mime ext:file.name.pathExtension.lowercaseString]
+             onImageView:self.thumbnailView style:SeafThumbPreviewStyleIcon];
+    [self applyThumbnailPreviewStyle:SeafThumbPreviewStyleIcon];
     if (completion) {
         completion(nil);
     }

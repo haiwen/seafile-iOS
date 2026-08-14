@@ -62,8 +62,6 @@
     
     [SeafTheme applyPreferenceToViewController:self];
     
-    self.edgesForExtendedLayout = UIRectEdgeAll;
-    
     // All lists use plain style so section headers stick to the top while scrolling.
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;

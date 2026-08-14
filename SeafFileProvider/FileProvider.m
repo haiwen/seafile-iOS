@@ -20,6 +20,7 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "SeafFileProviderUtility.h"
 #import "SeafThumb.h"
+#import "SeafCacheManager+Thumb.h"
 #import "SeafDataTaskManager.h"
 #import "SeafFileOperationManager.h"
 
@@ -586,7 +587,7 @@
         }
         
         SeafFile *sfile = (SeafFile *)[item toSeafObj];
-        if ([sfile isImageFile] || [sfile isPdfFile] || [sfile isVideoFile] || [sfile isSdocFile]) {
+        if ([Utils isServerThumbFile:sfile.name]) {
             if (sfile.thumb) {
                 counterProgress += 1;
                 NSData *imageData = UIImagePNGRepresentation(sfile.thumb);
@@ -599,10 +600,7 @@
                 [weakFile setThumbCompleteBlock:^(BOOL ret) {
                     counterProgress += 1;
                     if (ret) {
-                        NSString *thumbFilePath = weakFile.oid ? [weakFile thumbPath:weakFile.oid] : nil;
-                        if (!thumbFilePath) {
-                            thumbFilePath = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld", weakFile.name, weakFile.mtime]];
-                        }
+                        NSString *thumbFilePath = [[SeafCacheManager sharedManager] thumbCachePathForFile:weakFile];
                         NSData *imageData = [NSData dataWithContentsOfFile:thumbFilePath];
                         perThumbnailCompletionHandler(itemIdentifier, imageData, nil);
                     } else {

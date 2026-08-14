@@ -7,6 +7,7 @@
 //
 
 #import "SeafSearchResultViewController.h"
+#import "Utils.h"
 #import "SVProgressHUD.h"
 #import "SeafRepos.h"
 #import "Debug.h"
@@ -402,7 +403,9 @@
 // Updates the content of a cell based on the properties of a file.
 - (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile {
     cell.textLabel.text = sfile.name;
-    cell.imageView.image = sfile.icon;
+    UIImage *icon = sfile.icon;
+    [Utils setThumbImage:icon onImageView:cell.imageView
+                   style:[Utils thumbPreviewStyleForFileName:sfile.name hasThumb:(sfile.thumb != nil)]];
     cell.badgeLabel.text = nil;
     cell.moreButton.hidden = YES;
     [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:false cached:sfile.hasCache];
@@ -469,7 +472,8 @@
     if (!cell) return;
     UIImage *thumb = entry.thumb;
     if (thumb) {
-        cell.imageView.image = thumb;
+        [Utils setThumbImage:thumb onImageView:cell.imageView
+                       style:[Utils thumbPreviewStyleForFileName:entry.name hasThumb:YES]];
         return;
     }
     [self.tableView reloadRowsAtIndexPaths:@[path] withRowAnimation:UITableViewRowAnimationNone];

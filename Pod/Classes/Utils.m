@@ -349,6 +349,46 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
     return [Utils isExt:ext In:videoexts];
 }
 
++ (BOOL)isEpubFile:(NSString *)name
+{
+    return [name.pathExtension.lowercaseString isEqualToString:@"epub"];
+}
+
++ (BOOL)isXmindFile:(NSString *)name
+{
+    return [name.pathExtension.lowercaseString isEqualToString:@"xmind"];
+}
+
+#pragma mark - Server-thumbnail file types
+// Mirrors thumbnail-server's PREVIEW_FILEEXT (IMAGE/SVG/PDF/EPUB/VIDEO/XMIND/SEADOC)
+// and seahub's generate_thumbnail. heif stays only in isImageFile for the gallery;
+// thumbnail-server does not list it and answers 400.
+
++ (BOOL)isServerThumbImageFile:(NSString *)name
+{
+    if ([Utils isImageFile:name]) return YES;
+    static NSString *extra[] = {@"webp", @"avif", @"jfif", @"psd", @"psb", @"svg", nil};
+    return [Utils isExt:name.pathExtension.lowercaseString In:extra];
+}
+
++ (BOOL)isServerThumbVideoFile:(NSString *)name
+{
+    if ([Utils isVideoFile:name]) return YES;
+    static NSString *extra[] = {@"webm", @"ogv", nil};
+    return [Utils isExt:name.pathExtension.lowercaseString In:extra];
+}
+
++ (BOOL)isServerThumbDocumentFile:(NSString *)name
+{
+    static NSString *exts[] = {@"pdf", @"ai", @"epub", @"sdoc", @"xmind", nil};
+    return [Utils isExt:name.pathExtension.lowercaseString In:exts];
+}
+
++ (BOOL)isServerThumbFile:(NSString *)name
+{
+    return [Utils isServerThumbImageFile:name] || [Utils isServerThumbVideoFile:name] || [Utils isServerThumbDocumentFile:name];
+}
+
 
 + (BOOL)isExt:(NSString *)ext In:(__strong NSString *[])exts
 {
@@ -766,7 +806,10 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 }
 
 + (NSURL *)generateFileTempPath:(NSString *)name {
-    NSString *escapedName = [name stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
+    // URLPathAllowedCharacterSet keeps `/`, which would turn a filename into nested directories.
+    NSMutableCharacterSet *allowed = [[NSCharacterSet URLPathAllowedCharacterSet] mutableCopy];
+    [allowed removeCharactersInString:@"/"];
+    NSString *escapedName = [name stringByAddingPercentEncodingWithAllowedCharacters:allowed] ?: name;
     NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:escapedName];
     NSURL *tempURL = [NSURL fileURLWithPath:tempPath isDirectory:NO];
     if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {
@@ -954,6 +997,35 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
         return;
     }
     [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:viewController];
+}
+
+#pragma mark - Thumbnail presentation
+
++ (SeafThumbPreviewStyle)thumbPreviewStyleForFileName:(NSString *)fileName hasThumb:(BOOL)hasThumb
+{
+    if (!hasThumb) return SeafThumbPreviewStyleIcon;
+    // xmind thumbs are landscape mind-map images, not pages.
+    if ([Utils isXmindFile:fileName]) return SeafThumbPreviewStyleMedia;
+    if ([Utils isServerThumbDocumentFile:fileName]) return SeafThumbPreviewStyleDocument;
+    if ([Utils isServerThumbImageFile:fileName] || [Utils isServerThumbVideoFile:fileName]) return SeafThumbPreviewStyleMedia;
+    return SeafThumbPreviewStyleIcon;
+}
+
++ (void)setThumbImage:(UIImage *)image onImageView:(UIImageView *)imageView style:(SeafThumbPreviewStyle)style
+{
+    imageView.image = image;
+    CGRect contentsRect = CGRectMake(0, 0, 1, 1);
+    if (style == SeafThumbPreviewStyleDocument && image) {
+        CGSize size = image.size;
+        if (size.height > size.width && size.width > 0) {
+            // Keep the top square of the page; aspect fill then shows exactly that
+            // square, so the title area survives instead of a slice from the middle.
+            contentsRect.size.height = size.width / size.height;
+        }
+    }
+    if (!CGRectEqualToRect(imageView.layer.contentsRect, contentsRect)) {
+        imageView.layer.contentsRect = contentsRect;
+    }
 }
 
 @end

@@ -129,7 +129,8 @@ extern NSNotificationName const SeafServerInfoUpdatedNotification;
 @property (readonly) BOOL isWikiEnabled;///< Whether wiki should be shown (server supported AND client switch enabled).
 @property (nonatomic) BOOL wikiSwitchEnabled;///< Client-side wiki toggle (persisted per account, default NO).
 @property (readonly) BOOL isNewActivitiesApiSupported;///< Indicates whether the new activities API is supported.
-@property (readonly) BOOL isNewThumbnailApiSupported;///< Server >= 14.0 uses new thumbnail API: /thumbnail/{repo_id}/{size}/{path}
+@property (readonly) BOOL isNewThumbnailApiSupported;///< Use /thumbnail/{repo_id}/{size}/{path}: server >= 14.0, or a thumbnail-server answered the ping probe.
+@property (readonly) BOOL isThumbnailServerAvailable;///< Last GET /thumbnail/ping answered "pong" (persisted per account, refreshed with server-info).
 @property (readonly) NSData* _Nullable clientIdentityKey;///< Client identity key for secure communications.
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;///< Indicates whether syncing should occur over WiFi only.
@@ -543,11 +544,13 @@ Checks the auto synchronization settings and updates the connection’s synchron
 /**
  * Build thumbnail GET request path for use with buildRequest:.
  * The returned path is already percent-escaped, so do not encode it again.
- * 14.0+: /thumbnail/{repo_id}/256/{path} (requestedSize is ignored, the API only serves 256)
- * <= 13.0: /api2/repos/{repo_id}/thumbnail/?size={requestedSize}&p={path}
+ * Both APIs are asked for SEAF_THUMB_PIXEL_SIZE (256px). thumbnail-server (13.0+)
+ * only serves 256/512/1024 and rejects any other size with 400, so the request
+ * size must never scale with the screen.
+ * 14.0+: /thumbnail/{repo_id}/256/{path}
+ * <= 13.0: /api2/repos/{repo_id}/thumbnail/?size=256&p={path}
  */
-- (NSString *_Nullable)buildThumbnailRequestPathForFile:(SeafFile *_Nullable)sFile
-                                          requestedSize:(int)requestedSize;
+- (NSString *_Nullable)buildThumbnailRequestPathForFile:(SeafFile *_Nullable)sFile;
 
 - (void)cleanupOrphanedFileStatuses;
 

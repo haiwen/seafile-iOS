@@ -4,6 +4,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "Utils.h"
 
 @class SeafFile;
 @class SeafDir;
@@ -38,8 +39,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)updateUploadProgress:(float)progress uploaded:(BOOL)uploaded filesize:(long long)filesize timestamp:(NSTimeInterval)timestamp;
 - (void)resetCellFile;
 - (void)updateCheckboxForSelected:(BOOL)selected;
-/// Replace the preview image and switch between centered-icon vs full-bleed media layout.
-- (void)setThumbnailImage:(UIImage *)image mediaPreview:(BOOL)mediaPreview;
+/// Replace the preview image and lay it out for `style`: centered type icon, full-bleed
+/// media (centered crop) or full-bleed document page (cropped from the top).
+- (void)setThumbnailImage:(UIImage *)image style:(SeafThumbPreviewStyle)style;
 
 @end
 

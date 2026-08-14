@@ -7,6 +7,7 @@
 //
 
 #import "SeafCell.h"
+#import "Utils.h"
 #import "SeafTheme.h"
 
 @implementation SeafCell
@@ -173,7 +174,8 @@
     self.cacheStatusView.hidden = true;
     self.progressView.hidden = true;
     
-    self.imageView.image = nil;
+    // Also clears a Document-style top crop left on the layer by the previous file.
+    [Utils setThumbImage:nil onImageView:self.imageView style:SeafThumbPreviewStyleIcon];
 
     self.moreButton.hidden = self.isStarredCell ? NO : YES;
     [self resetCellFile];

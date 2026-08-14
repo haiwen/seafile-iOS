@@ -101,7 +101,6 @@
     self.title = NSLocalizedString(@"Starred", @"Seafile");
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
-    self.edgesForExtendedLayout = UIRectEdgeAll;
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
@@ -326,7 +325,10 @@
         detailText = sfile.starredDetailText;
         textColor = Utils.cellDetailTextTextColor;
     }
-    [self updateCellUI:cell cellName:sfile.name detailText:detailText detailTextColor:textColor image:sfile.icon morButtonIsHidden:NO];
+    UIImage *icon = sfile.icon;
+    [self updateCellUI:cell cellName:sfile.name detailText:detailText detailTextColor:textColor image:icon morButtonIsHidden:NO];
+    [Utils setThumbImage:icon onImageView:cell.imageView
+                   style:[Utils thumbPreviewStyleForFileName:sfile.name hasThumb:(sfile.thumb != nil)]];
     
     sfile.delegate = self;
     sfile.udelegate = self;
@@ -650,7 +652,8 @@
     if (!cell) return;
     UIImage *thumb = entry.thumb;
     if (thumb) {
-        cell.imageView.image = thumb;
+        [Utils setThumbImage:thumb onImageView:cell.imageView
+                       style:[Utils thumbPreviewStyleForFileName:entry.name hasThumb:YES]];
         return;
     }
     NSUInteger index = [_cellDataArray indexOfObject:entry];

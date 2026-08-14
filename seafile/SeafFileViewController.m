@@ -233,8 +233,6 @@ enum {
     longPress.minimumPressDuration = 0.5; // Set duration to 0.5 seconds
     [self.tableView addGestureRecognizer:longPress];
     
-    self.edgesForExtendedLayout = UIRectEdgeAll;
-
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
 
@@ -742,8 +740,10 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
                 // finishing or the directory re-sorting can leave the same index
                 // path showing a different file by the time this lands.
                 if (strongCell && strongCell.cellUploadFile == ufile && image) {
-                    BOOL media = ufile.isImageFile || ufile.isVideoFile;
-                    [strongCell setThumbnailImage:image mediaPreview:media];
+                    // iconWithCompletion: yields a real preview only for photos/videos.
+                    SeafThumbPreviewStyle style = [Utils thumbPreviewStyleForFileName:ufile.name
+                                                                             hasThumb:(ufile.isImageFile || ufile.isVideoFile)];
+                    [strongCell setThumbnailImage:image style:style];
                 }
             });
         }];
@@ -2869,7 +2869,11 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 {
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
-    cell.imageView.image = sfile.icon;
+    // icon also enqueues the thumbnail download when it is missing. Document
+    // thumbs (pdf/sdoc) are cropped from the top, see SeafThumbPreviewStyle.
+    UIImage *icon = sfile.icon;
+    [Utils setThumbImage:icon onImageView:cell.imageView
+                   style:[Utils thumbPreviewStyleForFileName:sfile.name hasThumb:(sfile.thumb != nil)]];
     cell.badgeLabel.text = nil;
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
@@ -3016,8 +3020,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
                 return;
             }
             if (thumb) {
-                BOOL media = entry.isImageFile || entry.isVideoFile;
-                [gridCell setThumbnailImage:thumb mediaPreview:media];
+                [gridCell setThumbnailImage:thumb style:[Utils thumbPreviewStyleForFileName:entry.name hasThumb:YES]];
             } else {
                 NSIndexPath *ip = path ?: [self indexPathForFileByIdentity:entry];
                 if (ip) {
@@ -3032,7 +3035,8 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
                 return;
             }
             if (thumb) {
-                listCell.imageView.image = thumb;
+                [Utils setThumbImage:thumb onImageView:listCell.imageView
+                               style:[Utils thumbPreviewStyleForFileName:entry.name hasThumb:YES]];
             } else {
                 NSIndexPath *ip = path ?: [self indexPathForFileByIdentity:entry];
                 if (ip) {

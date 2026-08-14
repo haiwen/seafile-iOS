@@ -14,12 +14,10 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <UIKit/UIKit.h>
 
-// Grid view keeps many decoded thumbs alive at once. The limit is sized for the
-// worst case, a <= 13.0 server at @3x: those thumbs are requested at
-// THUMB_SIZE * scale = 768px, ~2MB decoded each, and 20MB only held ~8-9 of them
-// before scrolling forced constant disk re-decode. On 14.0+ the API caps thumbs
-// at 256px (~256KB decoded), so there the count limit binds long before the cost
-// limit does.
+// Grid view keeps many decoded thumbs alive at once. Thumbs are requested at
+// SEAF_THUMB_PIXEL_SIZE (256px, ~256KB decoded), so the 250 count limit binds long
+// before 120MB does; the cost limit leaves room for a later move to 512px. The
+// earlier 20MB limit was sized for 768px thumbs and forced constant disk re-decode.
 #define DEFAULT_TotalCostLimit 120*1024*1024
 #define DEFAULT_CountLimit 250
 // The thumb queue allows 20 downloads at once; letting every one of them decode
@@ -447,6 +445,12 @@ static NSString *sha1String(NSString *s)
 - (void)updateWithEntry:(SeafBase *)entry sFile:(SeafFile *)sFile
 {
     SeafFile *file = (SeafFile *)entry;
+    // Whether the server offers a thumbnail can change between reloads (e.g.
+    // thumbnail-server enabled later), so always take the fresh listing's value.
+    // nil means the new entry carries no information; keep what we had.
+    if (file.thumbnailURLStr != nil) {
+        sFile.thumbnailURLStr = file.thumbnailURLStr;
+    }
     if ([sFile.oid isEqualToString:entry.oid]) {
         if (file.ufile) {
             sFile.ufile = file.ufile;

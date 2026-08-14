@@ -61,7 +61,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.edgesForExtendedLayout = UIRectEdgeAll;
 
     // Do any additional setup after loading the view from its nib.
     self.title = NSLocalizedString(@"Activities", @"Seafile");

@@ -94,6 +94,25 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 /// Check if a file extension is that of a video file.
 + (BOOL)isVideoExt:(NSString *)ext;
 
++ (BOOL)isEpubFile:(NSString *)name;
++ (BOOL)isXmindFile:(NSString *)name;
+
+#pragma mark - Server-thumbnail file types
+// What the server can render a thumbnail for: seahub itself handles images
+// (incl. psd/psb), svg, pdf and epub covers; thumbnail-server adds video, sdoc
+// and xmind. These sets are deliberately wider than isImageFile / isVideoFile,
+// which also decide what opens in the photo gallery or the video player.
+
+/// Images the server can thumbnail: the isImageFile set plus webp/avif/jfif/psd/psb/svg.
+/// Do not use for the gallery: avif needs iOS 16 and psd/svg cannot be decoded locally.
++ (BOOL)isServerThumbImageFile:(NSString *)name;
+/// Videos thumbnail-server can frame: the isVideoFile set plus webm/ogv, which AVPlayer cannot play.
++ (BOOL)isServerThumbVideoFile:(NSString *)name;
+/// Page-like documents the server can thumbnail: pdf and ai, epub covers, sdoc, xmind.
++ (BOOL)isServerThumbDocumentFile:(NSString *)name;
+/// Any of the three sets above.
++ (BOOL)isServerThumbFile:(NSString *)name;
+
 /// Calculate the display size of text given specific constraints.
 + (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font width:(float)width;
 
@@ -188,5 +207,27 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 /// Present the system limited-library picker so the user can add/remove selected photos.
 /// No-op unless the current authorization status is Limited.
 + (void)presentLimitedLibraryPickerFromViewController:(UIViewController *)viewController;
+
+#pragma mark - Thumbnail presentation
+
+/// How a cell presents the image it got for a file.
+typedef NS_ENUM(NSInteger, SeafThumbPreviewStyle) {
+    SeafThumbPreviewStyleIcon = 0,   ///< File-type icon: small, centered, aspect fit.
+    SeafThumbPreviewStyleMedia,      ///< Photo/video thumb: fills the frame, aspect fill, centered crop.
+    SeafThumbPreviewStyleDocument,   ///< PDF/sdoc page thumb: fills the frame, aspect fill, cropped from the top.
+};
+
+/// Style for the image shown for `fileName`: Document for pdf/sdoc and Media for
+/// image/video, but only when `hasThumb` says the image is a real thumbnail and not
+/// the type icon. Everything else is Icon.
++ (SeafThumbPreviewStyle)thumbPreviewStyleForFileName:(NSString *)fileName hasThumb:(BOOL)hasThumb;
+
+/// Sets `image` on `imageView` and, for the Document style, limits the layer's
+/// contentsRect to the top square of a portrait image so a page thumb shows its
+/// header instead of its middle band. Every other style restores the full
+/// contentsRect, so route all cell images through here and a reused cell never
+/// keeps an earlier crop. The frames this serves are square: the list cell's 35pt
+/// image view and the grid cell's 1:1 container.
++ (void)setThumbImage:(UIImage *_Nullable)image onImageView:(UIImageView *_Nonnull)imageView style:(SeafThumbPreviewStyle)style;
 
 @end

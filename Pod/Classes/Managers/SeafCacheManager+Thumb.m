@@ -14,15 +14,19 @@
 #import "SeafStorage.h"
 #import "SeafRealmManager.h"
 
-// Tunables for the thumbnail failure policy.
-static const NSInteger kSeafThumbMaxServerFailures = 5;    // stop retrying after this many 5xx / bad-body failures
-static const NSTimeInterval kSeafThumbRetryBackoff = 60.0; // min seconds between retries after a server failure
+// Tunables for the thumbnail failure policy. The backoff is short on purpose:
+// thumbnail-server keeps generating after it answered 503 (queue full) or timed
+// out, so the next request a few seconds later usually finds the thumb ready.
+// A cell only re-requests when it is configured again, so a long backoff showed
+// as thumbs that never load on a page the user stopped on.
+static const NSInteger kSeafThumbMaxServerFailures = 5;   // give up after this many counted failures
+static const NSTimeInterval kSeafThumbRetryBackoff = 5.0; // min seconds between retries after any failure
 static const NSUInteger kSeafThumbFailRecordCountLimit = 200;
 
 @interface SeafThumbFailRecord : NSObject
-@property (nonatomic, assign) NSInteger serverFailures;   // count of 5xx / non-image-body failures
-@property (nonatomic, assign) NSTimeInterval lastFailure; // time of last failure (referenceDate)
-@property (nonatomic, assign) BOOL permanent;             // 4xx: definitively not thumbnailable
+@property (nonatomic, assign) NSInteger serverFailures;   // counted failures: 400, 500 and other 5xx, non-image body
+@property (nonatomic, assign) NSTimeInterval lastFailure; // time of last failure of any kind (referenceDate)
+@property (nonatomic, assign) BOOL permanent;             // 401/403/404/415...: definitively not thumbnailable
 @end
 @implementation SeafThumbFailRecord
 @end
@@ -46,7 +50,48 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
             file.path ?: @"",
             oid,
             file.mtime,
-            THUMB_SIZE * (int)[[UIScreen mainScreen] scale]];
+            SEAF_THUMB_PIXEL_SIZE];
+}
+
+// On-disk names carry the pixel size, so changing SEAF_THUMB_PIXEL_SIZE retires
+// every cached thumb instead of serving old files at the wrong size. Earlier
+// builds named files `{oid}-{256*scale}` / `{name}-{mtime}`; those are left to
+// the cache cleanup in SeafStorage.
+static NSString *SeafThumbCacheFileName(NSString *stem)
+{
+    return [NSString stringWithFormat:@"%@-%dpx", stem, SEAF_THUMB_PIXEL_SIZE];
+}
+
+static NSString *SeafThumbOidPath(NSString *oid)
+{
+    return [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:SeafThumbCacheFileName(oid)];
+}
+
+static NSString *SeafThumbMtimePath(SeafFile *file)
+{
+    NSString *stem = [NSString stringWithFormat:@"%@-%lld", file.name, file.mtime];
+    return [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:SeafThumbCacheFileName(stem)];
+}
+
+// Types only thumbnail-server can render need a gate, or every request on a
+// server without it ends in 400 plus a backoff cycle. For video and sdoc the
+// directory listing is the signal: Seahub lists their thumbnail source exactly
+// when thumbnail-server is enabled, so "" (listed none) skips the request and nil
+// (search results, old caches) keeps it. xmind is never listed at all, so it goes
+// by the ping probe. Images, pdf, epub are never gated: Seahub renders those
+// itself, and without thumbnail-server their source is listed only once the thumb
+// exists, which says nothing about support.
+static BOOL SeafServerCannotThumbFile(SeafFile *file)
+{
+    NSString *name = file.name;
+    if ([Utils isXmindFile:name]) {
+        return !file.connection.isThumbnailServerAvailable;
+    }
+    if ([Utils isServerThumbVideoFile:name] || [Utils isSdocFile:name]) {
+        NSString *src = file.thumbnailURLStr;
+        return src != nil && src.length == 0;
+    }
+    return NO;
 }
 
 @implementation SeafCacheManager (Thumb)
@@ -84,6 +129,18 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
     [records setObject:record forKey:key];
 }
 
+- (void)markThumbDownloadBusyForFile:(SeafFile *)file
+{
+    if (!file) return;
+    NSString *key = SeafThumbFailKeyForFile(file);
+    NSCache<NSString *, SeafThumbFailRecord *> *records = SeafThumbFailRecords();
+    SeafThumbFailRecord *record = [records objectForKey:key] ?: [SeafThumbFailRecord new];
+    // Backoff only. Not counted: a busy server is not evidence that this file
+    // cannot be thumbnailed, and counting it exhausted the cap during bursts.
+    record.lastFailure = [NSDate timeIntervalSinceReferenceDate];
+    [records setObject:record forKey:key];
+}
+
 - (void)clearThumbDownloadFailedForFile:(SeafFile *)file
 {
     if (!file) return;
@@ -97,8 +154,8 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
     NSString *key = SeafThumbFailKeyForFile(file);
     SeafThumbFailRecord *record = [SeafThumbFailRecords() objectForKey:key];
     if (!record) return NO;
-    if (record.permanent) return YES;                                    // 4xx: never retry this version
-    if (record.serverFailures >= kSeafThumbMaxServerFailures) return YES; // gave up after repeated 5xx
+    if (record.permanent) return YES;                                    // never retry this version
+    if (record.serverFailures >= kSeafThumbMaxServerFailures) return YES; // gave up after repeated counted failures
     NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - record.lastFailure;
     return elapsed < kSeafThumbRetryBackoff;                             // within backoff window: skip for now
 }
@@ -112,7 +169,7 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
             file.oid = cacheOid;
         }
     }
-    if (file.isImageFile || file.isVideoFile || file.isPdfFile || file.isSdocFile) {
+    if ([Utils isServerThumbFile:file.name]) {
         if (![file.connection isEncrypted:file.repoId]) {
             if (!file.isDeleted) {
                 UIImage *img = [self thumbForFile:file];
@@ -120,6 +177,9 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
                     return img;
                 }
                 else if ([self shouldSkipThumbDownloadForFile:file]) {
+                    return nil;
+                }
+                else if (SeafServerCannotThumbFile(file)) {
                     return nil;
                 }
                 else if (!file.thumbTaskForQueue) {
@@ -153,12 +213,7 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
 }
 
 - (UIImage *)thumbForFile:(SeafFile *)file {
-    NSString *thumbpath;
-    if (file.oid) {
-        thumbpath = [file thumbPath:file.oid];
-    } else {
-        thumbpath = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld", file.name, file.mtime]];
-    }
+    NSString *thumbpath = [self thumbCachePathForFile:file];
 
     UIImage *thumb = [SeafCacheManager.sharedManager getThumbFromCache:thumbpath];
     if (thumb) {
@@ -183,9 +238,12 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
 }
 
 - (NSString *)thumbPath:(NSString *)objId sFile:(SeafFile *)sFile {
-    if (!sFile.oid) return nil;
-    int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
-    return [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%d", objId, size]];
+    if (!sFile.oid || !objId) return nil;
+    return SeafThumbOidPath(objId);
+}
+
+- (NSString *)thumbCachePathForFile:(SeafFile *)file {
+    return file.oid.length ? SeafThumbOidPath(file.oid) : SeafThumbMtimePath(file);
 }
 
 - (UIImage *)loadDecryptedImageForFile:(SeafFile *)file {
@@ -194,9 +252,7 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
     // Get the full path for cached file
     NSString *cachedPath = [SeafStorage.sharedObject documentPath:file.oid];
     
-    NSString *mtimePath = [SeafStorage.sharedObject.thumbsDir
-        stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld",
-                                        file.name, file.mtime]];
+    NSString *mtimePath = SeafThumbMtimePath(file);
     
     // Check if file exists in cache
     if ([Utils fileExistsAtPath:cachedPath]) {
@@ -218,9 +274,7 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
                 
                 // Check if thumbnail already exists
                 NSString *oidPath = sFile.oid ? [sFile thumbPath:sFile.oid] : nil;
-                NSString *mtimePath = [SeafStorage.sharedObject.thumbsDir
-                    stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld",
-                    sFile.name, sFile.mtime]];
+                NSString *mtimePath = SeafThumbMtimePath(sFile);
                     
                 // Only proceed if thumbnails don't exist in both paths
                 if ((!oidPath || ![Utils fileExistsAtPath:oidPath]) &&
@@ -233,9 +287,11 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
                         return;
                     }
                     
-                    // Calculate thumbnail size while maintaining aspect ratio
-                    CGFloat scale = [UIScreen mainScreen].scale;
-                    CGFloat maxSize = THUMB_SIZE * scale;
+                    // Calculate thumbnail size while maintaining aspect ratio.
+                    // targetSize is in pixels: the context below is created at
+                    // scale 1.0, so the long side comes out at SEAF_THUMB_PIXEL_SIZE,
+                    // the same as a server thumb.
+                    CGFloat maxSize = SEAF_THUMB_PIXEL_SIZE;
                     CGSize originalSize = originalImage.size;
                     CGSize targetSize;
                     
@@ -248,7 +304,7 @@ static NSString *SeafThumbFailKeyForFile(SeafFile *file) {
                     }
                     
                     // Create thumbnail
-                    UIGraphicsBeginImageContextWithOptions(targetSize, NO, scale);
+                    UIGraphicsBeginImageContextWithOptions(targetSize, NO, 1.0);
                     [originalImage drawInRect:CGRectMake(0, 0, targetSize.width, targetSize.height)];
                     UIImage *thumbnailImage = UIGraphicsGetImageFromCurrentImageContext();
                     UIGraphicsEndImageContext();

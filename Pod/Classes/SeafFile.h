@@ -17,7 +17,19 @@
 #import "SeafFilePreviewHandler.h"
 
 
+// Local upload previews only (SeafUploadFile), scaled by the screen scale.
 #define THUMB_SIZE 256
+
+// Pixel size of every server-fetched or locally generated file thumbnail, and the
+// suffix of its on-disk cache name (see SeafCacheManager+Thumb). One size serves
+// both list and grid cells: thumbnail-server only serves 256/512/1024 and
+// generates each size separately, which for video/sdoc means another ffmpeg or
+// browser run. 256 is the web list size, so it usually already exists on the
+// server. 512 looked better in the grid (165-220pt cells) but forced a full
+// regeneration of every folder, and 20 concurrent requests overran
+// thumbnail-server's 12-slot queue; revisit once the client paces requests.
+// Must stay one of 256/512/1024. Changing it retires every cached thumb, by design.
+#define SEAF_THUMB_PIXEL_SIZE 256
 
 @class SeafFile;
 @class SeafThumb;
@@ -78,7 +90,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (strong, nullable) id <SeafFileUpdateDelegate> udelegate;///< The delegate for upload updates.
 @property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;///< Whether the file is uploaded.
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;///< Whether the file is currently uploading.
-@property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
+/// Thumbnail source reported by the server (`encoded_thumbnail_src` from the
+/// directory listing or the starred list). nil: unknown, the entry was not built
+/// from such a listing. "": the server listed no thumbnail for this file.
+/// Non-empty: a server-side thumbnail path. Used only as a capability signal for
+/// video/sdoc (see SeafCacheManager+Thumb), never as the request URL.
+@property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;
 @property (strong, nonatomic) SeafUploadFile * _Nullable ufile;
 @property (assign, nonatomic) BOOL isDownloading;// Checks if the file is currently being downloaded.
 @property (assign, nonatomic) BOOL downloaded;// Checks if the file is downloaded.

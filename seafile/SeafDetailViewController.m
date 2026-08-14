@@ -405,7 +405,6 @@ enum SHARE_STATUS {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.edgesForExtendedLayout = UIRectEdgeAll;
     self.view.backgroundColor = [SeafTheme primarySurface];
     // Do any additional setup after loading the view, typically from a nib.
 
