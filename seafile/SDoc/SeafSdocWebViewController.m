@@ -75,6 +75,9 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 // Insert-image (sdoc local image) state
 @property (nonatomic, strong) SeafDocsCommentService *imageService;
 @property (nonatomic, assign) BOOL isUploadingImages;
+@property (nonatomic, assign) BOOL isPreparingImages;
+/// Nesting count so overlapping picker batches keep the preparing state alive.
+@property (nonatomic, assign) NSUInteger preparingImagesCount;
 /// Items waiting while an upload is already in flight (avoids silent drop).
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *pendingUploadImageItems;
 @property (nonatomic, strong) SeafImagePickerHelper *imagePickerHelper;
@@ -446,8 +449,8 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 - (void)editorToolbarDidTapInsertImage:(UIButton *)sender
 {
-    // Debounce: while a previous batch is still uploading, ignore extra taps.
-    if (self.isUploadingImages) return;
+    // Debounce: while a previous batch is preparing or uploading, ignore extra taps.
+    if (self.isUploadingImages || self.isPreparingImages) return;
     [self readPageOptionsEnsuringWithCompletion:^(BOOL ok) {
         if (!ok) {
             [self showToast:NSLocalizedString(@"Server error, please refresh", nil)];
@@ -581,26 +584,94 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 #pragma mark - SeafImagePickerHelperDelegate
 
-/// Shared image data processing: extract filename, transcode HEIC→JPEG, determine MIME,
-/// and append the result to the shared `items` array.
-- (void)processImageData:(NSData *)imageData
-                 dataUTI:(NSString *)dataUTI
-                   asset:(PHAsset *)asset
-                   index:(NSUInteger)idx
-                    lock:(NSObject *)lock
-                   items:(NSMutableArray<NSDictionary *> *)items
-                   group:(dispatch_group_t)group
+static dispatch_queue_t SeafSdocImageProcessingQueue(void)
 {
-    if (!imageData || imageData.length == 0) {
-        dispatch_group_leave(group);
-        return;
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.seafile.sdoc.image-processing", DISPATCH_QUEUE_CONCURRENT);
+    });
+    return queue;
+}
+
+/// Decoding a 12MP HEIC costs ~48MB of bitmap, so cap how many run at once to
+/// keep the peak footprint bounded when a full batch is picked.
+static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
+{
+    static dispatch_semaphore_t limiter;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        limiter = dispatch_semaphore_create(2);
+    });
+    return limiter;
+}
+
+- (void)updateInsertImageButtonEnabled
+{
+    BOOL enabled = !self.isUploadingImages && !self.isPreparingImages;
+    [self.editorToolbar setInsertImageEnabled:enabled];
+}
+
+- (void)beginPreparingImages
+{
+    self.preparingImagesCount += 1;
+    if (self.preparingImagesCount == 1) {
+        self.isPreparingImages = YES;
+        [self updateInsertImageButtonEnabled];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Preparing files …", @"Seafile")];
     }
+}
+
+- (void)endPreparingImages
+{
+    if (self.preparingImagesCount > 0) {
+        self.preparingImagesCount -= 1;
+    }
+    if (self.preparingImagesCount == 0) {
+        self.isPreparingImages = NO;
+        [self updateInsertImageButtonEnabled];
+        [SVProgressHUD dismiss];
+    }
+}
+
+/// Build one upload item from on-disk file URL. Intended for background queues.
+- (NSDictionary *)imageItemFromFileURL:(NSURL *)url fileOrder:(NSUInteger)fileOrder
+{
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    if (data.length == 0) return nil;
+
+    NSString *fileName = url.lastPathComponent ?: [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
+    NSString *mime = [self mimeTypeForURL:url] ?: @"image/jpeg";
+    NSData *payload = data;
+    if ([self isHEICMime:mime]
+        || [fileName.pathExtension.lowercaseString hasPrefix:@"heic"]
+        || [fileName.pathExtension.lowercaseString hasPrefix:@"heif"]) {
+        UIImage *img = [UIImage imageWithData:data];
+        NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
+        if (jpeg.length > 0) {
+            payload = jpeg;
+            mime = @"image/jpeg";
+            fileName = [[fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+        }
+    }
+    return @{ @"_fileOrder": @(fileOrder),
+              @"data": payload,
+              @"fileName": fileName,
+              @"mime": mime };
+}
+
+/// Build one upload item from PHAsset image bytes. Intended for background queues.
+- (NSDictionary *)imageItemFromImageData:(NSData *)imageData
+                                 dataUTI:(NSString *)dataUTI
+                                   asset:(PHAsset *)asset
+                                   index:(NSUInteger)idx
+{
+    if (!imageData || imageData.length == 0) return nil;
 
     NSData *data = imageData;
     NSString *mime = @"image/jpeg";
     NSString *fileName = nil;
 
-    // Determine filename from asset resource
     NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
     for (PHAssetResource *res in resources) {
         if (res.type == PHAssetResourceTypePhoto) {
@@ -612,7 +683,6 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
         fileName = [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
     }
 
-    // HEIC/HEIF → JPEG transcoding for backend compatibility
     NSString *ext = fileName.pathExtension.lowercaseString;
     BOOL isHEIC = [ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]
                || [dataUTI isEqualToString:@"public.heic"] || [dataUTI isEqualToString:@"public.heif"];
@@ -631,73 +701,139 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     } else if ([ext isEqualToString:@"gif"]) {
         mime = @"image/gif";
     } else {
-        // Default to JPEG for jpg/jpeg and unknown extensions
         mime = @"image/jpeg";
     }
 
-    @synchronized (lock) {
-        [items addObject:@{ @"_order": @(idx),
-                             @"data": data,
-                             @"fileName": fileName,
-                             @"mime": mime }];
-    }
-    dispatch_group_leave(group);
+    return @{ @"_order": @(idx),
+              @"data": data,
+              @"fileName": fileName,
+              @"mime": mime };
 }
 
-- (void)imagePickerHelper:(SeafImagePickerHelper *)helper
-    didFinishPickingAssets:(NSArray<PHAsset *> *)assets
-                  fileURLs:(NSArray<NSURL *> *)fileURLs
+- (NSArray<NSDictionary *> *)mergedUploadItemsFromCollectedItems:(NSArray<NSDictionary *> *)collectedItems
+{
+    if (collectedItems.count == 0) return @[];
+
+    NSMutableArray<NSDictionary *> *assetItems = [NSMutableArray array];
+    NSMutableArray<NSDictionary *> *fileItems = [NSMutableArray array];
+    for (NSDictionary *item in collectedItems) {
+        if (item[@"_order"] != nil) {
+            [assetItems addObject:item];
+        } else if (item[@"_fileOrder"] != nil) {
+            [fileItems addObject:item];
+        }
+    }
+
+    NSArray *sortedAssets = [assetItems sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        return [a[@"_order"] compare:b[@"_order"]];
+    }];
+    NSArray *sortedFiles = [fileItems sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        return [a[@"_fileOrder"] compare:b[@"_fileOrder"]];
+    }];
+
+    NSMutableArray<NSDictionary *> *merged = [NSMutableArray arrayWithCapacity:sortedAssets.count + sortedFiles.count];
+    for (NSDictionary *item in sortedAssets) {
+        NSMutableDictionary *clean = [item mutableCopy];
+        [clean removeObjectForKey:@"_order"];
+        [merged addObject:clean.copy];
+    }
+    for (NSDictionary *item in sortedFiles) {
+        NSMutableDictionary *clean = [item mutableCopy];
+        [clean removeObjectForKey:@"_fileOrder"];
+        [merged addObject:clean.copy];
+    }
+    return merged.copy;
+}
+
+- (void)processPickedImageAssets:(NSArray<PHAsset *> *)assets
+                        fileURLs:(NSArray<NSURL *> *)fileURLs
 {
     if (assets.count == 0 && fileURLs.count == 0) return;
 
-    // Materialize provider files first (kept in selection/completion order from helper).
-    // Asset reads are async; merge both into a single upload so neither batch is dropped
-    // by isUploadingImages.
-    NSArray<NSDictionary *> *fileItems = [self imageItemsFromFileURLs:fileURLs];
+    [self beginPreparingImages];
 
-    if (assets.count == 0) {
-        if (fileItems.count == 0) {
-            [self showToast:NSLocalizedString(@"Failed to read image", @"Seafile")];
-            return;
-        }
-        [self uploadAndInsertImagesWithItems:fileItems];
-        return;
-    }
-
-    NSMutableArray<NSDictionary *> *assetItems = [NSMutableArray array];
+    __weak typeof(self) weakSelf = self;
+    NSMutableArray<NSDictionary *> *collectedItems = [NSMutableArray array];
     NSObject *lock = [NSObject new];
     dispatch_group_t group = dispatch_group_create();
-    NSUInteger order = 0;
+    dispatch_queue_t processingQueue = SeafSdocImageProcessingQueue();
+    dispatch_semaphore_t limiter = SeafSdocImageProcessingLimiter();
+
+    NSUInteger fileOrder = 0;
+    for (NSURL *url in fileURLs) {
+        NSUInteger idx = fileOrder++;
+        dispatch_group_enter(group);
+        dispatch_async(processingQueue, ^{
+            dispatch_semaphore_wait(limiter, DISPATCH_TIME_FOREVER);
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                dispatch_semaphore_signal(limiter);
+                dispatch_group_leave(group);
+                return;
+            }
+            @autoreleasepool {
+                NSDictionary *item = [strongSelf imageItemFromFileURL:url fileOrder:idx];
+                if (item) {
+                    @synchronized (lock) {
+                        [collectedItems addObject:item];
+                    }
+                }
+            }
+            dispatch_semaphore_signal(limiter);
+            dispatch_group_leave(group);
+        });
+    }
 
     PHImageRequestOptions *opts = [PHImageRequestOptions new];
     opts.networkAccessAllowed = YES;
     opts.version = PHImageRequestOptionsVersionCurrent;
 
+    NSUInteger assetOrder = 0;
     for (PHAsset *asset in assets) {
-        NSUInteger idx = order++;
+        NSUInteger idx = assetOrder++;
         dispatch_group_enter(group);
-        [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset options:opts resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, CGImagePropertyOrientation __unused orientation, NSDictionary * _Nullable info) {
-            [self processImageData:imageData dataUTI:dataUTI asset:asset index:idx lock:lock items:assetItems group:group];
+        [[PHImageManager defaultManager] requestImageDataAndOrientationForAsset:asset
+                                                                        options:opts
+                                                                  resultHandler:^(NSData * _Nullable imageData,
+                                                                                  NSString * _Nullable dataUTI,
+                                                                                  CGImagePropertyOrientation __unused orientation,
+                                                                                  NSDictionary * _Nullable info) {
+            if (!imageData || imageData.length == 0) {
+                dispatch_group_leave(group);
+                return;
+            }
+            dispatch_async(processingQueue, ^{
+                dispatch_semaphore_wait(limiter, DISPATCH_TIME_FOREVER);
+                __strong typeof(weakSelf) strongSelf = weakSelf;
+                if (!strongSelf) {
+                    dispatch_semaphore_signal(limiter);
+                    dispatch_group_leave(group);
+                    return;
+                }
+                @autoreleasepool {
+                    NSDictionary *item = [strongSelf imageItemFromImageData:imageData
+                                                                    dataUTI:dataUTI
+                                                                      asset:asset
+                                                                      index:idx];
+                    if (item) {
+                        @synchronized (lock) {
+                            [collectedItems addObject:item];
+                        }
+                    }
+                }
+                dispatch_semaphore_signal(limiter);
+                dispatch_group_leave(group);
+            });
         }];
     }
 
-    __weak typeof(self) weakSelf = self;
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
 
-        NSArray *sorted = [assetItems sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
-            return [a[@"_order"] compare:b[@"_order"]];
-        }];
-        NSMutableArray *merged = [NSMutableArray arrayWithCapacity:sorted.count + fileItems.count];
-        for (NSDictionary *d in sorted) {
-            NSMutableDictionary *m = [d mutableCopy];
-            [m removeObjectForKey:@"_order"];
-            [merged addObject:m.copy];
-        }
-        if (fileItems.count > 0) {
-            [merged addObjectsFromArray:fileItems];
-        }
+        [strongSelf endPreparingImages];
+
+        NSArray *merged = [strongSelf mergedUploadItemsFromCollectedItems:collectedItems.copy];
         if (merged.count == 0) {
             [strongSelf showToast:NSLocalizedString(@"Failed to read image", @"Seafile")];
             return;
@@ -706,31 +842,68 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     });
 }
 
-- (NSArray<NSDictionary *> *)imageItemsFromFileURLs:(NSArray<NSURL *> *)fileURLs
+- (void)processDocumentPickerImageURLs:(NSArray<NSURL *> *)urls
 {
-    if (fileURLs.count == 0) return @[];
+    if (urls.count == 0) return;
 
-    NSMutableArray<NSDictionary *> *items = [NSMutableArray arrayWithCapacity:fileURLs.count];
-    for (NSURL *url in fileURLs) {
-        NSData *data = [NSData dataWithContentsOfURL:url];
-        if (data.length == 0) continue;
-        NSString *fileName = url.lastPathComponent ?: [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
-        NSString *mime = [self mimeTypeForURL:url] ?: @"image/jpeg";
-        NSData *payload = data;
-        if ([self isHEICMime:mime] || [fileName.pathExtension.lowercaseString hasPrefix:@"heic"] || [fileName.pathExtension.lowercaseString hasPrefix:@"heif"]) {
-            UIImage *img = [UIImage imageWithData:data];
-            NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
-            if (jpeg.length > 0) {
-                payload = jpeg;
-                mime = @"image/jpeg";
-                fileName = [[fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+    [self beginPreparingImages];
+
+    __weak typeof(self) weakSelf = self;
+    NSMutableArray<NSDictionary *> *collectedItems = [NSMutableArray array];
+    NSObject *lock = [NSObject new];
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_queue_t processingQueue = SeafSdocImageProcessingQueue();
+    dispatch_semaphore_t limiter = SeafSdocImageProcessingLimiter();
+
+    NSUInteger fileOrder = 0;
+    for (NSURL *url in urls) {
+        NSUInteger idx = fileOrder++;
+        dispatch_group_enter(group);
+        dispatch_async(processingQueue, ^{
+            dispatch_semaphore_wait(limiter, DISPATCH_TIME_FOREVER);
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                dispatch_semaphore_signal(limiter);
+                dispatch_group_leave(group);
+                return;
             }
-        }
-        [items addObject:@{ @"data": payload,
-                             @"fileName": fileName,
-                             @"mime": mime }];
+            @autoreleasepool {
+                BOOL secured = [url startAccessingSecurityScopedResource];
+                NSDictionary *item = [strongSelf imageItemFromFileURL:url fileOrder:idx];
+                if (secured) {
+                    [url stopAccessingSecurityScopedResource];
+                }
+                if (item) {
+                    @synchronized (lock) {
+                        [collectedItems addObject:item];
+                    }
+                }
+            }
+            dispatch_semaphore_signal(limiter);
+            dispatch_group_leave(group);
+        });
     }
-    return items.copy;
+
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+
+        [strongSelf endPreparingImages];
+
+        NSArray *merged = [strongSelf mergedUploadItemsFromCollectedItems:collectedItems.copy];
+        if (merged.count == 0) {
+            [strongSelf showToast:NSLocalizedString(@"Failed to read image", @"Seafile")];
+            return;
+        }
+        [strongSelf uploadAndInsertImagesWithItems:merged];
+    });
+}
+
+- (void)imagePickerHelper:(SeafImagePickerHelper *)helper
+    didFinishPickingAssets:(NSArray<PHAsset *> *)assets
+                  fileURLs:(NSArray<NSURL *> *)fileURLs
+{
+    [self processPickedImageAssets:assets fileURLs:fileURLs];
 }
 
 - (void)imagePickerHelper:(SeafImagePickerHelper *)helper didFailWithMessage:(NSString *)message
@@ -767,32 +940,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls
 {
-    if (urls.count == 0) return;
-    NSMutableArray<NSDictionary *> *items = [NSMutableArray arrayWithCapacity:urls.count];
-    for (NSURL *url in urls) {
-        BOOL secured = [url startAccessingSecurityScopedResource];
-        NSData *data = [NSData dataWithContentsOfURL:url];
-        if (secured) [url stopAccessingSecurityScopedResource];
-        if (data.length == 0) continue;
-        NSString *mime = [self mimeTypeForURL:url] ?: @"image/jpeg";
-        NSString *fileName = url.lastPathComponent ?: [NSString stringWithFormat:@"IMG_%@.jpg", [[NSUUID UUID] UUIDString]];
-        // Convert HEIC to JPEG; the seadoc backend may not accept HEIC reliably.
-        if ([self isHEICMime:mime] || [fileName.pathExtension.lowercaseString hasPrefix:@"heic"] || [fileName.pathExtension.lowercaseString hasPrefix:@"heif"]) {
-            UIImage *img = [UIImage imageWithData:data];
-            NSData *jpeg = img ? UIImageJPEGRepresentation(img, 0.92) : nil;
-            if (jpeg.length > 0) {
-                data = jpeg;
-                mime = @"image/jpeg";
-                fileName = [[fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
-            }
-        }
-        [items addObject:@{ @"data": data, @"fileName": fileName, @"mime": mime }];
-    }
-    if (items.count == 0) {
-        [self showToast:NSLocalizedString(@"Failed to read image", nil)];
-        return;
-    }
-    [self uploadAndInsertImagesWithItems:items.copy];
+    [self processDocumentPickerImageURLs:urls];
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller
@@ -835,7 +983,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     }
 
     self.isUploadingImages = YES;
-    [self.editorToolbar setInsertImageEnabled:NO];
+    [self updateInsertImageButtonEnabled];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Uploading", nil)];
 
     __weak typeof(self) wself = self;
@@ -848,7 +996,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
                                                   NSError * _Nullable lastError) {
         __strong typeof(wself) sself = wself; if (!sself) return;
         sself.isUploadingImages = NO;
-        [sself.editorToolbar setInsertImageEnabled:YES];
+        [sself updateInsertImageButtonEnabled];
         [SVProgressHUD dismiss];
 
         if (relativePaths.count == 0) {

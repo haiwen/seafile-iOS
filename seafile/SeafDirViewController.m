@@ -90,7 +90,6 @@
         [self applyRoundedCornersIfNeeded];
     }
 
-    self.edgesForExtendedLayout = UIRectEdgeAll;
     [self.navigationItem setHidesBackButton:[self.directory isKindOfClass:[SeafRepos class]]];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStylePlain target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;

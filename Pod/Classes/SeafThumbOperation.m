@@ -36,8 +36,6 @@
 // twice.
 @property (nonatomic, assign) BOOL thumbResultReported;
 
-@property (nonatomic, assign) NSInteger retryCount; // Tracks the current number of retry attempts
-
 /// Generation claimed for the shared on-disk thumb path. Only the current owner
 /// may delete that path on cancel/error, so a cancelled op cannot wipe a newer
 /// download that reused the same target.
@@ -49,8 +47,6 @@
 
 @synthesize executing = _executing;
 @synthesize finished = _finished;
-
-#define THUMB_MAX_RETRY_COUNT 0
 
 // path -> current generation. Protected by @synchronized(SeafThumbPathGenerations()).
 static NSMutableDictionary<NSString *, NSNumber *> *SeafThumbPathGenerations(void)
@@ -101,7 +97,6 @@ static void SeafThumbReleasePathGenerationIfOwned(NSString *path, NSInteger gene
         _executing = NO;
         _finished = NO;
         _taskList = [NSMutableArray array];
-        _retryCount = 0; // Initialize retry count to 0
         _operationCompleted = NO;
         _thumbResultReported = NO;
         _thumbPathGeneration = 0;
@@ -293,32 +288,20 @@ static void SeafThumbReleasePathGenerationIfOwned(NSString *path, NSInteger gene
                 SeafThumbReleasePathGenerationIfOwned(target, generation);
                 [strongSelf finishDownloadThumbOperation:NO];
             } else {
-                strongSelf.retryCount++; // Increment the retry count
-                if (strongSelf.retryCount < THUMB_MAX_RETRY_COUNT) {
-                    Debug(@"Retrying download for %@ (Retry %ld/%ld)", self.file.name, (long)strongSelf.retryCount, (long)THUMB_MAX_RETRY_COUNT);
-                    // Retry after a 1-second delay to avoid retrying too quickly
-                    SeafThumbReleasePathGenerationIfOwned(target, generation);
-                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                        [strongSelf downloadThumb];
-                    });
-                } else {
-                    // 4xx => permanent (this file version can't be thumbnailed). 5xx =>
-                    // transient (server busy / generation temporarily failed): use a
-                    // capped, backed-off retry so a brief server hiccup doesn't hide the
-                    // thumbnail for the rest of the session. Failures with no HTTP response
-                    // (timeout, connection lost, offline) are NOT recorded and stay fully
-                    // retryable.
-                    if (httpResp != nil) {
-                        if (statusCode >= 400 && statusCode < 500) {
-                            [[SeafCacheManager sharedManager] markThumbDownloadPermanentlyFailedForFile:strongSelf.file];
-                        } else if (statusCode >= 500) {
-                            [[SeafCacheManager sharedManager] markThumbDownloadTransientlyFailedForFile:strongSelf.file];
-                        }
+                // Retries are handled at enqueue time by SeafCacheManager+Thumb
+                // (backoff / cap / permanent-fail negative cache), not inside this op.
+                // 4xx => permanent. 5xx => transient with backoff. No HTTP response
+                // (timeout, offline, etc.) is not recorded and stays fully retryable.
+                if (httpResp != nil) {
+                    if (statusCode >= 400 && statusCode < 500) {
+                        [[SeafCacheManager sharedManager] markThumbDownloadPermanentlyFailedForFile:strongSelf.file];
+                    } else if (statusCode >= 500) {
+                        [[SeafCacheManager sharedManager] markThumbDownloadTransientlyFailedForFile:strongSelf.file];
                     }
-                    Debug(@"Max retry count reached for %@. Failing download.", self.file.name);
-                    SeafThumbReleasePathGenerationIfOwned(target, generation);
-                    [strongSelf finishDownloadThumbOperation:NO];
                 }
+                Debug(@"Thumbnail download failed for %@: %@", self.file.name, error);
+                SeafThumbReleasePathGenerationIfOwned(target, generation);
+                [strongSelf finishDownloadThumbOperation:NO];
             }
         }
         else {
@@ -336,9 +319,8 @@ static void SeafThumbReleasePathGenerationIfOwned(NSString *path, NSInteger gene
             }
             if (![UIImage imageWithContentsOfFile:target]) {
                 // 2xx but the body isn't a decodable image (HTML error page, empty body,
-                // etc.). Treat as transient-with-cap rather than permanent: retry a bounded
-                // number of times with backoff, then give up, so we neither hammer the
-                // server on every refresh nor hide a recoverable thumbnail forever.
+                // etc.). Record as transient so SeafCacheManager+Thumb can backoff-retry
+                // on the next enqueue instead of hammering the server on every refresh.
                 [[SeafCacheManager sharedManager] markThumbDownloadTransientlyFailedForFile:strongSelf.file];
                 cleanupBadThumbFile();
                 SeafThumbReleasePathGenerationIfOwned(target, generation);
@@ -394,9 +376,6 @@ static void SeafThumbReleasePathGenerationIfOwned(NSString *path, NSInteger gene
         }
 
         _operationCompleted = YES;  // Set the flag indicating operation is complete
-
-        // Reset the retry count
-        self.retryCount = 0;
     }
 
     // The gate above guarantees a single winner, so the KVO pair is sent exactly

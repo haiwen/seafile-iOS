@@ -101,7 +101,6 @@
     self.title = NSLocalizedString(@"Starred", @"Seafile");
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
-    self.edgesForExtendedLayout = UIRectEdgeAll;
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];

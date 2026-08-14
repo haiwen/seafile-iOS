@@ -233,8 +233,6 @@ enum {
     longPress.minimumPressDuration = 0.5; // Set duration to 0.5 seconds
     [self.tableView addGestureRecognizer:longPress];
     
-    self.edgesForExtendedLayout = UIRectEdgeAll;
-
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
 
