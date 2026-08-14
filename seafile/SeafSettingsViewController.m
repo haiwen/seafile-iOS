@@ -658,8 +658,13 @@ enum {
         return 1;
     }
     NSInteger count = [super tableView:tableView numberOfRowsInSection:[self storyboardSectionForSection:section]];
-    if (section == SECTION_CAMERA && [self shouldShowManageSelectedPhotosRow]) {
-        count += 1;
+    if (section == SECTION_CAMERA) {
+        NSAssert(count == CELL_CAMERA_MANAGE_PHOTOS,
+                 @"Camera storyboard has %ld rows, expected %ld; update CELL_CAMERA_MANAGE_PHOTOS",
+                 (long)count, (long)CELL_CAMERA_MANAGE_PHOTOS);
+        if ([self shouldShowManageSelectedPhotosRow]) {
+            count += 1;
+        }
     }
     return count;
 }

@@ -766,7 +766,10 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 }
 
 + (NSURL *)generateFileTempPath:(NSString *)name {
-    NSString *escapedName = [name stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
+    // URLPathAllowedCharacterSet keeps `/`, which would turn a filename into nested directories.
+    NSMutableCharacterSet *allowed = [[NSCharacterSet URLPathAllowedCharacterSet] mutableCopy];
+    [allowed removeCharactersInString:@"/"];
+    NSString *escapedName = [name stringByAddingPercentEncodingWithAllowedCharacters:allowed] ?: name;
     NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:escapedName];
     NSURL *tempURL = [NSURL fileURLWithPath:tempPath isDirectory:NO];
     if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {

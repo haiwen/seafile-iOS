@@ -209,11 +209,11 @@
     } error:nil];
     
     __weak __typeof__ (self) wself = self;
-    NSURLSessionUploadTask *blockDataUploadTask = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
+    NSURLSessionDataTask *blockDataUploadTask = [connection.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
         __strong __typeof (wself) sself = wself;
         [sself.uploadFile uploadProgress:1.0f * self.blkidx / self.allBlocks.count];
         
-    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    } downloadProgress:nil completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         __strong __typeof (wself) sself = wself;
         Debug("Upload blocks %@", arr);
         NSHTTPURLResponse *resp __attribute__((unused)) = (NSHTTPURLResponse *)response;
@@ -379,11 +379,11 @@
     }
     
     __weak typeof(self) weakSelf = self;
-    NSURLSessionUploadTask *uploadByFileTask = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
+    NSURLSessionDataTask *uploadByFileTask = [connection.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
 //        [strongSelf.uploadFile updateProgressWithoutKVO:uploadProgress];
         [strongSelf.uploadFile uploadProgress:uploadProgress.fractionCompleted];
-    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    } downloadProgress:nil completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (error) {
             [strongSelf finishUpload:NO oid:nil error:error];
