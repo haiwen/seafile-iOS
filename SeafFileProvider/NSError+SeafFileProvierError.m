@@ -31,6 +31,10 @@
     return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorPageExpired userInfo:nil];
 }
 
++ (NSError *)fileProvierErrorSyncAnchorExpired {
+    return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorSyncAnchorExpired userInfo:nil];
+}
+
 + (NSError *)fileProvierErrorFilenameCollision {
     return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorFilenameCollision userInfo:nil];
 }

@@ -32,7 +32,10 @@
 
 - (BOOL)isCertInUse:(NSData*)clientIdentityKey;
 - (void)loadAccounts;
-- (void)syncAccountsFromStorage;
+/// Re-reads the persisted account list, rebuilding the connections when it has changed.
+/// Returns YES in that case, so callers can drop whatever they cached against the old
+/// accounts. Cheap when nothing changed.
+- (BOOL)syncAccountsFromStorage;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
 - (BOOL)saveConnection:(SeafConnection *)conn;
 - (BOOL)removeConnection:(SeafConnection *)conn;

@@ -51,7 +51,20 @@
 
 - (NSString *)filename
 {
-    return _item.name;
+    NSString *name = _item.name;
+    if (name.length > 0) {
+        return name;
+    }
+    // filename is declared non-null. An empty value makes the system treat the item as
+    // invalid, which is how a stale duplicate ends up stuck in the Files app.
+    if (_item.filename.length > 0) {
+        return _item.filename;
+    }
+    NSString *lastComponent = _item.path.lastPathComponent;
+    if (lastComponent.length > 0 && ![lastComponent isEqualToString:@"/"]) {
+        return lastComponent;
+    }
+    return _item.repoId.length > 0 ? _item.repoId : @"Seafile";
 }
 
 - (NSString *)typeIdentifier
@@ -94,27 +107,36 @@
 - (NSFileProviderItemCapabilities)capabilities
 {
     NSFileProviderItemCapabilities cap = NSFileProviderItemCapabilitiesAllowsReading;
+
+    // Every container must stay enumerable regardless of permissions, otherwise the Files
+    // app cannot open it and a favorite pointing at it becomes a dead entry.
+    BOOL isContainer = !_item.isFile;
+    if (isContainer) {
+        cap |= NSFileProviderItemCapabilitiesAllowsContentEnumerating;
+    }
+
     if (_item.isRoot || _item.isAccountRoot) {
         return cap;
     }
-    
+
+    // The repo list is not loaded on a cold start, so a missing repo says nothing about
+    // permissions. Keep the item readable and browsable and let the operation itself fail.
     SeafRepo *repo = [_item.conn getRepo:_item.repoId];
-    if (!repo) {
-        return cap;
-    }
+    BOOL editable = repo ? repo.editable : NO;
 
     if (_item.isRepoRoot) {
-        if (repo.editable) {
-            cap |= NSFileProviderItemCapabilitiesAllowsAddingSubItems | NSFileProviderItemCapabilitiesAllowsContentEnumerating;
+        if (editable) {
+            cap |= NSFileProviderItemCapabilitiesAllowsAddingSubItems;
         }
         return cap;
     }
 
-    if (repo.editable) {
-        cap |= NSFileProviderItemCapabilitiesAllowsWriting
-        | NSFileProviderItemCapabilitiesAllowsReparenting
+    if (editable) {
+        cap |= NSFileProviderItemCapabilitiesAllowsReparenting
         | NSFileProviderItemCapabilitiesAllowsRenaming
         | NSFileProviderItemCapabilitiesAllowsDeleting;
+        cap |= isContainer ? NSFileProviderItemCapabilitiesAllowsAddingSubItems
+                           : NSFileProviderItemCapabilitiesAllowsWriting;
     }
     
     return cap;
@@ -182,8 +204,7 @@
             return [NSNumber numberWithUnsignedInteger:[[(SeafDir *)obj items] count]];
         }
     }
-    // placeholder for folder
-    return [NSNumber numberWithInt:1];
+    return nil;
 }
 
 - (BOOL)isDownloaded

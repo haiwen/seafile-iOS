@@ -726,22 +726,44 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 
 + (void)decodePath:(NSString *)encodedStr server:(NSString **)server username:(NSString **)username repo:(NSString **)repoId path:(NSString **)path
 {
-    NSArray *arr = [encodedStr componentsSeparatedByString:@"_"];
     *server = nil;
     *username = nil;
     *repoId = nil;
     *path = nil;
+    if (encodedStr.length == 0) {
+        return;
+    }
 
-    if (arr.count >= 2) {
-        *server = [[arr objectAtIndex:0] stringByRemovingPercentEncoding];
-        *username = [[arr objectAtIndex:1] stringByRemovingPercentEncoding];
+    // Only the first three underscores separate server, username and repo. The path segment
+    // may contain percent-encoded underscores (%5F), so splitting on every "_" corrupts it.
+    NSRange first = [encodedStr rangeOfString:@"_"];
+    if (first.location == NSNotFound) {
+        return;
     }
-    if (arr.count >= 3) {
-        *repoId = [[arr objectAtIndex:2] stringByRemovingPercentEncoding];
+    NSRange second = [encodedStr rangeOfString:@"_"
+                                        options:0
+                                          range:NSMakeRange(first.location + 1, encodedStr.length - first.location - 1)];
+    if (second.location == NSNotFound) {
+        *server = [[encodedStr substringToIndex:first.location] stringByRemovingPercentEncoding];
+        *username = [[encodedStr substringFromIndex:first.location + 1] stringByRemovingPercentEncoding];
+        return;
     }
-    if (arr.count >= 4) {
-        *path = [[arr objectAtIndex:3] stringByRemovingPercentEncoding];
+    NSRange third = [encodedStr rangeOfString:@"_"
+                                        options:0
+                                          range:NSMakeRange(second.location + 1, encodedStr.length - second.location - 1)];
+
+    *server = [[encodedStr substringToIndex:first.location] stringByRemovingPercentEncoding];
+    *username = [[encodedStr substringWithRange:NSMakeRange(first.location + 1, second.location - first.location - 1)]
+                stringByRemovingPercentEncoding];
+
+    if (third.location == NSNotFound) {
+        *repoId = [[encodedStr substringFromIndex:second.location + 1] stringByRemovingPercentEncoding];
+        return;
     }
+
+    *repoId = [[encodedStr substringWithRange:NSMakeRange(second.location + 1, third.location - second.location - 1)]
+               stringByRemovingPercentEncoding];
+    *path = [[encodedStr substringFromIndex:third.location + 1] stringByRemovingPercentEncoding];
 }
 
 + (NSError *)defaultError

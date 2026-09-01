@@ -251,26 +251,32 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 }
 
 // Lightweight sync: reload only if account list changed
-- (void)syncAccountsFromStorage
+- (BOOL)syncAccountsFromStorage
 {
-    NSArray *storedAccounts = [SeafStorage.sharedObject objectForKey:@"ACCOUNTS"];
-    
-    // Build set of current account keys
-    NSMutableSet *currentKeys = [NSMutableSet set];
-    for (SeafConnection *conn in _conns) {
-        [currentKeys addObject:[NSString stringWithFormat:@"%@/%@", conn.address, conn.username]];
-    }
-    
-    // Build set of stored account keys
-    NSMutableSet *storedKeys = [NSMutableSet set];
-    for (NSDictionary *account in storedAccounts) {
-        [storedKeys addObject:[NSString stringWithFormat:@"%@/%@", account[@"url"], account[@"username"]]];
-    }
-    
-    // Reload only if list changed
-    if (![currentKeys isEqualToSet:storedKeys]) {
+    // Callers in the file provider extension run on whatever thread the system hands them,
+    // so two concurrent syncs must not both rebuild the list and race over _conns.
+    @synchronized (self) {
+        NSArray *storedAccounts = [SeafStorage.sharedObject objectForKey:@"ACCOUNTS"];
+
+        // Build set of current account keys
+        NSMutableSet *currentKeys = [NSMutableSet set];
+        for (SeafConnection *conn in _conns) {
+            [currentKeys addObject:[NSString stringWithFormat:@"%@/%@", conn.address, conn.username]];
+        }
+
+        // Build set of stored account keys
+        NSMutableSet *storedKeys = [NSMutableSet set];
+        for (NSDictionary *account in storedAccounts) {
+            [storedKeys addObject:[NSString stringWithFormat:@"%@/%@", account[@"url"], account[@"username"]]];
+        }
+
+        // Reload only if list changed
+        if ([currentKeys isEqualToSet:storedKeys]) {
+            return NO;
+        }
         Debug("Account list changed, reloading accounts...");
         [self reloadAccounts];
+        return YES;
     }
 }
 

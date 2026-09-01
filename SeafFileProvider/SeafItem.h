@@ -12,6 +12,15 @@
 
 @interface SeafItem : NSObject
 
+/**
+ * Normalizes an identifier to its canonical, slash-less form.
+ * The system's path normalization (sidebar bookmarks, Spotlight) strips a leading slash,
+ * so a slash-prefixed identifier comes back in both forms and fileproviderd keeps two
+ * distinct nodes for the same item. Identifiers written by older builds still carry the
+ * slash and are accepted here.
+ */
++ (NSFileProviderItemIdentifier)canonicalIdentifier:(NSFileProviderItemIdentifier)identifier;
+
 @property (readonly) NSFileProviderItemIdentifier itemIdentifier;
 
 @property (readonly) NSString *server;
@@ -43,7 +52,18 @@
 + (SeafItem *)fromSeafBase:(SeafBase *)obj;
 
 - (NSDictionary*)convertToDict;
-- (SeafItem *)convertFromDict:(NSDictionary *)dict;
++ (SeafItem *)itemFromDict:(NSDictionary *)dict;
+
+/// The persisted File Provider metadata store, keyed by canonical item identifier.
++ (NSDictionary *)localMetadataStore;
+
+/**
+ * Applies the locally persisted favorite rank, last used date and display name.
+ * The favorite rank exists only on the device, so an item built from the server alone must
+ * be topped up from the store before being handed to the system. Otherwise the system reads
+ * the missing rank as "no longer a favorite" and drops the entry.
+ */
+- (void)applyLocalMetadataFromStore:(NSDictionary *)store;
 
 - (void)updateCacheWithSubItem:(SeafItem *)item;
 @end

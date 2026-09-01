@@ -721,3 +721,488 @@ final class ProfileEditUITests: XCTestCase {
         return app.keyboards.count == 0
     }
 }
+
+// MARK: - Issue #547: Files app folder favorites
+
+final class FilesAppFavoritesUITests: XCTestCase {
+
+    private var filesApp: XCUIApplication!
+    private let repoName = ProcessInfo.processInfo.environment["UI_TEST_REPO"] ?? "8888"
+    private let folderName = ProcessInfo.processInfo.environment["UI_TEST_FOLDER"] ?? "Camera Uploads"
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+
+        // Prime the file provider extension with account data if Seafile is available.
+        let seafile = XCUIApplication(bundleIdentifier: "com.seafile.seafilePro")
+        seafile.launchArguments = ["-UI_TESTING", "1"]
+        seafile.launch()
+        _ = seafile.tabBars.buttons.element(
+            matching: NSPredicate(format: "label CONTAINS 'Librar' OR label CONTAINS '资料库'")
+        ).waitForExistence(timeout: 15)
+        sleep(2)
+        seafile.terminate()
+
+        filesApp = XCUIApplication(bundleIdentifier: "com.apple.DocumentsApp")
+        // Force English so label-based queries ("Browse", "Favorite", ...) work on
+        // devices whose system language is not English.
+        filesApp.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        // Route the Files app's os_log output to stderr so client-side FileProvider errors
+        // (bookmark resolution, favorite-rank failures) show up in the test logs.
+        filesApp.launchEnvironment["OS_ACTIVITY_DT_MODE"] = "YES"
+        filesApp.launch()
+    }
+
+    /// Read-only diagnostic: relaunches Files twice and captures the Browse root
+    /// (Favorites section) each time. Mutates nothing; used to observe whether
+    /// existing favorites survive a relaunch on a device with legacy state.
+    func testZZ_ReadOnly_DumpFavoritesAfterRelaunch() throws {
+        attachSidebarSnapshot(label: "1-initial")
+
+        filesApp.terminate()
+        sleep(1)
+        filesApp.launch()
+        sleep(3)
+        attachSidebarSnapshot(label: "2-after-relaunch-1")
+
+        filesApp.terminate()
+        sleep(1)
+        filesApp.launch()
+        sleep(3)
+        attachSidebarSnapshot(label: "3-after-relaunch-2")
+    }
+
+    private func attachSidebarSnapshot(label: String) {
+        let browse = filesApp.tabBars.buttons["Browse"]
+        if browse.waitForExistence(timeout: 5) {
+            browse.tap()
+            sleep(1)
+            // A second tap pops back to the Browse root if a location was open.
+            browse.tap()
+        }
+        sleep(2)
+        let shot = XCTAttachment(screenshot: filesApp.screenshot())
+        shot.name = "\(label)-top"
+        shot.lifetime = .keepAlways
+        add(shot)
+
+        filesApp.swipeUp()
+        sleep(1)
+        let shot2 = XCTAttachment(screenshot: filesApp.screenshot())
+        shot2.name = "\(label)-scrolled"
+        shot2.lifetime = .keepAlways
+        add(shot2)
+
+        let labels = filesApp.cells.allElementsBoundByIndex.prefix(40).map { $0.label }
+        let att = XCTAttachment(string: labels.joined(separator: "\n"))
+        att.name = "\(label)-cells"
+        att.lifetime = .keepAlways
+        add(att)
+    }
+
+    func testIssue547_FolderFavoritePersistsAfterRelaunch() throws {
+        navigateToFolderInSeafileProvider()
+
+        removeFavoriteIfPresent(named: folderName)
+
+        navigateToFolderInSeafileProvider()
+
+        var folderCell = filesApp.cells.containing(.staticText, identifier: folderName).firstMatch
+        if !folderCell.waitForExistence(timeout: 8) {
+            folderCell = filesApp.staticTexts[folderName].firstMatch
+        }
+        XCTAssertTrue(folderCell.waitForExistence(timeout: 10), "Folder \(folderName) should be visible in Files app")
+        folderCell.tap()
+        XCTAssertTrue(waitForFolderContents(), "Folder \(folderName) should list items when opened normally")
+
+        let backButton = filesApp.navigationBars.buttons.element(boundBy: 0)
+        if backButton.waitForExistence(timeout: 3) {
+            backButton.tap()
+        }
+
+        folderCell = filesApp.cells.containing(.staticText, identifier: folderName).firstMatch
+        if !folderCell.waitForExistence(timeout: 5) {
+            folderCell = filesApp.staticTexts[folderName].firstMatch
+        }
+        XCTAssertTrue(folderCell.waitForExistence(timeout: 8), "Folder \(folderName) should still be visible in repo listing")
+        folderCell.press(forDuration: 1.2)
+
+        // If a stale rank from an earlier run makes the menu show "Unfavorite", go through a
+        // real unfavorite first so the favorite step below always exercises the full
+        // fileproviderd -> extension setFavoriteRank path.
+        let unfavoriteButton = filesApp.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] 'Unfavorite' OR label CONTAINS '取消收藏'")
+        ).firstMatch
+        if unfavoriteButton.waitForExistence(timeout: 3) {
+            unfavoriteButton.tap()
+            sleep(2)
+            folderCell = filesApp.cells.containing(.staticText, identifier: folderName).firstMatch
+            XCTAssertTrue(folderCell.waitForExistence(timeout: 8), "Folder should still be listed after unfavorite")
+            folderCell.press(forDuration: 1.2)
+        }
+
+        let favoriteButton = filesApp.buttons.matching(
+            NSPredicate(format: "(label CONTAINS[c] 'Favorite' OR label CONTAINS '收藏') AND NOT (label CONTAINS[c] 'Unfavorite' OR label CONTAINS '取消收藏')")
+        ).firstMatch
+        if !favoriteButton.waitForExistence(timeout: 5) {
+            let menuItem = filesApp.menuItems.matching(
+                NSPredicate(format: "label CONTAINS[c] 'Favorite' OR label CONTAINS '收藏'")
+            ).firstMatch
+            XCTAssertTrue(menuItem.waitForExistence(timeout: 5), "Favorite action should appear in context menu")
+            menuItem.tap()
+        } else {
+            favoriteButton.tap()
+        }
+
+        sleep(2)
+
+        XCTAssertEqual(countFavoriteEntries(named: folderName), 1,
+                       "Should have exactly one favorite entry for \(folderName)")
+
+        XCTAssertTrue(openFavoriteAndVerifyContents(named: folderName),
+                      "Favorite sidebar entry should open with folder contents")
+
+        XCTAssertTrue(verifyFolderContentsViaProvider(),
+                      "Folder should still list server contents via provider after favoriting")
+
+        // Simulate the user swiping the Files app away from the app switcher.
+        filesApp.terminate()
+        sleep(1)
+
+        filesApp.launch()
+        _ = filesApp.tabBars.buttons["Browse"].waitForExistence(timeout: 10)
+        sleep(3)
+
+        XCTAssertEqual(countFavoriteEntries(named: folderName), 1,
+                       "Favorite should persist after Files app relaunch")
+
+        XCTAssertTrue(openFavoriteAndVerifyContents(named: folderName),
+                      "Favorite sidebar entry should still open with folder contents after relaunch")
+
+        XCTAssertTrue(verifyFolderContentsViaProvider(),
+                      "Folder should still list server contents via provider after relaunch")
+
+        // A second cold start should still keep the same single favorite.
+        filesApp.terminate()
+        sleep(1)
+        filesApp.launch()
+        _ = filesApp.tabBars.buttons["Browse"].waitForExistence(timeout: 10)
+        sleep(3)
+        XCTAssertEqual(countFavoriteEntries(named: folderName), 1,
+                       "Favorite should still be present after a second relaunch")
+
+        XCTAssertTrue(verifyFolderContentsViaProvider(),
+                      "Folder should still list server contents via provider after a second relaunch")
+    }
+
+    /// Diagnostic for the poisoned-daemon upgrade state: disabling and re-enabling the
+    /// provider in the Files app Browse editor is the only user-reachable way (short of a
+    /// reboot) to make fileproviderd re-register the domain. If a favorite made right after
+    /// the toggle survives a relaunch, the toggle is a valid recovery step after upgrading
+    /// from a build that answered the working-set enumerator with nil.
+    func testIssue547_ToggleProviderThenFavoritePersists() throws {
+        toggleSeafileProviderOffOn()
+
+        navigateToFolderInSeafileProvider()
+        removeFavoriteIfPresent(named: folderName)
+        navigateToFolderInSeafileProvider()
+
+        var folderCell = filesApp.cells.containing(.staticText, identifier: folderName).firstMatch
+        if !folderCell.waitForExistence(timeout: 8) {
+            folderCell = filesApp.staticTexts[folderName].firstMatch
+        }
+        XCTAssertTrue(folderCell.waitForExistence(timeout: 10), "Folder \(folderName) should be visible in Files app")
+        folderCell.press(forDuration: 1.2)
+
+        let unfavoriteButton = filesApp.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] 'Unfavorite' OR label CONTAINS '取消收藏'")
+        ).firstMatch
+        if unfavoriteButton.waitForExistence(timeout: 3) {
+            unfavoriteButton.tap()
+            sleep(2)
+            folderCell = filesApp.cells.containing(.staticText, identifier: folderName).firstMatch
+            XCTAssertTrue(folderCell.waitForExistence(timeout: 8), "Folder should still be listed after unfavorite")
+            folderCell.press(forDuration: 1.2)
+        }
+
+        let favoriteButton = filesApp.buttons.matching(
+            NSPredicate(format: "(label CONTAINS[c] 'Favorite' OR label CONTAINS '收藏') AND NOT (label CONTAINS[c] 'Unfavorite' OR label CONTAINS '取消收藏')")
+        ).firstMatch
+        if !favoriteButton.waitForExistence(timeout: 5) {
+            let menuItem = filesApp.menuItems.matching(
+                NSPredicate(format: "label CONTAINS[c] 'Favorite' OR label CONTAINS '收藏'")
+            ).firstMatch
+            XCTAssertTrue(menuItem.waitForExistence(timeout: 5), "Favorite action should appear in context menu")
+            menuItem.tap()
+        } else {
+            favoriteButton.tap()
+        }
+        sleep(2)
+
+        XCTAssertEqual(countFavoriteEntries(named: folderName), 1,
+                       "Should have exactly one favorite entry for \(folderName) after toggle+favorite")
+
+        filesApp.terminate()
+        sleep(1)
+        filesApp.launch()
+        _ = filesApp.tabBars.buttons["Browse"].waitForExistence(timeout: 10)
+        sleep(3)
+
+        XCTAssertEqual(countFavoriteEntries(named: folderName), 1,
+                       "Favorite should persist after Files app relaunch when provider was toggled first")
+    }
+
+    /// Browse root -> More (circled ellipsis) -> Edit Sidebar -> flip the SeafilePro switch
+    /// off and back on -> Done. Screenshots at each step so a UI mismatch is diagnosable.
+    private func toggleSeafileProviderOffOn() {
+        let browse = filesApp.tabBars.buttons["Browse"]
+        if browse.waitForExistence(timeout: 5) {
+            browse.tap()
+            sleep(1)
+            browse.tap()
+            sleep(1)
+        }
+
+        var moreButton = filesApp.navigationBars.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] 'More' OR identifier CONTAINS[c] 'More'")
+        ).firstMatch
+        if !moreButton.waitForExistence(timeout: 5) {
+            moreButton = filesApp.buttons.matching(
+                NSPredicate(format: "label CONTAINS[c] 'More' OR identifier CONTAINS[c] 'More'")
+            ).firstMatch
+        }
+        XCTAssertTrue(moreButton.waitForExistence(timeout: 8), "Browse root should offer the More button")
+        moreButton.tap()
+        sleep(1)
+        attachShot("toggle-1-more-menu")
+
+        let editEntry = filesApp.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] 'Edit' OR label CONTAINS '编辑'")
+        ).firstMatch
+        let editMenuItem = filesApp.menuItems.matching(
+            NSPredicate(format: "label CONTAINS[c] 'Edit' OR label CONTAINS '编辑'")
+        ).firstMatch
+        if editEntry.waitForExistence(timeout: 4) {
+            editEntry.tap()
+        } else {
+            XCTAssertTrue(editMenuItem.waitForExistence(timeout: 4), "More menu should contain Edit")
+            editMenuItem.tap()
+        }
+        sleep(1)
+        attachShot("toggle-2-edit-mode")
+
+        // The row switches carry no accessibility label (value only), so locate the switch
+        // through the sidebar cell that carries the DOC.sidebar.item.SeafilePro identifier.
+        var seafileSwitch = filesApp.cells["DOC.sidebar.item.SeafilePro"].switches.firstMatch
+        if !seafileSwitch.waitForExistence(timeout: 6) {
+            seafileSwitch = filesApp.cells.matching(
+                NSPredicate(format: "label CONTAINS[c] 'Seafile'")
+            ).firstMatch.switches.firstMatch
+        }
+        XCTAssertTrue(seafileSwitch.waitForExistence(timeout: 8), "Edit mode should show a switch for SeafilePro")
+
+        seafileSwitch.tap()
+        sleep(2)
+        attachShot("toggle-3-after-off")
+        seafileSwitch.tap()
+        sleep(2)
+        attachShot("toggle-4-after-on")
+
+        let doneButton = filesApp.buttons.matching(
+            NSPredicate(format: "label == 'Done' OR label == '完成'")
+        ).firstMatch
+        if doneButton.waitForExistence(timeout: 4) {
+            doneButton.tap()
+        }
+        sleep(2)
+        attachShot("toggle-5-done")
+    }
+
+    private func attachShot(_ name: String) {
+        let shot = XCTAttachment(screenshot: filesApp.screenshot())
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
+    private func verifyFolderContentsViaProvider() -> Bool {
+        navigateToFolderInSeafileProvider()
+        var folderCell = filesApp.cells.containing(.staticText, identifier: folderName).firstMatch
+        if !folderCell.waitForExistence(timeout: 8) {
+            folderCell = filesApp.staticTexts[folderName].firstMatch
+        }
+        guard folderCell.waitForExistence(timeout: 10) else {
+            return false
+        }
+        folderCell.tap()
+        return waitForFolderContents()
+    }
+
+    private func navigateToFolderInSeafileProvider() {
+        let browse = filesApp.tabBars.buttons["Browse"]
+        if browse.waitForExistence(timeout: 3) {
+            browse.tap()
+        }
+
+        var seafileLocation = filesApp.cells["DOC.sidebar.item.SeafilePro"]
+        if !seafileLocation.waitForExistence(timeout: 12) {
+            seafileLocation = filesApp.cells.matching(
+                NSPredicate(format: "label CONTAINS[c] 'Seafile'")
+            ).firstMatch
+        }
+        if !seafileLocation.waitForExistence(timeout: 12) {
+            // Files may need a moment to register the provider after Seafile launches.
+            sleep(3)
+            if browse.waitForExistence(timeout: 2) {
+                browse.tap()
+            }
+            seafileLocation = filesApp.cells.matching(
+                NSPredicate(format: "label CONTAINS[c] 'Seafile'")
+            ).firstMatch
+        }
+        if !seafileLocation.waitForExistence(timeout: 8) {
+            // A leftover context menu or restored deep navigation can hide the Browse root;
+            // a clean relaunch recovers it.
+            filesApp.terminate()
+            sleep(1)
+            filesApp.launch()
+            sleep(3)
+            if browse.waitForExistence(timeout: 5) {
+                browse.tap()
+                sleep(1)
+                browse.tap()
+            }
+            seafileLocation = filesApp.cells.matching(
+                NSPredicate(format: "label CONTAINS[c] 'Seafile'")
+            ).firstMatch
+        }
+        XCTAssertTrue(seafileLocation.waitForExistence(timeout: 12), "SeafilePro location should appear in Browse")
+        seafileLocation.tap()
+
+        let turnOnAlert = filesApp.alerts["Turn On “SeafilePro”?"]
+        if turnOnAlert.waitForExistence(timeout: 3) {
+            filesApp.buttons["Turn On"].tap()
+        }
+
+        // After enabling the provider, open it from the sidebar again.
+        if browse.waitForExistence(timeout: 2) {
+            browse.tap()
+        }
+        if seafileLocation.waitForExistence(timeout: 5) {
+            seafileLocation.tap()
+        }
+
+        let accountCell = filesApp.cells.matching(
+            NSPredicate(format: "label CONTAINS 'dev.seafile.com' OR label CONTAINS '5759610' OR label CONTAINS 'hhh'")
+        ).firstMatch
+        XCTAssertTrue(accountCell.waitForExistence(timeout: 15), "Seafile account should appear in Files app")
+        accountCell.tap()
+
+        var repoCell = filesApp.cells.containing(.staticText, identifier: repoName).firstMatch
+        if !repoCell.waitForExistence(timeout: 15) {
+            repoCell = filesApp.staticTexts[repoName].firstMatch
+        }
+        XCTAssertTrue(repoCell.waitForExistence(timeout: 20), "Repo \(repoName) should appear in Files app")
+        repoCell.tap()
+    }
+
+    private func waitForFolderContents(timeout: TimeInterval = 20) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if visibleItemCount() > 0 {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        }
+        return false
+    }
+
+    private func visibleItemCount() -> Int {
+        let grid = filesApp.collectionViews.element(boundBy: 0)
+        if grid.exists && grid.cells.count > 0 {
+            return grid.cells.count
+        }
+        let table = filesApp.tables.element(boundBy: 0)
+        if table.exists && table.cells.count > 0 {
+            return table.cells.count
+        }
+        return filesApp.cells.matching(
+            NSPredicate(format: "NOT (identifier BEGINSWITH 'DOC.sidebar.')")
+        ).count
+    }
+
+    /// Counts only DOC.sidebar.item cells: a repo listing that happens to contain a cell with
+    /// the same name must not be mistaken for a sidebar favorite.
+    private func countFavoriteEntries(named name: String) -> Int {
+        goToBrowseRootAndExpandFavorites()
+        for _ in 0..<4 {
+            let sidebarMatches = filesApp.cells.matching(
+                NSPredicate(format: "identifier BEGINSWITH 'DOC.sidebar.item.' AND label == %@", name)
+            ).count
+            if sidebarMatches > 0 {
+                return sidebarMatches
+            }
+            sleep(1)
+        }
+        return 0
+    }
+
+    private func goToBrowseRootAndExpandFavorites() {
+        let browse = filesApp.tabBars.buttons["Browse"]
+        if browse.waitForExistence(timeout: 5) {
+            browse.tap()
+            sleep(1)
+            // A second tap pops back to the Browse root when a location was open.
+            browse.tap()
+            sleep(1)
+        }
+        // The header tap TOGGLES the section, so only tap when no favorite rows are
+        // visible (the device always has local folder favorites, so an expanded
+        // section is never empty).
+        let anyFavoriteRow = filesApp.cells.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'DOC.sidebar.item.'")
+        )
+        if anyFavoriteRow.count == 0 {
+            let favoritesHeader = filesApp.cells["DOC.sidebar.header.Favorites"]
+            if favoritesHeader.waitForExistence(timeout: 5) {
+                favoritesHeader.tap()
+                sleep(1)
+            }
+        }
+    }
+
+    private func removeFavoriteIfPresent(named name: String) {
+        guard countFavoriteEntries(named: name) > 0 else { return }
+
+        let sidebarCell = filesApp.cells.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'DOC.sidebar.item.' AND label == %@", name)
+        ).firstMatch
+        guard sidebarCell.waitForExistence(timeout: 5) else { return }
+        sidebarCell.press(forDuration: 1.2)
+
+        let unfavoriteButton = filesApp.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] 'Unfavorite' OR label CONTAINS '取消收藏'")
+        ).firstMatch
+        if unfavoriteButton.waitForExistence(timeout: 5) {
+            unfavoriteButton.tap()
+            sleep(1)
+        }
+    }
+
+    @discardableResult
+    private func openFavoriteAndVerifyContents(named name: String) -> Bool {
+        goToBrowseRootAndExpandFavorites()
+
+        let favoriteCell = filesApp.cells.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'DOC.sidebar.item.' AND label == %@", name)
+        ).firstMatch
+        guard favoriteCell.waitForExistence(timeout: 8) else {
+            return false
+        }
+        favoriteCell.tap()
+        if !waitForFolderContents(timeout: 10) {
+            favoriteCell.tap()
+        }
+        return waitForFolderContents(timeout: 25)
+    }
+}

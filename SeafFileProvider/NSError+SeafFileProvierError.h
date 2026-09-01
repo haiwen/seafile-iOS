@@ -14,6 +14,7 @@
 + (NSError *)fileProvierErrorNotAuthenticated;
 + (NSError *)fileProvierErrorNoSuchItem;
 + (NSError *)fileProvierErrorPageExpired;
++ (NSError *)fileProvierErrorSyncAnchorExpired;
 + (NSError *)fileProvierErrorFilenameCollision;
 + (NSError *)fileProvierErrorInsufficientQuota;
 + (NSError *)fileProvierErrorNoAccount;
