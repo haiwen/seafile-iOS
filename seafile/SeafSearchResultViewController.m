@@ -55,9 +55,7 @@
     self.tableView.backgroundView = bView;
     self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
 
-    if (@available(iOS 15.0, *)) {
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
 
     [self.view addSubview:self.tableView];
     

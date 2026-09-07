@@ -80,9 +80,7 @@
     } else {
         config.selectionLimit = 0; // unlimited
     }
-    if (@available(iOS 15.0, *)) {
-        config.selection = PHPickerConfigurationSelectionOrdered;
-    }
+    config.selection = PHPickerConfigurationSelectionOrdered;
 
     PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
     picker.delegate = self;

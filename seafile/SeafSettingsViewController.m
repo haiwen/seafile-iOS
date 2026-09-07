@@ -32,6 +32,7 @@
 #import "SeafRealmManager.h"
 #import "SeafTheme.h"
 #import "SeafNavigationBarStyler.h"
+#import "SeafFileProviderDomainManager.h"
 
 #define CELL_PADDING_HORIZONTAL 10.0
 #define CELL_CORNER_RADIUS 10.0
@@ -105,6 +106,10 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *wikiSwitchCell;
 @property (strong, nonatomic) IBOutlet UISwitch *wikiSwitch;
 @property (strong, nonatomic) IBOutlet UILabel *wikiSwitchLabel;
+/// Snapshot of `connection.isServerWikiSupported` taken at the last full reload.
+/// The data source reads this, never the live connection flag, so section row
+/// counts cannot change between two data-source queries without a reloadData.
+@property (nonatomic) BOOL wikiSectionVisible;
 
 
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -352,6 +357,9 @@ enum {
         }
     }
     _connection.touchIdEnabled = _enableTouchIDSwitch.on;
+    // touchIdEnabled is persisted synchronously above; Files must not show
+    // an account that is protected by Face ID / Touch ID.
+    [[SeafFileProviderDomainManager shared] ensureDomainForConnection:_connection completion:nil];
 }
 
 // Handles the toggle of the background sync switch.
@@ -379,6 +387,7 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.wikiSectionVisible = _connection.isServerWikiSupported;
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _nameCell.detailTextLabel.textColor = BAR_COLOR_ORANGE;
     _nameCell.detailTextLabel.text = NSLocalizedString(@"Switch Account", @"Seafile");
@@ -443,9 +452,7 @@ enum {
     };
     
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
-    if (@available(iOS 15.0, *)) {
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
     
     self.tableView.backgroundColor = kPrimaryBackgroundColor;
     
@@ -534,7 +541,7 @@ enum {
 
     [self updateSyncInfo];
 
-    [self.tableView reloadData];
+    [self reloadTableData];
 }
 
 // Updates the upload and download tasks information.
@@ -574,7 +581,7 @@ enum {
     // by setViewControllers: when switching accounts.
     // viewDidAppear: → configureView will refresh the data when user navigates here.
     if (self.isViewLoaded && self.view.window) {
-        [self.tableView reloadData];
+        [self reloadTableData];
     }
     [self updateAccountInfo];
 }
@@ -588,11 +595,50 @@ enum {
 }
 
 - (void)uploadTaskStatusChanged:(NSNotification *)notification {
-        dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
         // update the number of uploading and downloading
         [self updateSyncInfo];
-        [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
+        [self reloadSectionIfConsistent:SECTION_CAMERA];
     });
+}
+
+/// Reloads a single section, or falls back to a full reload when the row
+/// counts of the *other* sections no longer match what the table has cached.
+///
+/// The Wiki section is 0 or 1 rows depending on `connection.isServerWikiSupported`,
+/// which changes asynchronously (logout / re-login / server info fetch) while
+/// this view may be off-screen and therefore never got a `reloadData`. A partial
+/// `reloadSections:` in that state makes UIKit validate every section and throw
+/// "Invalid batch updates detected" because the Wiki row count went 1 -> 0.
+- (void)reloadSectionIfConsistent:(NSInteger)section
+{
+    if (!self.isViewLoaded) {
+        return;
+    }
+    UITableView *tableView = self.tableView;
+    NSInteger sectionCount = [self numberOfSectionsInTableView:tableView];
+    BOOL consistent = (tableView.numberOfSections == sectionCount);
+    for (NSInteger s = 0; consistent && s < sectionCount; s++) {
+        if (s == section) {
+            continue;
+        }
+        if ([tableView numberOfRowsInSection:s] != [self tableView:tableView numberOfRowsInSection:s]) {
+            consistent = NO;
+        }
+    }
+    if (consistent) {
+        [tableView reloadSections:[NSIndexSet indexSetWithIndex:section] withRowAnimation:UITableViewRowAnimationNone];
+    } else {
+        [self reloadTableData];
+    }
+}
+
+/// The only place that refreshes the table from scratch. Refreshes the Wiki
+/// section snapshot first so the data source and the table agree afterwards.
+- (void)reloadTableData
+{
+    self.wikiSectionVisible = _connection.isServerWikiSupported;
+    [self.tableView reloadData];
 }
 
 - (void)accountInfoUpdated:(NSNotification *)notification
@@ -1142,9 +1188,7 @@ enum {
             [self updateSyncInfo];
             // Update header view text instead of reloading the whole section
             // This avoids potential visual glitches with cell styling updates
-             [self.tableView beginUpdates];
-             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
-             [self.tableView endUpdates];
+            [self reloadSectionIfConsistent:SECTION_CAMERA];
         }
     });
 }
@@ -1185,7 +1229,7 @@ enum {
 
 #pragma mark - Wiki Switch
 - (BOOL)shouldShowWikiSection {
-    return _connection.isServerWikiSupported;
+    return self.wikiSectionVisible;
 }
 
 - (void)wikiSwitchFlip:(id)sender {
@@ -1197,7 +1241,7 @@ enum {
 - (void)serverInfoDidUpdate:(NSNotification *)note {
     if (note.object == _connection) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self.tableView reloadData];
+            [self reloadTableData];
         });
     }
 }

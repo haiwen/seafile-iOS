@@ -13,6 +13,7 @@
 #import "ExtentedString.h"   // For escapedUrl, escapedPostForm
 #import "SeafBase.h"         // Required for repoId property
 #import "SeafRepos.h"
+#import "SeafConstants.h"
 
 @implementation SeafFileOperationManager
 
@@ -52,6 +53,7 @@
         Debug("Create file success, statusCode=%ld", (long)response.statusCode);
         // Parse JSON and refresh directory data:
         [directory handleResponse:response json:JSON]; // optional, if you want dir->items updated
+        [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) completion(YES, nil);
     }
                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
@@ -93,6 +95,7 @@
             // Response format unexpected (e.g. array or simple string). Fall back to reloading directory content.
             [directory loadContent:YES];
         }
+        [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) completion(YES, nil);
     }
                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
@@ -133,6 +136,7 @@
     {
         Debug("Delete success, code=%ld", (long)response.statusCode);
         [directory handleResponse:response json:JSON]; // optional
+        [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) completion(YES, nil);
     }
                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
@@ -181,6 +185,7 @@
             }
         }
         
+        [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) {
             if (renamedFile) {
                 completion(YES, renamedFile, nil);
@@ -226,6 +231,7 @@
         [repo handleResponse:response json:JSON];
         
         repo.name = newName;
+        [repo.connection notifyFileProviderChange:SeafFileProviderSignalTypeRoot repoId:repo.repoId];
         
         if (completion) {
             completion(YES, repo, nil);
@@ -271,6 +277,7 @@
         Debug("Copy success, code=%ld", (long)response.statusCode);
         // Optionally refresh srcDir or dstDir:
         [srcDir handleResponse:response json:JSON];
+        [srcDir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:nil];
         if (completion) completion(YES, nil);
     }
                         failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
@@ -314,6 +321,7 @@
         Debug("Move success, code=%ld", (long)response.statusCode);
         // Optionally refresh
         [srcDir handleResponse:response json:JSON];
+        [srcDir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:nil];
         if (completion) completion(YES, nil);
     }
                         failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)

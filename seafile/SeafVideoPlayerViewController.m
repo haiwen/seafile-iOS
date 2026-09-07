@@ -329,9 +329,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 
     self.player = [AVPlayer playerWithPlayerItem:playerItem];
     self.player.automaticallyWaitsToMinimizeStalling = YES;
-    if (@available(iOS 15.0, *)) {
-        self.player.audiovisualBackgroundPlaybackPolicy = AVPlayerAudiovisualBackgroundPlaybackPolicyContinuesIfPossible;
-    }
+    self.player.audiovisualBackgroundPlaybackPolicy = AVPlayerAudiovisualBackgroundPlaybackPolicyContinuesIfPossible;
     self.playerViewController.player = self.player;
     
     // Add metadata so the system automatically updates Now Playing info

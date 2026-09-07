@@ -1110,22 +1110,17 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
 - (void)presentSheetViewController:(UIViewController *)vc
 {
     if (!vc) return;
-    if (@available(iOS 15.0, *)) {
-        vc.modalPresentationStyle = UIModalPresentationPageSheet;
-        UISheetPresentationController *sheet = vc.sheetPresentationController;
-        if (sheet) {
-            sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent, UISheetPresentationControllerDetent.largeDetent];
-            sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
-            sheet.prefersGrabberVisible = YES;
-            sheet.prefersScrollingExpandsWhenScrolledToEdge = YES;
-            sheet.largestUndimmedDetentIdentifier = nil;
-        }
-        vc.modalInPresentation = NO;
-        [self presentViewController:vc animated:YES completion:nil];
-    } else {
-        vc.modalPresentationStyle = UIModalPresentationOverFullScreen;
-        [self presentViewController:vc animated:NO completion:nil];
+    vc.modalPresentationStyle = UIModalPresentationPageSheet;
+    UISheetPresentationController *sheet = vc.sheetPresentationController;
+    if (sheet) {
+        sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent, UISheetPresentationControllerDetent.largeDetent];
+        sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
+        sheet.prefersGrabberVisible = YES;
+        sheet.prefersScrollingExpandsWhenScrolledToEdge = YES;
+        sheet.largestUndimmedDetentIdentifier = nil;
     }
+    vc.modalInPresentation = NO;
+    [self presentViewController:vc animated:YES completion:nil];
 }
 
 - (void)presentOutlineViewController:(SeafSDocOutlineSheetViewController *)vc

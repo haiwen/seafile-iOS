@@ -11,7 +11,8 @@
 
 #define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
 #define APP_ID @"com.seafile.seafilePro"
-#define SEAF_FILE_PROVIDER @"com.seafile.seafilePro.fileprovider"
+#define SEAF_FILE_PROVIDER @"com.seafile.seafilePro.fileprovider"   // legacy provider metadata, read once by SeafFileProviderLegacyMigrator
+#define SEAF_FP_MIGRATED @"com.seafile.seafilePro.fileprovider.migrated"
 
 #define kPrimaryBackgroundColor [SeafTheme primaryBackgroundColor]
 
