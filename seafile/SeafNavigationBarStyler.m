@@ -20,25 +20,17 @@
 
     navigationController.navigationBar.barStyle = UIBarStyleDefault;
 
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
-        [appearance configureWithOpaqueBackground];
-        appearance.backgroundColor = [SeafTheme primarySurface];
-        appearance.shadowColor = [UIColor opaqueSeparatorColor];
-        appearance.titleTextAttributes = titleAttributes;
-        appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = [SeafTheme primarySurface];
+    appearance.shadowColor = [UIColor opaqueSeparatorColor];
+    appearance.titleTextAttributes = titleAttributes;
+    appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme primaryText]};
 
-        navigationController.navigationBar.standardAppearance = appearance;
-        navigationController.navigationBar.scrollEdgeAppearance = appearance;
+    navigationController.navigationBar.standardAppearance = appearance;
+    navigationController.navigationBar.scrollEdgeAppearance = appearance;
 
-        navigationController.navigationBar.tintColor = [SeafTheme primaryText];
-    } else {
-        navigationController.navigationBar.barTintColor = [SeafTheme primarySurface];
-        navigationController.navigationBar.translucent = NO;
-        navigationController.navigationBar.tintColor = [SeafTheme primaryText];
-
-        navigationController.navigationBar.shadowImage = [self createSinglePixelImageWithColor:[UIColor opaqueSeparatorColor]];
-    }
+    navigationController.navigationBar.tintColor = [SeafTheme primaryText];
 }
 
 #pragma mark - Title View
@@ -108,21 +100,6 @@
 }
 
 #pragma mark - Utility Methods
-
-// Helper method to create a 1px image for the shadow
-+ (UIImage *)createSinglePixelImageWithColor:(UIColor *)color {
-    CGRect rect = CGRectMake(0.0f, 0.0f, 1.0f, 1.0f);
-    UIGraphicsBeginImageContext(rect.size);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    
-    CGContextSetFillColorWithColor(context, [color CGColor]);
-    CGContextFillRect(context, rect);
-    
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return image;
-}
 
 // Helper method to tint an image with a specific color
 + (UIImage *)imageWithTintColor:(UIColor *)tintColor image:(UIImage *)image {

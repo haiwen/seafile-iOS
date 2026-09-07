@@ -372,9 +372,11 @@
     } else if ([JSON isKindOfClass:[NSArray class]]) {
         repoArray = (NSArray *)JSON;
     }
-    if (!repoArray || repoArray.count == 0) {
-        return NO; // No data available, return failure directly
+    if (![repoArray isKindOfClass:[NSArray class]]) {
+        return NO; // Not a library list at all
     }
+    // An empty list is a valid, complete answer (account without libraries):
+    // it must reach the delegate and the callers like any other listing.
     
     for (NSDictionary *repoInfo in repoArray) {
         NSString *repoName = repoInfo[@"repo_name"];
@@ -431,6 +433,9 @@
                  [self.connection setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_REPOS entityName:ENTITY_OBJECT];
                  if (success)
                      success(self);
+             } else if (failure) {
+                 // Malformed answer: callers must not hang waiting for either block.
+                 failure(self, [Utils defaultError]);
              }
          }
      }

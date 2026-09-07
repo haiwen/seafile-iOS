@@ -401,7 +401,9 @@ static NSString *sha1String(NSString *s)
     
     NSString *cachePath = [self getCachePathForFile:file];
     if ((cachePath && cachePath.length > 0) || file.oid) {
-        if (!file.oid || file.oid.length == 0) {
+        if ((!file.oid || file.oid.length == 0) && [Utils isMainApp]) {
+            // Realm is main-app only (see getCachePathForFile:); an extension
+            // relies on file.oid alone.
             NSString *cacheOid = [[SeafRealmManager shared] getOidForUniKey:file.uniqueKey serverMtime:file.mtime];
             if (cacheOid && cacheOid.length > 0) {
                 file.oid = cacheOid;
@@ -431,7 +433,9 @@ static NSString *sha1String(NSString *s)
     
     fileStatus.fileName = sFile.name;
 
-    [[SeafRealmManager shared] updateFileStatus:fileStatus];
+    if ([Utils isMainApp]) {
+        [[SeafRealmManager shared] updateFileStatus:fileStatus];
+    }
 }
 
 - (NSString *)cachePathForFile:(SeafFile *)file {

@@ -37,7 +37,6 @@
 - (BOOL)saveConnection:(SeafConnection *)conn;
 - (BOOL)removeConnection:(SeafConnection *)conn;
 
-- (void)notifyFileProviderRootChanged;
 - (void)startTimer;
 - (void)migrate;
 

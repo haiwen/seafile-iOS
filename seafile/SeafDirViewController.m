@@ -77,9 +77,7 @@
     [super viewDidLoad];
     // Align cell sizing with file list page
     self.tableView.estimatedRowHeight = 55;
-    if (@available(iOS 15.0, *)) {
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
          forCellReuseIdentifier:@"SeafDirCell"];
     if (self.useDestinationStyle) {

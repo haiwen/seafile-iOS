@@ -1,5 +1,5 @@
 def shared
-  platform :ios, '14.0'
+  platform :ios, '16.0'
   pod 'Seafile', :path => "./"
   pod 'AFNetworking', '~> 4.0.0'
   pod 'OpenSSL-Universal', '1.0.2.17'
@@ -18,10 +18,6 @@ end
 
 
 target :"SeafFileProvider" do
-  shared
-end
-
-target :"SeafFileProviderUI" do
   shared
 end
 
@@ -44,8 +40,8 @@ post_install do |installer|
       # OpenSSL-Universal and WechatOpenSDK ship fat .a archives without an
       # arm64-simulator slice, so simulator builds must stay x86_64.
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = "arm64"
-      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 14.0
-          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 16.0
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
       end
     end
     if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"

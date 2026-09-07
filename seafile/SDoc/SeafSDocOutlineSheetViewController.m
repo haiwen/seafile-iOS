@@ -48,24 +48,15 @@
 
 @interface SeafSDocOutlineSheetViewController () <UITableViewDelegate, UITableViewDataSource>
 
-@property (nonatomic, strong) UIView *dimmingView;
-@property (nonatomic, strong) UIView *containerView;
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UIView *emptyView;
 @property (nonatomic, strong) NSArray<OutlineItemModel *> *items;
 @property (nonatomic, strong) NSArray *originArray;
 @property (nonatomic, strong) NSArray<NSNumber *> *originIndexMap;
-@property (nonatomic, assign) BOOL didShowAnimation;
 
 @end
 
 @implementation SeafSDocOutlineSheetViewController
-
-- (CGFloat)safeBottomInset
-{
-    CGFloat safeBottom = self.view.safeAreaInsets.bottom;
-    return safeBottom;
-}
 
 - (instancetype)initWithItems:(NSArray<OutlineItemModel *> *)items origin:(NSArray *)origin
 {
@@ -90,12 +81,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    if (@available(iOS 15.0, *)) {
-        self.view.backgroundColor = [SeafTheme primarySurface];
-        [self buildTableIntoView:self.view edgeInsets:UIEdgeInsetsZero];
-    } else {
-        [self buildCustomSheet];
-    }
+    self.view.backgroundColor = [SeafTheme primarySurface];
+    [self buildTableIntoView:self.view edgeInsets:UIEdgeInsetsZero];
 
     // Build empty view (same style as comments page) and attach when no data
     self.emptyView = [self buildEmptyView];
@@ -127,73 +114,9 @@
         [tv.bottomAnchor constraintEqualToAnchor:host.bottomAnchor constant:-insets.bottom],
     ]];
     tv.tableFooterView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 1, 0)];
-    if (@available(iOS 15.0, *)) {
-        UIView *spacer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 1, 32)];
-        spacer.backgroundColor = [UIColor clearColor];
-        tv.tableHeaderView = spacer;
-    }
-}
-
-- (void)buildCustomSheet
-{
-    self.view.backgroundColor = [UIColor clearColor];
-    UIView *dimming = [[UIView alloc] initWithFrame:self.view.bounds];
-    dimming.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    dimming.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.5];
-    dimming.alpha = 0.0;
-    [self.view addSubview:dimming];
-    self.dimmingView = dimming;
-
-    CGFloat safeBottom = [self safeBottomInset];
-    CGFloat sheetHeight = MIN(480.0, self.view.bounds.size.height * 0.7);
-    UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, self.view.bounds.size.height, self.view.bounds.size.width, sheetHeight + safeBottom)];
-    container.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-    container.backgroundColor = [SeafTheme primarySurface];
-    container.layer.cornerRadius = 12.0;
-    container.layer.masksToBounds = YES;
-    [self.view addSubview:container];
-    self.containerView = container;
-
-    UIView *grabber = [[UIView alloc] initWithFrame:CGRectMake((container.bounds.size.width-36)/2.0, 8, 36, 4)];
-    grabber.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    grabber.backgroundColor = [SeafTheme separator];
-    grabber.layer.cornerRadius = 2.0;
-    [container addSubview:grabber];
-
-    UIEdgeInsets insets = UIEdgeInsetsMake(40, 0, safeBottom, 0);
-    [self buildTableIntoView:container edgeInsets:insets];
-
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onTapDimming)];
-    [dimming addGestureRecognizer:tap];
-
-}
-
-- (void)onTapDimming
-{
-    if (!self.containerView) { [self dismissViewControllerAnimated:YES completion:nil]; return; }
-    [UIView animateWithDuration:0.25 animations:^{
-        self.containerView.frame = CGRectMake(0, self.view.bounds.size.height, self.view.bounds.size.width, self.containerView.bounds.size.height);
-        self.dimmingView.alpha = 0.0;
-    } completion:^(BOOL finished) {
-        [self dismissViewControllerAnimated:NO completion:nil];
-    }];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-    if (self.didShowAnimation) return;
-    if (!self.containerView) return;
-    self.didShowAnimation = YES;
-
-    CGFloat safeBottom = [self safeBottomInset];
-    CGFloat sheetHeight = MIN(480.0, self.view.bounds.size.height * 0.7);
-
-    CGRect targetFrame = CGRectMake(0, self.view.bounds.size.height - (sheetHeight + safeBottom), self.view.bounds.size.width, sheetHeight + safeBottom);
-    [UIView animateWithDuration:0.25 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
-        self.containerView.frame = targetFrame;
-        self.dimmingView.alpha = 1.0;
-    } completion:nil];
+    UIView *spacer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 1, 32)];
+    spacer.backgroundColor = [UIColor clearColor];
+    tv.tableHeaderView = spacer;
 }
 
 #pragma mark - UITableViewDataSource
@@ -233,11 +156,7 @@
         }
         self.onSelect(payload, indexPath.row, m);
     }
-    if (self.containerView) {
-        [self onTapDimming];
-    } else {
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark - Helpers

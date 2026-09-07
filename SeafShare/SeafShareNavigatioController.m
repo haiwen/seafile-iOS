@@ -21,19 +21,17 @@
     // Liquid Glass (configureWithDefaultBackground on iOS 26) renders as a
     // floating translucent pill, leaving the rest of the bar transparent.
     // Figma design: gradient #F1F1F1→#F9F9F9; we use #F9F9F9 as the solid fill.
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *appearance = [UINavigationBarAppearance new];
-        [appearance configureWithOpaqueBackground];
-        UIColor *navBarColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
-            if (tc.userInterfaceStyle == UIUserInterfaceStyleDark) {
-                return [UIColor secondarySystemBackgroundColor];
-            }
-            return [UIColor colorWithRed:249.0/255.0 green:249.0/255.0 blue:249.0/255.0 alpha:1.0];
-        }];
-        appearance.backgroundColor = navBarColor;
-        self.navigationBar.standardAppearance = appearance;
-        self.navigationBar.scrollEdgeAppearance = appearance;
-    }
+    UINavigationBarAppearance *appearance = [UINavigationBarAppearance new];
+    [appearance configureWithOpaqueBackground];
+    UIColor *navBarColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *tc) {
+        if (tc.userInterfaceStyle == UIUserInterfaceStyleDark) {
+            return [UIColor secondarySystemBackgroundColor];
+        }
+        return [UIColor colorWithRed:249.0/255.0 green:249.0/255.0 blue:249.0/255.0 alpha:1.0];
+    }];
+    appearance.backgroundColor = navBarColor;
+    self.navigationBar.standardAppearance = appearance;
+    self.navigationBar.scrollEdgeAppearance = appearance;
 }
 
 

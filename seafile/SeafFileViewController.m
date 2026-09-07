@@ -45,7 +45,6 @@
 #import "SeafMkLibAlertController.h"
 #import "SeafActionsManager.h"
 #import "SeafSearchResultViewController.h"
-#import "UISearchBar+SeafExtend.h"
 #import "UIImage+FileType.h"
 #import "SeafUploadOperation.h"
 #import "SeafFileOperationManager.h"
@@ -261,9 +260,7 @@ enum {
 
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
 
-    if (@available(iOS 15.0, *)) {
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
     
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
@@ -2491,16 +2488,12 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
                                                               aggregate:aggTyped
                                                         metadataEnabled:metaEnabled];
             vc.modalPresentationStyle = UIModalPresentationPageSheet;
-            if (@available(iOS 15.0, *)) {
-                UISheetPresentationController *sheet = vc.sheetPresentationController;
-                sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent,
-                                  UISheetPresentationControllerDetent.largeDetent];
-                sheet.prefersGrabberVisible = YES;
-                sheet.prefersScrollingExpandsWhenScrolledToEdge = YES;
-                sheet.largestUndimmedDetentIdentifier = nil;
-            } else {
-                vc.modalPresentationStyle = UIModalPresentationOverCurrentContext;
-            }
+            UISheetPresentationController *sheet = vc.sheetPresentationController;
+            sheet.detents = @[UISheetPresentationControllerDetent.mediumDetent,
+                              UISheetPresentationControllerDetent.largeDetent];
+            sheet.prefersGrabberVisible = YES;
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = YES;
+            sheet.largestUndimmedDetentIdentifier = nil;
             [sself presentViewController:vc animated:YES completion:nil];
         });
     }];
@@ -3666,13 +3659,11 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         searchField.leftViewMode = UITextFieldViewModeAlways;
         
         // Configure custom appearance for search presentation
-        if (@available(iOS 15.0, *)) {
-            [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
-            
-            // For search bar, we can only set these properties
-            // System default styling will now largely apply to the text field
-            _searchController.searchBar.tintColor = BAR_COLOR;
-        }
+        [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+        
+        // For search bar, we can only set these properties
+        // System default styling will now largely apply to the text field
+        _searchController.searchBar.tintColor = BAR_COLOR;
         
         // Hide the Cancel button
         _searchController.searchBar.showsCancelButton = NO;

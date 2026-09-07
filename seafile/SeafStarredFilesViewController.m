@@ -118,9 +118,7 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
-    if (@available(iOS 15.0, *)) {
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
     
     // Initialize loading view
     self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];

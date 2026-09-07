@@ -87,9 +87,7 @@ NSString * const kShareDestCellId = @"SeafShareDestCell";
         [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
     ]];
 
-    if (@available(iOS 15.0, *)) {
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
 }
 
 - (void)setupLoadingView {

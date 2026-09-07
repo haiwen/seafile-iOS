@@ -103,16 +103,14 @@ static NSString *const kTagSelectorCellId = @"TagSelectorCell";
     self.view.backgroundColor = [UIColor systemBackgroundColor];
 
     // Configure sheet presentation (align Android: BottomSheetDialogFragment)
-    if (@available(iOS 15.0, *)) {
-        UISheetPresentationController *sheet = self.sheetPresentationController;
-        if (sheet) {
-            sheet.detents = @[
-                UISheetPresentationControllerDetent.mediumDetent,
-                UISheetPresentationControllerDetent.largeDetent
-            ];
-            sheet.prefersGrabberVisible = YES;
-            sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
-        }
+    UISheetPresentationController *sheet = self.sheetPresentationController;
+    if (sheet) {
+        sheet.detents = @[
+            UISheetPresentationControllerDetent.mediumDetent,
+            UISheetPresentationControllerDetent.largeDetent
+        ];
+        sheet.prefersGrabberVisible = YES;
+        sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
     }
 
     // Top toolbar (align Android: ToolbarActionbarForSelectorWithDragBinding — Cancel / Done)
