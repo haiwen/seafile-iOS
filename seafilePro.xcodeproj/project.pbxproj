@@ -107,6 +107,11 @@
 		A45D4CF45723C65F50F45FD8 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 580AFF1925E3D871EC76E915 /* libsqlite3.tbd */; };
 		AA1234560001000000000001 /* SeafSdocLongTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA1234560002000000000002 /* SeafSdocLongTextEditorViewController.m */; };
 		AD9F9BE15EB7572B277B96B7 /* SeafWikiModel.m in Sources */ = {isa = PBXBuildFile; fileRef = E2F538AD6158FC9F31E5C54D /* SeafWikiModel.m */; };
+		BA1C0F70000000000000000A /* SeafIconFont.m in Sources */ = {isa = PBXBuildFile; fileRef = BA1C0F700000000000000002 /* SeafIconFont.m */; };
+		BA1C0F70000000000000000B /* SeafWikiCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BA1C0F700000000000000004 /* SeafWikiCell.m */; };
+		BA1C0F70000000000000000C /* SeafWikiGroupHeader.m in Sources */ = {isa = PBXBuildFile; fileRef = BA1C0F700000000000000006 /* SeafWikiGroupHeader.m */; };
+		BA1C0F70000000000000000D /* haiwen-iconfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BA1C0F700000000000000007 /* haiwen-iconfont.ttf */; };
+		BA1C0F70000000000000000E /* haiwen-iconfont.json in Resources */ = {isa = PBXBuildFile; fileRef = BA1C0F700000000000000008 /* haiwen-iconfont.json */; };
 		ADBA3FC2429DBFF9EA923711 /* SeafFileProviderDomainManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CFBA8070DCB6B96AF049A56 /* SeafFileProviderDomainManager.m */; };
 		B1A3469ADE052D0143FE63D8 /* SeafShareStarredViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 93CB29CEC677BCFC04E8635F /* SeafShareStarredViewController.m */; };
 		BA057DC62E1E60110030C743 /* SeafNavLeftItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA11F5032D91457900F56208 /* SeafNavLeftItem.m */; };
@@ -1307,6 +1312,14 @@
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
 		E193604B5D640B0EC0451D94 /* SeafWikiModel.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWikiModel.h; sourceTree = "<group>"; };
 		E2F538AD6158FC9F31E5C54D /* SeafWikiModel.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiModel.m; sourceTree = "<group>"; };
+		BA1C0F700000000000000001 /* SeafIconFont.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafIconFont.h; sourceTree = "<group>"; };
+		BA1C0F700000000000000002 /* SeafIconFont.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafIconFont.m; sourceTree = "<group>"; };
+		BA1C0F700000000000000003 /* SeafWikiCell.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWikiCell.h; sourceTree = "<group>"; };
+		BA1C0F700000000000000004 /* SeafWikiCell.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiCell.m; sourceTree = "<group>"; };
+		BA1C0F700000000000000005 /* SeafWikiGroupHeader.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafWikiGroupHeader.h; sourceTree = "<group>"; };
+		BA1C0F700000000000000006 /* SeafWikiGroupHeader.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiGroupHeader.m; sourceTree = "<group>"; };
+		BA1C0F700000000000000007 /* haiwen-iconfont.ttf */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file; path = haiwen-iconfont.ttf; sourceTree = "<group>"; };
+		BA1C0F700000000000000008 /* haiwen-iconfont.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; path = haiwen-iconfont.json; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 		F1A2B3C4D5E6789012345A02 /* seafileUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = seafileUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1A2B3C4D5E6789012345A04 /* ProfileEditUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditUITests.swift; sourceTree = "<group>"; };
@@ -1809,9 +1822,25 @@
 			name = Resources;
 			sourceTree = "<group>";
 		};
+		BA1C0F700000000000000009 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BA1C0F700000000000000007 /* haiwen-iconfont.ttf */,
+				BA1C0F700000000000000008 /* haiwen-iconfont.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		6C1F9E8B59F3A3615AE2042A /* Wiki */ = {
 			isa = PBXGroup;
 			children = (
+				BA1C0F700000000000000009 /* Resources */,
+				BA1C0F700000000000000001 /* SeafIconFont.h */,
+				BA1C0F700000000000000002 /* SeafIconFont.m */,
+				BA1C0F700000000000000003 /* SeafWikiCell.h */,
+				BA1C0F700000000000000004 /* SeafWikiCell.m */,
+				BA1C0F700000000000000005 /* SeafWikiGroupHeader.h */,
+				BA1C0F700000000000000006 /* SeafWikiGroupHeader.m */,
 				E193604B5D640B0EC0451D94 /* SeafWikiModel.h */,
 				E2F538AD6158FC9F31E5C54D /* SeafWikiModel.m */,
 				D337E3A761DBD14989ADC49C /* SeafWikiViewController.h */,
@@ -2592,6 +2621,8 @@
 				F52111D021E1C12000D93BB8 /* FolderView_iPad.storyboard in Resources */,
 				F5DF759424FE83DB004CAB1E /* arrowleft2.png in Resources */,
 				57D189D0182E0A380029A797 /* Images.xcassets in Resources */,
+				BA1C0F70000000000000000D /* haiwen-iconfont.ttf in Resources */,
+				BA1C0F70000000000000000E /* haiwen-iconfont.json in Resources */,
 				F5DF756A24FE83DB004CAB1E /* ellipsis2@2x.png in Resources */,
 				F52111E221E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
 				F5DF750A24FE83DB004CAB1E /* star2@2x.png in Resources */,
@@ -3522,6 +3553,9 @@
 				BAF436AC2EA9D5A70002ECD1 /* SeafTagChipCell.m in Sources */,
 				1C4454A94D2D95203CB3F655 /* SeafImagePickerHelper.m in Sources */,
 				AD9F9BE15EB7572B277B96B7 /* SeafWikiModel.m in Sources */,
+				BA1C0F70000000000000000A /* SeafIconFont.m in Sources */,
+				BA1C0F70000000000000000B /* SeafWikiCell.m in Sources */,
+				BA1C0F70000000000000000C /* SeafWikiGroupHeader.m in Sources */,
 				D39F0DA10361CD52EAD6E7D5 /* SeafWikiViewController.m in Sources */,
 				E5C6A2114E5D69744EE4E837 /* SeafWikiWebViewController.m in Sources */,
 				CBF3F952B96D7D3835F945A4 /* SeafWebViewBridge.m in Sources */,

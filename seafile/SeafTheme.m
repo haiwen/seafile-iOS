@@ -232,6 +232,13 @@ static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
 
 #pragma mark - Lines / fills
 
++ (UIColor *)cardBorder
+{
+    UIColor *light = [UIColor colorWithRed:238.0/255.0 green:238.0/255.0 blue:238.0/255.0 alpha:1.0]; // #EEEEEE
+    UIColor *dark  = [UIColor colorWithWhite:1.0 alpha:0.1];
+    return [self dynamicColorWithLight:light dark:dark];
+}
+
 + (UIColor *)separator
 {
     return [UIColor separatorColor];
