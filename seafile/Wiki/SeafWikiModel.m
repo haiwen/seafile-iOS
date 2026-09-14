@@ -7,6 +7,11 @@
 
 #import "SeafWikiModel.h"
 
+/// Fallbacks seahub uses when a wiki has no icon/color of its own; kept identical to
+/// the Android client's WikiInfoModel defaults so both render the same card.
+static NSString * const kSeafWikiDefaultIconName  = @"book-bookmark-fill";
+static NSString * const kSeafWikiDefaultIconColor = @"#FF9800";
+
 NSString * const SeafWikiTypeMine   = @"mine";
 NSString * const SeafWikiTypeShared = @"shared";
 NSString * const SeafWikiTypeOld    = @"old";
@@ -24,6 +29,8 @@ NSString * const SeafWikiTypeGroup  = @"group";
         _owner        = [self stringValue:json[@"owner"]];
         _ownerNickname = [self stringValue:json[@"owner_nickname"]];
         _ownerAvatarUrl = [self stringValue:json[@"owner_avatar_url"]];
+        _icon         = [self stringValue:json[@"icon"]];
+        _color        = [self stringValue:json[@"color"]];
         _permission   = [self stringValue:json[@"permission"]];
         _publicUrl    = [self stringValue:json[@"public_url"]];
         _slug         = [self stringValue:json[@"slug"]];
@@ -56,6 +63,16 @@ NSString * const SeafWikiTypeGroup  = @"group";
         _groupOwner   = nil;
     }
     return self;
+}
+
+- (NSString *)iconGlyphName
+{
+    return self.icon.length > 0 ? self.icon : kSeafWikiDefaultIconName;
+}
+
+- (NSString *)iconColorHex
+{
+    return self.color.length > 0 ? self.color : kSeafWikiDefaultIconColor;
 }
 
 /// Safely extract a string value from a JSON value (handles NSNull and numeric types)
