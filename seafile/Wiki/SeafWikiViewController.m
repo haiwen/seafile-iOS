@@ -12,249 +12,17 @@
 #import "SeafLoadingView.h"
 #import "SVProgressHUD.h"
 #import "Debug.h"
-#import "SeafDateFormatter.h"
 #import "UIViewController+Extend.h"
 #import "SeafNavigationBarStyler.h"
 #import "SeafTheme.h"
-
-static NSString * const kWikiCellId = @"SeafWikiCell";
-static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
-
-#pragma mark - SeafWikiCell
-
-@interface SeafWikiCell : UICollectionViewCell
-@property (nonatomic, strong) UILabel *nameLabel;
-@property (nonatomic, strong) UILabel *timeLabel;
-@property (nonatomic, strong) UILabel *publishBadge;
-@property (nonatomic, strong) UIImageView *iconView;
-@property (nonatomic, strong) UIButton *moreButton;
-@property (nonatomic, strong) UIImageView *ownerAvatarView;
-@property (nonatomic, strong) UILabel *ownerLabel;
-@property (nonatomic, copy) void (^onMoreTapped)(void);
-/// Constraints active when the owner row is visible (Old wiki)
-@property (nonatomic, strong) NSArray<NSLayoutConstraint *> *ownerVisibleConstraints;
-/// Constraints active when the owner row is hidden (non-Old wiki)
-@property (nonatomic, strong) NSArray<NSLayoutConstraint *> *ownerHiddenConstraints;
-@end
-
-@implementation SeafWikiCell
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    if (self = [super initWithFrame:frame]) {
-        self.contentView.backgroundColor = [UIColor secondarySystemBackgroundColor];
-        self.contentView.layer.cornerRadius = 8;
-        self.contentView.layer.borderWidth = 0.5;
-        self.contentView.layer.borderColor = [UIColor separatorColor].CGColor;
-        self.contentView.clipsToBounds = YES;
-
-        _iconView = [[UIImageView alloc] init];
-        _iconView.image = [UIImage systemImageNamed:@"book.fill"];
-        _iconView.tintColor = [SeafTheme accentOrange];
-        _iconView.translatesAutoresizingMaskIntoConstraints = NO;
-
-        _publishBadge = [[UILabel alloc] init];
-        _publishBadge.text = NSLocalizedString(@"Published", @"Seafile");
-        _publishBadge.font = [UIFont systemFontOfSize:11];
-        _publishBadge.textColor = [UIColor secondaryLabelColor];
-        _publishBadge.layer.cornerRadius = 8;
-        _publishBadge.layer.borderWidth = 0.5;
-        _publishBadge.layer.borderColor = [UIColor separatorColor].CGColor;
-        _publishBadge.clipsToBounds = YES;
-        _publishBadge.textAlignment = NSTextAlignmentCenter;
-        _publishBadge.translatesAutoresizingMaskIntoConstraints = NO;
-        _publishBadge.hidden = YES;
-
-        _moreButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        [_moreButton setImage:[UIImage systemImageNamed:@"ellipsis"] forState:UIControlStateNormal];
-        _moreButton.tintColor = [UIColor secondaryLabelColor];
-        _moreButton.translatesAutoresizingMaskIntoConstraints = NO;
-        _moreButton.hidden = YES; // Shown only for TYPE_MINE wikis
-        [_moreButton addTarget:self action:@selector(moreButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-
-        _nameLabel = [[UILabel alloc] init];
-        _nameLabel.font = [UIFont systemFontOfSize:13];
-        _nameLabel.textColor = [UIColor labelColor];
-        _nameLabel.numberOfLines = 3;
-        _nameLabel.translatesAutoresizingMaskIntoConstraints = NO;
-
-        _timeLabel = [[UILabel alloc] init];
-        _timeLabel.font = [UIFont systemFontOfSize:11];
-        _timeLabel.textColor = [UIColor secondaryLabelColor];
-        _timeLabel.translatesAutoresizingMaskIntoConstraints = NO;
-
-        // Owner row (avatar + nickname), shown only for old wikis
-        _ownerAvatarView = [[UIImageView alloc] init];
-        _ownerAvatarView.image = [UIImage imageNamed:@"account"];
-        _ownerAvatarView.contentMode = UIViewContentModeScaleAspectFill;
-        _ownerAvatarView.layer.cornerRadius = 8;
-        _ownerAvatarView.clipsToBounds = YES;
-        _ownerAvatarView.translatesAutoresizingMaskIntoConstraints = NO;
-        _ownerAvatarView.hidden = YES;
-
-        _ownerLabel = [[UILabel alloc] init];
-        _ownerLabel.font = [UIFont systemFontOfSize:11];
-        _ownerLabel.textColor = [UIColor secondaryLabelColor];
-        _ownerLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        _ownerLabel.hidden = YES;
-
-        UIView *cv = self.contentView;
-        [cv addSubview:_iconView];
-        [cv addSubview:_publishBadge];
-        [cv addSubview:_moreButton];
-        [cv addSubview:_nameLabel];
-        [cv addSubview:_ownerAvatarView];
-        [cv addSubview:_ownerLabel];
-        [cv addSubview:_timeLabel];
-
-        [NSLayoutConstraint activateConstraints:@[
-            [_iconView.topAnchor constraintEqualToAnchor:cv.topAnchor constant:12],
-            [_iconView.leadingAnchor constraintEqualToAnchor:cv.leadingAnchor constant:12],
-            [_iconView.widthAnchor constraintEqualToConstant:24],
-            [_iconView.heightAnchor constraintEqualToConstant:24],
-
-            [_publishBadge.centerYAnchor constraintEqualToAnchor:_iconView.centerYAnchor],
-            [_publishBadge.leadingAnchor constraintEqualToAnchor:_iconView.trailingAnchor constant:6],
-            [_publishBadge.widthAnchor constraintGreaterThanOrEqualToConstant:60],
-            [_publishBadge.heightAnchor constraintEqualToConstant:20],
-
-            [_moreButton.centerYAnchor constraintEqualToAnchor:_iconView.centerYAnchor],
-            [_moreButton.trailingAnchor constraintEqualToAnchor:cv.trailingAnchor constant:-8],
-            [_moreButton.widthAnchor constraintEqualToConstant:28],
-            [_moreButton.heightAnchor constraintEqualToConstant:28],
-
-            [_nameLabel.topAnchor constraintEqualToAnchor:_iconView.bottomAnchor constant:8],
-            [_nameLabel.leadingAnchor constraintEqualToAnchor:cv.leadingAnchor constant:12],
-            [_nameLabel.trailingAnchor constraintEqualToAnchor:cv.trailingAnchor constant:-12],
-
-            [_timeLabel.leadingAnchor constraintEqualToAnchor:cv.leadingAnchor constant:12],
-            [_timeLabel.trailingAnchor constraintEqualToAnchor:cv.trailingAnchor constant:-12],
-            [_timeLabel.bottomAnchor constraintEqualToAnchor:cv.bottomAnchor constant:-12],
-        ]];
-
-        // Activated only while the owner row is shown.
-        _ownerVisibleConstraints = @[
-            [_ownerAvatarView.leadingAnchor constraintEqualToAnchor:cv.leadingAnchor constant:12],
-            [_ownerAvatarView.bottomAnchor constraintEqualToAnchor:_timeLabel.topAnchor constant:-4],
-            [_ownerAvatarView.widthAnchor constraintEqualToConstant:16],
-            [_ownerAvatarView.heightAnchor constraintEqualToConstant:16],
-            [_ownerLabel.leadingAnchor constraintEqualToAnchor:_ownerAvatarView.trailingAnchor constant:4],
-            [_ownerLabel.centerYAnchor constraintEqualToAnchor:_ownerAvatarView.centerYAnchor],
-            [_ownerLabel.trailingAnchor constraintLessThanOrEqualToAnchor:cv.trailingAnchor constant:-12],
-        ];
-        _ownerHiddenConstraints = @[];
-    }
-    return self;
-}
-
-- (void)configureWithWiki:(SeafWikiInfo *)wiki {
-    self.nameLabel.text = wiki.name;
-    self.publishBadge.hidden = !wiki.isPublished;
-    // Show moreButton only for "mine" type (matches Android behavior)
-    self.moreButton.hidden = ![wiki.type isEqualToString:SeafWikiTypeMine];
-
-    // Owner row only for old wikis (matches Android behavior)
-    BOOL showOwner = [wiki.type isEqualToString:SeafWikiTypeOld] && wiki.ownerNickname.length > 0;
-    self.ownerAvatarView.hidden = !showOwner;
-    self.ownerLabel.hidden = !showOwner;
-    self.ownerLabel.text = showOwner ? wiki.ownerNickname : nil;
-    if (showOwner) {
-        [NSLayoutConstraint deactivateConstraints:self.ownerHiddenConstraints];
-        [NSLayoutConstraint activateConstraints:self.ownerVisibleConstraints];
-    } else {
-        [NSLayoutConstraint deactivateConstraints:self.ownerVisibleConstraints];
-        [NSLayoutConstraint activateConstraints:self.ownerHiddenConstraints];
-    }
-
-    if (wiki.updatedAt.length > 0) {
-        long long timestamp = [SeafDateFormatter timestampFromLastModified:wiki.updatedAt];
-        if (timestamp > 0) {
-            self.timeLabel.text = [SeafDateFormatter stringFromLongLong:timestamp];
-        } else {
-            self.timeLabel.text = wiki.updatedAt;
-        }
-    } else {
-        self.timeLabel.text = @"";
-    }
-}
-
-- (void)moreButtonTapped:(UIButton *)sender {
-    if (self.onMoreTapped) {
-        self.onMoreTapped();
-    }
-}
-
-- (void)prepareForReuse {
-    [super prepareForReuse];
-    self.onMoreTapped = nil;
-    self.moreButton.hidden = YES;
-    self.ownerAvatarView.hidden = YES;
-    self.ownerLabel.hidden = YES;
-    self.ownerLabel.text = nil;
-    [NSLayoutConstraint deactivateConstraints:self.ownerVisibleConstraints];
-    [NSLayoutConstraint activateConstraints:self.ownerHiddenConstraints];
-}
-
-// CALayer.borderColor caches a static CGColor and does not auto-refresh when
-// the trait collection changes. Re-resolve it whenever the appearance flips.
-- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
-    [super traitCollectionDidChange:previousTraitCollection];
-    if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
-        self.contentView.layer.borderColor = [UIColor separatorColor].CGColor;
-        self.publishBadge.layer.borderColor = [UIColor separatorColor].CGColor;
-    }
-}
-
-@end
-
-#pragma mark - SeafWikiGroupHeader
-
-@interface SeafWikiGroupHeader : UICollectionReusableView
-@property (nonatomic, strong) UILabel *titleLabel;
-@property (nonatomic, strong) UIImageView *iconView;
-@end
-
-@implementation SeafWikiGroupHeader
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    if (self = [super initWithFrame:frame]) {
-        _iconView = [[UIImageView alloc] init];
-        _iconView.tintColor = [UIColor secondaryLabelColor];
-        _iconView.contentMode = UIViewContentModeScaleAspectFit;
-        _iconView.translatesAutoresizingMaskIntoConstraints = NO;
-
-        _titleLabel = [[UILabel alloc] init];
-        _titleLabel.font = [UIFont boldSystemFontOfSize:15];
-        _titleLabel.textColor = [UIColor labelColor];
-        _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-
-        [self addSubview:_iconView];
-        [self addSubview:_titleLabel];
-
-        [NSLayoutConstraint activateConstraints:@[
-            [_iconView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:4],
-            [_iconView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-            [_iconView.widthAnchor constraintEqualToConstant:20],
-            [_iconView.heightAnchor constraintEqualToConstant:20],
-            [_titleLabel.leadingAnchor constraintEqualToAnchor:_iconView.trailingAnchor constant:6],
-            [_titleLabel.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-            [_titleLabel.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-8],
-        ]];
-    }
-    return self;
-}
-
-- (void)configureWithGroup:(SeafWikiGroup *)group {
-    self.titleLabel.text = group.title;
-    if (group.iconName) {
-        self.iconView.image = [[UIImage imageNamed:group.iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    } else {
-        self.iconView.image = [[UIImage imageNamed:@"icon_shared_with_all"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    }
-}
-
-@end
+#import "SeafWikiCell.h"
+#import "SeafWikiGroupHeader.h"
 
 #pragma mark - SeafWikiViewController
+
+// Grid metrics from the 260819 wiki home redline.
+static const CGFloat kGridMargin  = 16.0;   // leading / trailing page margin
+static const CGFloat kGridSpacing = 12.0;   // between cards, both axes
 
 @interface SeafWikiViewController () <UICollectionViewDataSource, UICollectionViewDelegate>
 @property (nonatomic, strong) UICollectionView *collectionView;
@@ -270,7 +38,7 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = NSLocalizedString(@"Wikis", @"Seafile");
-    self.view.backgroundColor = [UIColor systemBackgroundColor];
+    self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
 
     // On iPadOS 18+, the tab bar is hidden but still reserves layout space at the
     // bottom of the screen. Allow this VC's view to extend under the opaque (hidden)
@@ -310,12 +78,15 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
     UICollectionViewCompositionalLayout *layout = [self createLayout];
     _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
     _collectionView.translatesAutoresizingMaskIntoConstraints = NO;
-    _collectionView.backgroundColor = [UIColor systemBackgroundColor];
+    _collectionView.backgroundColor = [SeafTheme primaryBackgroundColor];
     _collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    // Sections carry no bottom inset so the gap before the next header comes from that
+    // header alone; this keeps the same breathing room after the last row.
+    _collectionView.contentInset = UIEdgeInsetsMake(0, 0, kGridSpacing, 0);
     _collectionView.dataSource = self;
     _collectionView.delegate = self;
-    [_collectionView registerClass:[SeafWikiCell class] forCellWithReuseIdentifier:kWikiCellId];
-    [_collectionView registerClass:[SeafWikiGroupHeader class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:kWikiGroupHeaderId];
+    [_collectionView registerClass:[SeafWikiCell class] forCellWithReuseIdentifier:SeafWikiCell.reuseIdentifier];
+    [_collectionView registerClass:[SeafWikiGroupHeader class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:SeafWikiGroupHeader.reuseIdentifier];
 
     _refreshControl = [[UIRefreshControl alloc] init];
     [_refreshControl addTarget:self action:@selector(loadData) forControlEvents:UIControlEventValueChanged];
@@ -327,7 +98,7 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
     _emptyLabel = [[UILabel alloc] init];
     _emptyLabel.text = NSLocalizedString(@"No data", @"Seafile");
     _emptyLabel.textAlignment = NSTextAlignmentCenter;
-    _emptyLabel.textColor = [UIColor secondaryLabelColor];
+    _emptyLabel.textColor = [SeafTheme secondaryText];
     _emptyLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     _emptyLabel.numberOfLines = 0;
 
@@ -342,8 +113,9 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
 
 - (UICollectionViewCompositionalLayout *)createLayout {
     UICollectionViewCompositionalLayout *layout = [[UICollectionViewCompositionalLayout alloc] initWithSectionProvider:^NSCollectionLayoutSection * _Nullable(NSInteger sectionIndex, id<NSCollectionLayoutEnvironment> env) {
-        // Dynamically determine column count based on available width.
-        // The sectionProvider is re-evaluated on rotation / resize automatically.
+        // The design specifies two columns on a phone; wider containers keep filling the
+        // row so cards do not stretch out on iPad. The sectionProvider is re-evaluated on
+        // rotation / resize automatically.
         CGFloat width = env.container.effectiveContentSize.width;
         NSInteger columns;
         if (width >= 1000) {
@@ -356,22 +128,24 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
             columns = 2;       // iPhone portrait (default)
         }
 
-        CGFloat itemFraction = 1.0 / (CGFloat)columns;
-        NSCollectionLayoutSize *itemSize = [NSCollectionLayoutSize sizeWithWidthDimension:[NSCollectionLayoutDimension fractionalWidthDimension:itemFraction]
-                                                                          heightDimension:[NSCollectionLayoutDimension absoluteDimension:140]];
+        // A count-based group divides the row itself, so the item's own width dimension
+        // is ignored and the spacing below is what separates the cards.
+        NSCollectionLayoutSize *itemSize = [NSCollectionLayoutSize sizeWithWidthDimension:[NSCollectionLayoutDimension fractionalWidthDimension:1.0]
+                                                                          heightDimension:[NSCollectionLayoutDimension fractionalHeightDimension:1.0]];
         NSCollectionLayoutItem *item = [NSCollectionLayoutItem itemWithLayoutSize:itemSize];
-        item.contentInsets = NSDirectionalEdgeInsetsMake(4, 4, 4, 4);
 
         NSCollectionLayoutSize *groupSize = [NSCollectionLayoutSize sizeWithWidthDimension:[NSCollectionLayoutDimension fractionalWidthDimension:1.0]
-                                                                           heightDimension:[NSCollectionLayoutDimension absoluteDimension:140]];
+                                                                           heightDimension:[NSCollectionLayoutDimension absoluteDimension:SeafWikiCell.cardHeight]];
         NSCollectionLayoutGroup *group = [NSCollectionLayoutGroup horizontalGroupWithLayoutSize:groupSize subitem:item count:columns];
+        group.interItemSpacing = [NSCollectionLayoutSpacing fixedSpacing:kGridSpacing];
 
         NSCollectionLayoutSection *section = [NSCollectionLayoutSection sectionWithGroup:group];
-        section.contentInsets = NSDirectionalEdgeInsetsMake(0, 12, 8, 12);
+        section.interGroupSpacing = kGridSpacing;
+        // The header supplies its own top spacing, so sections do not add any of their own.
+        section.contentInsets = NSDirectionalEdgeInsetsMake(0, kGridMargin, 0, kGridMargin);
 
-        // Section header
         NSCollectionLayoutSize *headerSize = [NSCollectionLayoutSize sizeWithWidthDimension:[NSCollectionLayoutDimension fractionalWidthDimension:1.0]
-                                                                            heightDimension:[NSCollectionLayoutDimension absoluteDimension:40]];
+                                                                            heightDimension:[NSCollectionLayoutDimension absoluteDimension:SeafWikiGroupHeader.headerHeight]];
         NSCollectionLayoutBoundarySupplementaryItem *header = [NSCollectionLayoutBoundarySupplementaryItem boundarySupplementaryItemWithLayoutSize:headerSize elementKind:UICollectionElementKindSectionHeader alignment:NSRectAlignmentTop];
         section.boundarySupplementaryItems = @[header];
 
@@ -546,7 +320,7 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    SeafWikiCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kWikiCellId forIndexPath:indexPath];
+    SeafWikiCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:SeafWikiCell.reuseIdentifier forIndexPath:indexPath];
     SeafWikiInfo *wiki = self.sections[indexPath.section][indexPath.item + 1]; // +1 to skip group header
     [cell configureWithWiki:wiki];
     __weak typeof(self) weakSelf = self;
@@ -559,7 +333,7 @@ static NSString * const kWikiGroupHeaderId = @"SeafWikiGroupHeader";
 }
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
-    SeafWikiGroupHeader *header = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:kWikiGroupHeaderId forIndexPath:indexPath];
+    SeafWikiGroupHeader *header = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:SeafWikiGroupHeader.reuseIdentifier forIndexPath:indexPath];
     SeafWikiGroup *group = self.sections[indexPath.section][0];
     [header configureWithGroup:group];
     return header;
