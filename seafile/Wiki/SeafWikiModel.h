@@ -30,6 +30,8 @@ extern NSString * const SeafWikiTypeGroup;
 @property (nonatomic, copy, nullable) NSString *owner;
 @property (nonatomic, copy, nullable) NSString *ownerNickname;
 @property (nonatomic, copy, nullable) NSString *ownerAvatarUrl;
+@property (nonatomic, copy, nullable) NSString *icon;       // seahub glyph name, e.g. "bank-fill"
+@property (nonatomic, copy, nullable) NSString *color;      // seahub hex color, e.g. "#ff9800"
 @property (nonatomic, copy, nullable) NSString *permission;
 @property (nonatomic, copy, nullable) NSString *publicUrl;
 @property (nonatomic, copy, nullable) NSString *slug;
@@ -43,6 +45,13 @@ extern NSString * const SeafWikiTypeGroup;
 
 /// Initialize from a legacy wiki1 API JSON dictionary
 - (instancetype)initWithWiki1JSON:(NSDictionary *)json;
+
+/// Glyph name to render in the icon font, falling back to seahub's default when the
+/// server sends none. Mirrors the Android client's WikiInfoModel.getIcon().
+- (NSString *)iconGlyphName;
+
+/// Hex color for the icon, falling back to seahub's default when the server sends none.
+- (NSString *)iconColorHex;
 
 @end
 
