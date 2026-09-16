@@ -185,7 +185,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 
 - (void)invalidate
 {
-    Debug("invalidate enumerator %@", self.containerIdentifier);
+    Info("invalidate enumerator %@", self.containerIdentifier);
 }
 
 #pragma mark - Loading
@@ -234,7 +234,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
         SeafRepos *r = (SeafRepos *)dir;
         BOOL cached = r.hasCache || [r loadCache];
         if (cached && strongSelf) {
-            Debug("Library list unreachable, serving cache: %@", error);
+            Info("Library list unreachable, serving cache: %@", error);
             [strongSelf deliverRoot:r fromCache:YES container:containerIdentifier completion:completion];
         } else {
             NSError *mapped = [SeafFPErrors errorForSeafError:error];
@@ -503,7 +503,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
     }
     NSString *lastUUID = records.lastObject.uuid;
     BOOL more = records.count == (NSUInteger)kSeafFPWorkingSetPageSize && lastUUID.length > 0;
-    Debug("working set page after %@: %lu items%@", afterUUID ?: @"(start)", (unsigned long)items.count, more ? @", more" : @", last");
+    Info("working set page after %@: %lu items%@", afterUUID ?: @"(start)", (unsigned long)items.count, more ? @", more" : @", last");
     if (items.count > 0) {
         [observer didEnumerateItems:items];
     }
@@ -593,7 +593,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
             return;
         }
         if (error) {
-            Debug("working set check of %@ failed: %@", container, error);
+            Info("working set check of %@ failed: %@", container, error);
             if (error.code == NSFileProviderErrorNoSuchItem) {
                 // Gone locally; the next container may still be fine.
                 [strongSelf checkContainers:containers index:index + 1 deadline:deadline changes:changes completion:completion];
@@ -662,7 +662,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
         }
         [changes deliverToObserver:observer];
         NSString *anchor = [NSString stringWithFormat:@"%@%lld", kSeafFPWorkingSetAnchorPrefix, cut];
-        Debug("working set changes since %lld: %lu updated, %lu deleted, checked %lu containers, anchor %@%@",
+        Info("working set changes since %lld: %lu updated, %lu deleted, checked %lu containers, anchor %@%@",
               known, (unsigned long)changes.updated.count, (unsigned long)changes.deleted.count,
               (unsigned long)containers.count, anchor, moreComing ? @", more coming" : @"");
         [observer finishEnumeratingChangesUpToSyncAnchor:SeafFPAnchorData(anchor) moreComing:moreComing];
@@ -683,7 +683,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 
 - (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer startingAtPage:(NSFileProviderPage)page
 {
-    Debug("enumerate %@", self.containerIdentifier);
+    Info("enumerate %@", self.containerIdentifier);
     switch (self.kind) {
         case SeafFPIdentifierKindWorkingSet: {
             NSError *access = [self.extension accessError];
@@ -726,7 +726,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 - (void)enumerateChangesForObserver:(id<NSFileProviderChangeObserver>)observer fromSyncAnchor:(NSFileProviderSyncAnchor)syncAnchor
 {
     NSString *known = SeafFPAnchorString(syncAnchor);
-    Debug("enumerate changes %@ from %@", self.containerIdentifier, known);
+    Info("enumerate changes %@ from %@", self.containerIdentifier, known);
     switch (self.kind) {
         case SeafFPIdentifierKindWorkingSet: {
             NSError *access = [self.extension accessError];
@@ -772,7 +772,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
                 }
                 SeafFPChangeSet *changes = [SeafFPChangeSet new];
                 [changes addLoad:load];
-                Debug("changes in %@: %lu updated, %lu deleted", self.containerIdentifier,
+                Info("changes in %@: %lu updated, %lu deleted", self.containerIdentifier,
                       (unsigned long)changes.updated.count, (unsigned long)changes.deleted.count);
                 [changes deliverToObserver:observer];
                 [observer finishEnumeratingChangesUpToSyncAnchor:SeafFPAnchorData(load.anchor) moreComing:NO];

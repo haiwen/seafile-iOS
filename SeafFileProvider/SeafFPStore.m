@@ -83,8 +83,16 @@ static const void *kSeafFPStoreQueueKey = &kSeafFPStoreQueueKey;
     // prepareLocked: / setMetaValueLocked:, so a failure can be told apart
     // from a corrupt file (see SeafFPResultIsCorruption).
     int _lastResultCode;
+    // The sqlite handle is only held while a perform: block runs. A WAL
+    // connection keeps a shared lock on the -shm file for its whole lifetime,
+    // and an extension suspended while holding a file lock is killed with
+    // 0xDEAD10CC. So the outermost perform: opens the file, its block(s) run,
+    // and the handle is closed again before the extension can be suspended.
+    NSInteger _performDepth;
+    BOOL _closed;   // close was called: nothing is ever opened again
 }
 @property (nonatomic, copy) NSString *domainIdentifier;
+@property (nonatomic, copy) NSURL *storeURL;
 @property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
@@ -125,21 +133,17 @@ static const void *kSeafFPStoreQueueKey = &kSeafFPStoreQueueKey;
                              withIntermediateDirectories:YES
                                               attributes:nil
                                                    error:nil];
-    int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
-    int rc = sqlite3_open_v2(url.path.fileSystemRepresentation, &_db, flags, NULL);
+    _storeURL = url;
+    int rc = [self openHandleLocked];
     if (rc != SQLITE_OK) {
         Warning("Cannot open file provider store %@: %s", url.path, sqlite3_errmsg(_db));
         if (error) {
             *error = [NSError errorWithDomain:@"SeafFPStore" code:rc
                                      userInfo:@{NSLocalizedDescriptionKey: @(sqlite3_errmsg(_db) ?: "sqlite open failed")}];
         }
-        if (_db) sqlite3_close(_db);
-        _db = NULL;
+        [self closeHandleLocked];
         return nil;
     }
-    sqlite3_busy_timeout(_db, 3000);
-    [self execLocked:@"PRAGMA journal_mode=WAL"];
-    [self execLocked:@"PRAGMA synchronous=NORMAL"];
     BOOL newerSchema = NO;
     BOOL corrupt = NO;
     if (![self createSchemaLocked:&newerSchema corrupt:&corrupt]) {
@@ -153,8 +157,7 @@ static const void *kSeafFPStoreQueueKey = &kSeafFPStoreQueueKey;
                 *error = [NSError errorWithDomain:@"SeafFPStore" code:SQLITE_ERROR
                                          userInfo:@{NSLocalizedDescriptionKey: @"store schema newer than supported"}];
             }
-            sqlite3_close(_db);
-            _db = NULL;
+            [self closeHandleLocked];
             return nil;
         }
         if (!corrupt) {
@@ -169,40 +172,35 @@ static const void *kSeafFPStoreQueueKey = &kSeafFPStoreQueueKey;
                 *error = [NSError errorWithDomain:@"SeafFPStore" code:failure
                                          userInfo:@{NSLocalizedDescriptionKey: @"store temporarily unusable"}];
             }
-            sqlite3_close(_db);
-            _db = NULL;
+            [self closeHandleLocked];
             return nil;
         }
         // Corrupt: nothing can be read from it, so rebuild. Identity rows and
         // decorations are lost; the system re-learns the tree from the server
         // and drops items it can no longer resolve.
         Warning("Rebuilding broken file provider store %@", url.path);
-        sqlite3_close(_db);
-        _db = NULL;
+        [self closeHandleLocked];
         [[self class] removeStoreForDomainIdentifier:domainIdentifier];
-        rc = sqlite3_open_v2(url.path.fileSystemRepresentation, &_db, flags, NULL);
+        rc = [self openHandleLocked];
         if (rc != SQLITE_OK) {
             if (error) {
                 *error = [NSError errorWithDomain:@"SeafFPStore" code:rc
                                          userInfo:@{NSLocalizedDescriptionKey: @"cannot rebuild store"}];
             }
-            if (_db) sqlite3_close(_db);
-            _db = NULL;
+            [self closeHandleLocked];
             return nil;
         }
-        sqlite3_busy_timeout(_db, 3000);
-        [self execLocked:@"PRAGMA journal_mode=WAL"];
-        [self execLocked:@"PRAGMA synchronous=NORMAL"];
         if (![self createSchemaLocked:NULL corrupt:NULL]) {
             if (error) {
                 *error = [NSError errorWithDomain:@"SeafFPStore" code:SQLITE_ERROR
                                          userInfo:@{NSLocalizedDescriptionKey: @"cannot rebuild store"}];
             }
-            sqlite3_close(_db);
-            _db = NULL;
+            [self closeHandleLocked];
             return nil;
         }
     }
+    // Schema verified: let go of the file until the first request.
+    [self closeHandleLocked];
     return self;
 }
 
@@ -211,20 +209,51 @@ static const void *kSeafFPStoreQueueKey = &kSeafFPStoreQueueKey;
     [self close];
 }
 
+/// Opens the sqlite file and applies the connection settings. Schema
+/// creation is separate: init runs it once, later reopens skip it.
+- (int)openHandleLocked
+{
+    int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+    int rc = sqlite3_open_v2(self.storeURL.path.fileSystemRepresentation, &_db, flags, NULL);
+    _lastResultCode = rc;
+    if (rc != SQLITE_OK) {
+        Warning("Cannot open file provider store %@: %s", self.storeURL.path, _db ? sqlite3_errmsg(_db) : "");
+        return rc;
+    }
+    sqlite3_busy_timeout(_db, 3000);
+    [self execLocked:@"PRAGMA journal_mode=WAL"];
+    [self execLocked:@"PRAGMA synchronous=NORMAL"];
+    return SQLITE_OK;
+}
+
+- (void)closeHandleLocked
+{
+    if (!_db) return;
+    // Every statement is finalized by its caller; close_v2 defers instead of
+    // failing should one leak, so the handle is never kept by mistake.
+    sqlite3_close_v2(_db);
+    _db = NULL;
+    _transactionDepth = 0;
+    _transactionOpen = NO;
+}
+
 - (void)close
 {
-    [self perform:^{
-        if (self->_db) {
-            sqlite3_close(self->_db);
-            self->_db = NULL;
-        }
-    }];
+    if (dispatch_get_specific(kSeafFPStoreQueueKey) == kSeafFPStoreQueueKey) {
+        _closed = YES;
+        if (_performDepth == 0) [self closeHandleLocked];   // else the outermost perform: closes it
+        return;
+    }
+    dispatch_sync(self.queue, ^{
+        self->_closed = YES;
+        [self closeHandleLocked];
+    });
 }
 
 - (BOOL)isOpen
 {
     __block BOOL open = NO;
-    [self perform:^{ open = YES; }];   // the block only runs while _db is set
+    [self perform:^{ open = YES; }];   // the block only runs when the file could be opened
     return open;
 }
 
@@ -233,13 +262,31 @@ static const void *kSeafFPStoreQueueKey = &kSeafFPStoreQueueKey;
 - (void)perform:(void (^)(void))block
 {
     if (dispatch_get_specific(kSeafFPStoreQueueKey) == kSeafFPStoreQueueKey) {
-        // Already on the store queue (nested call, or inside performBatch:).
+        // Already on the store queue (nested call, or inside performBatch:):
+        // the outermost perform: holds the handle open.
         if (_db) block();
         return;
     }
     dispatch_sync(self.queue, ^{
-        if (self->_db) {
+        if (self->_closed) return;
+        if (!self->_db && [self openHandleLocked] != SQLITE_OK) {
+            [self closeHandleLocked];
+            return;
+        }
+        self->_performDepth++;
+        @try {
             block();
+        } @finally {
+            self->_performDepth--;
+            if (self->_performDepth == 0) {
+                // No transaction (and no lock) may outlive a request; a stray
+                // one is rolled back together with the handle.
+                if (self->_transactionOpen) {
+                    Warning("store transaction left open across perform:, rolling back");
+                    [self execLocked:@"ROLLBACK"];
+                }
+                [self closeHandleLocked];
+            }
         }
     });
 }

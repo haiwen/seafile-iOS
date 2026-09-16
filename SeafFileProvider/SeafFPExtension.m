@@ -116,7 +116,7 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
         if (!_store) {
             Warning("Cannot open store for domain %@: %@", domain.identifier, error);
         }
-        Debug("File provider started for domain %@ (%@), account %@", domain.identifier, domain.displayName,
+        Info("File provider started for domain %@ (%@), account %@", domain.identifier, domain.displayName,
               _connection ? [NSString stringWithFormat:@"%@ @ %@", _connection.username, _connection.address] : @"<none>");
     }
     return self;
@@ -124,7 +124,7 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
 
 - (void)invalidate
 {
-    Debug("invalidate domain %@", self.domain.identifier);
+    Info("invalidate domain %@", self.domain.identifier);
     self.invalidated = YES;
     [self.store close];   // kept assigned for callbacks in flight; isOpen tells them it is gone
     [self.seafObjects removeAllObjects];
@@ -177,7 +177,7 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
         // library list is filtered by passwordRequired, which reads the
         // in-memory copy.
         if ([current reloadRepoPasswordsFromInfo:info]) {
-            Debug("Account %@ library passwords changed, dropping cached objects", current.username);
+            Info("Account %@ library passwords changed, dropping cached objects", current.username);
             [self.seafObjects removeAllObjects];
         }
         return;
@@ -185,7 +185,7 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
     SeafConnection *fresh = [[SeafConnection alloc] initWithUrl:current.address
                                                   cacheProvider:SeafGlobal.sharedObject.cacheProvider
                                                        username:current.username];
-    Debug("Account %@ session changed, refreshing connection", fresh.username);
+    Info("Account %@ session changed, refreshing connection", fresh.username);
     self.connection = fresh;
     [self.seafObjects removeAllObjects];
 }
@@ -272,7 +272,7 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
     if (!error) return;
     [self.manager signalErrorResolved:error completionHandler:^(NSError * _Nullable signalError) {
         if (signalError) {
-            Debug("signalErrorResolved failed: %@", signalError);
+            Info("signalErrorResolved failed: %@", signalError);
         }
     }];
 }
@@ -318,7 +318,7 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
     } failure:^(SeafDir *dir, NSError *error) {
         SeafRepos *r = (SeafRepos *)dir;
         BOOL cached = r.hasCache || [r loadCache];
-        Debug("library list unavailable (%@), cache: %d", error, cached);
+        Info("library list unavailable (%@), cache: %d", error, cached);
         completion(cached, NO);
     }];
 }
@@ -649,7 +649,7 @@ static BOOL SeafFPNamesEqual(NSString *a, NSString *b)
     if (containerIdentifier.length == 0) return;
     [self.manager signalEnumeratorForContainerItemIdentifier:NSFileProviderWorkingSetContainerItemIdentifier completionHandler:^(NSError * _Nullable error) {
         if (error) {
-            Debug("signal working set (for %@) failed: %@", containerIdentifier, error);
+            Info("signal working set (for %@) failed: %@", containerIdentifier, error);
         }
     }];
 }
@@ -672,7 +672,7 @@ static BOOL SeafFPNamesEqual(NSString *a, NSString *b)
         self.workingSetRecheckPending = YES;
     }
     NSTimeInterval delay = MAX(1.0, [date timeIntervalSinceNow]);
-    Debug("working set re-check in %.0fs", delay);
+    Info("working set re-check in %.0fs", delay);
     __weak typeof(self) weakSelf = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         typeof(self) strongSelf = weakSelf;
@@ -809,7 +809,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
     } failure:^(SeafDir *failed, NSError *error) {
         BOOL cached = failed.hasCache || [failed loadCache];
         if (cached) {
-            Debug("Directory %@ unreachable, serving cache: %@", failed.path, error);
+            Info("Directory %@ unreachable, serving cache: %@", failed.path, error);
             completion(YES, YES, nil);
         } else {
             NSError *mapped = [SeafFPErrors errorForSeafError:error];
@@ -852,7 +852,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         [self.store removeWorkingSetItem:identifier reason:cleared];
     }
     [current applyDecoration:decoration];
-    Debug("decoration %@ favorite=%@ tag=%lu lastUsed=%@", identifier, decoration.favoriteRank, (unsigned long)decoration.tagData.length, decoration.lastUsedDate);
+    Info("decoration %@ favorite=%@ tag=%lu lastUsed=%@", identifier, decoration.favoriteRank, (unsigned long)decoration.tagData.length, decoration.lastUsedDate);
 
     // Only the working set changes; signalling the parent is deliberately
     // avoided (see the iOS 26 notes in the design document).
@@ -1005,7 +1005,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         finish(nil, [SeafFPErrors cannotSynchronize]);
         return progress;
     }
-    Debug("createItem %@ (%@) in %@ options=%lu", requestedName, isFolder ? @"folder" : @"file", parentIdentifier, (unsigned long)options);
+    Info("createItem %@ (%@) in %@ options=%lu", requestedName, isFolder ? @"folder" : @"file", parentIdentifier, (unsigned long)options);
 
     NSString *repoId = parentDir.repoId;
     NSString *parentUUID = parentRecord.uuid;
@@ -1058,7 +1058,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             // A dataless re-import that matches nothing on the server: nil
             // item and no error, the system drops its placeholder
             // (NSFileProviderReplicatedExtension.h, createItem).
-            Debug("createItem %@: no content and no server entry, dropping", requestedName);
+            Info("createItem %@: no content and no server entry, dropping", requestedName);
             finish(nil, nil);
             return;
         }
@@ -1199,14 +1199,14 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             // SeafFPItem). The unchanged item alone would make the system take
             // the edited copy for the server version; the edit is dropped by
             // fetching the server content back instead.
-            Debug("modifyItem %@: content change in a read-only library, reverting to the server content", item.itemIdentifier);
+            Info("modifyItem %@: content change in a read-only library, reverting to the server content", item.itemIdentifier);
             finishFetchingContent(current);
         } else {
             finish(current, nil);
         }
         return progress;
     }
-    Debug("modifyItem %@ renamed=%d reparented=%d contents=%d", item.itemIdentifier, renamed, reparented, contentsChanged);
+    Info("modifyItem %@ renamed=%d reparented=%d contents=%d", item.itemIdentifier, renamed, reparented, contentsChanged);
 
     __weak typeof(self) weakSelf = self;
     void (^uploadIfNeeded)(SeafFPRecord *) = ^(SeafFPRecord *latest) {
@@ -1344,7 +1344,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         NSArray<SeafDir *> *dirs = reparented ? @[dstDir, srcDir] : @[srcDir];
         NSString *name = [strongSelf freeNameFor:requestedName inDirs:dirs ownName:oldName inDir:srcDir];
         if (!SeafFPNamesEqual(name, requestedName)) {
-            Debug("modifyItem %@: %@ is taken in %@, using %@", item.itemIdentifier, requestedName, dstDir.path, name);
+            Info("modifyItem %@: %@ is taken in %@, using %@", item.itemIdentifier, requestedName, dstDir.path, name);
         }
         void (^afterRename)(NSString *) = reparented ? moveStep : applyMove;
         if (SeafFPNamesEqual(name, oldName)) afterRename(name); else renameStep(name, afterRename);
@@ -1421,7 +1421,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         finish([SeafFPErrors noSuchItem]);
         return progress;
     }
-    Debug("deleteItem %@ (%@) options=%lu", identifier, record.path, (unsigned long)options);
+    Info("deleteItem %@ (%@) options=%lu", identifier, record.path, (unsigned long)options);
 
     __weak typeof(self) weakSelf = self;
     void (^deleteOnServer)(void) = ^{
@@ -1561,7 +1561,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
     [self collectMaterializedItemsFrom:enumerator page:NSFileProviderInitialPageSortedByName into:all completion:^(NSError *error) {
         typeof(self) strongSelf = weakSelf;
         if (error || !strongSelf) {
-            Debug("materialized items enumeration failed: %@", error);
+            Info("materialized items enumeration failed: %@", error);
             completionHandler();
             return;
         }
@@ -1573,7 +1573,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             }
         }
         [strongSelf.store replaceMaterializedItemIdentifiers:items];
-        Debug("materialized items: %lu", (unsigned long)items.count);
+        Info("materialized items: %lu", (unsigned long)items.count);
         completionHandler();
     }];
 }
