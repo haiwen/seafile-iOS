@@ -286,20 +286,14 @@
         
         id<SeafPreView> item = (id<SeafPreView>)entry;
 
+        BOOL presented = NO;
         if ([self isCurrentFileImage:item]) {
             [self.masterVC.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
         } else {
-            [self.masterVC.detailViewController setPreViewItem:item master:self];
+            presented = [self.masterVC.detailViewController previewItem:item master:self presentFrom:self animated:YES];
         }
-        
-        if (self.masterVC.detailViewController.state == PREVIEW_QL_MODAL) {
-            [self.masterVC.detailViewController.qlViewController reloadData];
-            if (IsIpad()) {
-                [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.masterVC.detailViewController.qlViewController animated:true completion:nil];
-            } else {
-                [self presentViewController:self.masterVC.detailViewController.qlViewController animated:true completion:nil];
-            }
-        } else if (!IsIpad()) {
+
+        if (!presented && !IsIpad()) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.masterVC.detailViewController];
         }
