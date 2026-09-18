@@ -702,6 +702,12 @@
     [self cancelDownload];
 }
 
+/// SeafPreView requires this; without it any caller hits an unrecognized selector.
+- (void)cancelAnyLoading
+{
+    [self cancelDownload];
+}
+
 #pragma mark - SeafFileDelegate
 
 - (void)download:(id)file complete:(BOOL)updated {

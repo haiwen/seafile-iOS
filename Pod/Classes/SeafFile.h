@@ -205,6 +205,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (BOOL)saveEditedPreviewFile:(NSURL *_Nullable)url;
 
 /**
+ * Uploads the edited copy saved by -saveEditedPreviewFile: back to the server.
+ */
+- (void)autoupload;
+
+/**
  * Gets the path for the thumbnail of the file.
  * @param objId The object identifier for which the thumbnail is requested.
  * @return The path to the thumbnail.

@@ -24,6 +24,7 @@
 #import "SeafWechatHelper.h"
 #import "SeafActionsManager.h"
 #import <WebKit/WebKit.h>
+#import <QuickLook/QuickLook.h>
 #import <SafariServices/SafariServices.h>
 #import "SeafDataTaskManager.h"
 #import "SeafNavigationBarStyler.h"
@@ -43,7 +44,26 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
-@interface SeafDetailViewController ()<MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate, WKNavigationDelegate, SeafFileUpdateDelegate>
+/// Quick Look controller bound to the item it was created for, so the data source
+/// never has to read a mutable property that a newer tap may already have changed.
+@interface SeafQLPreviewController : QLPreviewController
+@property (nonatomic, strong) id<SeafPreView> seafItem;
+/// previewItemURL path handed to Quick Look for `seafItem`. A cache hit reports
+/// download:complete: with updated=YES too, so this is what tells a real new version
+/// (content-addressed temp path changes) apart from "the bytes you already show".
+@property (nonatomic, copy) NSString *presentedPath;
+@property (nonatomic, assign) BOOL didEditItem;
+@end
+
+@implementation SeafQLPreviewController
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.view.accessibilityIdentifier = @"seafile_quicklook"; // UI tests locate the preview by this
+}
+@end
+
+@interface SeafDetailViewController ()<MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate, WKNavigationDelegate, SeafFileUpdateDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource>
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (nonatomic, strong) WKWebView *webView;
@@ -62,11 +82,20 @@ enum SHARE_STATUS {
 @property (strong) UIBarButtonItem *backItem;
 
 @property (strong) UIDocumentInteractionController *docController;
-@property (nonatomic, assign) BOOL previewDidEdited;
 @property int shareStatus;
 
-// New: Avoid presenting QLPreviewController multiple times
-@property (nonatomic, assign) BOOL isPresentingQL;
+/// The Quick Look controller this view controller currently owns. A fresh one is used
+/// for every preview (a reused instance flashes the previous file before re-rendering),
+/// so anything else arriving in a callback is a superseded instance.
+@property (nonatomic, strong) SeafQLPreviewController *qlViewController;
+/// Next controller, created and view-loaded ahead of time so the system Quick Look
+/// extension is already attached when the user taps the next file.
+@property (nonatomic, strong) SeafQLPreviewController *spareQuickLook;
+/// Presenter and animation named by the caller of -previewItem:master:presentFrom:animated:.
+/// Only set for the duration of that call: a preview that opens later on its own (download
+/// finished) must not be pushed over whatever the user moved on to.
+@property (nonatomic, weak) UIViewController *quickLookPresenter;
+@property (nonatomic, assign) BOOL quickLookUnanimated;
 
 @end
 
@@ -76,7 +105,6 @@ enum SHARE_STATUS {
 - (id)initWithCoder:(NSCoder *)decoder
 {
     self = [super initWithCoder:decoder];
-    self.previewDidEdited = NO;
     return self;
 }
 #pragma mark - Managing the detail item
@@ -160,8 +188,6 @@ enum SHARE_STATUS {
     self.textView = nil;
     [self.webView evaluateJavaScript:@"document.body.innerHTML='';" completionHandler:nil];
     [self clearPhotosVIew];
-    // Reset isPresentingQL flag when clearing preview
-    self.isPresentingQL = NO;
 }
 
 // Update the preview state based on the current item's properties and state.
@@ -305,34 +331,7 @@ enum SHARE_STATUS {
             break;
         case PREVIEW_QL_MODAL: {
             Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
-            [self.qlViewController reloadData]; // Reload data for Quick Look view controller
-            // If QLVC is already presented, do not present again
-            if (!self.qlViewController.presentingViewController && !self.presentedViewController && !self.isPresentingQL) {
-                if (self.isModal && self.isVisible) {
-                    UIViewController *vc = self.presentingViewController;
-                    // Mark to avoid repetition
-                    self.isPresentingQL = YES;
-                    [vc dismissViewControllerAnimated:NO completion:^{
-                        [vc presentViewController:self.qlViewController animated:YES completion:^{
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                [self clearPreView];
-                                self.isPresentingQL = NO;
-                            });
-                        }];
-                    }];
-                } else if (IsIpad()) {
-                    // In iPad scenario
-                    UIViewController *topVC = [SeafAppDelegate topViewController];
-                    if (!topVC.presentedViewController && !self.isPresentingQL) {
-                        self.isPresentingQL = YES;
-                        [topVC.parentViewController presentViewController:self.qlViewController animated:YES completion:^{
-                            [self clearPreView];
-                            [self resetNavigation];
-                            self.isPresentingQL = NO;
-                        }];
-                    }
-                }
-            }
+            [self presentQuickLookForItem:self.preViewItem];
             break;
         }
         case PREVIEW_WEBVIEW_JS:
@@ -619,6 +618,15 @@ enum SHARE_STATUS {
     }
     if (_preViewItem != entry) return;
     if (updated) {
+        SeafQLPreviewController *ql = self.qlViewController;
+        NSString *path = ((id<SeafPreView>)entry).previewItemURL.path;
+        if (ql.seafItem == entry && ql.presentingViewController
+            && path && ![ql.presentedPath isEqualToString:path]) {
+            // Quick Look is already up for this file and a newer version arrived.
+            Debug("QL %p refresh: %@ -> %@", ql, ql.presentedPath, path);
+            ql.presentedPath = path;
+            [ql refreshCurrentPreviewItem];
+        }
         [self refreshView];
         [self updateToolbarButtons]; // Update toolbar buttons after download completes
     } else if (self.state == PREVIEW_DOWNLOADING && entry.hasCache) {
@@ -930,19 +938,22 @@ enum SHARE_STATUS {
 }
 
 #pragma -mark QLPreviewControllerDataSource
+// Every Quick Look this view controller drives is a SeafQLPreviewController. The item is
+// read off the controller itself: self.preViewItem may already belong to a newer tap by
+// the time Quick Look gets around to asking.
 - (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)controller
 {
-    if (self.state != PREVIEW_QL_MODAL)
-        return 0;
-    return 1;
+    return ((SeafQLPreviewController *)controller).seafItem ? 1 : 0; // 0 for the pre-warmed spare
 }
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
-    if (index < 0 || index >= 1) {
+    if (index != 0) {
         return nil;
     }
-    return self.preViewItem;
+    id<SeafPreView> item = ((SeafQLPreviewController *)controller).seafItem;
+    Debug("QL %p asks for item: %@", controller, item.previewItemTitle);
+    return item;
 }
 
 #pragma -mark QLPreviewControllerDelegate
@@ -962,27 +973,28 @@ enum SHARE_STATUS {
 }
 
 - (void)previewController:(QLPreviewController *)controller didSaveEditedCopyOfPreviewItem:(id<QLPreviewItem>)previewItem atURL:(NSURL *)modifiedContentsURL {
-    if (previewItem && modifiedContentsURL) {
-        self.previewDidEdited = YES;
-        SeafFile *file = (SeafFile *)previewItem;
-        
-        [file saveEditedPreviewFile:modifiedContentsURL];
-    }
+    if (!modifiedContentsURL || ![previewItem isKindOfClass:[SeafFile class]]) return;
+    ((SeafQLPreviewController *)controller).didEditItem = YES;
+    [(SeafFile *)previewItem saveEditedPreviewFile:modifiedContentsURL];
 }
 
 - (void)previewControllerDidDismiss:(QLPreviewController *)controller {
-    if (self.previewDidEdited) {
-        SeafFile *file = (SeafFile *)self.preViewItem;
-        if (file && [file respondsToSelector:@selector(autoupload)]) {
-            [file performSelector:@selector(autoupload)];
-        }
-        
-        self.previewDidEdited = NO;
+    SeafQLPreviewController *ql = (SeafQLPreviewController *)controller;
+    id<SeafPreView> item = ql.seafItem;
+
+    // Honour the edit even for a superseded controller, otherwise the markup is lost:
+    // self.preViewItem may already point at the file the user opened next.
+    if (ql.didEditItem && [item isKindOfClass:[SeafFile class]]) {
+        [(SeafFile *)item autoupload];
     }
-    self.preViewItem = nil;
+
+    if (ql != self.qlViewController) {
+        // A newer preview already took over; leave its state alone.
+        Debug("QL %p dismissed, superseded by %p - ignored", controller, self.qlViewController);
+        return;
+    }
     self.qlViewController = nil;
-    // Ensure isPresentingQL is reset when QLViewController is dismissed
-    self.isPresentingQL = NO;
+    if (self.preViewItem == item) self.preViewItem = nil;
 }
 
 - (MWPhotoBrowser *)mwPhotoBrowser
@@ -1090,13 +1102,167 @@ enum SHARE_STATUS {
     return _textView;
 }
 
-- (QLPreviewController *)qlViewController {
-    if (!_qlViewController) {
-        _qlViewController = [[QLPreviewController alloc] init];
-        _qlViewController.delegate = self;
-        _qlViewController.dataSource = self;
+#pragma mark - Quick Look presentation
+
+// Where a Quick Look goes. Deliberately not [SeafAppDelegate topViewController]: that
+// helper walks through presentedViewController, so once a Quick Look is up it returns the
+// Quick Look itself, whose parentViewController is nil, and the presentation is dropped.
+- (UIViewController *)quickLookHost
+{
+    // The detail view is itself a modal (iPhone, file was not cached at tap time):
+    // the Quick Look replaces it, presented from the same controller that presented us.
+    if (self.isModal && self.isVisible) return self.presentingViewController;
+    if (IsIpad()) return self.navigationController ?: self;   // split view: always on screen
+    return self.quickLookPresenter;                           // iPhone: only inside -previewItem:...
+}
+
+// YES when `vc` is something a new Quick Look may take the place of: an earlier Quick
+// Look, or the modal container this detail view lives in. Anything else (photo gallery,
+// share sheet, alert, editor) belongs to the user and is left alone.
+- (BOOL)quickLookMayReplace:(UIViewController *)vc
+{
+    if ([vc isKindOfClass:[SeafQLPreviewController class]]) return YES;
+    for (UIViewController *ancestor = self; ancestor; ancestor = ancestor.parentViewController) {
+        if (ancestor == vc) return YES;
     }
-    return _qlViewController;
+    return NO;
+}
+
+// NO once `ql` is no longer the Quick Look this view controller wants on screen: a newer
+// tap replaced it, or the detail view moved on to a non-Quick Look item while `ql` was
+// waiting for a transition. Drops the claim so the next request for the same file is
+// not mistaken for "already showing".
+- (BOOL)quickLookStillWanted:(SeafQLPreviewController *)ql
+{
+    if (ql != self.qlViewController) return NO;
+    if (self.state == PREVIEW_QL_MODAL && self.preViewItem == ql.seafItem) return YES;
+    Debug("QL %p dropped: state=%d item=%@", ql, self.state, self.preViewItem.previewItemTitle);
+    self.qlViewController = nil;
+    return NO;
+}
+
+// Attaching the system Quick Look extension is the slow part of showing a fresh
+// controller, and it happens when the view loads. Do it ahead of the next tap.
+- (void)prepareSpareQuickLook
+{
+    if (self.spareQuickLook) return;
+    SeafQLPreviewController *spare = [[SeafQLPreviewController alloc] init];
+    spare.delegate = self;
+    spare.dataSource = self;
+    self.spareQuickLook = spare;
+    [spare loadViewIfNeeded];
+}
+
+- (SeafQLPreviewController *)takeQuickLook
+{
+    SeafQLPreviewController *ql = self.spareQuickLook;
+    self.spareQuickLook = nil;
+    if (!ql) {
+        ql = [[SeafQLPreviewController alloc] init];
+        ql.delegate = self;
+        ql.dataSource = self;
+    }
+    return ql;
+}
+
+// Takes a *new* Quick Look controller, binds `item` to it and presents it. Reusing one
+// instance is what made a preview that was still dismissing come back with the previous
+// file's contents (issue #549), and even after a clean dismissal a reused instance
+// flashes the previous file before it re-renders.
+- (void)presentQuickLookForItem:(id<SeafPreView>)item
+{
+    if (!item || self.state != PREVIEW_QL_MODAL) return;
+    // Already showing or on its way - e.g. the asynchronous download:complete: refresh
+    // arriving after the tap already opened it.
+    if (self.qlViewController.seafItem == item) return;
+    UIViewController *host = [self quickLookHost];
+    if (!host) return;
+
+    UIViewController *presented = host.presentedViewController;
+    if (presented && ![self quickLookMayReplace:presented]) {
+        Debug("QL for %@ not presented: %@ is up", item.previewItemTitle, presented);
+        return;
+    }
+
+    SeafQLPreviewController *ql = [self takeQuickLook];
+    ql.seafItem = item;
+    ql.presentedPath = item.previewItemURL.path;
+    if (ql.isViewLoaded) [ql reloadData]; // the spare was loaded with no item
+    // Claim it synchronously so a refreshView in the meantime will not start a second one.
+    self.qlViewController = ql;
+    Debug("QL %p present item=%@ host=%@", ql, item.previewItemTitle, host);
+    [self presentQuickLook:ql from:host animated:!self.quickLookUnanimated];
+}
+
+// Presents `ql` once nothing stands in the way. A controller still animating in or out
+// is waited out rather than dismissed: dismissing mid-transition is undefined and UIKit
+// may never run the completion, which would leave `ql` claimed but never shown.
+- (void)presentQuickLook:(SeafQLPreviewController *)ql
+                    from:(UIViewController *)host
+                animated:(BOOL)animated
+{
+    if (![self quickLookStillWanted:ql]) return;
+
+    __weak typeof(self) weakSelf = self;
+    UIViewController *presented = host.presentedViewController;
+    if (!presented) {
+        [host presentViewController:ql animated:animated completion:^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            // Warm the next one now that this presentation is done with the main thread.
+            [strongSelf prepareSpareQuickLook];
+            if (ql != strongSelf.qlViewController) return;
+            // Only tidy a detail view that exists. On iPhone the detail view is usually
+            // never loaded for a Quick Look file, and clearPreView would load it here
+            // (WKWebView, nibs, toolbar) right as the preview appears.
+            if (!strongSelf.isViewLoaded) return;
+            [strongSelf clearPreView];
+            if (IsIpad()) [strongSelf resetNavigation];
+        }];
+        return;
+    }
+    if (![self quickLookMayReplace:presented]) {
+        // Something unrelated appeared while we waited; leave it and forget this request.
+        Debug("QL %p dropped: %@ is up", ql, presented);
+        self.qlViewController = nil;
+        return;
+    }
+    Debug("QL %p waiting: %@ presented, transition=%d", ql, presented, presented.transitionCoordinator != nil);
+    if (presented.transitionCoordinator) {
+        // Presenting into a dismissal that is still in flight is exactly what made the
+        // old controller reappear with stale contents (issue #549).
+        [presented.transitionCoordinator animateAlongsideTransition:nil
+                                                         completion:^(id<UIViewControllerTransitionCoordinatorContext> ctx) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf presentQuickLook:ql from:host animated:animated];
+            });
+        }];
+    } else {
+        [host dismissViewControllerAnimated:NO completion:^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf presentQuickLook:ql from:host animated:animated];
+            });
+        }];
+    }
+}
+
+- (BOOL)previewItem:(id<SeafPreView>)item
+             master:(UIViewController<SeafDentryDelegate> *)c
+        presentFrom:(UIViewController *)presenter
+           animated:(BOOL)animated
+{
+    // setPreViewItem: -> refreshView presents the Quick Look when the item is cached;
+    // otherwise download:complete: does, by which time the caller's presenter no longer
+    // applies (see quickLookPresenter).
+    self.quickLookPresenter = presenter;
+    self.quickLookUnanimated = !animated;
+    [self setPreViewItem:item master:c];
+    // refreshView bails out before presenting while the detail view has never been
+    // loaded (iPhone, first preview after launch); the same-item guard makes this a no-op
+    // whenever refreshView did present.
+    [self presentQuickLookForItem:item];
+    self.quickLookPresenter = nil;
+    self.quickLookUnanimated = NO;
+    return self.state == PREVIEW_QL_MODAL;
 }
 
 - (NSAttributedString *)attributedTextOfPreViewItem {

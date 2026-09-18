@@ -935,15 +935,10 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
            // In encrypted libraries, skip the prompt and directly download, then auto-play
            if ([self.connection isEncrypted:self.directory.repoId]) {
                self.pendingVideoFile = file;
+               // Video never reaches PREVIEW_QL_MODAL: updatePreviewState forces
+               // PREVIEW_NONE for it, so the detail view is the only route here.
                [self.detailViewController setPreViewItem:item master:self];
-               if (self.detailViewController.state == PREVIEW_QL_MODAL) {
-                   [self.detailViewController.qlViewController reloadData];
-                   if (IsIpad()) {
-                       [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
-                   } else {
-                       [self presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
-                   }
-               } else if (!IsIpad()) {
+               if (!IsIpad()) {
                    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
                    [appdelegate showDetailView:self.detailViewController];
                }
@@ -971,14 +966,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
                    self.pendingVideoFile = file;
                    // Continue with default preview flow, same as non-video files
                    [self.detailViewController setPreViewItem:item master:self];
-                   if (self.detailViewController.state == PREVIEW_QL_MODAL) {
-                       [self.detailViewController.qlViewController reloadData];
-                       if (IsIpad()) {
-                           [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
-                       } else {
-                           [self presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
-                       }
-                   } else if (!IsIpad()) {
+                   if (!IsIpad()) {
                        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
                        [appdelegate showDetailView:self.detailViewController];
                    }
@@ -1017,18 +1005,8 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
             [self presentViewController:navController animated:YES completion:nil];
             return; // Return after handling image file
-        } else {
-            [self.detailViewController setPreViewItem:item master:self];
-        }
-        
-        if (self.detailViewController.state == PREVIEW_QL_MODAL) {
-            [self.detailViewController.qlViewController reloadData];
-            if (IsIpad()) {
-                [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.detailViewController.qlViewController animated:true completion:nil];
-            } else {
-                [self presentViewController:self.detailViewController.qlViewController animated:true completion:nil];
-            }
-        } else if (!IsIpad()) {
+        } else if (![self.detailViewController previewItem:item master:self presentFrom:self animated:YES]
+                   && !IsIpad()) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
         }
@@ -4500,5 +4478,56 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     // gallery (or whose download state changed) reflect immediately.
     [self refreshDownloadStatus];
 }
+
+// Navigates to a repository and path for deep links (SeafAppDelegate checkOpenLink:).
+// Called on the root file view controller and again on every pushed child once its
+// directory has loaded. Returns YES to keep descending and NO when navigation is
+// finished or the target does not exist.
+- (BOOL)goTo:(NSString *)targetRepo path:(NSString *)path
+{
+    if (![_directory hasCache] || !self.isVisible)
+        return YES;
+    Debug("repo: %@, path: %@, current: %@", targetRepo, path, _directory.path);
+    if ([self.directory isKindOfClass:[SeafRepos class]]) {
+        NSArray *repoGroups = ((SeafRepos *)_directory).repoGroups;
+        for (NSUInteger i = 0; i < repoGroups.count; ++i) {
+            NSArray *repos = repoGroups[i];
+            for (NSUInteger j = 0; j < repos.count; ++j) {
+                SeafRepo *r = repos[j];
+                if ([r.repoId isEqualToString:targetRepo]) {
+                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:j inSection:i];
+                    [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionMiddle];
+                    [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
+                    return YES;
+                }
+            }
+        }
+        Debug("Repo %@ not found.", targetRepo);
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to find library", @"Seafile")];
+        return NO;
+    }
+
+    if ([@"/" isEqualToString:path])
+        return NO;
+    for (NSUInteger i = 0; i < self.allItems.count; ++i) {
+        SeafBase *b = self.allItems[i];
+        NSString *p = b.path;
+        if ([b isKindOfClass:[SeafDir class]]) {
+            p = [p stringByAppendingString:@"/"];
+        }
+        BOOL found = [p isEqualToString:path];
+        if (found || [path hasPrefix:p]) {
+            Debug("found=%d, path:%@, p:%@", found, path, p);
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:i inSection:0];
+            [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionMiddle];
+            [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
+            return !found;
+        }
+    }
+    Debug("file %@/%@ not found", targetRepo, path);
+    [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to find %@", @"Seafile"), path]];
+    return NO;
+}
+
 
 @end
