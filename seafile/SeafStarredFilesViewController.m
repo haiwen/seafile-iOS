@@ -448,17 +448,13 @@
             // Otherwise: enter detail to trigger download; after completion, auto-play
             self.pendingVideoFile = sfile;
             Debug("[Starred] Encrypted video NOT ready. decrypted=%d hasCache=%d -> enter detail to download: %@", decrypted, [sfile hasCache], sfile.name);
+            // Video never reaches PREVIEW_QL_MODAL: updatePreviewState forces
+            // PREVIEW_NONE for it, so the detail view is the only route here.
             [self.detailViewController setPreViewItem:sfile master:self];
             if (!IsIpad()) {
-                if (self.detailViewController.state == PREVIEW_QL_MODAL) {
-                    Debug(@"[Starred] Present QL modal for download. state=PREVIEW_QL_MODAL");
-                    [self.detailViewController.qlViewController reloadData];
-                    [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
-                } else {
-                    Debug(@"[Starred] Show detail view controller for download (non-QL)");
-                    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-                    [appdelegate showDetailView:self.detailViewController];
-                }
+                Debug(@"[Starred] Show detail view controller for download (non-QL)");
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appdelegate showDetailView:self.detailViewController];
             }
             return;
         } else {
@@ -506,16 +502,11 @@
     }
     
     Debug("Select file %@", sfile.name);
-    [self.detailViewController setPreViewItem:sfile master:self];
-
-    if (!IsIpad()) {
-        if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
-            [self.detailViewController.qlViewController reloadData];
-            [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
-        } else {
-            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-            [appdelegate showDetailView:self.detailViewController];
-        }
+    // Fullscreen Quick Look for doc, xls, pdf, etc.; the detail view for everything else.
+    if (![self.detailViewController previewItem:sfile master:self presentFrom:self animated:NO]
+        && !IsIpad()) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate showDetailView:self.detailViewController];
     }
 }
 
