@@ -65,6 +65,9 @@ extern NSString * const kSeafThemePreferenceMigratedKey;
 + (UIColor *)galleryOperationText;
 
 // Lines / fills
+/// Hairline around card-style surfaces. Lighter than `separator`, which is tuned for
+/// list dividers and reads too heavy as a card outline.
++ (UIColor *)cardBorder;
 + (UIColor *)separator;
 + (UIColor *)fill;
 

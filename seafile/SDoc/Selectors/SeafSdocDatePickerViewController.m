@@ -31,16 +31,14 @@
     self.view.backgroundColor = [UIColor systemBackgroundColor];
 
     // Bottom sheet on iPhone; centered card on iPad (align SeafTagSelectorViewController)
-    if (@available(iOS 15.0, *)) {
-        UISheetPresentationController *sheet = self.sheetPresentationController;
-        if (sheet) {
-            sheet.detents = @[
-                UISheetPresentationControllerDetent.mediumDetent,
-                UISheetPresentationControllerDetent.largeDetent
-            ];
-            sheet.prefersGrabberVisible = YES;
-            sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
-        }
+    UISheetPresentationController *sheet = self.sheetPresentationController;
+    if (sheet) {
+        sheet.detents = @[
+            UISheetPresentationControllerDetent.mediumDetent,
+            UISheetPresentationControllerDetent.largeDetent
+        ];
+        sheet.prefersGrabberVisible = YES;
+        sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
     }
 
     // Top toolbar: Cancel | Title | Done

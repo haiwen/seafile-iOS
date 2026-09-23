@@ -93,6 +93,10 @@ static SeafDateFormatter *sharedLoaderChinese = nil;
 
 +(NSString *)compareGMTTimeWithNow:(NSString *)gmtTimeStr {
     NSDate *dateFormatted = [[SeafDateFormatter sharedLoaderUTC] dateFromString:gmtTimeStr];
+    // An unparsable string leaves dateFormatted nil, and timeIntervalSinceDate: then yields a
+    // garbage interval that still formats as a non-empty "... ago" - hiding the failure from
+    // callers that check the result before falling back.
+    if (!dateFormatted) return @"";
     NSTimeInterval timeInterval = [[NSDate date] timeIntervalSinceDate:dateFormatted];
     
     double minutes = timeInterval / 60;

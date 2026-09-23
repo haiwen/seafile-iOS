@@ -7,6 +7,9 @@
 //
 
 #import "SeafUploadFile.h"
+#import "SeafConstants.h"
+#import "SeafConnection.h"
+#import "SeafDir.h"
 #import "SeafUploadFileModel.h"
 #import "SeafAssetManager.h"
 #import "Debug.h"
@@ -348,6 +351,9 @@
         } else {
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
+        }
+        if (self.udir.connection) {
+            [self.udir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:self.udir.repoId];
         }
     }
     [self uploadComplete:fOid error:err];

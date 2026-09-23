@@ -23,6 +23,8 @@
 #import "SeafCustomInputAlertViewController.h"
 #import "SeafTheme.h"
 #import "SeafTabBarStyler.h"
+#import "SeafFileProviderDomainManager.h"
+#import "SeafFileProviderLegacyMigrator.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -375,6 +377,26 @@
     [self initTabController];
     [SeafTabBarStyler applyStandardAppearanceToTabBar:_tabbarController.tabBar];
     [SeafGlobal.sharedObject loadAccounts];
+    // Replicated File Provider: one domain per account. Clean the storage of
+    // the old extension, then make the registered domains match the accounts.
+    // SDK change notifications are forwarded to the domains from here on.
+    [[SeafFileProviderDomainManager shared] startObservingChangeNotifications];
+    // Legacy cleanup and migration touch the file system and sqlite: off the
+    // main thread, before any domain is registered.
+    NSArray *accountsAtLaunch = [SeafGlobal.sharedObject.conns copy];
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        [[SeafFileProviderDomainManager shared] cleanupLegacyStorageIfNeeded];
+        BOOL migratedFavorites = [SeafFileProviderLegacyMigrator migrateIfNeededWithConnections:accountsAtLaunch];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[SeafFileProviderDomainManager shared] reconcileDomainsWithConnections:SeafGlobal.sharedObject.conns completion:^{
+                if (migratedFavorites) {
+                    // Domains that already existed (development builds) must re-read
+                    // the working set to pick up the migrated favorites.
+                    [[SeafFileProviderDomainManager shared] signalWorkingSetForConnections:SeafGlobal.sharedObject.conns];
+                }
+            }];
+        });
+    });
 
     // Run the theme preference one-time migration *after* SeafGlobal has migrated
     // accounts into App Group storage, so SeafTheme can reliably distinguish
@@ -541,6 +563,8 @@
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
+    // Coalesced Files signals would die with the process otherwise.
+    [[SeafFileProviderDomainManager shared] flushPendingSignals];
     [self enterBackground];
     
     //not used
@@ -560,6 +584,9 @@
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
     Debug("Seafile will enter foreground");
+    [[SeafFileProviderDomainManager shared] reconcileDomainsWithConnections:SeafGlobal.sharedObject.conns completion:^{
+        [[SeafFileProviderDomainManager shared] signalWorkingSetForConnections:SeafGlobal.sharedObject.conns];
+    }];
     [application endBackgroundTask:self.bgTask];
     self.bgTaskNum = 0;
     [self.bgTaskTimer invalidate];
@@ -674,12 +701,10 @@
     // Ensure consistent tab bar appearance on iOS 15+.
     // Without this, scrollEdgeAppearance defaults to transparent, causing the
     // tab bar to flash white when Wiki/Activity content doesn't reach the bottom.
-    if (@available(iOS 15.0, *)) {
-        UITabBarAppearance *tabBarAppearance = [UITabBarAppearance new];
-        [tabBarAppearance configureWithDefaultBackground];
-        _tabbarController.tabBar.standardAppearance = tabBarAppearance;
-        _tabbarController.tabBar.scrollEdgeAppearance = tabBarAppearance;
-    }
+    UITabBarAppearance *tabBarAppearance = [UITabBarAppearance new];
+    [tabBarAppearance configureWithDefaultBackground];
+    _tabbarController.tabBar.standardAppearance = tabBarAppearance;
+    _tabbarController.tabBar.scrollEdgeAppearance = tabBarAppearance;
 
     // On iPadOS 18+, UITabBarController shows tabs at the top (compact tab bar).
     // The bottom UITabBar still exists and occupies layout space, causing blank

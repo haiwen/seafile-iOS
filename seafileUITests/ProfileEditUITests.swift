@@ -6,6 +6,9 @@ final class ProfileEditUITests: XCTestCase {
 
     private let repoName = ProcessInfo.processInfo.environment["UI_TEST_REPO"] ?? "8888"
     private let folderName = ProcessInfo.processInfo.environment["UI_TEST_FOLDER"] ?? "Camera Uploads"
+    /// Repo holding the issue #549 fixture (at least three PDFs). Separate from `repoName`
+    /// because the regression needs PDFs specifically, not the generic test repo.
+    private let pdfRepoName = ProcessInfo.processInfo.environment["UI_TEST_PDF_REPO"] ?? "Pdf"
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -450,10 +453,19 @@ final class ProfileEditUITests: XCTestCase {
     }
 
     private func openRepoOnly() {
-        let repo = app.tables.staticTexts[repoName].firstMatch
-        XCTAssertTrue(repo.waitForExistence(timeout: 10), "Repo \(repoName) should be visible")
-        repo.tap()
-        XCTAssertTrue(app.tables.cells.firstMatch.waitForExistence(timeout: 8), "Repo folder list should load")
+        openRepoRoot(named: repoName)
+    }
+
+    private func openRepoRoot(named repo: String) {
+        let repoCell = app.tables.staticTexts[repo].firstMatch
+        XCTAssertTrue(repoCell.waitForExistence(timeout: 10), "Repo \(repo) should be visible")
+        repoCell.tap()
+        if !app.tables.cells.firstMatch.waitForExistence(timeout: 8) {
+            XCTAssertTrue(
+                app.collectionViews.cells.firstMatch.waitForExistence(timeout: 8),
+                "Repo file list should load"
+            )
+        }
     }
 
     private func propertiesToolbarElement() -> XCUIElement {
@@ -719,5 +731,109 @@ final class ProfileEditUITests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
         return app.keyboards.count == 0
+    }
+
+    // MARK: - Issue #549 (Pdf repo root)
+
+    /// Table cells are labelled "name.pdf, size · date"; grid cells carry the bare name.
+    private var pdfCellPredicate: NSPredicate {
+        NSPredicate(format: "label MATCHES[c] '.*\\.pdf(,.*)?'")
+    }
+
+    private func pdfCellQuery() -> XCUIElementQuery {
+        let table = app.tables.cells.matching(pdfCellPredicate)
+        if table.count >= 3 { return table }
+        return app.collectionViews.cells.matching(pdfCellPredicate)
+    }
+
+    private func scrollToExposePDFs(maxSwipes: Int = 8) {
+        var swipes = 0
+        while pdfCellQuery().count < 3 && swipes < maxSwipes {
+            app.swipeUp()
+            swipes += 1
+        }
+    }
+
+    private func pdfDisplayName(from label: String) -> String {
+        label.components(separatedBy: ",").first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? label
+    }
+
+    private func tapOpenPDF(at index: Int) {
+        scrollToExposePDFs()
+        let cell = pdfCellQuery().element(boundBy: index)
+        XCTAssertTrue(cell.waitForExistence(timeout: 10), "PDF cell \(index) should exist")
+        if cell.isHittable {
+            cell.tap()
+        } else {
+            cell.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+    }
+
+    private func tapQLDone() {
+        let done = app.navigationBars.buttons.matching(
+            NSPredicate(format: "label IN %@", ["Done", "完成", "Close", "关闭"])
+        ).firstMatch
+        if done.waitForExistence(timeout: 12) && done.isHittable {
+            done.tap()
+        } else {
+            app.navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.5)).tap()
+        }
+    }
+
+    /// Waits for a Quick Look to be up *and* titled `name`. Issue #549 was the previous
+    /// file's preview coming back, so "any Quick Look appeared" is not enough.
+    private func waitForQuickLook(showing name: String, timeout: TimeInterval = 30) {
+        let quickLook = app.otherElements["seafile_quicklook"]
+        XCTAssertTrue(quickLook.waitForExistence(timeout: timeout), "Quick Look should appear for \(name)")
+        let titled = NSPredicate { _, _ in
+            self.app.navigationBars[name].exists || quickLook.staticTexts[name].exists
+        }
+        let shown = XCTNSPredicateExpectation(predicate: titled, object: nil)
+        let result = XCTWaiter().wait(for: [shown], timeout: 10)
+        XCTAssertEqual(result, .completed,
+                       "Quick Look should show \(name); bars: \(app.navigationBars.allElementsBoundByIndex.map { $0.identifier })")
+    }
+
+    private func issue549PDFNames(count: Int = 3) throws -> [String] {
+        scrollToExposePDFs()
+        let cells = pdfCellQuery()
+        guard cells.count >= count else {
+            throw XCTSkip("Need \(count) PDFs in repo Pdf, found \(cells.count)")
+        }
+        return (0..<count).map { pdfDisplayName(from: cells.element(boundBy: $0).label) }
+    }
+
+    func testIssue549_PdfRepo_RapidPDFSwitch() throws {
+        loginIfNeeded()
+        // Probe before openRepoRoot: that helper asserts, and a missing fixture repo is a
+        // reason to skip, not to fail.
+        guard app.tables.staticTexts[pdfRepoName].firstMatch.waitForExistence(timeout: 10) else {
+            throw XCTSkip("No repo \(pdfRepoName) for the issue #549 fixture")
+        }
+        openRepoRoot(named: pdfRepoName)
+        let names = try issue549PDFNames()
+
+        // Warm caches so rapid-switch timing matches issue #549 repro.
+        for i in 0..<3 {
+            tapOpenPDF(at: i)
+            waitForQuickLook(showing: names[i], timeout: 90)
+            tapQLDone()
+        }
+
+        for round in 0..<10 {
+            // Never the same PDF twice in a row, including across the round boundary
+            // (which is why this is +2 and not +1): reopening the file that is still
+            // dismissing hits the seafItem guard in -presentQuickLookForItem: and the tap
+            // is dropped. That is a separate, pre-existing issue - not what this covers.
+            let a = round % 3
+            let b = (round + 2) % 3
+            tapOpenPDF(at: a)
+            waitForQuickLook(showing: names[a])
+            tapQLDone()
+            tapOpenPDF(at: b)
+            waitForQuickLook(showing: names[b])
+            tapQLDone()
+        }
     }
 }

@@ -25,6 +25,7 @@
 #import "SeafRealmManager.h"
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFileModel.h"
+#import "SeafConstants.h"
 
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
@@ -165,8 +166,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _settings = [[NSMutableDictionary alloc] init];
         _inAutoSync = false;
         _cacheProvider = cacheProvider;
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateKeyValuePairs:) name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification object:[NSUbiquitousKeyValueStore defaultStore]];
     }
     return self;
 }
@@ -673,6 +672,8 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     [Utils dict:repoLastUpdateTsMap setObject:@([[NSDate date] timeIntervalSince1970]) forKey:repoId];
     [Utils dict:_info setObject:repoLastUpdateTsMap forKey:REPO_LAST_UPDATE_PASSWORD_TIME];
     [self saveAccountInfo];
+    // The library appears in (or leaves) the Files app root once its password is known.
+    [self notifyFileProviderChange:SeafFileProviderSignalTypeRoot repoId:repoId];
 }
 - (void)saveRepo:(NSString *_Nonnull)repoId encInfo:(NSDictionary *_Nonnull)encInfo
 {
@@ -685,6 +686,17 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     [Utils dict:repoInfos setObject:encInfo forKey:repoId];
     [Utils dict:_info setObject:repoInfos forKey:@"repoInfo"];
     [self saveAccountInfo];
+    [self notifyFileProviderChange:SeafFileProviderSignalTypeRoot repoId:repoId];
+}
+
+- (void)notifyFileProviderChange:(NSString *)type repoId:(NSString *)repoId
+{
+    NSMutableDictionary *info = [NSMutableDictionary dictionaryWithObject:(type ?: SeafFileProviderSignalTypeWorkingSet)
+                                                                   forKey:SeafFileProviderSignalTypeKey];
+    if (repoId.length > 0) {
+        info[SeafFileProviderSignalRepoIdKey] = repoId;
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:SeafFileProviderShouldSignalNotification object:self userInfo:info];
 }
 
 - (NSTimeInterval)getRepoLastRefreshPasswordTime:(NSString *)repoId {
@@ -709,6 +721,20 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     if (repopasswds)
         return [repopasswds objectForKey:repoId];
     return nil;
+}
+
+- (BOOL)reloadRepoPasswordsFromInfo:(NSDictionary *)persisted
+{
+    if (![persisted isKindOfClass:[NSDictionary class]]) return NO;
+    BOOL changed = NO;
+    for (NSString *key in @[@"repopassword", @"repoInfo", REPO_LAST_UPDATE_PASSWORD_TIME]) {
+        id stored = [persisted objectForKey:key];
+        id current = [_info objectForKey:key];
+        if (stored == current || [stored isEqual:current]) continue;
+        [Utils dict:_info setObject:stored forKey:key];
+        if (![key isEqualToString:REPO_LAST_UPDATE_PASSWORD_TIME]) changed = YES;
+    }
+    return changed;
 }
 
 - (AFSecurityPolicy *)policyForHost:(NSString *)host
@@ -860,6 +886,9 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     // Remove the default account settings
     [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-SERVER"];
     [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-USER"];
+
+    // Files keeps the domain but must learn that the session is gone.
+    [self notifyFileProviderChange:SeafFileProviderSignalTypeRoot repoId:nil];
 }
 
 - (void)clearAccount
@@ -897,6 +926,8 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
          [Utils dict:self->_info setObject:[account objectForKey:@"name"] forKey:@"name"];
          [Utils dict:self->_info setObject:self.address forKey:@"link"];
          [self saveAccountInfo];
+         // The Files app location is named after the display name.
+         [self notifyFileProviderChange:SeafFileProviderSignalTypeAccount repoId:nil];
          if (handler) handler(true);
      }
               failure:
@@ -1792,52 +1823,10 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     [[SeafRealmManager shared] clearAllFileStatuses];
 }
 
-// fileProvider tagData
-- (void)saveFileProviderTagData:(NSData*)tagData withItemIdentifier:(NSString*)itemId {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:self.tagDataKey]];
-    if (tagData && tagData.length > 0) {
-        [dict setObject:tagData forKey:itemId];
-    } else {
-        [dict removeObjectForKey:itemId];
-    }
-    
-    [SeafStorage.sharedObject setObject:dict forKey:self.tagDataKey];
-    // Save to iCloud
-    [self performSelectorInBackground:@selector(saveTagDataToICloudWithObject:) withObject:dict];
-}
-
-- (void)saveTagDataToICloudWithObject:(NSDictionary *)dict {
-    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
-    [store setDictionary:dict forKey:self.tagDataKey];
-    [store synchronize];
-}
-
-- (NSData*)loadFileProviderTagDataWithItemIdentifier:(NSString*)itemId {
-    NSDictionary *dict = [SeafStorage.sharedObject objectForKey:self.tagDataKey];
-    if (dict) {
-        return [dict objectForKey:itemId];
-    } else {
-        return nil;
-    }
-}
-
-- (void)updateKeyValuePairs:(NSNotification*)notification {
-    if ([notification.userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey]) {
-        NSInteger changeReason = [[notification.userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey] integerValue];
-        if (changeReason == NSUbiquitousKeyValueStoreServerChange || changeReason == NSUbiquitousKeyValueStoreInitialSyncChange) {
-            NSArray *changeKeys = [notification.userInfo objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
-            @synchronized (changeKeys) {
-                NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
-                for (NSString *key in changeKeys) {
-                    if ([key isEqualToString:self.tagDataKey]) {
-                        NSDictionary *dict = [store objectForKey:key];
-                        [SeafStorage.sharedObject setObject:dict forKey:self.tagDataKey];
-                    }
-                }
-            }
-        }
-    }
-}
+// The legacy File Provider tag store (per-account "TagData/<account>"
+// dictionary mirrored to iCloud KVS) is read once by
+// SeafFileProviderLegacyMigrator; the replicated extension keeps tags in
+// its own store, so nothing writes here any more.
 
 - (NSString *)encodeStringToURLFormat:(NSString *)string {
     // Create a character set that includes all characters allowed in a URL query
@@ -1847,10 +1836,6 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     NSString *encodedString = [string stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
     
     return encodedString;
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification object:[NSUbiquitousKeyValueStore defaultStore]];
 }
 
 - (NSSet *)getAllCachedDirectoryOids

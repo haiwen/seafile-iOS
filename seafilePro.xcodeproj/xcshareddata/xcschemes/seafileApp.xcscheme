@@ -52,6 +52,11 @@
             value = "Camera Uploads"
             isEnabled = "YES">
          </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "UI_TEST_PDF_REPO"
+            value = "Pdf"
+            isEnabled = "YES">
+         </EnvironmentVariable>
       </EnvironmentVariables>
       <Testables>
          <TestableReference

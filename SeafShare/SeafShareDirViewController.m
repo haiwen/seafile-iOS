@@ -78,20 +78,18 @@
         [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
     ]];
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [SeafTheme primarySurface];
+    UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+    barAppearance.backgroundColor = [SeafTheme primarySurface];
 
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+    self.navigationController.navigationBar.standardAppearance = barAppearance;
+    self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
 
-        UIToolbarAppearance *toolbarAppearance = [UIToolbarAppearance new];
-        toolbarAppearance.backgroundColor = [SeafTheme primarySurface];
-        self.navigationController.toolbar.standardAppearance = toolbarAppearance;
-        self.navigationController.toolbar.scrollEdgeAppearance = toolbarAppearance;
+    UIToolbarAppearance *toolbarAppearance = [UIToolbarAppearance new];
+    toolbarAppearance.backgroundColor = [SeafTheme primarySurface];
+    self.navigationController.toolbar.standardAppearance = toolbarAppearance;
+    self.navigationController.toolbar.scrollEdgeAppearance = toolbarAppearance;
 
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
     
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 

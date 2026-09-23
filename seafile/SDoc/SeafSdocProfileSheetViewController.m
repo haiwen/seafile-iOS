@@ -127,7 +127,7 @@ static NSSet *SeafChipTypes(void)
     return s;
 }
 
-@interface SeafSdocProfileSheetViewController () <UIGestureRecognizerDelegate>
+@interface SeafSdocProfileSheetViewController ()
 @property (nonatomic, strong) NSArray<NSDictionary *> *rows;
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIStackView *stack;
@@ -137,9 +137,6 @@ static NSSet *SeafChipTypes(void)
 @property (nonatomic, strong) NSMutableArray<UICollectionView *> *chipCollections;
 @property (nonatomic, strong) NSMutableArray<NSLayoutConstraint *> *chipHeightConstraints;
 @property (nonatomic, strong) NSMutableArray *chipDataSources; // strong retain data sources/delegates
-// < iOS 15 bottom-panel simulation
-@property (nonatomic, strong) UIView *panelView;
-@property (nonatomic, strong) NSLayoutConstraint *panelHeightConstraint;
 // Editing support
 @property (nonatomic, weak) SeafConnection *connection;
 @property (nonatomic, copy) NSString *repoId;
@@ -177,41 +174,9 @@ static NSSet *SeafChipTypes(void)
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    if (@available(iOS 15.0, *)) {
-        self.view.backgroundColor = [SeafTheme primarySurface];
-    } else {
-        // Dim background and host a bottom panel
-        self.view.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
-    }
+    self.view.backgroundColor = [SeafTheme primarySurface];
 
     UIView *host = self.view;
-    if (@available(iOS 15.0, *)) {
-        // keep host as self.view
-    } else {
-        UIView *panel = [UIView new];
-        panel.translatesAutoresizingMaskIntoConstraints = NO;
-        panel.backgroundColor = [SeafTheme primarySurface];
-        panel.layer.cornerRadius = 12.0;
-        panel.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
-        panel.clipsToBounds = YES;
-        [self.view addSubview:panel];
-        self.panelView = panel;
-
-        UILayoutGuide *guide = self.view.safeAreaLayoutGuide;
-        [NSLayoutConstraint activateConstraints:@[
-            [panel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-            [panel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-            [panel.bottomAnchor constraintEqualToAnchor:guide.bottomAnchor]
-        ]];
-        self.panelHeightConstraint = [panel.heightAnchor constraintEqualToConstant:280.0];
-        self.panelHeightConstraint.active = YES;
-
-        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onBackgroundTapped)];
-        tap.delegate = self;
-        [self.view addGestureRecognizer:tap];
-
-        host = panel;
-    }
 
     _scrollView = [UIScrollView new];
     _scrollView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -289,26 +254,16 @@ static NSSet *SeafChipTypes(void)
     self.contentHeight = fit.height;
     
     self.baseMaxHeight = self.view.bounds.size.height;
-
-    if (!@available(iOS 15.0, *)) {
-        CGFloat maxH = self.view.bounds.size.height * 0.9;
-        CGFloat desired = MIN(MAX(120.0, self.contentHeight), maxH);
-        self.panelHeightConstraint.constant = desired;
-        [self.view layoutIfNeeded];
-        
-    }
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    if (@available(iOS 15.0, *)) {
-        UISheetPresentationController *sheet = self.sheetPresentationController;
-        if (sheet) {
+    UISheetPresentationController *sheet = self.sheetPresentationController;
+    if (sheet) {
         sheet.prefersGrabberVisible = YES;
         sheet.prefersScrollingExpandsWhenScrolledToEdge = YES;
         [self configureSheetDetentsForSheet:sheet initial:YES];
-        }
     }
 }
 
@@ -317,7 +272,7 @@ static NSSet *SeafChipTypes(void)
     [super viewWillDisappear:animated];
 }
 
-- (void)configureSheetDetentsForSheet:(UISheetPresentationController *)sheet initial:(BOOL)initial API_AVAILABLE(ios(15.0))
+- (void)configureSheetDetentsForSheet:(UISheetPresentationController *)sheet initial:(BOOL)initial
 {
     // Use a stable base height, not current bounds (which changes with sheet drag)
     CGFloat maxH = (self.baseMaxHeight > 0 ? self.baseMaxHeight : self.view.bounds.size.height);
@@ -328,33 +283,16 @@ static NSSet *SeafChipTypes(void)
         return;
     }
     self.lastDesiredDetent = desired;
-    if (@available(iOS 16.0, *)) {
-        UISheetPresentationControllerDetent *contentDetent = [UISheetPresentationControllerDetent customDetentWithIdentifier:@"content" resolver:^CGFloat(id<UISheetPresentationControllerDetentResolutionContext>  _Nonnull context) {
-            CGFloat limit = context.maximumDetentValue;
-            CGFloat ret = MIN(desired, limit);
-            return ret;
-        }];
-        sheet.detents = @[ contentDetent, UISheetPresentationControllerDetent.largeDetent ];
-        if (initial) {
-            sheet.selectedDetentIdentifier = @"content";
-            sheet.largestUndimmedDetentIdentifier = nil; // always dim background
-            
-        }
-    } else {
-        // iOS 15: choose medium or large depending on desired height threshold (~50%)
-        CGFloat threshold = maxH * 0.5;
-        sheet.detents = @[ UISheetPresentationControllerDetent.mediumDetent, UISheetPresentationControllerDetent.largeDetent ];
-        if (initial) {
-            if (desired <= threshold) {
-                sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
-                sheet.largestUndimmedDetentIdentifier = nil; // always dim background
-                
-            } else {
-                sheet.selectedDetentIdentifier = UISheetPresentationControllerDetentIdentifierLarge;
-                sheet.largestUndimmedDetentIdentifier = nil; // always dim background
-                
-            }
-        }
+    UISheetPresentationControllerDetent *contentDetent = [UISheetPresentationControllerDetent customDetentWithIdentifier:@"content" resolver:^CGFloat(id<UISheetPresentationControllerDetentResolutionContext>  _Nonnull context) {
+        CGFloat limit = context.maximumDetentValue;
+        CGFloat ret = MIN(desired, limit);
+        return ret;
+    }];
+    sheet.detents = @[ contentDetent, UISheetPresentationControllerDetent.largeDetent ];
+    if (initial) {
+        sheet.selectedDetentIdentifier = @"content";
+        sheet.largestUndimmedDetentIdentifier = nil; // always dim background
+        
     }
 }
 
@@ -379,17 +317,9 @@ static NSSet *SeafChipTypes(void)
     if (newH - self.contentHeight > 1.0) {
         
         self.contentHeight = newH;
-        if (@available(iOS 15.0, *)) {
-            UISheetPresentationController *sheet = self.sheetPresentationController;
-            if (sheet) {
-                [self configureSheetDetentsForSheet:sheet initial:NO];
-            }
-        } else {
-            CGFloat maxH = self.view.bounds.size.height * 0.9;
-            CGFloat desired = MIN(MAX(120.0, self.contentHeight), maxH);
-            self.panelHeightConstraint.constant = desired;
-            [self.view layoutIfNeeded];
-            
+        UISheetPresentationController *sheet = self.sheetPresentationController;
+        if (sheet) {
+            [self configureSheetDetentsForSheet:sheet initial:NO];
         }
     }
 }
@@ -398,16 +328,6 @@ static NSSet *SeafChipTypes(void)
 
 - (void)dealloc
 {
-}
-
-#pragma mark - Background tap (< iOS 15)
-
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
-{
-    if (self.panelView && [touch.view isDescendantOfView:self.panelView]) {
-        return NO;
-    }
-    return YES;
 }
 
 - (void)onEditTapped
@@ -432,11 +352,6 @@ static NSSet *SeafChipTypes(void)
         }
         [presenter presentViewController:nav animated:YES completion:nil];
     }];
-}
-
-- (void)onBackgroundTapped
-{
-    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)renderRows

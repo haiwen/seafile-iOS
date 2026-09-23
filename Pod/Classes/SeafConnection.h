@@ -477,11 +477,31 @@ Checks the auto synchronization settings and updates the connection’s synchron
 - (void)saveRepo:(NSString *_Nonnull)repoId encInfo:(NSDictionary *_Nonnull)encInfo;
 
 /**
+ * Posts SeafFileProviderShouldSignalNotification for this account so the
+ * Files app re-reads the working set (SeafFileProviderSignalTypeWorkingSet)
+ * or the library list (SeafFileProviderSignalTypeRoot). See SeafConstants.h.
+ * @param type SeafFileProviderSignalTypeWorkingSet or SeafFileProviderSignalTypeRoot.
+ * @param repoId The library concerned, when known.
+ */
+- (void)notifyFileProviderChange:(NSString * _Nonnull)type repoId:(NSString * _Nullable)repoId;
+
+/**
  * Retrieves the stored password for a specific repository.
  * @param repoId The repository identifier for which the password is being requested.
  * @return The password for the repository if found, otherwise returns nil if the password does not exist or the dictionary is not available.
  */
 - (NSString * _Nullable)getRepoPassword:(NSString * _Nonnull)repoId;
+
+/**
+ * Replaces the library passwords and encryption info held in memory with
+ * those of the persisted account record. Another process (the main app)
+ * may have saved or cleared a library password since this connection read
+ * its record; a connection reads it once, at init. No network, no other
+ * side effect.
+ * @param persisted The account record as read from SeafStorage for accountIdentifier.
+ * @return YES when the passwords or the encryption info changed.
+ */
+- (BOOL)reloadRepoPasswordsFromInfo:(NSDictionary * _Nullable)persisted;
 
 /**
  * Retrieves the encryption information for a specific repository.
@@ -513,21 +533,6 @@ Checks the auto synchronization settings and updates the connection’s synchron
  *         Returns 0 if there is no timestamp available, indicating that the password has never been updated.
  */
 - (NSTimeInterval)getRepoLastRefreshPasswordTime:(NSString *_Nullable)repoId;
-
-// fileProvider tagData
-/**
- * Saves file provider tag data for a specific item to local and iCloud storage.
- * @param tagData The NSData object containing tag data to be stored.
- * @param itemId The unique identifier for the item whose tag data is being updated or removed.
- */
-- (void)saveFileProviderTagData:(NSData * _Nullable)tagData withItemIdentifier:(NSString * _Nullable)itemId;
-
-/**
- * Loads the file provider tag data associated with a specific item identifier from local storage.
- * @param itemId The unique identifier for the item whose tag data is to be retrieved.
- * @return An NSData object containing the tag data for the item, or nil if no data is found.
- */
-- (NSData * _Nullable)loadFileProviderTagDataWithItemIdentifier:(NSString * _Nullable)itemId;
 
 /**
  * Returns a shared instance of `AFHTTPRequestSerializer` which implements `AFURLRequestSerialization` protocol.

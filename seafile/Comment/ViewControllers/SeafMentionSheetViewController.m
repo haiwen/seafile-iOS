@@ -141,13 +141,11 @@ static UIImage *SeafDefaultAvatarImage(void)
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    if (@available(iOS 15.0, *)) {
-        UISheetPresentationController *sp = self.sheetPresentationController;
-        sp.detents = @[ UISheetPresentationControllerDetent.mediumDetent, UISheetPresentationControllerDetent.largeDetent ];
-        sp.prefersGrabberVisible = YES;
-        sp.prefersScrollingExpandsWhenScrolledToEdge = YES;
-        sp.largestUndimmedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
-    }
+    UISheetPresentationController *sp = self.sheetPresentationController;
+    sp.detents = @[ UISheetPresentationControllerDetent.mediumDetent, UISheetPresentationControllerDetent.largeDetent ];
+    sp.prefersGrabberVisible = YES;
+    sp.prefersScrollingExpandsWhenScrolledToEdge = YES;
+    sp.largestUndimmedDetentIdentifier = UISheetPresentationControllerDetentIdentifierMedium;
 }
 
 - (void)updateAllUsers:(NSArray<NSDictionary *> *)users

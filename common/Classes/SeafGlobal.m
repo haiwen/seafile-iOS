@@ -19,6 +19,7 @@
 #import "Version.h"
 #import "SeafDbCacheProvider.h"
 #import "SeafStorage.h"
+#import "SeafFileProviderDomainManager.h"
 
 
 /*
@@ -237,9 +238,15 @@ static NSError * NewNSErrorFromException(NSException * exc) {
             [connections addObject:existingConn];
         } else {
             // Initialize only new accounts
-            [_cacheProvider migrateUploadedPhotos:url username:username account:[NSString stringWithFormat:@"%@/%@", url, username]];
-            [_cacheProvider migrateUploadedPhotosToRealm];
-            [_cacheProvider checkAndUpgradeRealmDB];
+            // Photo-upload bookkeeping belongs to the main app. Extensions never
+            // upload photos, and opening the Realm inside the File Provider
+            // extension kills the process on iOS 26 (no crash log): the domain
+            // then shows "Content Unavailable" in Files.
+            if ([Utils isMainApp]) {
+                [_cacheProvider migrateUploadedPhotos:url username:username account:[NSString stringWithFormat:@"%@/%@", url, username]];
+                [_cacheProvider migrateUploadedPhotosToRealm];
+                [_cacheProvider checkAndUpgradeRealmDB];
+            }
             
             SeafConnection *conn = [[SeafConnection alloc] initWithUrl:url cacheProvider:_cacheProvider username:username];
             if (conn.username) {
@@ -303,10 +310,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     if (!existed) [self.conns addObject: conn];
     BOOL result = [self saveAccounts];
-    
-    // Notify FileProvider to refresh root
-    [self notifyFileProviderRootChanged];
-    
+
+    // One File Provider domain per account; Touch ID accounts get none.
+    [[SeafFileProviderDomainManager shared] ensureDomainForConnection:conn completion:nil];
+
     return result;
 }
 
@@ -314,23 +321,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     [self.conns removeObject:conn];
     BOOL result = [self saveAccounts];
-    
-    // Notify FileProvider to refresh root
-    [self notifyFileProviderRootChanged];
-    
-    return result;
-}
 
-// Notify FileProvider extension to refresh root
-- (void)notifyFileProviderRootChanged
-{
-    [[NSFileProviderManager defaultManager]
-        signalEnumeratorForContainerItemIdentifier:NSFileProviderRootContainerItemIdentifier
-        completionHandler:^(NSError * _Nullable error) {
-            if (error) {
-                Debug("Signal FileProvider root error: %@", error);
-            }
-        }];
+    [[SeafFileProviderDomainManager shared] removeDomainForConnection:conn completion:nil];
+
+    return result;
 }
 
 - (NSArray *)publicAccounts {

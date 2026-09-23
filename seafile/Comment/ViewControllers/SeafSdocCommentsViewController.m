@@ -1154,10 +1154,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 - (BOOL)isMentionUIVisible
 {
     BOOL viewVisible = (self.mentionView && !self.mentionView.hidden);
-    BOOL sheetVisible = NO;
-    if (@available(iOS 15.0, *)) {
-        sheetVisible = (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController != nil);
-    }
+    BOOL sheetVisible = (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController != nil);
     return viewVisible || sheetVisible;
 }
 
@@ -1196,22 +1193,12 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     [self ensureRelatedUsersLoaded:^{
         __strong typeof(wself) sself = wself; if (!sself) return;
         BOOL visible = [sself isMentionUIVisible];
-        if (@available(iOS 15.0, *)) {
-            if (!visible && allowPresent) {
-                [sself presentMentionSheetIfNeeded];
-            }
-            if ([sself isMentionUIVisible]) {
-                [sself.mentionSheetVC updateAllUsers:sself.mentionAllUsers];
-                [sself.mentionSheetVC applyFilter:query];
-            }
-        } else {
-            if (!visible && allowPresent) {
-                [sself.mentionView updateAllUsers:sself.mentionAllUsers];
-                [sself.mentionView applyFilter:query];
-                [sself.mentionView showInView:sself.view belowView:sself->_inputViewBar];
-            } else if ([sself isMentionUIVisible]) {
-                [sself.mentionView applyFilter:query];
-            }
+        if (!visible && allowPresent) {
+            [sself presentMentionSheetIfNeeded];
+        }
+        if ([sself isMentionUIVisible]) {
+            [sself.mentionSheetVC updateAllUsers:sself.mentionAllUsers];
+            [sself.mentionSheetVC applyFilter:query];
         }
     }];
 }
@@ -1407,7 +1394,6 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
 - (void)presentMentionSheetIfNeeded
 {
-    if (!@available(iOS 15.0, *)) return;
     if (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController) {
         return;
     }
@@ -1421,9 +1407,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         }
         sself.isMentionSheetPresented = NO;
     };
-    if (@available(iOS 15.0, *)) {
-        vc.modalPresentationStyle = UIModalPresentationPageSheet;
-    }
+    vc.modalPresentationStyle = UIModalPresentationPageSheet;
     self.mentionSheetVC = vc;
     self.isMentionSheetPresented = YES;
     vc.presentationController.delegate = self;
@@ -1432,11 +1416,9 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
 - (void)hideMentionUI
 {
-    if (@available(iOS 15.0, *)) {
-        if (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController) {
-            [self.mentionSheetVC dismissViewControllerAnimated:YES completion:nil];
-            self.isMentionSheetPresented = NO;
-        }
+    if (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController) {
+        [self.mentionSheetVC dismissViewControllerAnimated:YES completion:nil];
+        self.isMentionSheetPresented = NO;
     }
     [self.mentionView hide];
 }

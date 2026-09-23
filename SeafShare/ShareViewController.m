@@ -128,9 +128,7 @@ static inline UIEdgeInsets SeafAccountSeparatorInset(void) {
     self.tableView.contentInset = UIEdgeInsetsMake(8, 0, 8, 0);
     self.tableView.scrollEnabled = NO; // Card hugs content; enable only when taller than viewport.
     self.tableView.alwaysBounceVertical = YES;
-    if (@available(iOS 15.0, *)) {
-        self.tableView.sectionHeaderTopPadding = 0;
-    }
+    self.tableView.sectionHeaderTopPadding = 0;
     [self.view addSubview:self.tableView];
 
     UILayoutGuide *guide = self.view.safeAreaLayoutGuide;
