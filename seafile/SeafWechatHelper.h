@@ -14,6 +14,7 @@
 
 + (void)registerWechat;
 + (BOOL)wechatInstalled;
++ (BOOL)handleOpenURL:(NSURL *)url delegate:(id<WXApiDelegate>)delegate;
 + (void)shareToWechatWithFile:(SeafFile*)file;
 
 @end

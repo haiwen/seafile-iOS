@@ -103,8 +103,8 @@
          forCellReuseIdentifier:@"SeafCell"];
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
+    [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
-    self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
     
     UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
     bView.backgroundColor = kPrimaryBackgroundColor;
@@ -119,6 +119,14 @@
 
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     self.tableView.sectionHeaderTopPadding = 0;
+    // Same 10pt gap under the navigation bar as a directory file list.
+    self.tableView.sectionHeaderHeight = 0;
+    self.tableView.estimatedSectionHeaderHeight = 0;
+    CGFloat headerWidth = CGRectGetWidth(self.tableView.bounds);
+    if (headerWidth < 1.0) {
+        headerWidth = CGRectGetWidth(self.view.bounds);
+    }
+    self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, headerWidth, 10.0)];
     
     // Initialize loading view
     self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
@@ -277,6 +285,13 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     return 1;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    // Storyboard plain style defaults to a 22pt header. The 10pt table
+    // header is the gap under the navigation bar; don't add another one.
+    return 0.01;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section

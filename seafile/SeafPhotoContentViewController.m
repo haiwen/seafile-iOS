@@ -29,6 +29,10 @@
 @interface SeafPhotoContentViewController ()<UIScrollViewDelegate, SeafLivePhotoPlayerViewDelegate>
 @property (nonatomic, strong, readwrite) UIScrollView  *scrollView;
 @property (nonatomic, strong) UIImageView   *imageView;
+/// Scroll-view bounds size last passed to `configureForImage:`. Used to
+/// detect a window resize (rotation, iPhone Duo fold) that autoresizing
+/// already applied to the scroll view, so Aspect Fit has to be redone.
+@property (nonatomic, assign) CGSize configuredImageBounds;
 @property (nonatomic, strong) SeafPhotoInfoView *infoView;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 @property (nonatomic, strong) UITapGestureRecognizer *doubleTapGesture;
@@ -1135,14 +1139,22 @@
         newZoomScale = MAX(newZoomScale, self.scrollView.minimumZoomScale);
         self.scrollView.zoomScale = newZoomScale;
         
-        // Restore focal point position
-        CGFloat maxOffsetX = self.scrollView.contentSize.width  - self.scrollView.bounds.size.width;
-        CGFloat maxOffsetY = self.scrollView.contentSize.height - self.scrollView.bounds.size.height;
+        // Restore focal point. A fitted image is smaller than the scroll view
+        // on the long axis, and the only offset that centers it is negative
+        // (equal to -contentInset). Clamping at 0 pins that image to the top,
+        // which is what a Duo fold from the wide inner display looks like.
+        UIEdgeInsets inset = self.scrollView.contentInset;
+        CGFloat minOffsetX = -inset.left;
+        CGFloat minOffsetY = -inset.top;
+        CGFloat maxOffsetX = self.scrollView.contentSize.width - self.scrollView.bounds.size.width + inset.right;
+        CGFloat maxOffsetY = self.scrollView.contentSize.height - self.scrollView.bounds.size.height + inset.bottom;
+        if (maxOffsetX < minOffsetX) maxOffsetX = minOffsetX;
+        if (maxOffsetY < minOffsetY) maxOffsetY = minOffsetY;
         CGFloat newOffsetX = normalizedCenterX * self.scrollView.contentSize.width  - self.scrollView.bounds.size.width  / 2.0;
         CGFloat newOffsetY = normalizedCenterY * self.scrollView.contentSize.height - self.scrollView.bounds.size.height / 2.0;
         self.scrollView.contentOffset = CGPointMake(
-            MAX(0, MIN(newOffsetX, maxOffsetX)),
-            MAX(0, MIN(newOffsetY, maxOffsetY))
+            MIN(MAX(newOffsetX, minOffsetX), maxOffsetX),
+            MIN(MAX(newOffsetY, minOffsetY), maxOffsetY)
         );
 
         [self centerImageInScrollViewForReason:@"viewWillTransitionToSize"];
@@ -1838,8 +1850,16 @@
     // only fires on actual layout changes (orientation, info-panel toggle,
     // first appearance, etc.).
     CGRect targetScrollFrame = [self targetScrollViewFrameForInfoVisibility:self.infoVisible];
+    BOOL imageBoundsChanged = !CGSizeEqualToSize(self.scrollView.bounds.size, self.configuredImageBounds);
     if (!CGRectEqualToRect(self.scrollView.frame, targetScrollFrame)) {
         [self updateViewFramesForInfoVisibility:self.infoVisible];
+    } else if (imageBoundsChanged && !self.isZooming && !self.isZoomedIn && self.imageView.image
+               && self.scrollView.bounds.size.width > 0 && self.scrollView.bounds.size.height > 0) {
+        // Autoresizing already grew the scroll view (Duo fold, split resize)
+        // without a frame the equality check above would notice. Refit the
+        // image; configureForImage: also pins the offset so a landscape photo
+        // centers instead of sticking to the top.
+        [self configureForImage:self.imageView.image];
     } else if (!self.isZooming) {
         // Frames already correct — just keep contentInset centered. This is
         // cheap and idempotent OUTSIDE of an active pinch. During a pinch
@@ -2531,8 +2551,18 @@
     maxScale = MIN(maxScale, 10.0); // Cap at 10x to limit memory
     self.scrollView.maximumZoomScale = maxScale;
     
-    // ⑦ Center the image using contentInset
+    // ⑦ Center the image using contentInset, then pin the offset. Setting
+    // the inset alone leaves contentOffset at 0, which scrolls the padding
+    // away and sticks the image to the top of a taller window.
+    // Record the size first: assigning contentOffset can re-enter layout,
+    // and that pass must not call configureForImage: again.
+    self.configuredImageBounds = boundsSize;
     [self centerImageInScrollViewForReason:@"configureForImage"];
+    UIEdgeInsets fittedInset = self.scrollView.contentInset;
+    CGPoint fittedOffset = CGPointMake(-fittedInset.left, -fittedInset.top);
+    if (!CGPointEqualToPoint(self.scrollView.contentOffset, fittedOffset)) {
+        self.scrollView.contentOffset = fittedOffset;
+    }
 }
 
 // Center the imageView within the scrollView using contentInset.

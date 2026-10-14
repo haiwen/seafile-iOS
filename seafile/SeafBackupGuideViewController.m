@@ -381,7 +381,8 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
 }
 
 - (BOOL)isSmallScreen {
-    return [UIScreen mainScreen].bounds.size.width <= 375.0;
+    UIWindow *window = self.view.window ?: [SeafAppDelegate activeWindow];
+    return window.bounds.size.width <= 375.0;
 }
 
 - (UIView *)createOptionViewWithTitle:(NSString *)title type:(SeafBackupButtonType)type selected:(BOOL)selected {
