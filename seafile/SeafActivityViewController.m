@@ -64,11 +64,41 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
 
     // Do any additional setup after loading the view from its nib.
     self.title = NSLocalizedString(@"Activities", @"Seafile");
+    if (self.tableView && self.tableView != self.view) {
+        NSMutableArray<NSLayoutConstraint *> *oldConstraints = [NSMutableArray array];
+        for (NSLayoutConstraint *constraint in self.view.constraints) {
+            if (constraint.firstItem == self.tableView || constraint.secondItem == self.tableView) {
+                [oldConstraints addObject:constraint];
+            }
+        }
+        [NSLayoutConstraint deactivateConstraints:oldConstraints];
+        [SeafNavigationBarStyler pinViewToSafeAreaExtendingToHostBottom:self.tableView inHostView:self.view];
+    }
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60.0;
     self.tableView.tableFooterView = [UIView new];
     [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
+
+    UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
+    bView.backgroundColor = kPrimaryBackgroundColor;
+    self.tableView.backgroundView = bView;
+
+    // Unified card-style layout (match file list & Starred page)
+    self.tableView.cellLayoutMarginsFollowReadableWidth = NO;
+    self.tableView.layoutMargins = UIEdgeInsetsMake(0, 15, 0, 15);
+    self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
+    self.tableView.sectionHeaderTopPadding = 0;
+    self.tableView.sectionHeaderHeight = 0;
+    self.tableView.estimatedSectionHeaderHeight = 0;
+    self.tableView.sectionFooterHeight = 0;
+    self.tableView.estimatedSectionFooterHeight = 0;
+    CGFloat headerWidth = CGRectGetWidth(self.tableView.bounds);
+    if (headerWidth < 1.0) {
+        headerWidth = CGRectGetWidth(self.view.bounds);
+    }
+    self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, headerWidth, 10.0)];
+
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
@@ -419,6 +449,13 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     return 1;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    // Storyboard plain style defaults to a 28pt header. The 10pt table
+    // header is the gap under the navigation bar; don't add another one.
+    return 0.01;
+}
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (section == 1)
@@ -469,7 +506,11 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     cell.authorLabel.text = [event objectForKey:@"nick"];
     long timestamp = [[event objectForKey:@"time"] longValue];
     cell.timeLabel.text = [SeafDateFormatter stringFromLongLong:timestamp];
-    cell.backgroundColor = [UIColor clearColor];
+
+    BOOL isFirstCell = (indexPath.row == 0);
+    BOOL isLastCell = (indexPath.row == (NSInteger)_events.count - 1);
+    [cell updateSeparatorInset:isLastCell];
+    [cell updateCellStyle:isFirstCell isLastCell:isLastCell];
 
     return cell;
 }
@@ -483,6 +524,11 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     
     SeafActivityModel *event = [[SeafActivityModel alloc] initWithEventJSON:[_events objectAtIndex:indexPath.row] andOpsMap:self.opsMap];
     [cell showWithImage:event.avatarURL author:event.authorName operation:event.operation time:event.time attributedDetail:event.attributedDetail repoName:event.repoName];
+    
+    BOOL isFirstCell = (indexPath.row == 0);
+    BOOL isLastCell = (indexPath.row == (NSInteger)_events.count - 1);
+    [cell updateSeparatorInset:isLastCell];
+    [cell updateCellStyle:isFirstCell isLastCell:isLastCell];
     
     return cell;
 }
@@ -982,6 +1028,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
+    [SeafNavigationBarStyler updateTableViewBackgroundViewFrame:self.tableView];
     [self.loadingView updatePosition];
 }
 
