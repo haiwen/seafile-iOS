@@ -140,10 +140,7 @@ enum {
 
 @property NSString *version;// Stores the current version of the application.
 
-/// Trailing constraints for storyboard switches. The constant tracks the
-/// table's horizontal safe area so a fold/unfold does not leave the control
-/// under the outer display's camera column.
-@property (nonatomic, strong) NSMutableArray<NSLayoutConstraint *> *switchTrailingConstraints;
+/// Whether the storyboard switches/labels have been pinned with Auto Layout.
 @property (nonatomic) BOOL settingsSwitchConstraintsInstalled;
 @end
 
@@ -481,7 +478,6 @@ enum {
     for (UITableViewCell *cell in self.tableView.visibleCells) {
         [self layoutSettingsChromeForCell:cell];
     }
-    [self updateSettingsSwitchTrailingConstraints];
     NSInteger sections = [self.tableView numberOfSections];
     for (NSInteger section = 0; section < sections; section++) {
         UIView *header = [self.tableView headerViewForSection:section];
@@ -801,10 +797,11 @@ enum {
 #pragma mark - Duo outer-display layout
 
 // How far `view` still sticks into the table's horizontal unsafe area.
-// Measured from the table, not from the view's own safeAreaInsets, so a
-// content view that is already inset is not inset a second time. The outer
-// display keeps an ~84pt status/camera column on the right; storyboard
-// frames were built for a 393pt phone and do not follow that inset.
+// Measured from the table, not from the view's own safeAreaInsets. The outer
+// display keeps an ~84pt status/camera column on the right. The table insets
+// each cell's contentView into the safe area, but not the cell itself, so the
+// card / separator added directly to the cell and the custom section headers
+// still need this.
 - (UIEdgeInsets)safeInsetsOfViewInTable:(UIView *)view
 {
     if (!view || !self.tableView) return UIEdgeInsetsZero;
@@ -859,11 +856,11 @@ enum {
     [toggle setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
 
     // 6pt matches the storyboard gap on a 393pt canvas (switch at x = 336).
-    // The extra safe-area term is applied in updateSettingsSwitchTrailingConstraints.
-    NSLayoutConstraint *trailing = [toggle.trailingAnchor constraintEqualToAnchor:content.trailingAnchor constant:-6];
-    [self.switchTrailingConstraints addObject:trailing];
+    // No safe-area term is needed: the table already insets contentView into
+    // the safe area (insetsContentViewsToSafeArea), including the Duo outer
+    // display's camera column.
     NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithObjects:
-        trailing,
+        [toggle.trailingAnchor constraintEqualToAnchor:content.trailingAnchor constant:-6],
         [toggle.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
         nil];
 
@@ -874,6 +871,7 @@ enum {
         [label setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
         [constraints addObject:[label.leadingAnchor constraintEqualToAnchor:content.leadingAnchor constant:leading]];
         [constraints addObject:[label.centerYAnchor constraintEqualToAnchor:content.centerYAnchor]];
+        // Long labels truncate instead of running under the switch.
         [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:toggle.leadingAnchor constant:-12]];
     }
     [NSLayoutConstraint activateConstraints:constraints];
@@ -883,7 +881,6 @@ enum {
 {
     if (self.settingsSwitchConstraintsInstalled) return;
     if (!_enableTouchIDSwitch.superview) return;
-    self.switchTrailingConstraints = [NSMutableArray array];
     [self pinSwitch:_enableTouchIDSwitch label:_enableTouchIDLabel];
     [self pinSwitch:_autoSyncSwitch label:_autoCameraUploadLabel];
     [self pinSwitch:_videoSyncSwitch label:_videoSyncLabel];
@@ -895,21 +892,6 @@ enum {
     [self pinSwitch:_autoClearPasswdSwitch label:_autoClearPasswdLabel];
     [self pinSwitch:_localDecrySwitch label:_localDecryLabel];
     self.settingsSwitchConstraintsInstalled = YES;
-}
-
-- (void)updateSettingsSwitchTrailingConstraints
-{
-    [self installSettingsSwitchConstraintsIfNeeded];
-    for (NSLayoutConstraint *trailing in self.switchTrailingConstraints) {
-        UIView *toggle = (UIView *)trailing.firstItem;
-        UIView *content = toggle.superview;
-        if (!content.window) continue;
-        UIEdgeInsets safe = [self safeInsetsOfViewInTable:content];
-        CGFloat constant = -(safe.right + 6.0);
-        if (fabs(trailing.constant - constant) > 0.5) {
-            trailing.constant = constant;
-        }
-    }
 }
 
 - (void)layoutSettingsHeader:(UIView *)header
@@ -1032,7 +1014,7 @@ enum {
         [cell insertSubview:separatorView aboveSubview:cardBackgroundView];
     }
     [self layoutSettingsChromeForCell:cell];
-    [self updateSettingsSwitchTrailingConstraints];
+    [self installSettingsSwitchConstraintsIfNeeded];
 
     // Manage Separators - hide default separators
     cell.separatorInset = UIEdgeInsetsMake(0, 0, 0, cell.bounds.size.width);

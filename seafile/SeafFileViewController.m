@@ -150,18 +150,6 @@ enum {
 
 @end
 
-/// One bar-button item for search / view mode / more. Duo's outer display
-/// moves a bar-button item that does not fit into the status column, where
-/// taps never reach the button. Separate items let it peel off the last one.
-@interface SeafNavIconCluster : UIView
-@end
-
-@implementation SeafNavIconCluster
-- (CGSize)intrinsicContentSize {
-    return CGSizeMake(MAX(CGRectGetWidth(self.bounds), 1.0), 44.0);
-}
-@end
-
 @implementation SeafFileViewController
 
 @synthesize connection = _connection;
@@ -476,19 +464,21 @@ static CGFloat SeafNavBarClusterWidth(NSUInteger count) {
     return [[UIBarButtonItem alloc] initWithCustomView:btn];
 }
 
-/// Search, view mode, and more share one bar-button item so Duo cannot move
-/// only "more" into the status column. `buttons` is left-to-right.
+/// Search, view mode, and more share one bar-button item. Duo's outer display
+/// moves a bar-button item that does not fit into the status column, where taps
+/// never reach the button; separate items would let it peel off only "more".
+/// `buttons` is left-to-right.
 - (UIView *)navBarIconClusterWithButtons:(NSArray<UIButton *> *)buttons {
-    CGFloat width = SeafNavBarClusterWidth(buttons.count);
-    SeafNavIconCluster *cluster = [[SeafNavIconCluster alloc] initWithFrame:CGRectMake(0, 0, width, kNavBarIconItemHeight)];
-    [cluster setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [cluster setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    cluster.isAccessibilityElement = NO;
-    [buttons enumerateObjectsUsingBlock:^(UIButton *button, NSUInteger idx, BOOL *stop) {
-        button.frame = CGRectMake(idx * (kNavBarClusterButtonSide + kNavBarClusterSpacing), 0,
-                                  kNavBarClusterButtonSide, kNavBarIconItemHeight);
-        [cluster addSubview:button];
-    }];
+    UIStackView *cluster = [[UIStackView alloc] initWithArrangedSubviews:buttons];
+    cluster.axis = UILayoutConstraintAxisHorizontal;
+    cluster.spacing = kNavBarClusterSpacing;
+    // Exact size up front: libraryNavTrailingReservedWidth reads customView.bounds.
+    cluster.frame = CGRectMake(0, 0, SeafNavBarClusterWidth(buttons.count), kNavBarIconItemHeight);
+    for (UIButton *button in buttons) {
+        // Width only: the bar sets the height, and the stack stretches buttons to it.
+        button.translatesAutoresizingMaskIntoConstraints = NO;
+        [button.widthAnchor constraintEqualToConstant:kNavBarClusterButtonSide].active = YES;
+    }
     return cluster;
 }
 
