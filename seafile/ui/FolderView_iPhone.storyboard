@@ -9,7 +9,7 @@
         <!--Tab Bar Controller-->
         <scene sceneID="vyo-ju-qLe">
             <objects>
-                <tabBarController storyboardIdentifier="TABVC" definesPresentationContext="YES" providesPresentationContextTransitionStyle="YES" id="IwU-Z8-46U" sceneMemberID="viewController">
+                <tabBarController storyboardIdentifier="TABVC" customClass="SeafTabBarController" definesPresentationContext="YES" providesPresentationContextTransitionStyle="YES" id="IwU-Z8-46U" sceneMemberID="viewController">
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <nil key="simulatedBottomBarMetrics"/>
                     <tabBar key="tabBar" contentMode="scaleToFill" id="UkN-PX-asw">

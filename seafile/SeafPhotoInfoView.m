@@ -4,6 +4,7 @@
 #import <ImageIO/ImageIO.h>
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "SeafTheme.h"
+#import "Constants.h"
 
 // Subview tags inside `infoScrollView`: EXIF card, profile rows section,
 // and the fixed-height loading placeholder for profile rows.
@@ -129,6 +130,7 @@ static const NSInteger kProfileLoadingTag = 997;
     UIFont *smallFont = [UIFont systemFontOfSize:12];
     UIColor *textColor = [SeafTheme secondaryText];
     UIColor *lightGrayColor = [SeafTheme separator];
+    CGFloat hairline = SEAF_SEPARATOR_HEIGHT_IN(self);
     UIColor *cardBackgroundColor = [SeafTheme secondarySurface];
     UIColor *modelBackgroundColor = [SeafTheme fill];
 
@@ -188,7 +190,7 @@ static const NSInteger kProfileLoadingTag = 997;
     modelBackgroundView.frame = modelBgFrame;
 
     // --- Separator Line (below model background) ---
-    UIView *separatorTop = [[UIView alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(modelBackgroundView.frame), availableWidth, 1.0 / [UIScreen mainScreen].scale)];
+    UIView *separatorTop = [[UIView alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(modelBackgroundView.frame), availableWidth, hairline)];
     separatorTop.backgroundColor = lightGrayColor;
     [exifSectionContainer addSubview:separatorTop]; // Add to main container
     
@@ -248,7 +250,7 @@ static const NSInteger kProfileLoadingTag = 997;
     currentDetailsY += verticalSpacing * 1.5; // More space after this block
 
     // --- Separator Line (within detailsBackgroundView) ---
-    UIView *separator1 = [[UIView alloc] initWithFrame:CGRectMake(0, currentDetailsY, availableWidth, 1.0 / [UIScreen mainScreen].scale)];
+    UIView *separator1 = [[UIView alloc] initWithFrame:CGRectMake(0, currentDetailsY, availableWidth, hairline)];
     separator1.backgroundColor = lightGrayColor;
     [detailsBackgroundView addSubview:separator1];
     currentDetailsY += separator1.frame.size.height + verticalSpacing * 1.5; // Space after separator
@@ -304,9 +306,9 @@ static const NSInteger kProfileLoadingTag = 997;
         
         // Add vertical separator (except for the last item)
         if (i < detailItems.count - 1) {
-            UIView *vSeparator = [[UIView alloc] initWithFrame:CGRectMake(currentDetailX + detailItemWidth - (1.0 / [UIScreen mainScreen].scale) / 2.0,
+            UIView *vSeparator = [[UIView alloc] initWithFrame:CGRectMake(currentDetailX + detailItemWidth - hairline / 2.0,
                                                                        currentDetailsY,
-                                                                       1.0 / [UIScreen mainScreen].scale,
+                                                                       hairline,
                                                                        label.frame.size.height)];
             vSeparator.backgroundColor = lightGrayColor;
             [detailsBackgroundView addSubview:vSeparator];

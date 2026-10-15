@@ -76,17 +76,56 @@
     self.imageView.layer.cornerRadius = 5.0f;
 }
 
+/// How far this cell still overlaps the table's horizontal unsafe area.
+/// File-list tables are pinned inside the safe area, so this is zero and the
+/// 23/16 separator inset stays put. Starred is a full-bleed table view
+/// controller; on iPhone Duo's outer display the right ~84pt is the camera
+/// column, and a cell-edge inset would draw the separator through it.
+/// Measured from the table, same as settings, so a content view that is
+/// already inset is not inset a second time.
+- (UIEdgeInsets)seaf_horizontalUnsafeOverlap
+{
+    UIView *ancestor = self.superview;
+    UITableView *tableView = nil;
+    while (ancestor) {
+        if ([ancestor isKindOfClass:[UITableView class]]) {
+            tableView = (UITableView *)ancestor;
+            break;
+        }
+        ancestor = ancestor.superview;
+    }
+    if (!tableView) return UIEdgeInsetsZero;
+    CGFloat tableWidth = CGRectGetWidth(tableView.bounds);
+    CGFloat width = CGRectGetWidth(self.bounds);
+    if (tableWidth < 1.0 || width < 1.0) return UIEdgeInsetsZero;
+    UIEdgeInsets tableSafe = tableView.safeAreaInsets;
+    CGRect rect = [self convertRect:self.bounds toView:tableView];
+    CGFloat left = tableSafe.left - CGRectGetMinX(rect);
+    CGFloat right = CGRectGetMaxX(rect) - (tableWidth - tableSafe.right);
+    return UIEdgeInsetsMake(0, MAX(0.0, left), 0, MAX(0.0, right));
+}
+
+- (void)seaf_applyCardSeparatorInset
+{
+    UIEdgeInsets inset;
+    if (self.isLastCell) {
+        inset = UIEdgeInsetsMake(0, CGRectGetWidth(self.bounds), 0, 0);
+    } else {
+        UIEdgeInsets overlap = [self seaf_horizontalUnsafeOverlap];
+        inset = UIEdgeInsetsMake(0,
+                                  SEAF_SEPARATOR_LEFT_INSET + overlap.left,
+                                  0,
+                                  SEAF_SEPARATOR_RIGHT_INSET + overlap.right);
+    }
+    // Assigning separatorInset can re-enter layout. Skip when unchanged.
+    if (!UIEdgeInsetsEqualToEdgeInsets(self.separatorInset, inset)) {
+        self.separatorInset = inset;
+    }
+}
+
 - (void)layoutSubviews {
     [super layoutSubviews];
-    
-    if (!self.isLastCell) {
-        // Unified separator inset matching card-style list standard
-        self.separatorInset = UIEdgeInsetsMake(0, SEAF_SEPARATOR_LEFT_INSET, 0, SEAF_SEPARATOR_RIGHT_INSET);
-    }
-    else {
-        // reset separatorInset to default.
-        self.separatorInset = UIEdgeInsetsMake(0, self.bounds.size.width, 0, 0);
-    }
+    [self seaf_applyCardSeparatorInset];
 }
 
 - (void)updateCellStyle:(BOOL)isFirstCell isLastCell:(BOOL)isLastCell {

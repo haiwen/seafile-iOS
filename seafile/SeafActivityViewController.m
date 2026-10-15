@@ -67,8 +67,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60.0;
     self.tableView.tableFooterView = [UIView new];
+    [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
-    self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
