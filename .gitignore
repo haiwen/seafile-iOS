@@ -35,3 +35,6 @@ scripts/
 
 # Xcode build output
 build/
+
+# Simulator-only OpenSSL built by Vendor/OpenSSL-simulator/build.sh
+Vendor/OpenSSL-simulator/lib/
