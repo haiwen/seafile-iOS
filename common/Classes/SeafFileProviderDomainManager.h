@@ -14,9 +14,26 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Told about the domain lifecycle. Registered by the main app's indexer
+/// (SeafFPIndexer); this class is compiled into the extensions too and must
+/// not reference app-only classes directly.
+@protocol SeafFileProviderDomainObserver <NSObject>
+/// The domain was added (or is still there after a failed removal).
+- (void)fileProviderDomainDidActivate:(NSString *)domainIdentifier;
+/// The domain is about to be removed (Touch ID turned on, account deleted):
+/// stop writing its store now.
+- (void)fileProviderDomainWillDeactivate:(NSString *)domainIdentifier;
+/// The domain's store is about to be deleted. Call `removeStore` once nothing
+/// can write it anymore (queued writes drained, open stores closed).
+- (void)fileProviderDomainWillRemoveStore:(NSString *)domainIdentifier removeStore:(dispatch_block_t)removeStore;
+@end
+
 @interface SeafFileProviderDomainManager : NSObject
 
 + (instancetype)shared;
+
+/// Main app only; nil in the extensions.
+@property (nonatomic, weak, nullable) id<SeafFileProviderDomainObserver> domainObserver;
 
 + (NSString *)domainIdentifierForConnection:(SeafConnection *)conn;
 + (NSString *)displayNameForConnection:(SeafConnection *)conn;
@@ -39,7 +56,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// fetched) only refreshes the domain's display name.
 - (void)startObservingChangeNotifications;
 
-/// Signals are coalesced per domain within two seconds. A replicated
+/// Signals are coalesced per domain within five seconds (every signal makes
+/// the extension re-list the library list). A replicated
 /// extension only honours working set signals, so the "root" variant also
 /// signals the working set; the extension re-checks the library list there.
 - (void)signalWorkingSetForConnection:(SeafConnection *)conn;
@@ -47,6 +65,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)signalWorkingSetForConnections:(NSArray<SeafConnection *> *)conns;
 /// Sends every coalesced signal now (call before the app is suspended).
 - (void)flushPendingSignals;
+/// Same, calling `completion` (on an arbitrary queue) once the system has
+/// answered every signal sent.
+- (void)flushPendingSignalsWithCompletion:(nullable dispatch_block_t)completion;
 
 /// Deletes the legacy "File Provider Storage" directory left by the old
 /// NSFileProviderExtension. Runs once.

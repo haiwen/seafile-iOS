@@ -2,6 +2,7 @@
 //  Seafile
 
 #import "SeafSdocWebViewController.h"
+#import "SeafFPIndexer.h"
 #import "SeafWebViewBridge.h"
 #import "SeafSdocStylePopupViewController.h"
 #import "SeafSdocEditorToolbar.h"
@@ -97,6 +98,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     if (self) {
         _file = file;
         _fileName = fileName;
+        [[SeafFPIndexer shared] noteFileOpened:file];   // Files app Recents / search
         _nextEditMode = YES;
         _isEditing = NO;
         _keyboardVisibleHeight = 0;

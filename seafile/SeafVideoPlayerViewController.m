@@ -4,6 +4,7 @@
 #import "Debug.h"
 #import "Version.h"
 #import "SeafFile.h"
+#import "SeafFPIndexer.h"
 #import "SeafCacheManager+Thumb.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MediaPlayer.h>
@@ -31,6 +32,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     self = [super init];
     if (self) {
         _file = file;
+        [[SeafFPIndexer shared] noteFileOpened:file];   // Files app Recents / search
         self.modalPresentationStyle = UIModalPresentationFullScreen;
         
         // Close any existing active video player

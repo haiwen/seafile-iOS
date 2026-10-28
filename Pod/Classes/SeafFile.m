@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "SeafFile.h"
 #import "SeafRepos.h"
+#import "SeafConnection.h"
 #import "SeafThumb.h"
 #import "SeafDataTaskManager.h"
 #import "SeafStorage.h"
@@ -203,6 +204,12 @@
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_SUCCESS;
     self.oid = ooid;
+    // Files app index: fills in the content id of a record created without
+    // one (starred item, search result); a stored oid is never replaced.
+    id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+    if (indexer && ooid.length > 0 && self.connection && self.repoId.length > 0 && self.path.length > 0) {
+        [indexer fp_noteDownloadedFileOfRepo:self.repoId path:self.path oid:ooid size:(long long)self.filesize connection:self.connection];
+    }
     [[SeafCacheManager sharedManager] saveThumbFromEncrypetedFile:self];
     [self downloadComplete:updated];
 }
