@@ -25,6 +25,7 @@
 #import "SeafTabBarStyler.h"
 #import "SeafFileProviderDomainManager.h"
 #import "SeafFileProviderLegacyMigrator.h"
+#import "SeafFPIndexer.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -368,6 +369,9 @@
     // the old extension, then make the registered domains match the accounts.
     // SDK change notifications are forwarded to the domains from here on.
     [[SeafFileProviderDomainManager shared] startObservingChangeNotifications];
+    // Files app search (#228): what the app lists, renames, moves, stars,
+    // searches and opens is copied into the File Provider store.
+    [[SeafFPIndexer shared] start];
     // Legacy cleanup and migration touch the file system and sqlite: off the
     // main thread, before any domain is registered.
     NSArray *accountsAtLaunch = [SeafGlobal.sharedObject.conns copy];

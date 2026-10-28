@@ -112,6 +112,8 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
 - (NSArray<SeafFPRecord *> *)liveRecordsAfterUUID:(nullable NSString *)uuid limit:(NSInteger)limit;
 
 /// Renames / moves a record; directory subtrees follow. uuid stays the same.
+/// The directory it leaves gets a stamp (see directoryStampForRepo:) so a
+/// listing of it that was requested earlier is not applied by the main app.
 - (nullable SeafFPRecord *)moveRecordUUID:(NSString *)uuid
                                    toRepo:(NSString *)repoId
                                      path:(NSString *)path
@@ -149,6 +151,115 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
 /// Sets the "materialized" reason on exactly the given items and clears it
 /// everywhere else. Does not advance seq: the system already knows these items.
 - (void)replaceMaterializedItemIdentifiers:(NSArray<NSString *> *)identifiers;
+
+#pragma mark main app indexing (SeafFPIndexer)
+
+// The main app feeds metadata it already has (directory listings, starred
+// items, search results, uploads, opened files) into the store so Files can
+// find those items through the working set. Every method below runs in one
+// BEGIN IMMEDIATE transaction and gives up without writing anything when the
+// write lock cannot be taken or when the extension changed the affected rows
+// after the main app's request started: the extension's view always wins.
+// They return YES when at least one row changed (the caller signals then).
+
+/// Keys of the entry dictionaries. Listing entries carry a name, sparse
+/// entries a full path. oid (non-empty string), size (>= 0) and mtime (> 0)
+/// are optional; a missing value keeps the stored one.
+extern NSString * const SeafFPEntryName;
+extern NSString * const SeafFPEntryPath;
+extern NSString * const SeafFPEntryIsDir;
+extern NSString * const SeafFPEntryOid;
+extern NSString * const SeafFPEntrySize;
+extern NSString * const SeafFPEntryMtime;
+
+/// Current seq read through a private read-only style handle: the file is
+/// opened without SQLITE_OPEN_CREATE, no DDL / PRAGMA runs, 200 ms busy
+/// timeout, closed right away. -1 when the store does not exist or cannot be
+/// read. Never waits behind a write transaction of another store instance
+/// (WAL readers do not block), so it may run on the main thread.
++ (long long)currentSeqForDomainIdentifier:(NSString *)domainIdentifier;
+
+/// Applies a complete server listing of one directory. requestStartSeq is the
+/// seq read before the request was sent; -1 means unknown, then only rows for
+/// unknown paths are inserted (nothing is updated, revived or tombstoned).
+/// Gives up when an ancestor was tombstoned after (or, with -1, at all before)
+/// the request, when a direct child changed after it, or when a directory
+/// stamp along the chain moved past it (an entry was renamed or moved away).
+- (BOOL)applyListingOfRepo:(NSString *)repoId
+             directoryPath:(NSString *)directoryPath
+                   entries:(NSArray<NSDictionary *> *)entries
+           requestStartSeq:(long long)requestStartSeq;
+
+/// Writes entries that are not a complete listing (starred items, search
+/// results, an upload): missing ancestors are created, siblings are never
+/// tombstoned, a stored oid is never replaced by a missing one. Entries that
+/// are tombstoned, or sit below a tombstoned directory, are skipped unless
+/// allowRevive is YES.
+- (BOOL)applySparseEntriesOfRepo:(NSString *)repoId
+                         entries:(NSArray<NSDictionary *> *)entries
+                     allowRevive:(BOOL)allowRevive;
+
+/// Follows a move the main app made on the server: the records keep their
+/// uuid (favorites, tags, downloaded contents survive) and directory subtrees
+/// follow. Each moved record's final filename in the destination directory is
+/// confirmed against destinationEntries (including server auto-renames on
+/// conflicts); ambiguous or occupied targets are skipped. Gives up when the
+/// source/destination directory chains or moved subtrees changed after
+/// requestStartSeq.
+- (BOOL)moveRecordsOfRepo:(NSString *)srcRepoId
+            fromDirectory:(NSString *)srcDirectoryPath
+                    names:(NSArray<NSString *> *)names
+                   toRepo:(NSString *)dstRepoId
+              toDirectory:(NSString *)dstDirectoryPath
+       destinationEntries:(NSArray<NSDictionary *> *)destinationEntries
+          requestStartSeq:(long long)requestStartSeq;
+
+/// Follows a rename the main app made on the server, keeping the uuid.
+/// Confirms the final filename on the server from listing (including server
+/// auto-renames on conflicts) and validates that the directory and source
+/// record (and its subtree) did not change after requestStartSeq.
+- (BOOL)renameRecordOfRepo:(NSString *)repoId
+                 directory:(NSString *)directoryPath
+                  fromName:(NSString *)oldName
+                    toName:(NSString *)newName
+                   listing:(NSArray<NSDictionary *> *)entries
+           requestStartSeq:(long long)requestStartSeq;
+
+/// Activity log operations for applyActivitiesOfRepo:entries:.
+extern NSString * const SeafFPEntryOp;        // NSString, one of the values below
+extern NSString * const SeafFPEntryOldPath;   // NSString, full path before a move / rename
+extern NSString * const SeafFPActivityOpCreate;   // create, edit, recover, publish
+extern NSString * const SeafFPActivityOpDelete;
+extern NSString * const SeafFPActivityOpMove;     // move and rename (same library)
+
+/// Replays server activity log entries of one library, oldest first. Entries
+/// carry op, path, isDir, mtime (the event time) and, for moves, oldPath.
+/// The log may lag behind or overlap what the store already knows, so it is
+/// applied cautiously:
+/// - create: only unknown paths get a row (no update, never a revive);
+/// - delete: only when the stored row (and, for a directory, every live row
+///   below it) is not newer than the event;
+/// - move: the row at oldPath keeps its uuid and moves to path, unless that
+///   row is newer than the event (a later file at the old path) or path is
+///   taken by another live row; without a row at oldPath it is a create.
+- (BOOL)applyActivitiesOfRepo:(NSString *)repoId entries:(NSArray<NSDictionary *> *)entries;
+
+/// Records that the main app opened a file and fills in content information
+/// the record lacks. The oid / size are only written when the record has no
+/// oid yet (a stored oid is never replaced: it may be newer). lastUsedDate nil:
+/// only the fill-in. createIfMissing NO: unknown paths are left alone.
+/// Repeated within 60 s without a fill-in: nothing is written. Never revives.
+- (BOOL)noteLastUsedDate:(nullable NSDate *)lastUsedDate
+                 forRepo:(NSString *)repoId
+                    path:(NSString *)path
+                     oid:(nullable NSString *)oid
+                    size:(long long)size
+                   mtime:(long long)mtime
+         createIfMissing:(BOOL)createIfMissing;
+
+/// Seq at which an entry was last renamed or moved away from the directory
+/// (parentUUID nil: the library root); 0 when never. Exposed for tests.
+- (long long)directoryStampForRepo:(NSString *)repoId parentUUID:(nullable NSString *)parentUUID;
 
 @end
 

@@ -21,6 +21,7 @@
 		3474342D816C89B8B7AE59A6 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
 		3CF1A2D554B54583D58ED0C7 /* SeafShareBaseListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 362172CD8635113D89225C86 /* SeafShareBaseListViewController.m */; };
 		401D4FC31615131532015921 /* SeafFileProviderLegacyMigrator.m in Sources */ = {isa = PBXBuildFile; fileRef = 60C99B730895D984C87FFA80 /* SeafFileProviderLegacyMigrator.m */; };
+		4539EEBEDE1132FF8ED1BF0D /* SeafFPIndexer.m in Sources */ = {isa = PBXBuildFile; fileRef = B5928E0A97017FDDEECD44D9 /* SeafFPIndexer.m */; };
 		40539EB4B6C7854A5AB1B6D5 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
 		44E314FBBBCF972AFA1DF6A6 /* SeafFPIdentifier.m in Sources */ = {isa = PBXBuildFile; fileRef = AEAF14322A9ECA9761843E89 /* SeafFPIdentifier.m */; };
 		45E233C0D66524D1DDD39AE2 /* local-image-nomal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */; };
@@ -1100,6 +1101,8 @@
 		5DA126D224400B6A8E752C31 /* libPods-SeafShare.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafShare.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DB0E02614A142D5EA9F3E34 /* SeafGridCell.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafGridCell.h; sourceTree = "<group>"; };
 		60C99B730895D984C87FFA80 /* SeafFileProviderLegacyMigrator.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SeafFileProviderLegacyMigrator.m; path = common/Classes/SeafFileProviderLegacyMigrator.m; sourceTree = "<group>"; };
+		615BC664F44B0FB11872FA11 /* SeafFPIndexer.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = SeafFPIndexer.h; path = common/Classes/SeafFPIndexer.h; sourceTree = "<group>"; };
+		B5928E0A97017FDDEECD44D9 /* SeafFPIndexer.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SeafFPIndexer.m; path = common/Classes/SeafFPIndexer.m; sourceTree = "<group>"; };
 		63D491CDD7B475B4A20E172B /* SeafImagePickerHelper.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafImagePickerHelper.m; sourceTree = "<group>"; };
 		66A0A85ED1C1808578E903C2 /* Pods-SeafFileProvider.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafFileProvider.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider.debug.xcconfig"; sourceTree = "<group>"; };
 		6E02F45D400A774F24C9DCD7 /* SeafImagePickerHelper.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafImagePickerHelper.h; sourceTree = "<group>"; };
@@ -1821,6 +1824,8 @@
 				1CFBA8070DCB6B96AF049A56 /* SeafFileProviderDomainManager.m */,
 				29573048A65815A41E4FB922 /* SeafFileProviderLegacyMigrator.h */,
 				60C99B730895D984C87FFA80 /* SeafFileProviderLegacyMigrator.m */,
+				615BC664F44B0FB11872FA11 /* SeafFPIndexer.h */,
+				B5928E0A97017FDDEECD44D9 /* SeafFPIndexer.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -3586,6 +3591,7 @@
 				6D8A35BA5B092E0854235326 /* SeafFPStore.m in Sources */,
 				E5757452134B83BF5B9710F2 /* SeafFileProviderDomainManager.m in Sources */,
 				401D4FC31615131532015921 /* SeafFileProviderLegacyMigrator.m in Sources */,
+				4539EEBEDE1132FF8ED1BF0D /* SeafFPIndexer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

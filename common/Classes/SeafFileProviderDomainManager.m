@@ -4,6 +4,7 @@
 //
 
 #import "SeafFileProviderDomainManager.h"
+#import <UIKit/UIKit.h>
 #import "SeafFPIdentifier.h"
 #import "SeafConnection.h"
 #import "SeafStorage.h"
@@ -12,7 +13,7 @@
 
 static NSString * const kSeafFPLegacyStorageCleaned = @"com.seafile.seafilePro.fileprovider.legacyStorageCleaned";
 static NSString * const kSeafFPLegacyStorageDirectory = @"File Provider Storage";
-static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
+static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
 
 @interface SeafFileProviderDomainManager ()
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSFileProviderDomain *> *pendingSignals;   // domainId -> domain
@@ -105,6 +106,8 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
 - (void)removeDomain:(NSFileProviderDomain *)domain keepStore:(BOOL)keepStore completion:(void (^)(NSError * _Nullable))completion
 {
     NSString *identifier = domain.identifier;
+    // The main app stops writing the store before the domain goes away.
+    [self.domainObserver fileProviderDomainWillDeactivate:identifier];
     // RemoveAll is the only mode iOS offers (PreserveDirtyUserData and
     // PreserveDownloadedUserData are macOS-only), so removing a domain always
     // discards the system's replica -- including a file the user edited in
@@ -115,9 +118,18 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
                       completionHandler:^(NSURL * _Nullable preservedLocation, NSError * _Nullable error) {
         if (error) {
             Warning("removeDomain %@ failed: %@", identifier, error);
+            // Still registered: writing its store is fine again.
+            [self.domainObserver fileProviderDomainDidActivate:identifier];
         } else {
             Debug("removed file provider domain %@ (store %@)", identifier, keepStore ? @"kept" : @"deleted");
-            if (!keepStore) [self removeStoreForDomainIdentifier:identifier];
+            if (!keepStore) {
+                // The next domain op (the same account added back, say) must
+                // not run before the old store is gone.
+                [self removeStoreForDomainIdentifier:identifier completion:^{
+                    if (completion) completion(nil);
+                }];
+                return;
+            }
         }
         if (completion) completion(error);
     }];
@@ -130,20 +142,33 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
             Warning("addDomain %@ failed: %@", domain.identifier, error);
         } else {
             Debug("added file provider domain %@ (%@)", domain.identifier, domain.displayName);
+            [self.domainObserver fileProviderDomainDidActivate:domain.identifier];
         }
         if (completion) completion(error);
     }];
 }
 
-- (void)removeStoreForDomainIdentifier:(NSString *)identifier
+/// Deletes the store files. With an observer (the main app's indexer) the
+/// deletion waits until the observer can no longer write the store, so a
+/// queued write cannot bring it back as an empty file.
+- (void)removeStoreForDomainIdentifier:(NSString *)identifier completion:(nullable dispatch_block_t)completion
 {
-    NSURL *url = [SeafFPIdentifier storeURLForDomainIdentifier:identifier];
-    NSFileManager *fm = [NSFileManager defaultManager];
-    for (NSString *suffix in @[@"", @"-wal", @"-shm", @"-journal"]) {
-        NSString *path = [url.path stringByAppendingString:suffix];
-        if ([fm fileExistsAtPath:path]) {
-            [fm removeItemAtPath:path error:nil];
+    dispatch_block_t removeStore = ^{
+        NSURL *url = [SeafFPIdentifier storeURLForDomainIdentifier:identifier];
+        NSFileManager *fm = [NSFileManager defaultManager];
+        for (NSString *suffix in @[@"", @"-wal", @"-shm", @"-journal"]) {
+            NSString *path = [url.path stringByAppendingString:suffix];
+            if ([fm fileExistsAtPath:path]) {
+                [fm removeItemAtPath:path error:nil];
+            }
         }
+        if (completion) completion();
+    };
+    id<SeafFileProviderDomainObserver> observer = self.domainObserver;
+    if (observer) {
+        [observer fileProviderDomainWillRemoveStore:identifier removeStore:removeStore];
+    } else {
+        removeStore();
     }
 }
 
@@ -184,6 +209,9 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
     // in the order they were asked for.
     NSFileProviderDomain *domain = [self domainForConnection:conn];
     BOOL wants = [self.class connectionWantsDomain:conn];
+    if (!wants) {
+        [self.domainObserver fileProviderDomainWillDeactivate:domain.identifier];
+    }
     [self enqueueDomainOp:^(dispatch_block_t done) {
         [NSFileProviderManager getDomainsWithCompletionHandler:^(NSArray<NSFileProviderDomain *> *domains, NSError *error) {
             void (^finish)(NSError *) = ^(NSError *finishError) {
@@ -211,6 +239,11 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
             } else if (!wants && existing) {
                 [self removeDomain:existing keepStore:YES completion:finish];
             } else {
+                if (wants && existing) {
+                    [self.domainObserver fileProviderDomainDidActivate:domain.identifier];
+                } else if (!wants) {
+                    [self.domainObserver fileProviderDomainWillDeactivate:domain.identifier];
+                }
                 finish(nil);
             }
         }];
@@ -220,6 +253,7 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
 - (void)removeDomainForConnection:(SeafConnection *)conn completion:(void (^)(NSError * _Nullable))completion
 {
     NSFileProviderDomain *domain = [self domainForConnection:conn];
+    [self.domainObserver fileProviderDomainWillDeactivate:domain.identifier];
     [self enqueueDomainOp:^(dispatch_block_t done) {
         [NSFileProviderManager getDomainsWithCompletionHandler:^(NSArray<NSFileProviderDomain *> *domains, NSError *error) {
             void (^finish)(NSError *) = ^(NSError *finishError) {
@@ -242,8 +276,9 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
             if (existing) {
                 [self removeDomain:existing keepStore:NO completion:finish];
             } else {
-                [self removeStoreForDomainIdentifier:domain.identifier];
-                finish(nil);
+                [self removeStoreForDomainIdentifier:domain.identifier completion:^{
+                    finish(nil);
+                }];
             }
         }];
     }];
@@ -288,6 +323,8 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
                         [self addDomain:wanted[d.identifier] completion:^(NSError *addError) {
                             dispatch_group_leave(group);
                         }];
+                    } else {
+                        [self.domainObserver fileProviderDomainDidActivate:d.identifier];
                     }
                     continue;
                 }
@@ -360,29 +397,82 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 2.0;
 
 - (void)sendPendingSignalForDomainIdentifier:(NSString *)identifier
 {
+    [self sendPendingSignalForDomainIdentifier:identifier completion:nil];
+}
+
+/// completion runs once the system answered, or right away when nothing was pending.
+- (void)sendPendingSignalForDomainIdentifier:(NSString *)identifier completion:(nullable dispatch_block_t)completion
+{
     NSFileProviderDomain *domain = nil;
     @synchronized (self.pendingSignals) {
         domain = self.pendingSignals[identifier];
         [self.pendingSignals removeObjectForKey:identifier];
     }
-    if (!domain) return;   // already flushed
+    if (!domain) {   // already flushed
+        if (completion) completion();
+        return;
+    }
     NSFileProviderManager *manager = [NSFileProviderManager managerForDomain:domain];
+    if (!manager) {
+        if (completion) completion();
+        return;
+    }
     [manager signalEnumeratorForContainerItemIdentifier:NSFileProviderWorkingSetContainerItemIdentifier completionHandler:^(NSError * _Nullable error) {
         if (error) {
             Debug("signal working set for domain %@ failed: %@", domain.identifier, error);
         }
+        if (completion) completion();
     }];
 }
 
 - (void)flushPendingSignals
 {
+    [self flushPendingSignalsWithCompletion:nil];
+}
+
+- (void)flushPendingSignalsWithCompletion:(dispatch_block_t)completion
+{
     NSArray<NSString *> *identifiers = nil;
     @synchronized (self.pendingSignals) {
         identifiers = self.pendingSignals.allKeys;
     }
-    for (NSString *identifier in identifiers) {
-        [self sendPendingSignalForDomainIdentifier:identifier];
+    if (identifiers.count == 0) {
+        if (completion) completion();
+        return;
     }
+#if !defined(AF_APP_EXTENSIONS)
+    UIApplication *app = [UIApplication sharedApplication];
+    __block UIBackgroundTaskIdentifier bgTask = UIBackgroundTaskInvalid;
+    NSObject *token = [NSObject new];
+    void (^endTask)(void) = ^{
+        UIBackgroundTaskIdentifier ending = UIBackgroundTaskInvalid;
+        @synchronized (token) {
+            ending = bgTask;
+            bgTask = UIBackgroundTaskInvalid;
+        }
+        if (ending != UIBackgroundTaskInvalid) {
+            [app endBackgroundTask:ending];
+        }
+    };
+    @synchronized (token) {
+        bgTask = [app beginBackgroundTaskWithName:@"SeafFPSignalFlush" expirationHandler:^{
+            endTask();
+        }];
+    }
+#else
+    void (^endTask)(void) = ^{};
+#endif
+    dispatch_group_t group = dispatch_group_create();
+    for (NSString *identifier in identifiers) {
+        dispatch_group_enter(group);
+        [self sendPendingSignalForDomainIdentifier:identifier completion:^{
+            dispatch_group_leave(group);
+        }];
+    }
+    dispatch_group_notify(group, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        if (completion) completion();
+        endTask();
+    });
 }
 
 - (void)signalWorkingSetForConnection:(SeafConnection *)conn

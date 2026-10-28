@@ -23,6 +23,7 @@
 #import "SeafPhotoThumb.h"
 #import <ImageIO/ImageIO.h>
 #import "SeafMotionPhotoExtractor.h"
+#import "SeafFPIndexer.h"
 #import "SeafLivePhotoSaver.h"
 #import "SeafPGThumbnailCell.h" // Added import
 #import "SeafPGThumbnailCellViewModel.h" // Added import
@@ -517,6 +518,10 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                    currentItem:(id<SeafPreView>)currentItem
                         master:(UIViewController<SeafDentryDelegate> *)masterVC {
     if (self = [super init]) {
+        // Files app Recents / search: the photo the user tapped (not the ones swiped to)
+        if ([(id)currentItem isKindOfClass:[SeafFile class]]) {
+            [[SeafFPIndexer shared] noteFileOpened:(SeafFile *)currentItem];
+        }
         // Save all photo files
         _preViewItems = files;
         // Current photo being viewed

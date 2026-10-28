@@ -31,6 +31,7 @@
 #import "SeafSdocWebViewController.h"
 #import "SeafTheme.h"
 #import "SeafNavLeftItem.h"
+#import "SeafFPIndexer.h"
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
@@ -1493,6 +1494,9 @@ enum SHARE_STATUS {
 - (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     if (item) Debug("preview %@", item.previewItemTitle);
+    if ([(id)item isKindOfClass:[SeafFile class]]) {
+        [[SeafFPIndexer shared] noteFileOpened:(SeafFile *)item];   // Files app Recents / search
+    }
     self.masterVc = c;
     self.photos = nil;
     self.preViewItem = item;

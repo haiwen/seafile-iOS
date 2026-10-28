@@ -573,3 +573,84 @@ Checks the auto synchronization settings and updates the connection’s synchron
                     failure:(void (^_Nullable)(NSURLRequest * _Nullable request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
 @end
+
+#pragma mark - Files app index bridge
+
+NS_ASSUME_NONNULL_BEGIN
+
+/// Keys of the value snapshots handed to SeafFPIndexingSink. The strings are
+/// the SeafFPEntry* keys of SeafFPStore.h (the Pod cannot import it), plus
+/// the library id for entries that are not grouped by library yet.
+extern NSString * const SeafFPIndexKeyName;     // @"name"
+extern NSString * const SeafFPIndexKeyPath;     // @"path"
+extern NSString * const SeafFPIndexKeyIsDir;    // @"isDir"
+extern NSString * const SeafFPIndexKeyOid;      // @"oid"   (absent when unknown)
+extern NSString * const SeafFPIndexKeySize;     // @"size"  (-1 when unknown or a directory)
+extern NSString * const SeafFPIndexKeyMtime;    // @"mtime"
+extern NSString * const SeafFPIndexKeyRepoId;   // @"repoId"
+
+/// Value snapshot of a SeafFile / SeafDir; nil for anything else (pending uploads).
+FOUNDATION_EXPORT NSDictionary * _Nullable SeafFPIndexEntryForBase(SeafBase *obj);
+
+/// Implemented by the main app (SeafFPIndexer) to copy what the SDK learns
+/// into the Files app's index. Never registered in the extensions. Every
+/// argument is a value snapshot taken synchronously by the caller; the
+/// indexer does its work asynchronously.
+@protocol SeafFPIndexingSink <NSObject>
+/// The store's seq right before a listing request is sent; -1 when unknown.
+- (long long)fp_requestStartSeqForConnection:(SeafConnection *)conn;
+/// A complete server listing of one directory.
+- (void)fp_indexListing:(NSArray<NSDictionary *> *)entries
+                 ofRepo:(NSString *)repoId
+              directory:(NSString *)directoryPath
+             connection:(SeafConnection *)conn
+        requestStartSeq:(long long)requestStartSeq;
+/// Entries that are not a complete listing (search results, an upload).
+/// Each entry carries its full path and library id.
+- (void)fp_indexSparseEntries:(NSArray<NSDictionary *> *)entries
+                   connection:(SeafConnection *)conn
+                  allowRevive:(BOOL)allowRevive;
+/// The starred_item_list of a fresh /api/v2.1/starred-items/ response.
+- (void)fp_indexStarredItems:(NSArray<NSDictionary *> *)items connection:(SeafConnection *)conn;
+/// The app renamed an entry on the server. The record keeps its uuid; when
+/// the store does not know the entry, the listing (the reloaddir response) is
+/// applied instead.
+- (void)fp_indexRenameOf:(NSString *)oldName
+                      to:(NSString *)newName
+                  ofRepo:(NSString *)repoId
+               directory:(NSString *)directoryPath
+                 listing:(nullable NSArray<NSDictionary *> *)entries
+              connection:(SeafConnection *)conn
+         requestStartSeq:(long long)requestStartSeq;
+/// The app moved entries on the server. The records keep their uuid; when
+/// the store knows none of them, the source listing is applied instead. The
+/// destination is listed again afterwards (names the server changed).
+- (void)fp_indexMoveOf:(NSArray<NSString *> *)names
+              fromRepo:(NSString *)srcRepoId
+         fromDirectory:(NSString *)srcDirectoryPath
+                toRepo:(NSString *)dstRepoId
+           toDirectory:(NSString *)dstDirectoryPath
+         sourceListing:(nullable NSArray<NSDictionary *> *)entries
+            connection:(SeafConnection *)conn
+       requestStartSeq:(long long)requestStartSeq;
+/// Something changed in a directory the app did not list again (copy / move target).
+- (void)fp_refreshDirectoryOfRepo:(NSString *)repoId path:(NSString *)path connection:(SeafConnection *)conn;
+/// A file finished downloading with this content id.
+- (void)fp_noteDownloadedFileOfRepo:(NSString *)repoId
+                               path:(NSString *)path
+                                oid:(NSString *)oid
+                               size:(long long)size
+                         connection:(SeafConnection *)conn;
+@end
+
+@interface SeafConnection (FileProviderIndexing)
+/// Registered once by the main app.
+@property (class, nonatomic, weak, nullable) id<SeafFPIndexingSink> fileProviderIndexer;
+/// The registered indexer when running in the main app, nil otherwise:
+/// callers skip building snapshots entirely when this is nil.
++ (nullable id<SeafFPIndexingSink>)activeFileProviderIndexer;
+/// Hands search results (SeafFile / SeafDir without oid) to the indexer.
+- (void)fp_indexSearchResults:(NSArray<SeafBase *> *)results;
+@end
+
+NS_ASSUME_NONNULL_END
