@@ -92,6 +92,7 @@
             }
         }
 
+        [self fp_indexSearchResults:results];
         if (success) success(request, response, JSON, results);
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         if (failure) failure(request, response, JSON, error);

@@ -35,6 +35,10 @@
 /// Rounded clip pinned to the visible area of the file-list card so the card keeps
 /// its rounded frame while scrolling (the per-cell corners only round the first/last row).
 @property (strong, nonatomic) CALayer *cardCornerMaskLayer;
+/// View width and safe area the back capsule was last sized for. Width 0 means
+/// the current capsule has not been sized against this view yet.
+@property (assign, nonatomic) CGFloat lastNavContainerWidth;
+@property (assign, nonatomic) UIEdgeInsets lastNavSafeInsets;
 
 @end
 
@@ -200,6 +204,7 @@
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     [self updateCardCornerMask];
+    [self updateNavLeftItemWidth];
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -620,6 +625,29 @@
         self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:_directory title:nil target:self action:@selector(backAction)]];
     }
     self.navigationItem.title = @"";
+    self.lastNavContainerWidth = 0;
+    [self updateNavLeftItemWidth];
+}
+
+/// The capsule is created before this view has a size, and fold / unfold
+/// changes the width later. Size it again whenever the width or safe area moves.
+- (void)updateNavLeftItemWidth {
+    UIBarButtonItem *item = self.navigationItem.leftBarButtonItem;
+    if (![item.customView isKindOfClass:[SeafNavLeftItem class]] || !self.isViewLoaded) return;
+    CGFloat width = CGRectGetWidth(self.view.bounds);
+    if (width < 1.0) return;
+    UIEdgeInsets safeInsets = self.view.safeAreaInsets;
+    if (fabs(width - self.lastNavContainerWidth) < 0.5
+        && UIEdgeInsetsEqualToEdgeInsets(safeInsets, self.lastNavSafeInsets)) {
+        return;
+    }
+    self.lastNavContainerWidth = width;
+    self.lastNavSafeInsets = safeInsets;
+    SeafNavLeftItem *leftItem = (SeafNavLeftItem *)item.customView;
+    if ([leftItem applyContainerWidth:width safeInsets:safeInsets reservedTrailingWidth:0]) {
+        // A new item makes the navigation bar read the resized custom view.
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:leftItem];
+    }
 }
 
 - (void)backAction {

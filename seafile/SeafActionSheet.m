@@ -10,6 +10,7 @@
 #import "SeafCell.h"
 #import "SeafAppDelegate.h"
 #import "SeafTheme.h"
+#import "Constants.h"
 
 #define kHostsCornerRadius 12.0f
 
@@ -23,7 +24,6 @@
 
 #define kFixedWidth 200.0f
 #define kFixedWidthContinuous 200.0f
-#define kScreenHeight [UIScreen mainScreen].bounds.size.height
 #define KButtonHeight = 44.0f
 
 #define kAnimationDurationForSectionCount(count) MAX(0.25f, MIN(count*0.08f, 0.35f))
@@ -168,7 +168,7 @@ static BOOL disableCustomEasing = NO;
     self.layer.shadowRadius = kShadowRadius;
     self.layer.shadowOpacity = kShadowOpacity;
     
-    self.layer.contentsScale = [UIScreen mainScreen].scale;
+    self.layer.contentsScale = SeafDisplayScale(self);
     ((CAShapeLayer *)self.layer).fillColor = [SeafTheme elevatedSurface].CGColor;
     ((CAShapeLayer *)self.layer).strokeColor = [UIColor clearColor].CGColor;
 }
@@ -335,7 +335,7 @@ static BOOL disableCustomEasing = NO;
     BOOL _anchoredAtPoint;
     CGPoint _anchorPoint;// The point at which the action sheet is anchored
     SFActionSheetArrowDirection _anchoredArrowDirection;// The direction of the arrow when the action sheet is anchored
-    BOOL _observingDeviceOrientation;
+    CGSize _laidOutSize;
 
     NSUInteger _interactionSuspendCount;// Show/move/dismiss nest their suspend calls, so this has to be counted
     __weak UIView *_interactionSuspendedWindow;
@@ -366,6 +366,7 @@ static BOOL disableCustomEasing = NO;
         tap.delegate = self;
 
         [self addGestureRecognizer:tap];
+        self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
         _scrollViewHost = [[SeafActionSheetView alloc] init];
         _scrollViewHost.backgroundColor = [UIColor clearColor];
@@ -422,6 +423,7 @@ static BOOL disableCustomEasing = NO;
         tap.delegate = self;
 
         [self addGestureRecognizer:tap];
+        self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
         _scrollViewHost = [[SeafActionSheetView alloc] init];
         _scrollViewHost.backgroundColor = [UIColor clearColor];
@@ -473,33 +475,24 @@ static BOOL disableCustomEasing = NO;
     return [SeafActionSheetLayer class];
 }
 
-- (void)startObservingDeviceOrientation
-{
-    if (_observingDeviceOrientation) {
+// The sheet covers its window and follows it through autoresizing, so a window
+// size change (rotation, iPhone Duo fold, iPad resize) shows up here.
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGSize size = self.bounds.size;
+    BOOL resized = !CGSizeEqualToSize(_laidOutSize, CGSizeZero) && !CGSizeEqualToSize(_laidOutSize, size);
+    _laidOutSize = size;
+    if (!resized || !self.superview) {
         return;
     }
-    _observingDeviceOrientation = YES;
-    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(orientationChanged)
-                                                 name:UIDeviceOrientationDidChangeNotification
-                                               object:nil];
-}
-
-- (void)stopObservingDeviceOrientation
-{
-    if (!_observingDeviceOrientation) {
-        return;
+    if (_anchoredAtPoint) {
+        [self moveToPoint:_anchorPoint arrowDirection:_anchoredArrowDirection animated:NO];
+    } else {
+        [self layoutSheetInitial:NO];
     }
-    _observingDeviceOrientation = NO;
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:UIDeviceOrientationDidChangeNotification
-                                                  object:nil];
-    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
 }
 
 - (void)dealloc {
-    [self stopObservingDeviceOrientation];
     // Never leave the window unresponsive if the sheet goes away mid-animation.
     if (_interactionSuspendCount > 0) {
         _interactionSuspendedWindow.userInteractionEnabled = YES;
@@ -524,22 +517,6 @@ static BOOL disableCustomEasing = NO;
 - (void)tapped:(UITapGestureRecognizer *)gesture {
     if ([self hitTest:[gesture locationInView:self] withEvent:nil] == self) {
         [self dismissAnimated:YES];
-    }
-}
-
-- (void)orientationChanged {
-    if (_targetVC.view && !CGRectEqualToRect(self.bounds, _targetVC.view.bounds)) {
-        disableCustomEasing = YES;
-        [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseInOut animations:^{
-            if (_anchoredAtPoint) {
-                [self moveToPoint:_anchorPoint arrowDirection:_anchoredArrowDirection animated:NO];
-            }
-            else {
-                [self layoutSheetInitial:NO];
-            }
-        } completion:^(BOOL finished) {
-            disableCustomEasing = NO;
-        }];
     }
 }
 
@@ -613,7 +590,6 @@ static BOOL disableCustomEasing = NO;
         [self resumeInteraction];
     };
 
-    [self startObservingDeviceOrientation];
     [self layoutForVisible:!animated];
     [[self topWindow] addSubview:self];
 
@@ -721,8 +697,8 @@ static BOOL disableCustomEasing = NO;
 - (void)showFromPoint:(CGPoint)point sourceRect:(CGRect)sourceRect arrowDirection:(SFActionSheetArrowDirection)arrowDirection animated:(BOOL)animated {
     [self suspendInteraction];
 
-    // Automatically adjust arrow direction based on screen space
-    if (point.y > kScreenHeight - 320 - 50) {
+    // Automatically adjust arrow direction based on window space
+    if (point.y > CGRectGetHeight([self topWindow].bounds) - 320 - 50) {
         arrowDirection = SFActionSheetArrowDirectionBottom;
     }
 
@@ -757,8 +733,6 @@ static BOOL disableCustomEasing = NO;
     void (^completion)(void) = ^{
         [self resumeInteraction];
     };
-
-    [self startObservingDeviceOrientation];
 
     // Initial state: scale to 0 and set animation anchor point to source button position
     if (animated) {
@@ -1002,8 +976,7 @@ static BOOL disableCustomEasing = NO;
         _anchoredAtPoint = NO;
         _anchoredArrowDirection = 0;
         _anchorPoint = CGPointZero;
-
-        [self stopObservingDeviceOrientation];
+        _laidOutSize = CGSizeZero;
 
         [self resumeInteraction];
     };
@@ -1030,7 +1003,7 @@ static BOOL disableCustomEasing = NO;
     return [SeafAppDelegate topViewController].view.window;
 }
 
-// Show/move/dismiss nest their calls, and -orientationChanged re-enters via -moveToPoint:,
+// Show/move/dismiss nest their calls, and -layoutSubviews re-enters via -moveToPoint:,
 // so the suspensions have to be counted the way the old UIApplication API did it.
 - (void)suspendInteraction {
     if (_interactionSuspendCount == 0) {
