@@ -31,6 +31,64 @@
     navigationController.navigationBar.scrollEdgeAppearance = appearance;
 
     navigationController.navigationBar.tintColor = [SeafTheme primaryText];
+    navigationController.view.backgroundColor = [SeafTheme primaryBackgroundColor];
+}
+
+#pragma mark - Back arrow
+
++ (UIImage *)backArrowImage
+{
+    UIImage *source = [UIImage imageNamed:@"arrowLeft_black"];
+    CGSize size = CGSizeMake(10.0, 20.0);
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+    format.opaque = NO;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+    UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [source drawInRect:CGRectMake(0, 0, size.width, size.height)];
+    }];
+    return [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+}
+
+#pragma mark - List page chrome
+
++ (void)applyListPageBackgroundToViewController:(UIViewController *)viewController
+{
+    UIColor *background = [SeafTheme primaryBackgroundColor];
+    viewController.view.backgroundColor = background;
+    viewController.navigationController.view.backgroundColor = background;
+}
+
++ (void)pinView:(UIView *)subview inHostView:(UIView *)hostView extendPastBottomSafeArea:(BOOL)extendPastBottomSafeArea
+{
+    subview.translatesAutoresizingMaskIntoConstraints = NO;
+    if (subview.superview != hostView) {
+        [hostView addSubview:subview];
+    }
+    UILayoutGuide *guide = hostView.safeAreaLayoutGuide;
+    NSLayoutYAxisAnchor *bottomAnchor = extendPastBottomSafeArea ? hostView.bottomAnchor : guide.bottomAnchor;
+    [NSLayoutConstraint activateConstraints:@[
+        [subview.topAnchor constraintEqualToAnchor:guide.topAnchor],
+        [subview.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor],
+        [subview.trailingAnchor constraintEqualToAnchor:guide.trailingAnchor],
+        [subview.bottomAnchor constraintEqualToAnchor:bottomAnchor],
+    ]];
+}
+
++ (void)pinViewToSafeArea:(UIView *)subview inHostView:(UIView *)hostView
+{
+    [self pinView:subview inHostView:hostView extendPastBottomSafeArea:NO];
+}
+
++ (void)pinViewToSafeAreaExtendingToHostBottom:(UIView *)subview inHostView:(UIView *)hostView
+{
+    [self pinView:subview inHostView:hostView extendPastBottomSafeArea:YES];
+}
+
++ (void)updateTableViewBackgroundViewFrame:(UITableView *)tableView
+{
+    if (tableView.backgroundView) {
+        tableView.backgroundView.frame = tableView.bounds;
+    }
 }
 
 #pragma mark - Title View

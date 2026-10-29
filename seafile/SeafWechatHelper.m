@@ -9,14 +9,27 @@
 #import "SeafWechatHelper.h"
 #import <SVProgressHUD/SVProgressHUD.h>
 
+// libWeChatSDK.a has no arm64-simulator slice, so simulator builds don't link it
+// (see Podfile post_install). Every WXApi symbol reference must stay inside
+// !TARGET_OS_SIMULATOR.
 @implementation SeafWechatHelper
 
 + (void)registerWechat {
+#if !TARGET_OS_SIMULATOR
     [WXApi registerApp:@"wx4799bc7f5242c55a" universalLink:@""];
+#endif
 }
 
 + (BOOL)wechatInstalled {
     return [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"wechat://"]];
+}
+
++ (BOOL)handleOpenURL:(NSURL *)url delegate:(id<WXApiDelegate>)delegate {
+#if TARGET_OS_SIMULATOR
+    return NO;
+#else
+    return [WXApi handleOpenURL:url delegate:delegate];
+#endif
 }
 
 + (void)shareToWechatWithFile:(SeafFile *)file {
@@ -25,7 +38,7 @@
         [SVProgressHUD showWithStatus:NSLocalizedString(@"File can not be shared", @"Seafile")];
         return;
     }
-    
+#if !TARGET_OS_SIMULATOR
     WXMediaMessage *message = [WXMediaMessage message];
     message.title = file.name;
     message.description = file.name;
@@ -49,6 +62,7 @@
     [WXApi sendReq:req completion:^(BOOL success) {
 
     }];
+#endif
 }
 
 @end

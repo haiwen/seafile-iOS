@@ -17,6 +17,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafPhoto.h"
 #import "SeafConnection+Search.h"
+#import "SeafNavigationBarStyler.h"
 
 #define SEARCH_STATE_INIT NSLocalizedString(@"Click \"Search\" to start", @"Seafile")
 #define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Seafile")
@@ -53,20 +54,13 @@
     UIView *bView = [[UIView alloc] initWithFrame:CGRectZero];
     bView.backgroundColor = kPrimaryBackgroundColor;
     self.tableView.backgroundView = bView;
+    self.tableView.backgroundColor = kPrimaryBackgroundColor;
     self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
 
     self.tableView.sectionHeaderTopPadding = 0;
 
-    [self.view addSubview:self.tableView];
-    
-    // Use Auto Layout to let UISearchController manage the correct presentation area
-    self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
-    [NSLayoutConstraint activateConstraints:@[
-        [self.tableView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
-        [self.tableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
-    ]];
+    [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
+    [SeafNavigationBarStyler pinViewToSafeArea:self.tableView inHostView:self.view];
     
     self.stateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];
     self.stateLabel.textAlignment = NSTextAlignmentCenter;
@@ -74,6 +68,12 @@
     self.stateLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.stateLabel.centerXAnchor constraintEqualToAnchor:self.tableView.centerXAnchor].active = YES;
     [self.stateLabel.centerYAnchor constraintEqualToAnchor:self.tableView.centerYAnchor constant:-100].active = YES;
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    [SeafNavigationBarStyler updateTableViewBackgroundViewFrame:self.tableView];
 }
 
 // Update search results when user types in the search bar.

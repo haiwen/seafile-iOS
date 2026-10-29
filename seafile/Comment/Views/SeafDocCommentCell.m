@@ -8,10 +8,17 @@
 #import "SeafDataTaskManager.h"
 #import "SeafCacheManager.h"
 #import "SeafTheme.h"
+#import "SeafAppDelegate.h"
 #import <CommonCrypto/CommonDigest.h>
 
+// The layout mirrors Android's, which is specified against the screen width;
+// the window width is its equivalent once the window can be resized.
+static CGFloat SeafCommentReferenceWidth(UIView *view) {
+    return (view.window ?: [SeafAppDelegate activeWindow]).bounds.size.width;
+}
+
 //  IMAGE_WIDTH = (SCREEN_WIDTH - 120dp) / 3
-#define kImageWidth ((UIScreen.mainScreen.bounds.size.width - 120) / 3.0)
+#define kImageWidth ((SeafCommentReferenceWidth(self) - 120) / 3.0)
 
 // Common layout constants
 static const CGFloat kPaddingV = 8.0;
@@ -512,7 +519,7 @@ static NSString *commentImageCacheDir(void)
         if (plainText.length > 0) {
             // FlexboxLayout layout_width="match_parent"
             CGFloat containerWidth = self.contentView.bounds.size.width - 16 - 16;  // paddingHorizontal="16dp"
-            if (containerWidth <= 0) containerWidth = UIScreen.mainScreen.bounds.size.width - 16 - 16;
+            if (containerWidth <= 0) containerWidth = SeafCommentReferenceWidth(self) - 16 - 16;
             [self appendTextToContainer:plainText containerWidth:containerWidth];
         }
     }
@@ -525,8 +532,8 @@ static NSString *commentImageCacheDir(void)
     // Compute container width; if bounds are not set yet, use screen width as a reference
     CGFloat containerWidth = self.contentView.bounds.size.width - 16 - 16;  // paddingHorizontal="16dp"
     if (containerWidth <= 0) {
-        // For the first layout, estimate using screen width
-        containerWidth = UIScreen.mainScreen.bounds.size.width - 16 - 16;
+        // For the first layout, estimate using the window width
+        containerWidth = SeafCommentReferenceWidth(self) - 16 - 16;
     }
     
     NSUInteger i = 0;

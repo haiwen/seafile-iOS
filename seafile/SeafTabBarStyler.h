@@ -20,6 +20,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (void)applyStandardAppearanceToTabBar:(UITabBar *)tabBar;
 
+/**
+ * Whether the tab bar must be translucent for its current placement.
+ * An opaque bar makes child navigation controllers subtract its height from
+ * theirs; when iOS lays the bar out vertically along a side (iPhone Duo's outer
+ * display) that height is the whole window, leaving the content 0pt tall.
+ */
++ (BOOL)tabBarNeedsTranslucency:(UITabBar *)tabBar;
+
 @end
 
 NS_ASSUME_NONNULL_END

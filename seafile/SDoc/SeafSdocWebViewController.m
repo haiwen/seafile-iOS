@@ -69,6 +69,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *statusLabel;
+@property (nonatomic, strong) NSLayoutConstraint *titleMaxWidthConstraint;
 
 @property (nonatomic, copy) NSString *currentStyleType; // Current paragraph style type
 
@@ -193,9 +194,16 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
         [stackView.trailingAnchor constraintEqualToAnchor:containerView.trailingAnchor],
         [stackView.topAnchor constraintEqualToAnchor:containerView.topAnchor],
         [stackView.bottomAnchor constraintEqualToAnchor:containerView.bottomAnchor],
-        // Max width constraint to avoid overlapping right items
-        [containerView.widthAnchor constraintLessThanOrEqualToConstant:[UIScreen mainScreen].bounds.size.width * 0.75]
     ]];
+    // Max width constraint to avoid overlapping right items. Based on this
+    // controller's width (the navigation bar is that wide, not the window's,
+    // inside an iPad split view); viewWillTransitionToSize: keeps it current.
+    CGFloat width = CGRectGetWidth(self.view.bounds);
+    if (width < 1.0) {
+        width = CGRectGetWidth((self.view.window ?: [SeafAppDelegate activeWindow]).bounds);
+    }
+    self.titleMaxWidthConstraint = [containerView.widthAnchor constraintLessThanOrEqualToConstant:[self titleMaxWidthForContentWidth:width]];
+    self.titleMaxWidthConstraint.active = YES;
 
     UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
     self.navigationItem.leftBarButtonItem = leftItem;
@@ -366,7 +374,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     [bar addSubview:stack];
     self.bottomStack = stack;
 
-    CGFloat dividerHeight = 1.0 / [UIScreen mainScreen].scale;
+    CGFloat dividerHeight = SEAF_SEPARATOR_HEIGHT_IN(self);
     NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
     [constraints addObjectsFromArray:@[
         [bar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
@@ -1270,6 +1278,17 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
             [sself showToast:NSLocalizedString(@"Unknown error", nil)];
         }
     }];
+}
+
+- (CGFloat)titleMaxWidthForContentWidth:(CGFloat)width
+{
+    return width * 0.75;
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    self.titleMaxWidthConstraint.constant = [self titleMaxWidthForContentWidth:size.width];
 }
 
 - (void)viewDidLayoutSubviews
