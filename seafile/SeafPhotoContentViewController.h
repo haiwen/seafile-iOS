@@ -218,6 +218,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Immersive Appearance (driven by gallery)
 
+/// Keep a visual copy of the current viewport while the gallery changes its
+/// chrome, then animate to the new viewport without exposing zoom refits.
+- (void)performChromeTransitionAnimated:(BOOL)animated changes:(void (^)(void))changes;
+
 /// Switch this page's own appearance (background colors, scroll indicators,
 /// LIVE badge) into the "immersive" look. Called by the gallery whenever its
 /// chrome is hidden — both pinch-to-zoom and tap-to-toggle paths funnel

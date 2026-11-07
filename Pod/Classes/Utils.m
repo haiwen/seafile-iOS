@@ -970,6 +970,14 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 
 #pragma mark - Photo library authorization
 
++ (NSString *)filenameForAssetResource:(PHAssetResource *)resource
+{
+    if (@available(iOS 27.0, *)) {
+        return resource.filename;
+    }
+    return resource.originalFilename;
+}
+
 + (PHAuthorizationStatus)photoLibraryAuthorizationStatus
 {
     return [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];

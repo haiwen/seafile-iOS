@@ -3,6 +3,7 @@
 #import "SeafSDocOutlineSheetViewController.h"
 #import "OutlineItemModel.h"
 #import "SeafTheme.h"
+#import "SeafAppDelegate.h"
 
 @interface SeafSDocOutlineCell : UITableViewCell
 @property (nonatomic, strong) UILabel *titleLabel;
@@ -70,8 +71,8 @@
         // For iPad popover, provide a reasonable preferred size so the outline list
         // looks like a lightweight panel instead of a full-screen view.
         if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
-            CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
-            CGFloat height = MIN(480.0, screenH * 0.6);
+            CGFloat windowH = [SeafAppDelegate activeWindow].bounds.size.height;
+            CGFloat height = MIN(480.0, windowH * 0.6);
             self.preferredContentSize = CGSizeMake(420.0, height);
         }
     }

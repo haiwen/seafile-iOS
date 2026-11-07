@@ -526,8 +526,8 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
     // Create temporary paths for image and video
     // Use original filename extension from resource to preserve format info
     NSString *tempDir = NSTemporaryDirectory();
-    NSString *originalImageExt = photoResource.originalFilename.pathExtension.lowercaseString ?: @"heic";
-    NSString *originalVideoExt = videoResource.originalFilename.pathExtension.lowercaseString ?: @"mov";
+    NSString *originalImageExt = [Utils filenameForAssetResource:photoResource].pathExtension.lowercaseString ?: @"heic";
+    NSString *originalVideoExt = [Utils filenameForAssetResource:videoResource].pathExtension.lowercaseString ?: @"mov";
     NSString *imageFileName = [NSString stringWithFormat:@"livephoto_image_%@.%@", [[NSUUID UUID] UUIDString], originalImageExt];
     NSString *videoFileName = [NSString stringWithFormat:@"livephoto_video_%@.%@", [[NSUUID UUID] UUIDString], originalVideoExt];
     NSString *tempImagePath = [tempDir stringByAppendingPathComponent:imageFileName];

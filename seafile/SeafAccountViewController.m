@@ -215,6 +215,38 @@
     return stringSize;
 }
 
+// The nib positions the form container against the view's edges with only
+// inequality constraints, so its width was ambiguous and on iPhone Duo's outer
+// display the switch and clear buttons ran under the camera/status column.
+// Replace those with an unambiguous layout centred in the safe area: 30pt
+// inset on each side (iPhone), or the nib's fixed width when it has one (iPad).
+- (void)pinFormToHorizontalSafeArea
+{
+    UIView *root = self.view;
+    UIView *form = self.serverTextField.superview;
+    if (!form || form.superview != root) return;
+
+    for (NSLayoutConstraint *c in [root.constraints copy]) {
+        BOOL involvesForm = (c.firstItem == form || c.secondItem == form);
+        NSLayoutAttribute attr = c.firstAttribute;
+        BOOL horizontal = (attr == NSLayoutAttributeLeading || attr == NSLayoutAttributeTrailing ||
+                           attr == NSLayoutAttributeLeft || attr == NSLayoutAttributeRight ||
+                           attr == NSLayoutAttributeCenterX);
+        if (involvesForm && horizontal) {
+            c.active = NO;
+        }
+    }
+
+    UILayoutGuide *safeArea = root.safeAreaLayoutGuide;
+    NSLayoutConstraint *fill = [form.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor constant:30];
+    fill.priority = UILayoutPriorityDefaultHigh;
+    [NSLayoutConstraint activateConstraints:@[
+        [form.centerXAnchor constraintEqualToAnchor:safeArea.centerXAnchor],
+        [form.leadingAnchor constraintGreaterThanOrEqualToAnchor:safeArea.leadingAnchor constant:16],
+        fill,
+    ]];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -225,6 +257,7 @@
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
+    [self pinFormToHorizontalSafeArea];
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
     self.navigationItem.leftBarButtonItem = cancelItem;
 

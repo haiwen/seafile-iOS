@@ -88,6 +88,18 @@ enum {
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 #define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
 
+/// Run card-content alignment after UIKit has laid out its standard labels/accessory.
+@interface SeafSettingsCell : UITableViewCell
+@property (nonatomic, copy) void (^layoutCardContent)(UITableViewCell *cell);
+@end
+
+@implementation SeafSettingsCell
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    if (self.layoutCardContent) self.layoutCardContent(self);
+}
+@end
+
 @interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, CLLocationManagerDelegate, SeafBackupGuideDelegate>
 // Holds the cell that displays the username.
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
@@ -150,6 +162,9 @@ enum {
 @property int state;// Stores the current state of settings options selected.
 
 @property NSString *version;// Stores the current version of the application.
+
+/// Whether the storyboard switches/labels have been pinned with Auto Layout.
+@property (nonatomic) BOOL settingsSwitchConstraintsInstalled;
 @end
 
 @implementation SeafSettingsViewController
@@ -483,6 +498,21 @@ enum {
 
 }
 
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    for (UITableViewCell *cell in self.tableView.visibleCells) {
+        [self layoutSettingsChromeForCell:cell];
+    }
+    NSInteger sections = [self.tableView numberOfSections];
+    for (NSInteger section = 0; section < sections; section++) {
+        UIView *header = [self.tableView headerViewForSection:section];
+        if (header) {
+            [self layoutSettingsHeader:header];
+        }
+    }
+}
+
 - (void)viewDidAppear:(BOOL)animated
 {
     dispatch_async(dispatch_get_main_queue(), ^ {
@@ -795,7 +825,7 @@ enum {
 
 - (UITableViewCell *)appearanceCell
 {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Appearance", @"Seafile");
     cell.textLabel.font = [UIFont systemFontOfSize:17.0];
 
@@ -812,7 +842,7 @@ enum {
 
 - (UITableViewCell *)manageSelectedPhotosCell
 {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Manage Selected Photos", @"Seafile");
     cell.textLabel.font = [UIFont systemFontOfSize:17.0];
     cell.textLabel.textColor = [SeafTheme primaryText];
@@ -899,9 +929,160 @@ enum {
     [SeafTheme setPreference:(SeafThemePreference)sender.selectedSegmentIndex];
 }
 
+#pragma mark - Duo outer-display layout
+
+// How far `view` still sticks into the table's horizontal unsafe area.
+// Measured from the table, not from the view's own safeAreaInsets. The outer
+// display keeps an ~84pt status/camera column on the right. The table insets
+// each cell's contentView into the safe area, but not the cell itself, so the
+// card / separator added directly to the cell and the custom section headers
+// still need this.
+- (UIEdgeInsets)safeInsetsOfViewInTable:(UIView *)view
+{
+    if (!view || !self.tableView) return UIEdgeInsetsZero;
+    CGFloat tableWidth = CGRectGetWidth(self.tableView.bounds);
+    CGFloat width = CGRectGetWidth(view.bounds);
+    if (tableWidth < 1 || width < 1) return UIEdgeInsetsZero;
+    UIEdgeInsets tableSafe = self.tableView.safeAreaInsets;
+    if (!view.superview) {
+        // A header just built in viewForHeader is not in the hierarchy yet.
+        // It is created at the table's width and placed at x = 0.
+        CGFloat right = tableSafe.right - (tableWidth - width);
+        return UIEdgeInsetsMake(0, tableSafe.left, 0, MAX(0, right));
+    }
+    CGRect rect = [view convertRect:view.bounds toView:self.tableView];
+    CGFloat left = tableSafe.left - CGRectGetMinX(rect);
+    CGFloat right = CGRectGetMaxX(rect) - (tableWidth - tableSafe.right);
+    return UIEdgeInsetsMake(0, MAX(0, left), 0, MAX(0, right));
+}
+
+- (void)layoutSettingsChromeForCell:(UITableViewCell *)cell
+{
+    UIEdgeInsets safe = [self safeInsetsOfViewInTable:cell];
+    UIView *card = [cell viewWithTag:999];
+    if (card) {
+        card.autoresizingMask = UIViewAutoresizingFlexibleHeight;
+        CGFloat left = CELL_PADDING_HORIZONTAL + safe.left;
+        CGFloat right = CELL_PADDING_HORIZONTAL + safe.right;
+        card.frame = CGRectMake(left,
+                                 0,
+                                 MAX(0, CGRectGetWidth(cell.bounds) - left - right),
+                                 CGRectGetHeight(cell.bounds));
+    }
+    if (card) {
+        CGRect inner = CGRectInset(card.frame, 16.0, 0);
+        CGRect contentRect = [cell.contentView convertRect:inner fromView:cell];
+        cell.contentView.insetsLayoutMarginsFromSafeArea = NO;
+        cell.contentView.preservesSuperviewLayoutMargins = NO;
+        UIEdgeInsets margins = UIEdgeInsetsMake(0, MAX(0, CGRectGetMinX(contentRect)), 0,
+                                                MAX(0, CGRectGetWidth(cell.contentView.bounds) - CGRectGetMaxX(contentRect)));
+        if (!UIEdgeInsetsEqualToEdgeInsets(cell.contentView.layoutMargins, margins)) {
+            cell.contentView.layoutMargins = margins;
+        }
+        // Standard cells use UIKit's frame layout. Keep both labels and the
+        // accessory within the same card padding after that layout completes.
+        CGFloat trailing = CGRectGetMaxX(contentRect);
+        if (cell.accessoryView) {
+            CGRect accessory = cell.accessoryView.frame;
+            accessory.origin.x = CGRectGetMaxX(inner) - accessory.size.width;
+            cell.accessoryView.frame = accessory;
+            trailing = MIN(trailing, [cell.contentView convertPoint:CGPointMake(accessory.origin.x - 12, 0) fromView:cell].x);
+        }
+        UILabel *detail = cell.detailTextLabel;
+        if (detail.text.length) {
+            CGFloat width = MIN([detail sizeThatFits:contentRect.size].width, MAX(0, contentRect.size.width * 0.55));
+            CGRect frame = detail.frame;
+            frame.origin.x = trailing - width;
+            frame.size.width = width;
+            detail.frame = frame;
+            detail.lineBreakMode = NSLineBreakByTruncatingTail;
+            trailing = CGRectGetMinX(frame) - 12;
+        }
+        UILabel *label = cell.textLabel;
+        if (label.text.length) {
+            CGRect frame = label.frame;
+            frame.origin.x = CGRectGetMinX(contentRect);
+            frame.size.width = MAX(0, trailing - frame.origin.x);
+            label.frame = frame;
+            label.lineBreakMode = NSLineBreakByTruncatingTail;
+        }
+    }
+    UIView *separator = [cell viewWithTag:888];
+    if (separator) {
+        CGFloat leftInset = SEAF_SEPARATOR_LEFT_INSET + safe.left;
+        CGFloat rightInset = SEAF_SEPARATOR_RIGHT_INSET + safe.right;
+        CGFloat height = SEAF_SEPARATOR_HEIGHT_IN(cell);
+        separator.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
+        separator.frame = CGRectMake(leftInset,
+                                      CGRectGetHeight(cell.bounds) - height,
+                                      MAX(0, CGRectGetWidth(cell.bounds) - leftInset - rightInset),
+                                      height);
+    }
+}
+
+- (void)pinSwitch:(UISwitch *)toggle label:(UILabel *)label
+{
+    UIView *content = toggle.superview;
+    if (!toggle || !content) return;
+    toggle.translatesAutoresizingMaskIntoConstraints = NO;
+    [toggle setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [toggle setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+    // Card-relative margins are updated after every cell layout.
+    NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithObjects:
+        [toggle.trailingAnchor constraintEqualToAnchor:content.layoutMarginsGuide.trailingAnchor],
+        [toggle.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
+        nil];
+
+    if (label && label.superview == content) {
+        label.translatesAutoresizingMaskIntoConstraints = NO;
+        label.lineBreakMode = NSLineBreakByTruncatingTail;
+        [label setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
+        [constraints addObject:[label.leadingAnchor constraintEqualToAnchor:content.layoutMarginsGuide.leadingAnchor]];
+        [constraints addObject:[label.centerYAnchor constraintEqualToAnchor:content.centerYAnchor]];
+        // Long labels truncate instead of running under the switch.
+        [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:toggle.leadingAnchor constant:-12]];
+    }
+    [NSLayoutConstraint activateConstraints:constraints];
+}
+
+- (void)installSettingsSwitchConstraintsIfNeeded
+{
+    if (self.settingsSwitchConstraintsInstalled) return;
+    if (!_enableTouchIDSwitch.superview) return;
+    [self pinSwitch:_enableTouchIDSwitch label:_enableTouchIDLabel];
+    [self pinSwitch:_autoSyncSwitch label:_autoCameraUploadLabel];
+    [self pinSwitch:_videoSyncSwitch label:_videoSyncLabel];
+    [self pinSwitch:_wifiOnlySwitch label:_wifiOnlyLabel];
+    [self pinSwitch:_backgroundSyncSwitch label:_backgroundSyncLable];
+    [self pinSwitch:_enableUploadHeic label:_enableHeicLabel];
+    [self pinSwitch:_useJpgSwitch label:_useJpgLabel];
+    [self pinSwitch:_wikiSwitch label:_wikiSwitchLabel];
+    [self pinSwitch:_autoClearPasswdSwitch label:_autoClearPasswdLabel];
+    [self pinSwitch:_localDecrySwitch label:_localDecryLabel];
+    self.settingsSwitchConstraintsInstalled = YES;
+}
+
+- (void)layoutSettingsHeader:(UIView *)header
+{
+    UILabel *titleLabel = (UILabel *)[header viewWithTag:770];
+    if (![titleLabel isKindOfClass:[UILabel class]]) return;
+    UIEdgeInsets safe = [self safeInsetsOfViewInTable:header];
+    CGFloat leading = 30.0 + safe.left;
+    CGFloat trailing = 16.0 + safe.right;
+    CGFloat width = MAX(0, CGRectGetWidth(header.bounds) - leading - trailing);
+    titleLabel.frame = CGRectMake(leading, 5, width, 30);
+}
+
 #pragma mark - Table view delegate
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if ([cell isKindOfClass:[SeafSettingsCell class]]) {
+        __weak typeof(self) weakSelf = self;
+        ((SeafSettingsCell *)cell).layoutCardContent = ^(UITableViewCell *layoutCell) {
+            [weakSelf layoutSettingsChromeForCell:layoutCell];
+        };
+    }
     // Ensure cell and content view are clear to show the custom background
     cell.backgroundColor = [UIColor clearColor];
     cell.contentView.backgroundColor = [UIColor clearColor];
@@ -935,8 +1116,8 @@ enum {
         }
         UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:chevronImage];
         
-        // Set the frame to position it 5px to the left with smaller dimensions
-        chevronImageView.frame = CGRectMake(-5, 2, 12, 16); // Reduced size from 15x20 to 12x16
+        // Keep the chevron within its accessory bounds.
+        chevronImageView.frame = CGRectMake(0, 2, 12, 16); // Reduced size from 15x20 to 12x16
         chevronImageView.contentMode = UIViewContentModeScaleAspectFit;
         chevronImageView.tintColor = [SeafTheme tertiaryText];
         
@@ -952,10 +1133,8 @@ enum {
             cell.textLabel.font = [UIFont systemFontOfSize:17.0];
         }
     } else {
-        // For other cells, add the spacer accessory view
-        UIView *spacerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, 1)];
-        spacerView.backgroundColor = [UIColor clearColor];
-        cell.accessoryView = spacerView;
+        // Card padding supplies the trailing spacing.
+        cell.accessoryView = nil;
         cell.accessoryType = UITableViewCellAccessoryNone;
     }
 
@@ -993,40 +1172,22 @@ enum {
         cardBackgroundView.layer.cornerRadius = 0; // No rounding for middle cells
     }
 
-    // Calculate frame relative to cell bounds with horizontal padding
-    // Make height almost full cell height
-    CGRect cardFrame = CGRectMake(CELL_PADDING_HORIZONTAL,
-                                0, // Start at the top
-                                cell.bounds.size.width - (2 * CELL_PADDING_HORIZONTAL),
-                                cell.bounds.size.height); // Fill height
-
-    cardBackgroundView.frame = cardFrame;
-    cardBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-
-    // Insert the custom background view BELOW the cell's content view
+    // Insert the custom background view BELOW the cell's content view.
+    // Frame follows the safe area; FlexibleWidth would stretch it back under
+    // the Duo camera column on the next bounds change.
+    cardBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     [cell insertSubview:cardBackgroundView belowSubview:cell.contentView];
 
     // Add separator line for all cells except the last one in each section
     if (!isLastCell) {
-        // Create a separator view
         UIView *separatorView = [[UIView alloc] init];
         separatorView.tag = 888;
         separatorView.backgroundColor = [SeafTheme separator];
-        
-        // Calculate separator frame - place it at the bottom of the cell
-        CGFloat separatorHeight = SEAF_SEPARATOR_HEIGHT;
-        CGFloat leftInset = SEAF_SEPARATOR_LEFT_INSET;
-        CGRect separatorFrame = CGRectMake(leftInset,
-                                        cell.bounds.size.height - separatorHeight,
-                                        cell.bounds.size.width - leftInset - SEAF_SEPARATOR_RIGHT_INSET,
-                                        separatorHeight);
-        
-        separatorView.frame = separatorFrame;
-        separatorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-        
-        // Add the separator on top of the card background but below content view
+        separatorView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
         [cell insertSubview:separatorView aboveSubview:cardBackgroundView];
     }
+    [self layoutSettingsChromeForCell:cell];
+    [self installSettingsSwitchConstraintsIfNeeded];
 
     // Manage Separators - hide default separators
     cell.separatorInset = UIEdgeInsetsMake(0, 0, 0, cell.bounds.size.width);
@@ -1208,17 +1369,19 @@ enum {
         return nil;
     }
     
-    // Create a custom header view
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 35)];
+    // Width matches the table so safe-area math works before the header is inserted.
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 35)];
     headerView.backgroundColor = [UIColor clearColor];
-    
-    // Create a label with 30-point left indentation
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 5, tableView.frame.size.width - 40, 30)];
+
+    UILabel *titleLabel = [[UILabel alloc] init];
+    titleLabel.tag = 770;
     titleLabel.font = [UIFont systemFontOfSize:14];
     titleLabel.textColor = [SeafTheme secondaryText];
     titleLabel.text = title;
+    titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
     [headerView addSubview:titleLabel];
-    
+    [self layoutSettingsHeader:headerView];
+
     return headerView;
 }
 

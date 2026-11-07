@@ -49,7 +49,6 @@
 #import "SeafUploadOperation.h"
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFileModel.h"
-#import "SeafNavLeftItem.h"
 #import "SeafHeaderView.h"
 #import "SeafEditNavRightItem.h"
 #import "SeafLoadingView.h"
@@ -106,6 +105,7 @@ enum {
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (nonatomic, assign) BOOL gridModeEnabled;
 @property (nonatomic, assign) BOOL collectionNeedsReload;
+@property (nonatomic, assign) CGFloat lastGridLayoutWidth;
 @property (strong, nonatomic) UIRefreshControl *gridRefreshControl;
 
 @property (retain) SWTableViewCell *selectedCell;// The cell currently selected.
@@ -118,6 +118,9 @@ enum {
 
 @property (nonatomic, strong) UISearchController *searchController;
 @property (nonatomic, strong) SeafSearchResultViewController *searchResultController;
+/// Back arrow drawn inside the search bar; replaced by a rail item when a vertical bar is shown.
+@property (nonatomic, strong) UIButton *searchBarBackButton;
+@property (nonatomic, assign) BOOL searchUsesVerticalBar;
 
 @property (strong, retain) NSArray *photos;// Array of photo entries.
 @property (strong, retain) NSArray *thumbs;// Array of thumbnail entries.
@@ -126,10 +129,7 @@ enum {
 
 //@property (nonatomic, strong) NSMutableDictionary *expandedSections; // Dictionary to store expanded sections
 
-@property (nonatomic, strong) NSString *originalTitle; // Property to store the original title
-
 @property (nonatomic, strong) UIView *customToolView;
-@property (nonatomic, strong) UILabel *customTitleLabel; // Add new property to track title label
 @property (nonatomic, strong) SeafFile *pendingVideoFile; // Video file waiting to play after download
 
 @property (nonatomic, strong) SeafSelectionActionCoordinator *selectionCoordinator;
@@ -178,16 +178,35 @@ enum {
 {
     [super viewDidLoad];
 
-    self.view.backgroundColor = kPrimaryBackgroundColor;
+    [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
+
+    // On Duo the navigation bar's background stops short of the top edge.
+    // Continue its surface behind the top safe area without moving content or
+    // changing the gray backdrop beside the list. The safe-area anchor follows
+    // navigation bar minimization and fold/unfold transitions.
+    UIView *navigationBackground = [[UIView alloc] init];
+    navigationBackground.backgroundColor = [SeafTheme primarySurface];
+    navigationBackground.userInteractionEnabled = NO;
+    navigationBackground.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:navigationBackground];
+    [NSLayoutConstraint activateConstraints:@[
+        [navigationBackground.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [navigationBackground.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [navigationBackground.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [navigationBackground.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+    ]];
+
     self.gridModeEnabled = SeafFileBrowseGridModeEnabled();
 
-    UITableView *tv = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
-    tv.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    UITableView *tv = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
     tv.dataSource = self;
     tv.delegate = self;
     tv.allowsSelectionDuringEditing = YES;
     tv.allowsMultipleSelectionDuringEditing = YES;
-    [self.view addSubview:tv];
+    tv.backgroundColor = kPrimaryBackgroundColor;
+    // Bottom follows the host view so rows stay visible in the home-indicator
+    // band. Horizontal edges stay in the safe area (Duo camera column).
+    [SeafNavigationBarStyler pinViewToSafeAreaExtendingToHostBottom:tv inHostView:self.view];
     self.tableView = tv;
 
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
@@ -195,16 +214,19 @@ enum {
     layout.minimumInteritemSpacing = 12.0;
     layout.minimumLineSpacing = 16.0;
     layout.sectionInset = UIEdgeInsetsMake(16.0, 16.0, 16.0, 16.0);
-    UICollectionView *cv = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:layout];
-    cv.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    UICollectionView *cv = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
     cv.backgroundColor = kPrimaryBackgroundColor;
     cv.dataSource = self;
     cv.delegate = self;
     cv.alwaysBounceVertical = YES;
+    // The collection view is already pinned inside the safe area. Automatic
+    // adjustment would add that inset a second time after a fold/unfold and
+    // the row would no longer fill the width.
+    cv.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     cv.hidden = YES;
     cv.accessibilityElementsHidden = YES;
     [cv registerClass:[SeafGridCell class] forCellWithReuseIdentifier:@"SeafGridCell"];
-    [self.view addSubview:cv];
+    [SeafNavigationBarStyler pinViewToSafeArea:cv inHostView:self.view];
     self.collectionView = cv;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -237,10 +259,9 @@ enum {
 
     self.tableView.estimatedRowHeight = 55;
     
-    // Custom navigation bar left button
-    if (!self.isEditing) {
-        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory title:nil target:self action:@selector(backButtonTapped)]];
-        self.navigationItem.leftBarButtonItem = customBarButton;
+    // Skip until setDirectory: when the directory is not ready.
+    if (!self.isEditing && self.directory) {
+        [self applyLibraryNavigationChrome];
     }
     
     self.state = STATE_INIT;
@@ -333,36 +354,51 @@ enum {
     return [self isGridModeActive] ? (UIScrollView *)self.collectionView : (UIScrollView *)self.tableView;
 }
 
-- (void)updateCollectionViewLayout {
-    if (!self.collectionView) return;
-    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
-    CGFloat width = CGRectGetWidth(self.collectionView.bounds);
-    if (width <= 0) width = CGRectGetWidth(self.view.bounds);
-
+- (void)gridItemSize:(CGSize *)outSize inset:(UIEdgeInsets *)outInset forCollectionWidth:(CGFloat)width {
     const CGFloat baseInset = 16.0;
+    const CGFloat spacing = 12.0;
     const CGFloat maxItemWidth = 220.0;
-    CGFloat spacing = layout.minimumInteritemSpacing;
-    // Grow column count on wide iPads instead of leaving large empty side margins.
-    CGFloat usable = width - baseInset * 2.0;
+    // Always the collection view's current width. A width remembered from the
+    // folded layout stays near 220pt after unfold, and the row then stretches
+    // the gutter instead of the cells.
+    if (width <= 0) width = CGRectGetWidth(self.collectionView.bounds);
+    if (width <= 0) width = CGRectGetWidth(self.view.bounds);
+    CGFloat usable = MAX(0, width - baseInset * 2.0);
     NSInteger columns = MAX(2, (NSInteger)floor((usable + spacing) / (maxItemWidth + spacing)));
-    CGFloat available = width - baseInset * 2.0 - spacing * (columns - 1);
-    CGFloat itemWidth = floor(available / columns);
-    UIEdgeInsets inset = UIEdgeInsetsMake(baseInset, baseInset, baseInset, baseInset);
-    if (itemWidth > maxItemWidth) {
-        itemWidth = maxItemWidth;
-        CGFloat used = itemWidth * columns + spacing * (columns - 1);
-        CGFloat side = MAX(baseInset, floor((width - used) / 2.0));
-        inset = UIEdgeInsetsMake(baseInset, side, baseInset, side);
+    CGFloat itemWidth = floor((usable - spacing * (CGFloat)(columns - 1)) / (CGFloat)columns);
+    if (itemWidth < 1.0) itemWidth = 1.0;
+    if (outSize) {
+        *outSize = CGSizeMake(itemWidth, [SeafGridCell preferredItemHeightForWidth:itemWidth]);
     }
-    CGSize itemSize = CGSizeMake(itemWidth, [SeafGridCell preferredItemHeightForWidth:itemWidth]);
-    // Skip work when nothing changed (viewDidLayoutSubviews calls this often).
-    if (UIEdgeInsetsEqualToEdgeInsets(layout.sectionInset, inset)
-        && CGSizeEqualToSize(layout.itemSize, itemSize)) {
-        return;
+    if (outInset) {
+        *outInset = UIEdgeInsetsMake(baseInset, baseInset, baseInset, baseInset);
     }
-    layout.sectionInset = inset;
-    layout.itemSize = itemSize;
-    [layout invalidateLayout];
+}
+
+/// Invalidate the grid layout when the collection view's width changes.
+/// Item size, insets, and spacing come from the flow-layout delegate methods
+/// below, which read the width at layout time; nothing is cached on the layout.
+- (void)updateCollectionViewLayout {
+    if (!self.collectionView || ![self isGridModeActive]) return;
+    // Read the width only. Do not layoutIfNeeded here: that pass can grow the
+    // bounds while this method is still on the stack, and the in-between width
+    // (the 3-column boundary, item size exactly 220pt) then sticks.
+    CGFloat width = CGRectGetWidth(self.collectionView.bounds);
+    if (width <= 0) return;
+    if (fabs(width - self.lastGridLayoutWidth) < 0.5) return;
+    self.lastGridLayoutWidth = width;
+    [self.collectionView.collectionViewLayout invalidateLayout];
+}
+
+- (void)relayoutGridAfterBoundsChange {
+    self.lastGridLayoutWidth = 0;
+    [self updateCollectionViewLayout];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (![self isGridModeActive] || !self.collectionView) return;
+        self.lastGridLayoutWidth = 0;
+        [self updateCollectionViewLayout];
+        [self.collectionView reloadData];
+    });
 }
 
 - (void)applyViewMode {
@@ -388,52 +424,16 @@ enum {
     }
 }
 
-/// Shared nav-bar icon metrics so more / view-mode / search share equal spacing.
-/// Narrow item width keeps icons visually close; height stays tall for tap comfort.
-static const CGFloat kNavBarIconItemWidth = 28.0;
-static const CGFloat kNavBarIconItemHeight = 44.0;
+/// Template glyph sizing; the system owns bar item placement.
 static const CGFloat kNavBarIconGlyphSize = 20.0;
-/// View-mode SF Symbol reads slightly larger than PNG glyphs at the same point size.
 static const CGFloat kNavBarViewModeGlyphSize = 17.0;
-/// Pull custom-view items together evenly (UIKit default gap is too wide for 3 icons).
-static const CGFloat kNavBarIconInterItemSpace = -8.0;
-
-- (UIButton *)makeNavBarIconButton {
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
-    btn.frame = CGRectMake(0, 0, kNavBarIconItemWidth, kNavBarIconItemHeight);
-    btn.tintColor = [SeafTheme secondaryText];
-    btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-    btn.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    btn.adjustsImageWhenHighlighted = NO;
-    return btn;
-}
-
-- (UIBarButtonItem *)navBarIconSpacingItem {
-    UIBarButtonItem *space = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
-                                                                           target:nil
-                                                                           action:nil];
-    space.width = kNavBarIconInterItemSpace;
-    return space;
-}
-
-- (NSArray<UIBarButtonItem *> *)navBarRightItemsByInsertingEqualSpacing:(NSArray<UIBarButtonItem *> *)items {
-    if (items.count <= 1) return items;
-    NSMutableArray<UIBarButtonItem *> *spaced = [NSMutableArray arrayWithCapacity:items.count * 2 - 1];
-    [items enumerateObjectsUsingBlock:^(UIBarButtonItem *item, NSUInteger idx, BOOL *stop) {
-        if (idx > 0) {
-            [spaced addObject:[self navBarIconSpacingItem]];
-        }
-        [spaced addObject:item];
-    }];
-    return spaced;
-}
 
 - (UIImage *)navBarTemplateImageNamed:(NSString *)imageName {
     UIImage *img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     if (!img) return nil;
     CGSize size = CGSizeMake(kNavBarIconGlyphSize, kNavBarIconGlyphSize);
     UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
-    format.scale = [UIScreen mainScreen].scale;
+    format.scale = self.traitCollection.displayScale;
     UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
     UIImage *resized = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
         [img drawInRect:CGRectMake(0, 0, size.width, size.height)];
@@ -442,11 +442,10 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 }
 
 - (UIBarButtonItem *)makeNavBarIconItemWithImageName:(NSString *)imageName action:(SEL)action {
-    UIButton *btn = [self makeNavBarIconButton];
-    [btn setImage:[self navBarTemplateImageNamed:imageName] forState:UIControlStateNormal];
-    btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
-    return [[UIBarButtonItem alloc] initWithCustomView:btn];
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:[self navBarTemplateImageNamed:imageName]
+                                                          style:UIBarButtonItemStylePlain target:self action:action];
+    item.tintColor = [SeafTheme glassBarIconColor];
+    return item;
 }
 
 - (UIImage *)viewModeBarButtonSymbol {
@@ -457,24 +456,19 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 }
 
 - (UIBarButtonItem *)makeViewModeBarButtonItem {
-    UIButton *btn = [self makeNavBarIconButton];
-    [btn setImage:[self viewModeBarButtonSymbol] forState:UIControlStateNormal];
-    [btn addTarget:self action:@selector(toggleViewMode:) forControlEvents:UIControlEventTouchUpInside];
-    NSString *label = self.gridModeEnabled
-        ? NSLocalizedString(@"Switch to List View", @"Seafile")
-        : NSLocalizedString(@"Switch to Grid View", @"Seafile");
-    btn.accessibilityLabel = label;
-    return [[UIBarButtonItem alloc] initWithCustomView:btn];
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:[self viewModeBarButtonSymbol]
+                                                          style:UIBarButtonItemStylePlain target:self action:@selector(toggleViewMode:)];
+    item.tintColor = [SeafTheme glassBarIconColor];
+    item.accessibilityIdentifier = @"directory_view_mode_button";
+    return item;
 }
 
 - (void)updateViewModeBarButtonImage {
-    if (!self.viewModeItem) return;
-    UIButton *btn = (UIButton *)self.viewModeItem.customView;
-    if (![btn isKindOfClass:[UIButton class]]) return;
-    [btn setImage:[self viewModeBarButtonSymbol] forState:UIControlStateNormal];
-    btn.accessibilityLabel = self.gridModeEnabled
+    self.viewModeItem.image = [self viewModeBarButtonSymbol];
+    self.viewModeItem.title = self.gridModeEnabled
         ? NSLocalizedString(@"Switch to List View", @"Seafile")
         : NSLocalizedString(@"Switch to Grid View", @"Seafile");
+    self.viewModeItem.accessibilityLabel = self.viewModeItem.title;
 }
 
 - (void)toggleViewMode:(id)sender {
@@ -504,14 +498,27 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
+    [SeafNavigationBarStyler updateTableViewBackgroundViewFrame:self.tableView];
     if ([self isGridModeActive]) {
         [self updateCollectionViewLayout];
     }
+    // Both the panel and its scroll-view overlap follow the current content area.
+    if (self.editing && self.customToolView) {
+        self.customToolView.frame = [self customToolFrame];
+        [self layoutCustomToolButtons];
+        [self adjustContentInsetForCustomToolbar:YES];
+    }
+}
+
+- (void)viewSafeAreaInsetsDidChange {
+    [super viewSafeAreaInsetsDidChange];
+    [self.view setNeedsLayout];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    
+    [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
+
     // Set delegate here to ensure it's properly set each time the view appears
     if (self.navigationController) {
         self.navigationController.interactivePopGestureRecognizer.delegate = self;
@@ -561,17 +568,11 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
 
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        // Update customToolView frame for orientation change if it exists
         if (self.customToolView) {
-            CGRect screenBounds = [UIScreen mainScreen].bounds;
-            CGRect frame = self.customToolView.frame;
-            frame.size.width = screenBounds.size.width;
-            frame.origin.y = screenBounds.size.height - frame.size.height;
-            self.customToolView.frame = frame;
-            
-            // Update child subviews to match the new width
+            self.customToolView.frame = [self customToolFrame];
             [self relayoutCustomToolViewSubviews];
         }
+        [self relayoutGridAfterBoundsChange];
         // Update tableView headerView frame and refresh all its subviews layout
         if (self.tableView.tableHeaderView) {
             CGRect headerFrame = self.tableView.tableHeaderView.frame;
@@ -598,7 +599,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
             }
         }
     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        [self updateCollectionViewLayout];
+        [self relayoutGridAfterBoundsChange];
     }];
 }
 
@@ -622,68 +623,53 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
 - (void)initNavigationItems:(SeafDir *)directory
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-//        self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:) size:20];
-        
-        // Create a container view containing icon and label
-        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 180, 44)];
-        
-        // Add close icon
-        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        [closeButton setImage:[UIImage imageNamed:@"close"] forState:UIControlStateNormal];
-        closeButton.frame = CGRectMake(0, 10, 24, 24);
-        [closeButton addTarget:self action:@selector(editDone:) forControlEvents:UIControlEventTouchUpInside];
-        [containerView addSubview:closeButton];
-        
-        // Add selection count label
-        UILabel *countLabel = [[UILabel alloc] initWithFrame:CGRectMake(35, 0, containerView.frame.size.width - 24 - 20, 44)];
-        countLabel.font = [UIFont systemFontOfSize:17];
-        countLabel.textColor = [SeafTheme primaryText];
-        countLabel.text = NSLocalizedString(@"Select items", @"Seafile");
-        [containerView addSubview:countLabel];
-        
-        UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
-        self.doneItem = customBarItem;
-        // Equal 44pt hit targets + equal glyph size; no FixedSpace so inter-item gaps stay uniform.
-        self.editItem = [self makeNavBarIconItemWithImageName:@"more" action:@selector(editSheet:)];
-        if ([self.editItem.customView isKindOfClass:[UIButton class]]) {
-            UIButton *moreBtn = (UIButton *)self.editItem.customView;
-            moreBtn.accessibilityIdentifier = @"directory_more_button";
-            moreBtn.accessibilityLabel = NSLocalizedString(@"More", @"Seafile");
-        }
+    // Install buttons before the first navigation-bar layout. Deferring them
+    // lets long titles appear centered before shifting to fit the buttons.
+    self.doneItem = [SeafNavigationBarStyler createCloseButtonWithTarget:self action:@selector(editDone:)];
+    self.doneItem.accessibilityIdentifier = @"directory_exit_selection_button";
+    self.editItem = [self makeNavBarIconItemWithImageName:@"more" action:@selector(editSheet:)];
+    self.editItem.accessibilityIdentifier = @"directory_more_button";
+    self.editItem.title = NSLocalizedString(@"More", @"Seafile");
+    self.editItem.accessibilityLabel = self.editItem.title;
 
-        // Determine whether to show search button based on server type and current level
-        SeafConnection *conn = directory.connection;
-        BOOL isRoot = [directory isKindOfClass:[SeafRepos class]];
-        BOOL isPro = conn.isProServer;
-        BOOL isAdvanced = conn.isAdvancedSearchEnabled;
-        BOOL isCommunity = conn.isCommunityServer;
+    // Determine whether to show search button based on server type and current level
+    SeafConnection *conn = directory.connection;
+    BOOL isRoot = [directory isKindOfClass:[SeafRepos class]];
+    BOOL isPro = conn.isProServer;
+    BOOL isAdvanced = conn.isAdvancedSearchEnabled;
+    BOOL isCommunity = conn.isCommunityServer;
 
-        BOOL shouldShowSearch = NO;
-        if (isPro && isAdvanced) {
-            // Pro + file-search: support search on root and inside repos
-            shouldShowSearch = YES;
-        } else if (isCommunity && !isRoot) {
-            // Community edition: only support search inside a specific repo
-            shouldShowSearch = YES;
-        }
+    BOOL shouldShowSearch = NO;
+    if (isPro && isAdvanced) {
+        // Pro + file-search: support search on root and inside repos
+        shouldShowSearch = YES;
+    } else if (isCommunity && !isRoot) {
+        // Community edition: only support search inside a specific repo
+        shouldShowSearch = YES;
+    }
 
-        NSMutableArray *items = [NSMutableArray arrayWithObjects:self.editItem, nil];
-        if (!isRoot) {
-            self.viewModeItem = [self makeViewModeBarButtonItem];
-            [items addObject:self.viewModeItem];
-        }
-        if (shouldShowSearch) {
-            self.searchItem = [self makeNavBarIconItemWithImageName:@"fileNav_search" action:@selector(searchAction:)];
-            [items addObject:self.searchItem];
-        }
-        self.rightItems = [self navBarRightItemsByInsertingEqualSpacing:items];
+    self.searchItem = nil;
+    self.viewModeItem = nil;
+    // UIKit orders trailing items from the edge inward and adapts their axis.
+    NSMutableArray<UIBarButtonItem *> *items = [NSMutableArray arrayWithObject:self.editItem];
+    if (!isRoot) {
+        self.viewModeItem = [self makeViewModeBarButtonItem];
+        [self updateViewModeBarButtonImage];
+        [items addObject:self.viewModeItem];
+    }
+    if (shouldShowSearch) {
+        self.searchItem = [self makeNavBarIconItemWithImageName:@"fileNav_search" action:@selector(searchAction:)];
+        self.searchItem.accessibilityIdentifier = @"directory_search_button";
+        self.searchItem.title = NSLocalizedString(@"Search", @"Seafile");
+        self.searchItem.accessibilityLabel = self.searchItem.title;
+        [items addObject:self.searchItem];
+    }
+    self.rightItems = items;
 
-        _selectNoneItem = [[SeafEditNavRightItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") imageName:@"ic_checkbox_unchecked" target:self action:@selector(selectAll:)];
-        
-        _selectAllItem = [[SeafEditNavRightItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") imageName:@"ic_checkbox_checked" target:self action:@selector(selectNone:)];
-        self.navigationItem.rightBarButtonItems = self.rightItems;
-    });
+    _selectNoneItem = [[SeafEditNavRightItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") imageName:@"ic_checkbox_unchecked" target:self action:@selector(selectAll:)];
+
+    _selectAllItem = [[SeafEditNavRightItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Seafile") imageName:@"ic_checkbox_checked" target:self action:@selector(selectNone:)];
+    self.navigationItem.rightBarButtonItems = self.rightItems;
 }
 
 - (void)editSheet:(id)sender {
@@ -701,6 +687,27 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
 
 #pragma mark - UICollectionView Data Source & Delegate
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    CGSize itemSize = CGSizeZero;
+    [self gridItemSize:&itemSize inset:NULL forCollectionWidth:CGRectGetWidth(collectionView.bounds)];
+    return itemSize;
+}
+
+- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+    UIEdgeInsets inset = UIEdgeInsetsZero;
+    [self gridItemSize:NULL inset:&inset forCollectionWidth:CGRectGetWidth(collectionView.bounds)];
+    return inset;
+}
+
+- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
+    return 12.0;
+}
+
+- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section {
+    return 16.0;
+}
+
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
     if ([self isRepoRootDirectory]) return 0;
@@ -1217,19 +1224,45 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     [self setDirectory:(SeafDir *)conn.rootFolder];
 }
 
+/// Keep the title independent so UIKit can adapt navigation controls to either display.
+- (void)applyLibraryNavigationChrome
+{
+    self.navigationItem.titleView = nil;
+    // Keep every directory title leading-aligned, regardless of its length.
+    self.navigationItem.style = UINavigationItemStyleBrowser;
+    self.navigationItem.backButtonDisplayMode = UINavigationItemBackButtonDisplayModeMinimal;
+    SeafDir *directory = self.directory;
+    self.title = directory.name.length ? directory.name : NSLocalizedString(@"Libraries", @"Seafile");
+    self.navigationItem.leftBarButtonItem = [self glassBackItemIfNeeded];
+    self.navigationItem.hidesBackButton = NO;
+}
+
+/// On iOS 26+ iPhones the system back button ignores the bar tint (and the iPhone
+/// Duo side rail also ignores a custom back indicator), so it stays black while
+/// the other bar buttons use glassBarIconColor. Subfolders show their own back
+/// item with the same chevron and color instead; swipe-back still works through
+/// gestureRecognizerShouldBegin:. The library root has nothing to go back to.
+- (nullable UIBarButtonItem *)glassBackItemIfNeeded
+{
+    if (@available(iOS 26.0, *)) {
+        if (IsIpad() || [self.directory isKindOfClass:[SeafRepos class]])
+            return nil;
+        UIBarButtonItem *back = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                             action:@selector(backButtonTapped)
+                                                                              color:[SeafTheme glassBarIconColor]];
+        return back;
+    }
+    return nil;
+}
+
 - (void)setDirectory:(SeafDir *)directory
 {
-    [self initNavigationItems:directory];
-
     _directory = directory;
     _connection = directory.connection;
     self.searchResultController.connection = _connection;
     self.searchResultController.directory = _directory;
     
     // Update custom title
-    if (self.customTitleLabel) {
-        self.customTitleLabel.text = directory.name;
-    }
     
     [_directory loadContent:false];
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid, _directory.editable);
@@ -1256,10 +1289,10 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     [_directory setDelegate:self];
     [self applyViewMode];
     [self refreshView];
-    
-    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:directory title:nil target:self action:@selector(backButtonTapped)]];
-    self.navigationItem.leftBarButtonItem = customBarButton;
-    
+
+    [self initNavigationItems:directory];
+    [self applyLibraryNavigationChrome];
+
     self.state = STATE_LOADING;
     self.directory.delegate = self;
     [_directory loadContent:true];
@@ -1494,11 +1527,12 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     
     if (editing) {
         [self checkNetworkStatus];
-        // Save original title
-        self.originalTitle = self.title;
+        // Clear the title so the root page does not keep a centered
+        // "Libraries" title next to the selection button. editDone: puts it
+        // back through applyLibraryNavigationChrome.
+        self.title = nil;
         
         [self.navigationController.toolbar sizeToFit];
-        self.tabBarController.tabBar.hidden = YES;
         [self setupCustomTabTool];
         // Drop any leftover selection from a previous edit session or
         // non-edit selectItem: calls before multi-select begins.
@@ -1511,22 +1545,11 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         self.navigationItem.leftBarButtonItem = nil;
         [self.photoItem setEnabled:YES];
         
-        // Restore original title
-        self.customTitleLabel.text = self.directory.name;
+        [self applyLibraryNavigationChrome];
 
         // Remove custom toolbar
         [self dismissCustomTabTool:^{
-            [self adjustContentInsetForCustomToolbar:NO];
-            // On iPadOS 18+, tabs are shown at the top; keep bottom tab bar hidden.
-            if (IsIpad()) {
-                if (@available(iOS 18.0, *)) {
-                    // Tab bar stays hidden on iPad with compact top tabs
-                } else {
-                    self.tabBarController.tabBar.hidden = NO;
-                }
-            } else {
-                self.tabBarController.tabBar.hidden = NO;
-            }
+            [self adjustContentInsetForCustomToolbar:self.editing];
         }];
     }
 
@@ -1550,18 +1573,22 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
 // Method to remove custom toolbar when no longer needed
 - (void)dismissCustomTabTool:(void (^)(void))completion {
-    if (!self.customToolView) {
+    UIView *panel = self.customToolView;
+    if (!panel) {
+        if (completion) completion();
         return;
     }
-    
+    self.customToolView = nil;
+    NSMutableArray *accessibleViews = [self.view.accessibilityElements mutableCopy];
+    [accessibleViews removeObject:panel];
+    self.view.accessibilityElements = accessibleViews;
     [UIView animateWithDuration:0.2 animations:^{
-        CGRect frame = self.customToolView.frame;
-        frame.origin.y = self.customToolView.superview.bounds.size.height;
-        self.customToolView.frame = frame;
+        CGRect frame = panel.frame;
+        frame.origin.y = panel.superview.bounds.size.height;
+        panel.frame = frame;
     } completion:^(BOOL finished) {
-        [self.customToolView removeFromSuperview];
-        self.customToolView = nil;
-        
+        [panel removeFromSuperview];
+
         // Execute completion callback
         if (completion) {
             completion();
@@ -1584,11 +1611,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     self.navigationItem.rightBarButtonItem = nil;
     self.navigationItem.rightBarButtonItems = self.rightItems;
     
-    // Restore original title
-    self.customTitleLabel.text = self.directory.name;
-    
-    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory title:nil target:self action:@selector(backButtonTapped)]];
-    self.navigationItem.leftBarButtonItem = customBarButton;
+    [self applyLibraryNavigationChrome];
 }
 
 - (void)editOperation:(id)sender
@@ -1672,48 +1695,17 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
 - (void)noneSelected:(BOOL)none
 {
-    if (none) {
-        // Get done button container view
-        UIView *containerView = (UIView *)self.doneItem.customView;
-        UILabel *countLabel = [containerView.subviews.lastObject isKindOfClass:[UILabel class]] ?
-                             (UILabel *)containerView.subviews.lastObject : nil;
-        countLabel.text = NSLocalizedString(@"Select items", @"Seafile");
-        
-        self.navigationItem.rightBarButtonItem = _selectNoneItem;
-        self.navigationItem.leftBarButtonItem = self.doneItem;
-    
-    } else {
-        NSArray *selectedRows = [self selectedEntryIndexPaths];
-        NSInteger selectedCount = selectedRows.count;
-        
-        // Update label text on done button
-        UIView *containerView = (UIView *)self.doneItem.customView;
-        UILabel *countLabel = [containerView.subviews.lastObject isKindOfClass:[UILabel class]] ?
-                             (UILabel *)containerView.subviews.lastObject : nil;
-        countLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%ld selected", @"Seafile"), (long)selectedCount];
-        
-        // Calculate total selectable rows
-        NSInteger selectableCount = 0;
-        for (id entry in self.allItems) {
-            if (![entry isKindOfClass:[SeafUploadFile class]]) {
-                selectableCount++;
-            }
-        }
-        
-        // Decide which button to show based on selection state
-        if (selectedCount == selectableCount) {
-            self.navigationItem.rightBarButtonItem = _selectAllItem;
-        } else {
-            self.navigationItem.rightBarButtonItem = _selectNoneItem;
-        }
-        
-        self.navigationItem.leftBarButtonItem = self.doneItem;
-        
-        // Only update custom title in edit mode
-        if (self.editing) {
-            self.customTitleLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%ld items selected", @"Seafile"), (long)selectedCount];
-        }
+    NSInteger selectedCount = none ? 0 : [self selectedEntryIndexPaths].count;
+    NSInteger selectableCount = 0;
+    for (id entry in self.allItems) {
+        if (![entry isKindOfClass:[SeafUploadFile class]]) selectableCount++;
     }
+    self.navigationItem.titleView = nil;
+    self.navigationItem.title = selectedCount > 0
+        ? [NSString stringWithFormat:NSLocalizedString(@"%ld selected", @"Seafile"), (long)selectedCount]
+        : NSLocalizedString(@"Select items", @"Seafile");
+    self.navigationItem.leftBarButtonItem = self.doneItem;
+    self.navigationItem.rightBarButtonItems = @[(selectedCount > 0 && selectedCount == selectableCount) ? self.selectAllItem : self.selectNoneItem];
 }
 
 - (void)updateExportBarItem:(NSArray *)items {
@@ -1784,7 +1776,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         navController.modalPresentationStyle = UIModalPresentationFormSheet;
         [self presentViewController:navController animated:YES completion:nil];
     } else {
-        navController.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+        navController.modalPresentationStyle = UIModalPresentationOverFullScreen;
         [self presentViewController:navController animated:NO completion:nil]; // iPhone uses custom animation
     }
     
@@ -3661,6 +3653,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 
         customBackButton.translatesAutoresizingMaskIntoConstraints = NO;
         [_searchController.searchBar addSubview:customBackButton];
+        self.searchBarBackButton = customBackButton;
 
         // Align to the search field's vertical center (not the bar's) — the field is not
         // centered within the bar, so centering on the bar makes the button sit too low.
@@ -3703,6 +3696,19 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 - (void)presentSearchBar {
     UISearchBar *bar = self.searchController.searchBar;
     [bar sizeToFit];
+    if (self.searchUsesVerticalBar) {
+        // The navigation bar stays visible to host the rail's back item, so the search bar
+        // takes the title row; a header-hosted bar would be moved underneath the nav bar.
+        if (bar.superview == self.view) {
+            [bar removeFromSuperview];
+        }
+        if (self.tableView.tableHeaderView == bar) {
+            self.tableView.tableHeaderView = [self directoryTableHeaderPlaceholder];
+        }
+        [self setCollectionViewSearchBarInset:0];
+        self.navigationItem.titleView = bar;
+        return;
+    }
     if ([self isGridModeActive]) {
         if (self.tableView.tableHeaderView == bar) {
             self.tableView.tableHeaderView = [self directoryTableHeaderPlaceholder];
@@ -3729,6 +3735,9 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 /// Remove the search bar from whichever host it was attached to.
 - (void)dismissSearchBar {
     UISearchBar *bar = _searchController.searchBar;
+    if (bar && self.navigationItem.titleView == bar) {
+        self.navigationItem.titleView = nil;
+    }
     if (bar.superview == self.view) {
         [bar removeFromSuperview];
     }
@@ -3740,6 +3749,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     }
     // Ensure list/grid visibility matches the current mode after a grid search session.
     [self applyViewMode];
+    [self restoreNavigationChromeAfterSearch];
 }
 
 - (void)customSearchDismissAction:(UIButton *)sender {
@@ -3799,34 +3809,29 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 - (void)setupCustomTabTool {
     // Remove existing custom view if present
     if (self.customToolView) {
+        NSMutableArray *accessibleViews = [self.view.accessibilityElements mutableCopy];
+        [accessibleViews removeObject:self.customToolView];
+        self.view.accessibilityElements = accessibleViews;
         [self.customToolView removeFromSuperview];
         self.customToolView = nil;
     }
     
-    // Get key window first since the view will be added to it
-    UIWindow *keyWindow = nil;
-    NSArray<UIWindowScene *> *scenes = UIApplication.sharedApplication.connectedScenes.allObjects;
-    for (UIWindowScene *scene in scenes) {
-        if (scene.activationState == UISceneActivationStateForegroundActive) {
-            keyWindow = scene.windows.firstObject;
-            break;
-        }
-    }
-    
-    // Calculate custom view size and position using keyWindow coordinates
-    CGFloat toolHeight = kCustomTabToolTotalHeight;
-    
-    CGFloat pureHomeIndicator = keyWindow.safeAreaInsets.bottom;
-
-    // Use keyWindow bounds since the view is added to keyWindow
-    CGRect frame = CGRectMake(0,
-                             keyWindow.bounds.size.height - toolHeight - pureHomeIndicator,
-                             keyWindow.bounds.size.width,
-                             toolHeight + pureHomeIndicator);
+    // A sibling of the list: it stays fixed without covering the system side bar.
+    CGRect frame = [self customToolFrame];
     
     // Create custom view
     UIView *customToolView = [[UIView alloc] initWithFrame:frame];
+    customToolView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
     customToolView.backgroundColor = [SeafTheme primarySurface];
+
+    // Paint through the bottom safe-area gap without extending the panel's
+    // hit region or covering the system side rail. A bottom tab bar remains
+    // above this controller's view in the container hierarchy.
+    UIView *bottomFill = [[UIView alloc] initWithFrame:CGRectZero];
+    bottomFill.tag = 9000;
+    bottomFill.userInteractionEnabled = NO;
+    bottomFill.backgroundColor = [SeafTheme primarySurface];
+    [customToolView addSubview:bottomFill];
 
     // Add top border as a UIView so the dynamic separator color adapts to theme changes
     UIView *topBorder = [[UIView alloc] initWithFrame:CGRectMake(0, 0, customToolView.frame.size.width, 0.5)];
@@ -3864,22 +3869,23 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         @"detail_information"
     ];
     
-    // Set button sizes and spacing
-    CGFloat screenWidth = customToolView.bounds.size.width;
-    
-    // Calculate second row position
-    CGFloat buttonHeight = kCustomTabToolButtonHeight;
-        
     // Set initial position below screen
     CGRect initialFrame = customToolView.frame;
-    initialFrame.origin.y = keyWindow.bounds.size.height;
+    initialFrame.origin.y = CGRectGetHeight(self.view.bounds);
     customToolView.frame = initialFrame;
     
-    // Add to key window to prevent scrolling with tableView
-    [keyWindow addSubview:customToolView];
+    customToolView.accessibilityIdentifier = @"directory_selection_toolbar";
+    customToolView.accessibilityContainerType = UIAccessibilityContainerTypeSemanticGroup;
+    customToolView.shouldGroupAccessibilityChildren = YES;
+    [self.view addSubview:customToolView];
     
     // Store reference
     self.customToolView = customToolView;
+    // The page defines an explicit accessibility order for its scroll views.
+    // Include this sibling panel so VoiceOver and UI automation can reach it.
+    NSMutableArray *accessibleViews = [self.view.accessibilityElements mutableCopy];
+    [accessibleViews addObject:customToolView];
+    self.view.accessibilityElements = accessibleViews;
     
     // Create first row buttons
     for (int i = 0; i < firstRowTitles.count; i++) {
@@ -3915,10 +3921,24 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
     }];
 }
 
+- (CGRect)customToolFrame {
+    CGRect safe = self.view.safeAreaLayoutGuide.layoutFrame;
+    CGFloat height = MIN(kCustomTabToolTotalHeight, CGRectGetHeight(safe));
+    // Keep the entire panel inside the page, whether tabs are beside or below it.
+    return CGRectMake(CGRectGetMinX(safe), CGRectGetMaxY(safe) - height,
+                      CGRectGetWidth(safe), height);
+}
+
 - (void)layoutCustomToolButtons {
     if (!self.customToolView) return;
+    UIView *bottomFill = [self.customToolView viewWithTag:9000];
+    bottomFill.frame = CGRectMake(0, CGRectGetHeight(self.customToolView.bounds),
+                                  CGRectGetWidth(self.customToolView.bounds),
+                                  MAX(0, CGRectGetMaxY(self.view.bounds) - CGRectGetMaxY(self.view.safeAreaLayoutGuide.layoutFrame)));
     
-    CGFloat screenWidth = self.customToolView.bounds.size.width;
+    // Keep buttons out of side insets (landscape notch, iPhone Duo's outer-display camera column).
+    CGFloat leadingInset = 0;
+    CGFloat screenWidth = CGRectGetWidth(self.customToolView.bounds);
     // Desired fixed width for button and minimal horizontal spacing
     CGFloat desiredButtonWidth = 80.0;
     CGFloat minSpacing = 10.0; // minimal spacing to the edges and between buttons
@@ -3948,12 +3968,12 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
         NSInteger tag = subview.tag;
         if (tag >= 1001 && tag < 1001 + firstRowButtonCount) {
             NSInteger index = tag - 1001;
-            CGFloat x = firstRowSpacing + index * (buttonWidth + firstRowSpacing);
+            CGFloat x = leadingInset + firstRowSpacing + index * (buttonWidth + firstRowSpacing);
             subview.frame = CGRectMake(x, firstRowTop, buttonWidth, buttonHeight);
         } else if (tag >= 1001 + firstRowButtonCount && tag < 1001 + firstRowButtonCount + 3) {
             // Second row (3 buttons: Move, Delete, Profile) aligned to the first three columns of first row
             NSInteger index = tag - (1001 + firstRowButtonCount); // 0, 1, or 2
-            CGFloat x = firstRowSpacing + index * (buttonWidth + firstRowSpacing);
+            CGFloat x = leadingInset + firstRowSpacing + index * (buttonWidth + firstRowSpacing);
             subview.frame = CGRectMake(x, secondRowTop, buttonWidth, buttonHeight);
         }
         // ---- Relayout internal icon & label to match new button width ----
@@ -3971,6 +3991,9 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 - (UIView *)createTabButtonWithTitle:(NSString *)title iconName:(NSString *)iconName width:(CGFloat)width tag:(NSInteger)tag {
     UIView *buttonView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, 40)];
     buttonView.tag = tag;
+    buttonView.isAccessibilityElement = YES;
+    buttonView.accessibilityLabel = title;
+    buttonView.accessibilityTraits = UIAccessibilityTraitButton | UIAccessibilityTraitNotEnabled;
     
     // Icon image view
     UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake((width - 24) / 2, 0, 24, 24)];
@@ -4008,6 +4031,7 @@ static const CGFloat kNavBarIconInterItemSpace = -8.0;
 - (void)updateToolButton:(NSInteger)tag enabled:(BOOL)enabled {
     UIView *buttonView = [self.customToolView viewWithTag:tag];
     if (!buttonView) return;
+    buttonView.accessibilityTraits = UIAccessibilityTraitButton | (enabled ? 0 : UIAccessibilityTraitNotEnabled);
     
     UIImageView *iconView = [buttonView viewWithTag:100];
     UILabel *titleLabel = [buttonView viewWithTag:101];
@@ -4294,13 +4318,30 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 // Adjust content insets to avoid custom toolbar overlap.
 // Apply to both scroll views so an async edit-exit after a view-mode toggle
 // cannot leave bottom inset on the scroll view that is no longer current.
+// The list table extends through the bottom safe area and keeps automatic
+// adjustment, so that system inset is already in adjustedContentInset.
+// Subtract it; otherwise the toolbar padding stacks on the home indicator.
+// The grid is inside the safe area with adjustment disabled, so this
+// subtraction is zero and its inset stays the toolbar height.
 - (void)adjustContentInsetForCustomToolbar:(BOOL)showing {
-    CGFloat toolbarHeight = showing ? self.customToolView.frame.size.height : 0;
     NSArray<UIScrollView *> *scrollViews = @[self.tableView, self.collectionView];
     for (UIScrollView *scrollView in scrollViews) {
         if (!scrollView) continue;
+        CGFloat systemBottom = scrollView.adjustedContentInset.bottom - scrollView.contentInset.bottom;
+        CGFloat overlap = 0;
+        if (showing && self.customToolView.superview) {
+            CGRect panel = [scrollView convertRect:self.customToolView.bounds fromView:self.customToolView];
+            CGRect intersection = CGRectIntersection(scrollView.bounds, panel);
+            if (!CGRectIsNull(intersection)) {
+                // Reserve everything below the panel's top, including the system
+                // bottom area; automatic adjustment is subtracted exactly once.
+                overlap = CGRectGetMaxY(scrollView.bounds) - CGRectGetMinY(intersection);
+            }
+        }
+        CGFloat bottom = MAX(0, overlap - systemBottom);
         UIEdgeInsets contentInset = scrollView.contentInset;
-        contentInset.bottom = toolbarHeight;
+        if (fabs(contentInset.bottom - bottom) < 0.5) continue;
+        contentInset.bottom = bottom;
         scrollView.contentInset = contentInset;
         scrollView.scrollIndicatorInsets = contentInset;
     }
@@ -4372,15 +4413,62 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 
 #pragma mark - Search Action
 
+/// Whether the system shows its vertical bar (the iPhone Duo side rail) for this view.
+- (BOOL)hasVerticalBar {
+    if (@available(iOS 27.1, *)) {
+        return self.traitCollection.verticalBarEdge != UIVerticalBarEdgeUnspecified;
+    }
+    return NO;
+}
+
+/// With a vertical bar, the search back control belongs in the rail rather than in the
+/// search bar, so keep the navigation bar and swap its items for a single back item.
+- (void)applySearchNavigationChrome {
+    self.searchUsesVerticalBar = [self hasVerticalBar];
+    UISearchBar *bar = self.searchController.searchBar;
+    if (!self.searchUsesVerticalBar) {
+        self.searchController.hidesNavigationBarDuringPresentation = !IsIpad();
+        self.searchBarBackButton.hidden = NO;
+        bar.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 42, 0, 0);
+        return;
+    }
+    self.searchController.hidesNavigationBarDuringPresentation = NO;
+    self.searchBarBackButton.hidden = YES;
+    bar.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 12, 0, 0);
+    UIBarButtonItem *back = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                         action:@selector(customSearchDismissAction:)
+                                                                          color:[SeafTheme glassBarIconColor]];
+    back.accessibilityIdentifier = @"search_back_button";
+    self.navigationItem.hidesBackButton = YES;
+    self.navigationItem.leftBarButtonItems = @[back];
+    self.navigationItem.rightBarButtonItems = nil;
+}
+
+- (void)restoreNavigationChromeAfterSearch {
+    if (!self.searchUsesVerticalBar) return;
+    self.searchUsesVerticalBar = NO;
+    self.navigationItem.leftBarButtonItems = nil;
+    self.navigationItem.rightBarButtonItems = self.rightItems;
+    [self applyLibraryNavigationChrome];
+}
+
 - (void)searchAction:(id)sender {
+    [self applySearchNavigationChrome];
     [self presentSearchBar];
     
     // Ensure status bar style is set correctly before activating search
     // Force status bar to update appearance
     [self setNeedsStatusBarAppearanceUpdate];
     
-    // Activate search bar
-    [self.searchController.searchBar becomeFirstResponder];
+    // Activate search bar. A bar just moved into the title view joins the window on the
+    // next layout pass, so focus it after the current run loop turn.
+    if (self.searchUsesVerticalBar) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.searchController.searchBar becomeFirstResponder];
+        });
+    } else {
+        [self.searchController.searchBar becomeFirstResponder];
+    }
 }
 
 #pragma mark - Helper Methods

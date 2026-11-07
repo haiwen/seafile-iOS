@@ -164,7 +164,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
         [sep.leadingAnchor constraintEqualToAnchor:self.fixedReturnHeaderView.leadingAnchor],
         [sep.trailingAnchor constraintEqualToAnchor:self.fixedReturnHeaderView.trailingAnchor],
         [sep.bottomAnchor constraintEqualToAnchor:self.fixedReturnHeaderView.bottomAnchor],
-        [sep.heightAnchor constraintEqualToConstant:(1.0/UIScreen.mainScreen.scale)]
+        [sep.heightAnchor constraintEqualToConstant:SEAF_SEPARATOR_HEIGHT_IN(self)]
     ]];
     // Transparent background: hide separator to avoid list-like appearance
     sep.hidden = YES;
@@ -192,22 +192,8 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     }
     self.title = [NSString stringWithFormat:@"%@%@", action, namePart];
 
-    // Left: back chevron style (works for modal).
-    UIButton *backBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    backBtn.translatesAutoresizingMaskIntoConstraints = NO;
-    UIImage *backImg = [UIImage systemImageNamed:@"chevron.left"];
-    if (backImg) {
-        [backBtn setImage:backImg forState:UIControlStateNormal];
-    }
-    [backBtn addTarget:self action:@selector(onBack:) forControlEvents:UIControlEventTouchUpInside];
-    backBtn.accessibilityLabel = NSLocalizedString(@"Back", @"Seafile");
-    // Make the icon visually closer to the left screen edge
-    backBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-    backBtn.contentEdgeInsets = UIEdgeInsetsMake(0, 0, 0, 8);
-    NSLayoutConstraint *bw = [backBtn.widthAnchor constraintEqualToConstant:32];
-    NSLayoutConstraint *bh = [backBtn.heightAnchor constraintEqualToConstant:32];
-    bw.active = YES; bh.active = YES;
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:backBtn];
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(onBack:) color:nil];
 
     // Right: outlined add-folder button with custom icon
     UIButton *plusBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -463,7 +449,7 @@ typedef NS_ENUM(NSInteger, SeafDestSegment) {
     self.cancelButton.isAccessibilityElement = YES;
     self.cancelButton.accessibilityLabel = NSLocalizedString(@"Cancel", @"Seafile");
     // outline style
-    self.cancelButton.layer.borderWidth = 1.0 / UIScreen.mainScreen.scale;
+    self.cancelButton.layer.borderWidth = SEAF_SEPARATOR_HEIGHT_IN(self);
     self.cancelButton.layer.borderColor = [SeafTheme separator].CGColor;
 
     NSString *confirmTitle = self.operationState == OPERATION_STATE_MOVE ? NSLocalizedString(@"Move here", @"Seafile") : NSLocalizedString(@"Copy here", @"Seafile");

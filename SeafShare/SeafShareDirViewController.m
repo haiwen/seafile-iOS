@@ -20,7 +20,7 @@
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 #import "Constants.h"
-#import "SeafNavLeftItem.h"
+#import "SeafNavigationBarStyler.h"
 #import "SeafRepos.h"
 #import "SeafBase+Display.h"
 
@@ -613,13 +613,11 @@
 #pragma mark - Navigation helpers implementation
 
 - (void)setupNavigationItems {
-    if ([_directory isKindOfClass:[SeafRepos class]]) {
-        NSString *title = NSLocalizedString(@"Save to Seafile", @"Seafile");
-        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:title target:self action:@selector(backAction)]];
-    } else {
-        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:_directory title:nil target:self action:@selector(backAction)]];
-    }
-    self.navigationItem.title = @"";
+    self.navigationItem.title = [_directory isKindOfClass:[SeafRepos class]]
+        ? NSLocalizedString(@"Save to Seafile", @"Seafile") : _directory.name;
+    self.navigationItem.titleView = nil;
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(backAction) color:nil];
 }
 
 - (void)backAction {

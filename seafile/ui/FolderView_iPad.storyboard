@@ -18,7 +18,7 @@
                         <sections>
                             <tableViewSection headerTitle="Account Info" id="eqt-eE-wom">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="JhF-v4-NbA" detailTextLabel="ku3-VT-vxK" style="IBUITableViewCellStyleValue1" id="wTl-CF-jaE">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="JhF-v4-NbA" detailTextLabel="ku3-VT-vxK" style="IBUITableViewCellStyleValue1" id="wTl-CF-jaE" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="55.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="wTl-CF-jaE" id="5cC-aI-QZK">
@@ -42,7 +42,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="C91-ob-60u" detailTextLabel="nNm-DU-f33" style="IBUITableViewCellStyleValue1" id="5pX-xU-4Tz">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="C91-ob-60u" detailTextLabel="nNm-DU-f33" style="IBUITableViewCellStyleValue1" id="5pX-xU-4Tz" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="99.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="5pX-xU-4Tz" id="8xC-76-EMo">
@@ -66,7 +66,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="olQ-uR-5xX">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="olQ-uR-5xX" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="143.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="olQ-uR-5xX" id="x3w-Fp-InI">
@@ -90,7 +90,7 @@
                             </tableViewSection>
                             <tableViewSection headerTitle="Camera Upload" id="6VU-ga-Nks">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="2FB-V2-2Rq">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="2FB-V2-2Rq" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="235.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2FB-V2-2Rq" id="8n7-oK-9pN">
@@ -110,7 +110,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="tKI-g6-dZG">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="tKI-g6-dZG" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="279.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="tKI-g6-dZG" id="B09-JV-BfF">
@@ -130,7 +130,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="vqZ-oC-xdN">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="vqZ-oC-xdN" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="323.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="vqZ-oC-xdN" id="hCJ-tZ-Ya4">
@@ -150,7 +150,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Wpl-EH-vWh">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Wpl-EH-vWh" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="367.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Wpl-EH-vWh" id="bkU-ze-dNl">
@@ -170,7 +170,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="yvl-XV-NJi" userLabel="Upload heic Repo Cell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="yvl-XV-NJi" customClass="SeafSettingsCell" userLabel="Upload heic Repo Cell">
                                         <rect key="frame" x="0.0" y="411.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="yvl-XV-NJi" id="u3r-32-DaC">
@@ -194,7 +194,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="iPd-K2-m8X" userLabel="Use JPG Format Cell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="iPd-K2-m8X" customClass="SeafSettingsCell" userLabel="Use JPG Format Cell">
                                         <rect key="frame" x="0.0" y="455.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="iPd-K2-m8X" id="iPd-L3-n9Y">
@@ -218,7 +218,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="brh-aG-8o1" detailTextLabel="bQL-rX-igl" style="IBUITableViewCellStyleValue1" id="IpC-pk-zuJ">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="brh-aG-8o1" detailTextLabel="bQL-rX-igl" style="IBUITableViewCellStyleValue1" id="IpC-pk-zuJ" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="455.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="IpC-pk-zuJ" id="qkB-ZK-wTx">
@@ -246,7 +246,7 @@
                             </tableViewSection>
                             <tableViewSection headerTitle="Uploading &amp; Downloading" id="oWj-k9-0bj" userLabel="Uploading &amp; Downloading">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="0AH-NT-84W" detailTextLabel="uyy-Is-WvA" style="IBUITableViewCellStyleValue1" id="zfE-gH-hEA" userLabel="Downloading Cell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="0AH-NT-84W" detailTextLabel="uyy-Is-WvA" style="IBUITableViewCellStyleValue1" id="zfE-gH-hEA" customClass="SeafSettingsCell" userLabel="Downloading Cell">
                                         <rect key="frame" x="0.0" y="547.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="zfE-gH-hEA" id="uND-s0-t8j">
@@ -269,7 +269,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="iOp-nd-Chd" detailTextLabel="Nf3-m6-YRd" style="IBUITableViewCellStyleValue1" id="8nn-WP-Erc" userLabel="Uploading Cell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="iOp-nd-Chd" detailTextLabel="Nf3-m6-YRd" style="IBUITableViewCellStyleValue1" id="8nn-WP-Erc" customClass="SeafSettingsCell" userLabel="Uploading Cell">
                                         <rect key="frame" x="0.0" y="591.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="8nn-WP-Erc" id="6AC-FA-5Lt">
@@ -298,7 +298,7 @@
                             </tableViewSection>
                             <tableViewSection headerTitle="Wiki" id="Wki-Pd-c01">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Wki-Pd-l01">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Wki-Pd-l01" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Wki-Pd-l01" id="Wki-Pd-v01">
@@ -322,7 +322,7 @@
                             </tableViewSection>
                             <tableViewSection headerTitle="Cache" id="ark-6D-F1J">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="8zK-Nn-u52" detailTextLabel="Oa6-GC-DB5" style="IBUITableViewCellStyleValue1" id="TaN-1T-o1k">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="8zK-Nn-u52" detailTextLabel="Oa6-GC-DB5" style="IBUITableViewCellStyleValue1" id="TaN-1T-o1k" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="683.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="TaN-1T-o1k" id="NkC-2C-Qs5">
@@ -346,7 +346,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="FfL-gE-UDV" style="IBUITableViewCellStyleDefault" id="lgx-fS-Ihm">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="FfL-gE-UDV" style="IBUITableViewCellStyleDefault" id="lgx-fS-Ihm" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="727.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="lgx-fS-Ihm" id="mfi-6W-bPo">
@@ -366,7 +366,7 @@
                             </tableViewSection>
                             <tableViewSection headerTitle="Encrypted Libraries" id="GYj-jo-XED">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="LRu-dx-rys" style="IBUITableViewCellStyleDefault" id="50z-yM-W3t">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="LRu-dx-rys" style="IBUITableViewCellStyleDefault" id="50z-yM-W3t" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="819.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="50z-yM-W3t" id="TGQ-LU-7ca">
@@ -383,7 +383,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Ce1-sC-QpO">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="Ce1-sC-QpO" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="863.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Ce1-sC-QpO" id="Oz3-Mc-SRY">
@@ -407,7 +407,7 @@
                             </tableViewSection>
                             <tableViewSection headerTitle="About" id="F9c-bc-Mvu">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="3Fj-HB-jhE" detailTextLabel="oGo-wY-uqh" style="IBUITableViewCellStyleValue1" id="oNb-DA-jMR">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="3Fj-HB-jhE" detailTextLabel="oGo-wY-uqh" style="IBUITableViewCellStyleValue1" id="oNb-DA-jMR" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="955.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="oNb-DA-jMR" id="aDQ-b6-wWq">
@@ -431,7 +431,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="pLs-ON-pwm" detailTextLabel="sZT-HW-4FS" style="IBUITableViewCellStyleValue1" id="N1h-hO-sea">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="pLs-ON-pwm" detailTextLabel="sZT-HW-4FS" style="IBUITableViewCellStyleValue1" id="N1h-hO-sea" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="999.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="N1h-hO-sea" id="VGg-Vq-inJ">
@@ -455,7 +455,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="4JV-Tq-RUx" style="IBUITableViewCellStyleDefault" id="YTD-XS-k13" userLabel="Privacy Policy Cell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="4JV-Tq-RUx" style="IBUITableViewCellStyleDefault" id="YTD-XS-k13" customClass="SeafSettingsCell" userLabel="Privacy Policy Cell">
                                         <rect key="frame" x="0.0" y="1043.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="YTD-XS-k13" id="cyA-wB-Xs8">
@@ -476,7 +476,7 @@
                             </tableViewSection>
                             <tableViewSection id="Mex-m7-xJh">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="GCj-Bt-qdF">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="GCj-Bt-qdF" customClass="SeafSettingsCell">
                                         <rect key="frame" x="0.0" y="1107.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="GCj-Bt-qdF" id="OJP-cu-MgL">
@@ -569,7 +569,7 @@
         <!--Tab Bar Controller-->
         <scene sceneID="IDr-x3-K7D">
             <objects>
-                <tabBarController storyboardIdentifier="TABVC" definesPresentationContext="YES" id="cyW-Je-Rn4" sceneMemberID="viewController">
+                <tabBarController storyboardIdentifier="TABVC" customClass="SeafTabBarController" definesPresentationContext="YES" id="cyW-Je-Rn4" sceneMemberID="viewController">
                     <nil key="simulatedBottomBarMetrics"/>
                     <tabBar key="tabBar" contentMode="scaleToFill" itemPositioning="centered" id="nRy-eg-aBb">
                         <rect key="frame" x="129" y="330" width="163" height="49"/>

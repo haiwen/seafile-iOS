@@ -138,6 +138,16 @@ static NSString * const kSeafThemeAccountsKey = @"ACCOUNTS";
     return [self dynamicColorWithLight:light dark:dark];
 }
 
++ (UIColor *)glassBarIconColor
+{
+    if (@available(iOS 26.0, *)) {
+        UIColor *light = [UIColor colorWithRed:60.0/255.0 green:60.0/255.0 blue:60.0/255.0 alpha:1.0];
+        UIColor *dark  = [UIColor colorWithRed:170.0/255.0 green:170.0/255.0 blue:170.0/255.0 alpha:1.0];
+        return [self dynamicColorWithLight:light dark:dark];
+    }
+    return [self barColor];
+}
+
 + (UIColor *)barColorOrange
 {
     return [UIColor colorWithRed:240.0/256.0 green:128.0/256.0 blue:48.0/256.0 alpha:1.0];

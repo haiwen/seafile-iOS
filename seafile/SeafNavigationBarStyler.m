@@ -31,6 +31,59 @@
     navigationController.navigationBar.scrollEdgeAppearance = appearance;
 
     navigationController.navigationBar.tintColor = [SeafTheme primaryText];
+    navigationController.view.backgroundColor = [SeafTheme primaryBackgroundColor];
+}
+
+#pragma mark - Back arrow
+
++ (UIImage *)backArrowImage
+{
+    // The same symbol UIKit uses for the system back button, so custom back items
+    // (modal gallery, previews, search) look like the pushed-list back button.
+    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithWeight:UIImageSymbolWeightSemibold];
+    return [UIImage systemImageNamed:@"chevron.backward" withConfiguration:config];
+}
+
+#pragma mark - List page chrome
+
++ (void)applyListPageBackgroundToViewController:(UIViewController *)viewController
+{
+    UIColor *background = [SeafTheme primaryBackgroundColor];
+    viewController.view.backgroundColor = background;
+    viewController.navigationController.view.backgroundColor = background;
+}
+
++ (void)pinView:(UIView *)subview inHostView:(UIView *)hostView extendPastBottomSafeArea:(BOOL)extendPastBottomSafeArea
+{
+    subview.translatesAutoresizingMaskIntoConstraints = NO;
+    if (subview.superview != hostView) {
+        [hostView addSubview:subview];
+    }
+    UILayoutGuide *guide = hostView.safeAreaLayoutGuide;
+    NSLayoutYAxisAnchor *bottomAnchor = extendPastBottomSafeArea ? hostView.bottomAnchor : guide.bottomAnchor;
+    [NSLayoutConstraint activateConstraints:@[
+        [subview.topAnchor constraintEqualToAnchor:guide.topAnchor],
+        [subview.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor],
+        [subview.trailingAnchor constraintEqualToAnchor:guide.trailingAnchor],
+        [subview.bottomAnchor constraintEqualToAnchor:bottomAnchor],
+    ]];
+}
+
++ (void)pinViewToSafeArea:(UIView *)subview inHostView:(UIView *)hostView
+{
+    [self pinView:subview inHostView:hostView extendPastBottomSafeArea:NO];
+}
+
++ (void)pinViewToSafeAreaExtendingToHostBottom:(UIView *)subview inHostView:(UIView *)hostView
+{
+    [self pinView:subview inHostView:hostView extendPastBottomSafeArea:YES];
+}
+
++ (void)updateTableViewBackgroundViewFrame:(UITableView *)tableView
+{
+    if (tableView.backgroundView) {
+        tableView.backgroundView.frame = tableView.bounds;
+    }
 }
 
 #pragma mark - Title View
@@ -63,35 +116,22 @@
 #pragma mark - Back Button
 
 + (UIBarButtonItem *)createBackButtonWithTarget:(id)target action:(SEL)action color:(nullable UIColor *)color {
-    // Create more precise back button using custom view
-    UIButton *customBackButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    
-    // Get original image
-    UIImage *originalImage = [UIImage imageNamed:@"arrowLeft_black"];
-    
-    // Apply tint if color specified
-    if (color) {
-        originalImage = [self imageWithTintColor:color image:originalImage];
-    }
-    
-    [customBackButton setImage:originalImage forState:UIControlStateNormal];
-    
-    // Set button size and hit area
-    customBackButton.frame = CGRectMake(0, 0, 30, 44); // Increase touch area
-    
-    // Set image padding to ensure correct icon size and position
-    customBackButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:[self backArrowImage]
+                                                          style:UIBarButtonItemStylePlain
+                                                         target:target action:action];
+    item.title = NSLocalizedString(@"Back", @"Seafile");
+    item.accessibilityLabel = item.title;
+    item.accessibilityIdentifier = @"navigation_back_button";
+    item.tintColor = color ?: [SeafTheme glassBarIconColor];
+    return item;
+}
 
-    // Set image view content mode to ensure proper image scaling
-    customBackButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    
-    // Add tap event
-    [customBackButton addTarget:target action:action forControlEvents:UIControlEventTouchUpInside];
-    
-    // Create UIBarButtonItem with custom view
-    UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithCustomView:customBackButton];
-    
-    return backButton;
++ (UIBarButtonItem *)createCloseButtonWithTarget:(id)target action:(SEL)action {
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemClose
+                                                                       target:target action:action];
+    item.accessibilityLabel = NSLocalizedString(@"Close", @"Seafile");
+    item.accessibilityIdentifier = @"navigation_close_button";
+    return item;
 }
 
 // Maintain method without tint parameter for backward compatibility
@@ -116,4 +156,4 @@
     return tintedImage;
 }
 
-@end 
+@end

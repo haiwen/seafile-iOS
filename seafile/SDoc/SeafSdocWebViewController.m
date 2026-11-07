@@ -30,8 +30,152 @@
 
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <string.h>
+#import <objc/runtime.h>
 
 typedef void (^SeafJSCallback)(NSString * _Nullable data);
+
+#pragma mark - Rail-aware bottom sheet
+
+/// Bottom sheet that stays inside the horizontal safe area. In compact width a system page
+/// sheet always spans the window, which on iPhone Duo covers the system rail; this keeps the
+/// same dimming, grabber, tap-outside and swipe-down dismissal while leaving the rail clear.
+@interface SeafRailSheetPresentationController : UIPresentationController <UIGestureRecognizerDelegate>
+@property (nonatomic, strong) UIView *dimmingView;
+@property (nonatomic, strong) UIView *grabberView;
+@property (nonatomic, strong) UIPanGestureRecognizer *dismissPan;
+@end
+
+@implementation SeafRailSheetPresentationController
+
+static const CGFloat kSeafRailSheetMargin = 8.0;
+static const CGFloat kSeafRailSheetCornerRadius = 32.0;
+
+- (CGRect)frameOfPresentedViewInContainerView
+{
+    UIView *container = self.containerView;
+    if (!container) return CGRectZero;
+    CGRect bounds = container.bounds;
+    UIEdgeInsets safe = container.safeAreaInsets;
+    CGFloat x = safe.left + kSeafRailSheetMargin;
+    CGFloat width = CGRectGetWidth(bounds) - safe.left - safe.right - 2 * kSeafRailSheetMargin;
+    CGFloat bottomGap = MAX(kSeafRailSheetMargin, safe.bottom);
+    CGFloat maxHeight = CGRectGetHeight(bounds) - safe.top - bottomGap - kSeafRailSheetMargin;
+    CGFloat height = MIN(maxHeight, MAX(240.0, round(CGRectGetHeight(bounds) * 0.55)));
+    return CGRectMake(x, CGRectGetHeight(bounds) - bottomGap - height, MAX(0, width), height);
+}
+
+- (void)presentationTransitionWillBegin
+{
+    UIView *container = self.containerView;
+    self.dimmingView = [[UIView alloc] initWithFrame:container.bounds];
+    self.dimmingView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.2];
+    self.dimmingView.alpha = 0;
+    [self.dimmingView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissSheet)]];
+    [container insertSubview:self.dimmingView atIndex:0];
+
+    UIView *sheet = self.presentedView;
+    sheet.layer.cornerRadius = kSeafRailSheetCornerRadius;
+    sheet.layer.cornerCurve = kCACornerCurveContinuous;
+    sheet.clipsToBounds = YES;
+
+    self.grabberView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 36, 5)];
+    self.grabberView.backgroundColor = [UIColor tertiaryLabelColor];
+    self.grabberView.layer.cornerRadius = 2.5;
+    self.grabberView.userInteractionEnabled = NO;
+    [sheet addSubview:self.grabberView];
+
+    self.dismissPan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleDismissPan:)];
+    self.dismissPan.delegate = self;
+    [sheet addGestureRecognizer:self.dismissPan];
+
+    [self.presentedViewController.transitionCoordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        self.dimmingView.alpha = 1;
+    } completion:nil];
+}
+
+- (void)dismissalTransitionWillBegin
+{
+    [self.presentedViewController.transitionCoordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        self.dimmingView.alpha = 0;
+    } completion:nil];
+}
+
+- (void)containerViewWillLayoutSubviews
+{
+    [super containerViewWillLayoutSubviews];
+    self.dimmingView.frame = self.containerView.bounds;
+    self.presentedView.frame = [self frameOfPresentedViewInContainerView];
+}
+
+- (void)containerViewDidLayoutSubviews
+{
+    [super containerViewDidLayoutSubviews];
+    UIView *sheet = self.presentedView;
+    self.grabberView.center = CGPointMake(CGRectGetMidX(sheet.bounds), 8.5);
+    [sheet bringSubviewToFront:self.grabberView];
+}
+
+- (void)dismissSheet
+{
+    [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+/// Begin only for downward drags, and inside a scroll view only once it is scrolled to the top.
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    if (gestureRecognizer != self.dismissPan) return YES;
+    CGPoint velocity = [self.dismissPan velocityInView:self.presentedView];
+    if (velocity.y <= 0 || fabs(velocity.y) < fabs(velocity.x)) return NO;
+    UIView *hit = [self.presentedView hitTest:[self.dismissPan locationInView:self.presentedView] withEvent:nil];
+    for (UIView *v = hit; v && v != self.presentedView; v = v.superview) {
+        if ([v isKindOfClass:UIScrollView.class]) {
+            UIScrollView *scroll = (UIScrollView *)v;
+            return scroll.contentOffset.y <= -scroll.adjustedContentInset.top + 0.5;
+        }
+    }
+    return YES;
+}
+
+- (void)handleDismissPan:(UIPanGestureRecognizer *)pan
+{
+    UIView *sheet = self.presentedView;
+    CGFloat dy = MAX(0, [pan translationInView:sheet.superview].y);
+    switch (pan.state) {
+        case UIGestureRecognizerStateChanged:
+            sheet.transform = CGAffineTransformMakeTranslation(0, dy);
+            break;
+        case UIGestureRecognizerStateEnded:
+        case UIGestureRecognizerStateCancelled: {
+            CGFloat velocity = [pan velocityInView:sheet.superview].y;
+            if (pan.state == UIGestureRecognizerStateEnded
+                && (dy > CGRectGetHeight(sheet.bounds) * 0.25 || velocity > 800)) {
+                [self dismissSheet];
+            } else {
+                [UIView animateWithDuration:0.25 animations:^{ sheet.transform = CGAffineTransformIdentity; }];
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+@end
+
+@interface SeafRailSheetTransitioningDelegate : NSObject <UIViewControllerTransitioningDelegate>
+@end
+
+@implementation SeafRailSheetTransitioningDelegate
+
+- (UIPresentationController *)presentationControllerForPresentedViewController:(UIViewController *)presented
+                                                      presentingViewController:(UIViewController *)presenting
+                                                          sourceViewController:(UIViewController *)source
+{
+    return [[SeafRailSheetPresentationController alloc] initWithPresentedViewController:presented
+                                                               presentingViewController:presenting];
+}
+
+@end
 
 @interface SeafSdocWebViewController () <SeafSdocStylePopupDelegate, SeafSdocEditorToolbarDelegate,
     UINavigationControllerDelegate, UIImagePickerControllerDelegate,
@@ -42,8 +186,6 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 @property (nonatomic, assign) NSUInteger mobileLoginReroutes;
 @property (nonatomic, strong) NSDate *mobileLoginRerouteWindowStart;
 @property (nonatomic, strong) UIBarButtonItem *editItem;
-@property (nonatomic, strong) UIButton *editButton;
-@property (nonatomic, assign) CGFloat editButtonFixedWidth;
 @property (nonatomic, assign) BOOL nextEditMode; // YES -> edit
 @property (nonatomic, strong) NSTimer *timeoutTimer;
 @property (nonatomic, copy) NSString *fileName;
@@ -71,8 +213,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 @property (nonatomic, assign) BOOL isEditing;
 @property (nonatomic, assign) CGFloat keyboardVisibleHeight;
 
-@property (nonatomic, strong) UILabel *titleLabel;
-@property (nonatomic, strong) UILabel *statusLabel;
+@property (nonatomic, strong) SeafNavLeftItem *navLeftItem;
 
 @property (nonatomic, copy) NSString *currentStyleType; // Current paragraph style type
 
@@ -145,66 +286,12 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 - (void)configureNavigationItems
 {
-    self.navigationItem.title = nil;
-    self.navigationItem.titleView = nil; // Clear any center title view
+    self.navigationItem.title = self.fileName ?: self.file.name ?: @"";
+    self.navLeftItem = [SeafNavLeftItem titleViewWithTitle:self.navigationItem.title];
+    self.navigationItem.titleView = self.navLeftItem;
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(onTapBack) color:nil];
 
-    // Back button matching SeafNavLeftItem style
-    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [backButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
-    backButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
-    backButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    [backButton addTarget:self action:@selector(onTapBack) forControlEvents:UIControlEventTouchUpInside];
-    // Frame is not strictly needed for stack view but width constraint might be good if it's too small
-    [backButton.widthAnchor constraintEqualToConstant:30].active = YES;
-    [backButton.heightAnchor constraintEqualToConstant:44].active = YES;
-
-    // Title Label
-    self.titleLabel = [[UILabel alloc] init];
-    self.titleLabel.text = self.fileName ?: self.file.name;
-    self.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold]; // Matches SeafNavLeftItem
-    self.titleLabel.textColor = [SeafTheme primaryText];
-
-    // Status Label
-    self.statusLabel = [[UILabel alloc] init];
-    self.statusLabel.font = [UIFont systemFontOfSize:12];
-    self.statusLabel.textColor = [SeafTheme secondaryText];
-    self.statusLabel.text = @"";
-
-    // Title and Status aligned by baseline
-    UIStackView *textStack = [[UIStackView alloc] initWithArrangedSubviews:@[self.titleLabel, self.statusLabel]];
-    textStack.axis = UILayoutConstraintAxisHorizontal;
-    textStack.alignment = UIStackViewAlignmentFirstBaseline;
-    textStack.spacing = 6;
-    textStack.translatesAutoresizingMaskIntoConstraints = NO;
-
-    // Main stack: Back Button + Text Stack
-    UIStackView *stackView = [[UIStackView alloc] initWithArrangedSubviews:@[backButton, textStack]];
-    stackView.axis = UILayoutConstraintAxisHorizontal;
-    stackView.alignment = UIStackViewAlignmentCenter;
-    stackView.spacing = 6;
-    stackView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    // Allow title to shrink if needed, but keep priority high enough to be visible
-    [self.titleLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisHorizontal];
-    [self.statusLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-
-    // Wrap in a UIView because UIBarButtonItem customView behavior can be quirky with direct StackView on some iOS versions
-    UIView *containerView = [[UIView alloc] init];
-    containerView.translatesAutoresizingMaskIntoConstraints = NO;
-    [containerView addSubview:stackView];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [stackView.leadingAnchor constraintEqualToAnchor:containerView.leadingAnchor],
-        [stackView.trailingAnchor constraintEqualToAnchor:containerView.trailingAnchor],
-        [stackView.topAnchor constraintEqualToAnchor:containerView.topAnchor],
-        [stackView.bottomAnchor constraintEqualToAnchor:containerView.bottomAnchor],
-        // Max width constraint to avoid overlapping right items
-        [containerView.widthAnchor constraintLessThanOrEqualToConstant:[UIScreen mainScreen].bounds.size.width * 0.75]
-    ]];
-
-    UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
-    self.navigationItem.leftBarButtonItem = leftItem;
-    
     // Tint color
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
@@ -212,29 +299,12 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
 - (void)configureEditButton
 {
-    UIButton *editBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    [editBtn setTitle:NSLocalizedString(@"Edit", nil) forState:UIControlStateNormal];
-    // Font 17px, Weight Semibold (590)
-    editBtn.titleLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold];
-    editBtn.titleLabel.adjustsFontSizeToFitWidth = NO;
-    editBtn.titleLabel.minimumScaleFactor = 1.0;
-    // Right edge 16px: alignment right with 0 right inset
-    editBtn.contentEdgeInsets = UIEdgeInsetsZero;
-    editBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-
-    // Compute a fixed width that can accommodate both states to avoid layout jumps
-    CGFloat fixedWidth = [self preferredEditButtonWidthForFont:editBtn.titleLabel.font edgeInsets:editBtn.contentEdgeInsets];
-    self.editButtonFixedWidth = fixedWidth;
-    CGRect ebf = CGRectZero;
-    ebf.size.height = 32;
-    ebf.size.width = fixedWidth;
-    editBtn.frame = ebf;
-    
-    [editBtn setTitleColor:[UIColor systemBlueColor] forState:UIControlStateNormal];
-
-    [editBtn addTarget:self action:@selector(onToggleEdit) forControlEvents:UIControlEventTouchUpInside];
-    self.editButton = editBtn;
-    self.editItem = [[UIBarButtonItem alloc] initWithCustomView:editBtn];
+    self.editItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"pencil.line"]
+                                                  style:UIBarButtonItemStylePlain target:self action:@selector(onToggleEdit)];
+    self.editItem.title = NSLocalizedString(@"Edit", nil);
+    self.editItem.accessibilityLabel = self.editItem.title;
+    self.editItem.accessibilityIdentifier = @"sdoc_edit_button";
+    self.editItem.tintColor = [UIColor systemBlueColor];
     self.editItem.enabled = NO;
     self.navigationItem.rightBarButtonItems = @[self.editItem];
 }
@@ -242,12 +312,32 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 - (void)setupWebView
 {
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
+    // Respect the page's focus-zoom limit while retaining user pinch-to-zoom.
+    // Otherwise WebKit enlarges the editor's small text when the keyboard opens,
+    // shifting the document horizontally inside the safe-area-sized web view.
+    config.ignoresViewportScaleLimits = YES;
     WKUserContentController *uc = [[WKUserContentController alloc] init];
+    NSString *viewportScript = @"(() => {"
+        "let viewport = document.querySelector('meta[name=viewport]');"
+        "if (!viewport) {"
+            "viewport = document.createElement('meta');"
+            "viewport.name = 'viewport';"
+            "viewport.content = 'width=device-width, initial-scale=1';"
+            "document.head.appendChild(viewport);"
+        "}"
+        "const values = viewport.content.split(/[,;]/).filter(value => !/^\\s*maximum-scale\\s*=/i.test(value));"
+        "values.push('maximum-scale=1');"
+        "viewport.content = values.join(', ');"
+    "})();";
+    [uc addUserScript:[[WKUserScript alloc] initWithSource:viewportScript
+                                           injectionTime:WKUserScriptInjectionTimeAtDocumentEnd
+                                        forMainFrameOnly:YES]];
     self.weakBridgeHandler = [uc seaf_addBridgeMessageHandlerWithTarget:self];
     [uc seaf_injectBridgeScripts];
     config.userContentController = uc;
 
     self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
+    self.webView.accessibilityIdentifier = @"sdoc_content";
     self.webView.navigationDelegate = self;
     self.webView.backgroundColor = [SeafTheme primarySurface];
     self.webView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -257,8 +347,8 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     NSLayoutYAxisAnchor *topAnchor = nil;
     topAnchor = self.view.safeAreaLayoutGuide.topAnchor;
     NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithArray:@[
-        [self.webView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.webView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.webView.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor],
+        [self.webView.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor],
         [self.webView.topAnchor constraintEqualToAnchor:topAnchor]
     ]];
     // By default the WebView bottom follows the safe area bottom to avoid being covered by the home indicator
@@ -331,6 +421,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     bar.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:bar];
     self.bottomBar = bar;
+    bar.accessibilityIdentifier = @"sdoc_reading_toolbar";
     // Top divider inside bar
     UIView *divider = [[UIView alloc] initWithFrame:CGRectZero];
     divider.backgroundColor = [SeafTheme separator];
@@ -371,11 +462,11 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     [bar addSubview:stack];
     self.bottomStack = stack;
 
-    CGFloat dividerHeight = 1.0 / [UIScreen mainScreen].scale;
+    CGFloat dividerHeight = SEAF_SEPARATOR_HEIGHT_IN(self);
     NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
     [constraints addObjectsFromArray:@[
-        [bar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [bar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [bar.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor],
+        [bar.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor],
         [bar.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
         [divider.leadingAnchor constraintEqualToAnchor:bar.leadingAnchor],
         [divider.trailingAnchor constraintEqualToAnchor:bar.trailingAnchor],
@@ -401,6 +492,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     if (self.editorToolbar) return;
     
     self.editorToolbar = [[SeafSdocEditorToolbar alloc] initWithFrame:CGRectZero];
+    self.editorToolbar.accessibilityIdentifier = @"sdoc_editor_toolbar";
     self.editorToolbar.delegate = self;
     self.editorToolbar.translatesAutoresizingMaskIntoConstraints = NO;
     self.editorToolbar.hidden = YES;
@@ -411,8 +503,8 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     self.editorBarBottomConstraint = bottomC;
     
     [NSLayoutConstraint activateConstraints:@[
-        [self.editorToolbar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.editorToolbar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.editorToolbar.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor],
+        [self.editorToolbar.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor],
         bottomC,
         [self.editorToolbar.heightAnchor constraintEqualToConstant:height]
     ]];
@@ -680,7 +772,7 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
     NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
     for (PHAssetResource *res in resources) {
         if (res.type == PHAssetResourceTypePhoto) {
-            fileName = res.originalFilename;
+            fileName = [Utils filenameForAssetResource:res];
             break;
         }
     }
@@ -1044,7 +1136,7 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
                                                style:UIAlertActionStyleDefault
                                              handler:^(UIAlertAction * _Nonnull action) {
         NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-        if (url && [[UIApplication sharedApplication] canOpenURL:url]) {
+        if (url) {
             [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
         }
     }]];
@@ -1112,9 +1204,29 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
     }];
 }
 
+/// Whether a compact-width sheet would cover the iPhone Duo system rail on the trailing edge.
+- (BOOL)sheetWouldCoverVerticalBar
+{
+    if (@available(iOS 27.1, *)) {
+        return self.traitCollection.verticalBarEdge == UIVerticalBarEdgeTrailing
+            && self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact
+            && self.view.safeAreaInsets.right > 0;
+    }
+    return NO;
+}
+
 - (void)presentSheetViewController:(UIViewController *)vc
 {
     if (!vc) return;
+    if ([self sheetWouldCoverVerticalBar]) {
+        // transitioningDelegate is weak; keep the delegate alive with the presented controller.
+        SeafRailSheetTransitioningDelegate *delegate = [SeafRailSheetTransitioningDelegate new];
+        objc_setAssociatedObject(vc, @selector(presentSheetViewController:), delegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        vc.modalPresentationStyle = UIModalPresentationCustom;
+        vc.transitioningDelegate = delegate;
+        [self presentViewController:vc animated:YES completion:nil];
+        return;
+    }
     vc.modalPresentationStyle = UIModalPresentationPageSheet;
     UISheetPresentationController *sheet = vc.sheetPresentationController;
     if (sheet) {
@@ -1264,7 +1376,7 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
         if (ok) {
             SeafSdocCommentsViewController *vc = [SeafSdocCommentsViewController new];
             vc.pageOptions = sself.pageOptions;
-            vc.docDisplayName = sself.titleLabel.text ?: sself.fileName ?: sself.file.name;
+            vc.docDisplayName = sself.fileName ?: sself.file.name;
             vc.connection = sself.file.connection;
             vc.repoId = sself.file.repoId;
             vc.latestContributor = sself.pageOptions.latestContributor ?: @"";
@@ -1358,20 +1470,6 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
 
 #pragma mark - Edit Toggle
 
-- (CGFloat)preferredEditButtonWidthForFont:(UIFont *)font edgeInsets:(UIEdgeInsets)insets
-{
-    NSString *t1 = NSLocalizedString(@"Edit", nil);
-    NSString *t2 = NSLocalizedString(@"Done", nil);
-    UIFont *f = font ?: [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold];
-    CGFloat w1 = [t1 sizeWithAttributes:@{ NSFontAttributeName: f }].width;
-    CGFloat w2 = [t2 sizeWithAttributes:@{ NSFontAttributeName: f }].width;
-    CGFloat textWidth = MAX(w1, w2);
-    CGFloat total = ceil(textWidth) + insets.left + insets.right;
-    CGFloat minW = 60.0;
-    CGFloat maxW = 100.0;
-    return MIN(MAX(total, minW), maxW);
-}
-
 - (void)onToggleEdit
 {
     [self startEditTimeout];
@@ -1399,18 +1497,12 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
 
 - (void)updateEditButtonWithTitle:(NSString *)title
 {
-    if (!self.editButton) return;
-    [UIView performWithoutAnimation:^{
-        [self.editButton setTitle:title forState:UIControlStateNormal];
-        
-        [self.editButton setTitleColor:[UIColor systemBlueColor] forState:UIControlStateNormal];
-        
-        [self.editButton layoutIfNeeded];
-    }];
-    CGRect f = self.editButton.frame;
-    f.size.height = 32;
-    f.size.width = (self.editButtonFixedWidth > 0 ? self.editButtonFixedWidth : f.size.width);
-    self.editButton.frame = f;
+    self.editItem.title = title;
+    self.editItem.accessibilityLabel = title;
+    self.editItem.image = [UIImage systemImageNamed:self.isEditing ? @"checkmark" : @"pencil.line"];
+    // Match the text editor's Save item with the system Done style and blue tint.
+    self.editItem.style = self.isEditing ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain;
+    self.editItem.tintColor = [UIColor systemBlueColor];
 }
 
 - (void)startEditTimeout
@@ -1602,16 +1694,21 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
 
 - (void)updateNavigationTitleWithStatus:(NSString *)status isTemporary:(BOOL)temp
 {
-    if (self.statusLabel) {
-        self.statusLabel.text = status;
+    if (self.navLeftItem) {
+        [self applyNavStatusText:status];
         if (temp) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                if ([self.statusLabel.text isEqualToString:status]) {
-                    self.statusLabel.text = @"";
+                if ([self.navLeftItem.statusText isEqualToString:status]) {
+                    [self applyNavStatusText:nil];
                 }
             });
         }
     }
+}
+
+- (void)applyNavStatusText:(NSString *)status
+{
+    [self.navLeftItem applyStatusText:status];
 }
 
 - (void)sendBridgeCallback:(NSString *)text forCallbackId:(id)callbackId
