@@ -24,6 +24,7 @@
 #import "SeafMentionSheetViewController.h"
 #import "SeafSdocUserMapper.h"
 #import "SeafTheme.h"
+#import "SeafAppDelegate.h"
 
 static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
 static NSTimeInterval const kRelatedUsersCacheTTL = 300.0; // 5 minutes
@@ -70,7 +71,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.view.backgroundColor = [SeafTheme primarySurface];
+    // Match the list so side insets (such as the iPhone Duo rail) share its backdrop.
+    self.view.backgroundColor = [SeafTheme groupedSurface];
     _attachmentDeleteButtons = [NSMapTable strongToWeakObjectsMapTable];
 
     self.navigationItem.title = self.docDisplayName.length > 0 ? self.docDisplayName : NSLocalizedString(@"Comments", nil);
@@ -156,6 +158,15 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     _lastSelectedRange = _inputViewBar.textView.selectedRange;
 }
 
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    // Comment cells build their content for a fixed width, so rebuild them at the new one.
+    [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [self->_tableView reloadData];
+    }];
+}
+
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
@@ -177,6 +188,9 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     CGSize sz = self.view.bounds.size;
     CGFloat inputContentH = [_inputViewBar intrinsicContentSize].height;
     CGFloat safeBottom = self.view.safeAreaInsets.bottom;
+    // Keep the input bar out of side insets such as the iPhone Duo system rail.
+    CGFloat safeLeft = self.view.safeAreaInsets.left;
+    CGFloat barWidth = sz.width - safeLeft - self.view.safeAreaInsets.right;
 
     // Input bar intrinsic now returns pure content height:
     // - No keyboard: add safeBottom, align to bottom without being covered by Home Indicator
@@ -188,12 +202,12 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
     void (^changes)(void) = ^{
         // Always ensure table view fills the view; insets will provide spacing
-        self->_tableView.frame = CGRectMake(0, 0, sz.width, sz.height);
+        self->_tableView.frame = CGRectMake(safeLeft, 0, barWidth, sz.height);
         if (kbHeight > 0) {
-            self->_inputViewBar.frame = CGRectMake(0, sz.height - inputHForLayout - kbHeight, sz.width, inputHForLayout);
+            self->_inputViewBar.frame = CGRectMake(safeLeft, sz.height - inputHForLayout - kbHeight, barWidth, inputHForLayout);
             self->_tableView.contentInset = UIEdgeInsetsMake(0, 0, inputHForLayout + kbHeight, 0);
         } else {
-            self->_inputViewBar.frame = CGRectMake(0, sz.height - inputHForLayout, sz.width, inputHForLayout);
+            self->_inputViewBar.frame = CGRectMake(safeLeft, sz.height - inputHForLayout, barWidth, inputHForLayout);
             self->_tableView.contentInset = UIEdgeInsetsMake(0, 0, inputHForLayout + extraContentInsetNoKb, 0);
         }
         self->_tableView.scrollIndicatorInsets = self->_tableView.contentInset;
@@ -861,7 +875,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     // Set contentView bounds so width is computed correctly
     CGFloat cellWidth = tableView.bounds.size.width;
     if (cellWidth <= 0) {
-        cellWidth = UIScreen.mainScreen.bounds.size.width;
+        cellWidth = (self.view.window ?: [SeafAppDelegate activeWindow]).bounds.size.width;
     }
     sizing.contentView.bounds = CGRectMake(0, 0, cellWidth, 0);
     
@@ -1441,6 +1455,11 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     // Convert to view coordinates for robust first-show behavior
     CGRect end = [self.view convertRect:endScreen fromView:nil];
     CGFloat overlap = MAX(0.0, CGRectGetMaxY(self.view.bounds) - CGRectGetMinY(end));
+    // Display changes such as folding an iPhone Duo post an all-zero end frame. Read
+    // literally it covers the whole view and pushes the input bar and list off screen.
+    if (CGRectIsEmpty(endScreen)) {
+        overlap = 0.0;
+    }
     self.currentKeyboardOverlap = overlap;
 
     CGFloat safeBottom = self.view.safeAreaInsets.bottom;

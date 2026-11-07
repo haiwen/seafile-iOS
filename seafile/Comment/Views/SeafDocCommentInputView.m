@@ -2,6 +2,8 @@
 
 #import "SeafDocCommentInputView.h"
 #import "SeafTheme.h"
+#import "Constants.h"
+#import "SeafAppDelegate.h"
 
 @interface SeafDocCommentInputView () <UITextViewDelegate>
 
@@ -84,7 +86,7 @@
     CGFloat contentHeight = MAX(baseHeight, 6.0 + measuredTextHeight + 6.0);
     
     // Divider
-    self.separator.frame = CGRectMake(0, 0, self.bounds.size.width, 1.0 / [UIScreen mainScreen].scale);
+    self.separator.frame = CGRectMake(0, 0, self.bounds.size.width, SEAF_SEPARATOR_HEIGHT_IN(self));
 
     // Image button 48dp × 48dp (widened to 56pt here), layout_marginEnd="8dp"
     CGFloat buttonTop = 6.0;
@@ -144,7 +146,7 @@
 
     CGFloat availableWidth = self.bounds.size.width > 0 ?
         self.bounds.size.width - (56 + 8 + 60 + 8) :
-        [UIScreen mainScreen].bounds.size.width - (56 + 8 + 60 + 8);
+        (self.window ?: [SeafAppDelegate activeWindow]).bounds.size.width - (56 + 8 + 60 + 8);
 
     CGFloat measuredTextHeight = ceilf(MAX(38.0, MIN(maxTextHeight,
         [self.textView sizeThatFits:CGSizeMake(availableWidth, CGFLOAT_MAX)].height)));

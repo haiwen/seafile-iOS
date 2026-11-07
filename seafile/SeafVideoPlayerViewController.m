@@ -198,11 +198,19 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
         }
     }
     
-    // Register for audio session interruption notifications so we can resume playback
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(handleAudioSessionInterruption:)
-                                                 name:AVAudioSessionInterruptionNotification
-                                               object:audioSession];
+    // Register for audio session interruptions so we can resume playback.
+    // iOS 27 replaces the interruption notification with a resumption recommendation.
+    if (@available(iOS 27.0, *)) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(handleAudioSessionResumptionRecommendation:)
+                                                     name:AVAudioSessionResumptionRecommendationNotification
+                                                   object:audioSession];
+    } else {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(handleAudioSessionInterruption:)
+                                                     name:AVAudioSessionInterruptionNotification
+                                                   object:audioSession];
+    }
 
     // Observe route change as well for debugging purposes
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -237,20 +245,34 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
         Debug(@"Audio session interruption ended. options=%lu, player.rate=%f", (unsigned long)options, self.player.rate);
 
         if (options & AVAudioSessionInterruptionOptionShouldResume) {
-            // Reactivate audio session and resume playback if possible
-            NSError *err = nil;
-            [[AVAudioSession sharedInstance] setActive:YES error:&err];
-            if (err) {
-                Warning(@"Failed to reactivate audio session after interruption: %@", err);
-            }
-
-            if (self.player && self.player.rate == 0) {
-                Debug(@"Resuming player after interruption");
-                [self.player play];
-            }
+            [self resumePlaybackAfterInterruption];
         }
     } else if (type == AVAudioSessionInterruptionTypeBegan) {
         Debug(@"Audio session interruption began. player.rate=%f", self.player.rate);
+    }
+}
+
+- (void)handleAudioSessionResumptionRecommendation:(NSNotification *)notification {
+    if (@available(iOS 27.0, *)) {
+        AVAudioSessionResumptionContext *context = notification.userInfo[AVAudioSessionResumptionContextKey];
+        Debug(@"Audio session resumption recommendation=%ld, player.rate=%f", (long)context.recommendation, self.player.rate);
+        if (context.recommendation == AVAudioSessionResumptionRecommendationShouldResume) {
+            [self resumePlaybackAfterInterruption];
+        }
+    }
+}
+
+- (void)resumePlaybackAfterInterruption {
+    // Reactivate audio session and resume playback if possible
+    NSError *err = nil;
+    [[AVAudioSession sharedInstance] setActive:YES error:&err];
+    if (err) {
+        Warning(@"Failed to reactivate audio session after interruption: %@", err);
+    }
+
+    if (self.player && self.player.rate == 0) {
+        Debug(@"Resuming player after interruption");
+        [self.player play];
     }
 }
 

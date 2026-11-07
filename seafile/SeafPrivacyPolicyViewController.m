@@ -11,6 +11,7 @@
 #import <WebKit/WebKit.h>
 #import "Debug.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 @interface SeafPrivacyPolicyViewController ()<WKNavigationDelegate>
 
@@ -35,13 +36,18 @@
     [self.view addSubview:self.progressView];
     
     [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
-    if (self.presentingViewController) {
-        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStyleDone target:self action:@selector(dismiss)];
+    if (self.navigationController.viewControllers.count > 1 || self.presentingViewController || self.navigationController.presentingViewController) {
+        self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                          action:@selector(dismiss) color:nil];
     }
 }
 
 - (void)dismiss {
-    [self dismissViewControllerAnimated:true completion:nil];
+    if (self.navigationController.viewControllers.count > 1) {
+        [self.navigationController popViewControllerAnimated:YES];
+    } else {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 -(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {

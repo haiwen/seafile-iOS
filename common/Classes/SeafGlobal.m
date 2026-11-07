@@ -45,12 +45,30 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 @synthesize cacheProvider = _cacheProvider;
 
+/// App Group container shared with the extensions. Falls back to the app's own
+/// Documents directory when the container is unavailable, e.g. a build signed
+/// without the App Group entitlement; without a root path the app would abort
+/// in -[SeafStorage rootURL] at launch.
++ (NSURL *)storageContainerURL
+{
+    static NSURL *url = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        url = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME];
+        if (!url) {
+            Warning("App Group container %@ is unavailable, falling back to the Documents directory", SEAFILE_SUITE_NAME);
+            url = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+        }
+    });
+    return url;
+}
+
 -(id)init
 {
     if (self = [super init]) {
         _conns = [[NSMutableArray alloc] init];
         _saveAlbumSem = dispatch_semaphore_create(1);
-         NSURL *rootURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+        NSURL *rootURL = [[SeafGlobal storageContainerURL] URLByAppendingPathComponent:@"seafile" isDirectory:true];
         [SeafStorage registerRootPath:rootURL.path metadataStorage:[[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME]];
 
         _cacheProvider = [[SeafDbCacheProvider alloc] init];
@@ -96,7 +114,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (NSString *)fileProviderStorageDir
 {
-    return [[[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] path] stringByAppendingPathComponent:@"File Provider Storage"];
+    return [[[SeafGlobal storageContainerURL] path] stringByAppendingPathComponent:@"File Provider Storage"];
 }
 
 - (void)registerDefaultsFromSettingsBundle
@@ -153,8 +171,9 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (void)migrateDocuments
 {
     NSURL *oldURL = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
-    NSURL *newURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
-    if ([Utils fileExistsAtPath:newURL.path])
+    NSURL *newURL = [[SeafGlobal storageContainerURL] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+    // Nothing to migrate when storage already lives inside Documents (container fallback).
+    if (!newURL || [newURL.path hasPrefix:oldURL.path] || [Utils fileExistsAtPath:newURL.path])
         return;
 
     [Utils checkMakeDir:newURL.path];

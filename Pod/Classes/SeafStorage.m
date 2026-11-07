@@ -90,7 +90,7 @@ static SeafStorage *object = nil;
 
 - (NSURL *)rootURL
 {
-    return [NSURL fileURLWithPath:_cacheRootPath];
+    return _cacheRootPath ? [NSURL fileURLWithPath:_cacheRootPath] : nil;
 }
 
 - (NSString *)rootPath

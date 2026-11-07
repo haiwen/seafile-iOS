@@ -17,6 +17,7 @@
 #import "SVProgressHUD.h"
 #import "SeafDestCell.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 @interface SeafDirViewController ()<SeafDentryDelegate>
 @property (strong) UIBarButtonItem *chooseItem;
@@ -89,6 +90,10 @@
     }
 
     [self.navigationItem setHidesBackButton:[self.directory isKindOfClass:[SeafRepos class]]];
+    if (![self.directory isKindOfClass:[SeafRepos class]] && self.navigationController.viewControllers.count > 1) {
+        self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                          action:@selector(onTapReturnHeader) color:nil];
+    }
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStylePlain target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
     

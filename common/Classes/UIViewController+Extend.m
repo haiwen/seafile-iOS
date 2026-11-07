@@ -128,7 +128,7 @@
     
     // Resize image using UIGraphicsImageRenderer for better quality
     UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
-    format.scale = [UIScreen mainScreen].scale;
+    format.scale = SeafDisplayScale(self);
     UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(size, size) format:format];
     UIImage *resizedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
         [img drawInRect:CGRectMake(0, 0, size, size)];

@@ -30,7 +30,6 @@
 #import "SeafNavigationBarStyler.h"
 #import "SeafSdocWebViewController.h"
 #import "SeafTheme.h"
-#import "SeafNavLeftItem.h"
 #import "SeafFPIndexer.h"
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
@@ -129,29 +128,13 @@ enum SHARE_STATUS {
 {
     if ([self isModal]) {
         [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
-    } else if (!(IsIpad() && [self isPortrait])
-               && ![self.navigationItem.leftBarButtonItem.customView isKindOfClass:[SeafNavLeftItem class]]) {
-        // Match the file list back button (SeafNavLeftItem) for push presentations on
-        // iPhone and iPad landscape; iPad portrait keeps the split-view displayMode button.
-        UIView *backView = [SeafNavLeftItem navLeftItemWithDirectory:nil
-                                                                title:@""
-                                                               target:self
-                                                               action:@selector(goBack:)];
-        UIBarButtonItem *customBack = [[UIBarButtonItem alloc] initWithCustomView:backView];
-        [self.navigationItem setLeftBarButtonItem:customBack animated:NO];
+    } else if (!(IsIpad() && [self isPortrait])) {
+        self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                          action:@selector(goBack:) color:nil];
     }
+    self.navigationItem.titleView = nil;
+    self.navigationItem.title = self.preViewItem.previewItemTitle;
 
-    // Set title using style tool
-    NSString *titleText = self.preViewItem.previewItemTitle;
-    if (!self.navigationItem.titleView) {
-        UILabel *titleLabel = [SeafNavigationBarStyler createCustomTitleViewWithText:titleText 
-                                                             maxWidthPercentage:0.7 
-                                                                  viewController:self];
-        self.navigationItem.titleView = titleLabel;
-    } else {
-        [SeafNavigationBarStyler updateTitleView:(UILabel *)self.navigationItem.titleView withText:titleText];
-    }
-    
     // Restore navigation bar right button display
     NSMutableArray *rightItems = [NSMutableArray array];
     
@@ -303,23 +286,7 @@ enum SHARE_STATUS {
     }
     // --- End Toolbar Visibility Control ---
 
-    CGFloat y = 64;
-    if (IsIpad()) {
-        y = 0;
-    } else {
-        y = 44 + [SeafAppDelegate activeWindow].safeAreaInsets.top;
-    }
-    
-    // Calculate bottom margin to account for toolbar, including safe area
-    CGFloat bottomMargin = 0;
-    if (self.toolbarView && !self.toolbarView.hidden) {
-        CGFloat toolbarHeight = 36; // Toolbar standard height
-        CGFloat safeAreaBottom = 0;
-        safeAreaBottom = self.view.safeAreaInsets.bottom; // Get bottom safe area inset
-        bottomMargin = toolbarHeight + safeAreaBottom; // Total height occupied by toolbar
-    }
-    
-    CGRect r = CGRectMake(self.view.frame.origin.x, y, self.view.frame.size.width, self.view.frame.size.height - y - bottomMargin);
+    CGRect r = [self previewContentFrameInsettingSides:YES];
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
@@ -385,7 +352,7 @@ enum SHARE_STATUS {
             break;
         case PREVIEW_PHOTO:
             Debug("Preview photo %@\n", self.preViewItem.previewItemTitle);
-            self.mwPhotoBrowser.view.frame = r;
+            self.mwPhotoBrowser.view.frame = [self previewContentFrameInsettingSides:NO];
             break;
         case PREVIEW_NONE:
             break;
@@ -411,18 +378,15 @@ enum SHARE_STATUS {
     self.view.backgroundColor = [SeafTheme primarySurface];
     // Do any additional setup after loading the view, typically from a nib.
 
-    // Use the same SeafNavLeftItem as the file list so the back button icon, size, and
-    // tint behavior stay consistent across pages (especially in dark mode).
-    UIView *backView = [SeafNavLeftItem navLeftItemWithDirectory:nil
-                                                            title:@""
-                                                           target:self
-                                                           action:@selector(goBack:)];
-    self.backItem = [[UIBarButtonItem alloc] initWithCustomView:backView];
+    self.backItem = [SeafNavigationBarStyler createCloseButtonWithTarget:self action:@selector(goBack:)];
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
-    self.editItem = [self getBarItem:@"editfile2" action:@selector(editFile:)size:18];
+    self.editItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"pencil"]
+                                                  style:UIBarButtonItemStylePlain target:self action:@selector(editFile:)];
+    self.editItem.title = NSLocalizedString(@"Edit", @"Seafile");
+    self.editItem.accessibilityLabel = self.editItem.title;
     self.exportItem = [self getBarItem:@"export2" action:@selector(export:)size:18];
     self.deleteItem = [self getBarItemAutoSize:@"delete" action:@selector(delete:)];
 
@@ -507,33 +471,10 @@ enum SHARE_STATUS {
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    // Calculate layout y offset: iPad detail view starts below nav bar already, so y=0
-    CGFloat layoutY = 0;
-    if (!IsIpad()) {
-        layoutY = 64;
-        layoutY = 44 + [SeafAppDelegate activeWindow].safeAreaInsets.top;
-    }
-    
-    // Calculate bottom margin to avoid toolbar overlap
-    CGFloat layoutBottomMargin = 0;
-    if (self.toolbarView && !self.toolbarView.hidden) {
-        CGFloat toolbarHeight = 36;
-        CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
-        layoutBottomMargin = toolbarHeight + safeAreaBottom;
-    }
-    
-    CGRect r = CGRectMake(0, layoutY, self.view.bounds.size.width, self.view.bounds.size.height - layoutY - layoutBottomMargin);
+    CGRect r = [self previewContentFrameInsettingSides:YES];
     
     if (self.state == PREVIEW_PHOTO){
-        if (IsIpad()) {
-            self.mwPhotoBrowser.view.frame = r;// Adjust photo browser frame for iPad
-        } else {
-            if (UIInterfaceOrientationIsPortrait([SeafAppDelegate activeInterfaceOrientation])) {
-                self.mwPhotoBrowser.view.frame = r;// Adjust photo browser frame for portrait orientation
-            } else {
-                self.mwPhotoBrowser.view.frame = CGRectMake(self.view.frame.origin.x, 32, self.view.frame.size.width, self.view.frame.size.height - 32);// Adjust photo browser frame for landscape orientation
-            }
-        }
+        self.mwPhotoBrowser.view.frame = [self previewContentFrameInsettingSides:NO];
     } else {
         // Update the actual visible content view based on current preview state
         switch (self.state) {
@@ -561,9 +502,9 @@ enum SHARE_STATUS {
         CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
         
         
-        CGRect toolbarFrame = CGRectMake(0,
+        CGRect toolbarFrame = CGRectMake(self.view.safeAreaInsets.left,
                                       self.view.bounds.size.height - toolbarHeight - safeAreaBottom,
-                                      self.view.bounds.size.width,
+                                      MAX(0, self.view.bounds.size.width - self.view.safeAreaInsets.left - self.view.safeAreaInsets.right),
                                       toolbarHeight + safeAreaBottom); // Include safe area in height
         self.toolbarView.frame = toolbarFrame;
         
@@ -586,11 +527,6 @@ enum SHARE_STATUS {
 - (void)splitViewController:(UISplitViewController *)splitController willShowViewController:(UIViewController *)viewController invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
 {
     [self.navigationItem setLeftBarButtonItem:nil animated:NO];
-}
-
-- (BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
-{
-    return !UIInterfaceOrientationIsLandscape(orientation); // Determine if the view controller should be hidden based on orientation
 }
 
 #pragma mark - SeafDentryDelegate
@@ -1107,8 +1043,32 @@ enum SHARE_STATUS {
     }
 }
 
+// Window shape rather than interface orientation: in resizable environments
+// (iPhone Duo, iPhone Mirroring) the orientation no longer describes the window.
 - (BOOL)isPortrait {
-    return UIInterfaceOrientationIsPortrait([SeafAppDelegate activeInterfaceOrientation]);
+    UIWindow *window = self.view.window ?: [SeafAppDelegate activeWindow];
+    return window.bounds.size.height >= window.bounds.size.width;
+}
+
+- (CGFloat)contentTopInset {
+    // The iPad detail view already starts below its navigation bar.
+    return IsIpad() ? 0 : self.view.safeAreaInsets.top;
+}
+
+// Area between the navigation bar and the bottom toolbar. Side insets keep
+// text out of the landscape notch and iPhone Duo's outer-display camera column;
+// photos stay full-bleed.
+- (CGRect)previewContentFrameInsettingSides:(BOOL)insetSides {
+    CGFloat top = [self contentTopInset];
+    CGFloat bottom = 0;
+    if (self.toolbarView && !self.toolbarView.hidden) {
+        CGFloat toolbarHeight = 36; // Must be in sync with setupToolbar
+        bottom = toolbarHeight + self.view.safeAreaInsets.bottom;
+    }
+    CGFloat left = insetSides ? self.view.safeAreaInsets.left : 0;
+    CGFloat right = insetSides ? self.view.safeAreaInsets.right : 0;
+    CGSize size = self.view.bounds.size;
+    return CGRectMake(left, top, size.width - left - right, size.height - top - bottom);
 }
 
 - (UITextView *)textView {
@@ -1512,7 +1472,7 @@ enum SHARE_STATUS {
     }
     if (buttonCount == 0) return;
 
-    CGFloat totalWidth = self.toolbarView.bounds.size.width;
+    CGFloat totalWidth = CGRectGetWidth(self.toolbarView.bounds);
     CGFloat itemWidth  = totalWidth / buttonCount;
 
     // Re-position each button according to its tag order (tags were assigned 0,1,2 when created).

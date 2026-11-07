@@ -42,6 +42,9 @@
 // Main container views
 @property (nonatomic, strong) UIView *backgroundDimmingView;
 @property (nonatomic, strong) UIView *alertView;
+@property (nonatomic, strong) UIScrollView *formScrollView;
+@property (nonatomic, strong) UIStackView *formStackView;
+@property (nonatomic, strong) UIStackView *buttonStackView;
 
 // UI Elements
 @property (nonatomic, strong) UILabel *titleLabel;
@@ -55,26 +58,20 @@
 @property (nonatomic, strong) UIButton *cancelButton;
 @property (nonatomic, strong) UIButton *confirmButton;
 
-// Constraints for dynamic layout
+// The available area follows both the window's safe area and the keyboard.
+@property (nonatomic, strong) UILayoutGuide *availableLayoutGuide;
+@property (nonatomic, strong) NSLayoutConstraint *availableBottomConstraint;
 @property (nonatomic, strong) NSLayoutConstraint *alertViewBottomConstraint;
-@property (nonatomic, strong) NSMutableArray<NSLayoutConstraint *> *passwordRelatedConstraints;
+@property (nonatomic, strong) NSLayoutConstraint *alertViewCenterYConstraint;
+@property (nonatomic, assign) CGSize previousFormViewportSize;
 
-// Constraints for button's top anchor, to switch between anchoring to encryptSwitch or confirmPasswordTextField
-@property (nonatomic, strong) NSLayoutConstraint *cancelButtonTopAnchorToEncryptSwitchConstraint;
-@property (nonatomic, strong) NSLayoutConstraint *cancelButtonTopAnchorToConfirmPasswordConstraint;
-
-@property (nonatomic, strong) NSLayoutConstraint *ipadAlertViewHeightConstraint; // Added for dynamic height on iPad
-
-// Keyboard and state management
+@property (nonatomic, assign) BOOL hasPresentedAlert;
 @property (nonatomic, assign) BOOL isBeingDismissedProgrammatically;
-@property (nonatomic, assign) BOOL currentDismissalWasCancel;
 
 @end
 
-// Define a constant for the initial off-screen position
-static CGFloat const kMkLibInitialOffScreenBottomConstant = 450.0; // Adjusted for potentially taller content
-static CGFloat const kIPadAlertHeightNoEncrypt = 275.0f; // Calculated height for non-encrypted state
-static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height for encrypted state
+static CGFloat const kMkLibMaximumWidth = 480.0;
+static CGFloat const kMkLibCenteredLayoutMinimumWidth = 520.0;
 
 @implementation SeafMkLibAlertController
 
@@ -84,70 +81,64 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
         if (IsIpad()) {
             self.modalPresentationStyle = UIModalPresentationFormSheet;
         } else {
-            self.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+            self.modalPresentationStyle = UIModalPresentationOverFullScreen;
             self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
         }
-        _passwordRelatedConstraints = [NSMutableArray array];
     }
     return self;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    if (IsIpad()) {
-        self.view.backgroundColor = [UIColor clearColor];
-        CGFloat initialHeight = self.encryptSwitch.isOn ? kIPadAlertHeightEncrypted : kIPadAlertHeightNoEncrypt;
-        self.preferredContentSize = CGSizeMake(480, initialHeight); // Set initial preferred size
+    [self setupViews];
+    [self setupConstraints];
+    [self updateEncryptionFieldsVisibility:self.encryptSwitch.isOn animated:NO];
 
-        [self setupViews];
-        [self setupConstraints]; // This will now use the preferredContentSize for ipadAlertViewHeightConstraint
-        self.alertView.alpha = 1.0;
-        [self updateEncryptionFieldsVisibility:self.encryptSwitch.isOn animated:NO];
-        // No keyboard notifications or background tap for iPad form sheet style
-    } else { // iPhone
-        [self setupViews];
-        [self setupConstraints];
-        
+    if (!IsIpad()) {
         self.alertView.alpha = 0;
         self.backgroundDimmingView.alpha = 0;
-        self.alertViewBottomConstraint.constant = kMkLibInitialOffScreenBottomConstant;
-        [self.view layoutIfNeeded];
-
+        self.alertView.transform = CGAffineTransformMakeTranslation(0, 30);
         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleBackgroundTap:)];
         [self.backgroundDimmingView addGestureRecognizer:tapGesture];
-        
-        [self registerForKeyboardNotifications];
-        [self updateEncryptionFieldsVisibility:self.encryptSwitch.isOn animated:NO];
     }
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-    if (!IsIpad()) { // iPhone: focus nameTextField or password fields
-        if (!self.nameTextField.isFirstResponder &&
-            !(self.encryptSwitch.isOn && (self.passwordTextField.isFirstResponder || self.confirmPasswordTextField.isFirstResponder))) {
-            [self.nameTextField becomeFirstResponder];
-        }
-    } else { // iPad: focus nameTextField if nothing else appropriate is focused
-        if (!self.nameTextField.isFirstResponder &&
-            !(self.encryptSwitch.isOn && (self.passwordTextField.isFirstResponder || self.confirmPasswordTextField.isFirstResponder))) {
-             [self.nameTextField becomeFirstResponder];
-        }
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    if (self.hasPresentedAlert) return;
+    self.hasPresentedAlert = YES;
+    [UIView animateWithDuration:0.25 animations:^{
+        self.alertView.alpha = 1.0;
+        self.alertView.transform = CGAffineTransformIdentity;
+        self.backgroundDimmingView.alpha = 1.0;
+    }];
+    [self.nameTextField becomeFirstResponder];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    BOOL centered = IsIpad() || CGRectGetWidth(self.view.safeAreaLayoutGuide.layoutFrame) >= kMkLibCenteredLayoutMinimumWidth;
+    if (self.alertViewCenterYConstraint.active != centered) {
+        self.alertViewBottomConstraint.active = NO;
+        self.alertViewCenterYConstraint.active = NO;
+        self.alertViewCenterYConstraint.active = centered;
+        self.alertViewBottomConstraint.active = !centered;
+    }
+    self.availableBottomConstraint.constant = centered ? -8.0 : 0.0;
+    self.alertView.layer.maskedCorners = centered
+        ? kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner | kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner
+        : kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
+
+    CGSize viewportSize = self.formScrollView.bounds.size;
+    if (!CGSizeEqualToSize(viewportSize, self.previousFormViewportSize)) {
+        self.previousFormViewportSize = viewportSize;
+        [self scrollActiveTextFieldIntoViewAnimated:NO];
     }
 }
 
-- (void)viewWillDisappear:(BOOL)animated {
-    [super viewWillDisappear:animated];
-    if (!IsIpad()) {
-        [self unregisterForKeyboardNotifications];
-    }
-}
-
-- (void)dealloc {
-    if (!IsIpad()) {
-        [self unregisterForKeyboardNotifications];
-    }
+- (void)viewSafeAreaInsetsDidChange {
+    [super viewSafeAreaInsetsDidChange];
+    [self.view setNeedsLayout];
 }
 
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
@@ -172,7 +163,20 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     self.alertView.backgroundColor = [SeafTheme primarySurface];
     self.alertView.layer.masksToBounds = YES;
     self.alertView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.alertView.accessibilityIdentifier = @"new_library_dialog";
     [self.view addSubview:self.alertView];
+
+    self.formScrollView = [[UIScrollView alloc] init];
+    self.formScrollView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.formScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    self.formScrollView.accessibilityIdentifier = @"new_library_form";
+    [self.alertView addSubview:self.formScrollView];
+
+    self.formStackView = [[UIStackView alloc] init];
+    self.formStackView.axis = UILayoutConstraintAxisVertical;
+    self.formStackView.spacing = 18.0;
+    self.formStackView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.formScrollView addSubview:self.formStackView];
 
     if (IsIpad()) {
         self.alertView.layer.cornerRadius = 14.0; // Standard rounded corners for iPad
@@ -186,41 +190,51 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     self.titleLabel.font = [UIFont systemFontOfSize:17.0];
     self.titleLabel.textColor = [SeafTheme primaryText];
     self.titleLabel.textAlignment = NSTextAlignmentLeft;
+    self.titleLabel.numberOfLines = 0;
     self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.alertView addSubview:self.titleLabel];
+    [self.formStackView addArrangedSubview:self.titleLabel];
 
     self.nameTextField = [self createStyledTextFieldWithPlaceholder:NSLocalizedString(@"New library name", @"Library Name Placeholder") isPassword:NO];
     self.nameTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    [self.alertView addSubview:self.nameTextField];
+    self.nameTextField.accessibilityIdentifier = @"new_library_name";
+    [self.formStackView addArrangedSubview:self.nameTextField];
 
     self.encryptLabel = [[UILabel alloc] init];
     self.encryptLabel.text = NSLocalizedString(@"Encrypted", @"Encrypt Label");
     self.encryptLabel.font = [UIFont systemFontOfSize:16.0];
     self.encryptLabel.textColor = [SeafTheme primaryText];
     self.encryptLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.alertView addSubview:self.encryptLabel];
 
     self.encryptSwitch = [[UISwitch alloc] init];
     self.encryptSwitch.onTintColor = [UIColor orangeColor];
     [self.encryptSwitch addTarget:self action:@selector(encryptSwitchValueChanged:) forControlEvents:UIControlEventValueChanged];
     self.encryptSwitch.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.alertView addSubview:self.encryptSwitch];
+    self.encryptSwitch.accessibilityIdentifier = @"new_library_encrypt";
+    self.encryptSwitch.accessibilityLabel = self.encryptLabel.text;
+    [self.encryptSwitch setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [self.encryptSwitch setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    UIStackView *encryptionRow = [[UIStackView alloc] initWithArrangedSubviews:@[self.encryptLabel, self.encryptSwitch]];
+    encryptionRow.alignment = UIStackViewAlignmentCenter;
+    encryptionRow.spacing = 10.0;
+    [self.formStackView addArrangedSubview:encryptionRow];
+    [self.formStackView setCustomSpacing:23.0 afterView:self.nameTextField];
 
     self.passwordTextField = (UITextField *)[self createStyledTextFieldWithPlaceholder:NSLocalizedString(@"Password (at least 8 characters)", @"Password Placeholder") isPassword:YES];
     self.passwordTextField.secureTextEntry = YES;
     self.passwordVisibilityButton = [self createPasswordVisibilityButtonForTextField:self.passwordTextField];
     self.passwordTextField.rightView = self.passwordVisibilityButton;
     self.passwordTextField.rightViewMode = UITextFieldViewModeAlways;
-    self.passwordTextField.alpha = 0; // Initial alpha
-    [self.alertView addSubview:self.passwordTextField];
+    self.passwordTextField.accessibilityIdentifier = @"new_library_password";
+    [self.formStackView addArrangedSubview:self.passwordTextField];
+    [self.formStackView setCustomSpacing:10.0 afterView:self.passwordTextField];
 
     self.confirmPasswordTextField = (UITextField *)[self createStyledTextFieldWithPlaceholder:NSLocalizedString(@"Please enter your password again", @"Confirm Password Placeholder") isPassword:YES];
     self.confirmPasswordTextField.secureTextEntry = YES;
     self.confirmPasswordVisibilityButton = [self createPasswordVisibilityButtonForTextField:self.confirmPasswordTextField];
     self.confirmPasswordTextField.rightView = self.confirmPasswordVisibilityButton;
     self.confirmPasswordTextField.rightViewMode = UITextFieldViewModeAlways;
-    self.confirmPasswordTextField.alpha = 0; // Initial alpha
-    [self.alertView addSubview:self.confirmPasswordTextField];
+    self.confirmPasswordTextField.accessibilityIdentifier = @"new_library_password_confirmation";
+    [self.formStackView addArrangedSubview:self.confirmPasswordTextField];
     
     self.cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.cancelButton setTitle:NSLocalizedString(@"Cancel", @"Cancel Button Title") forState:UIControlStateNormal];
@@ -232,7 +246,7 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     self.cancelButton.layer.borderWidth = 1.0;
     [self.cancelButton addTarget:self action:@selector(cancelButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     self.cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.alertView addSubview:self.cancelButton];
+    self.cancelButton.accessibilityIdentifier = @"new_library_cancel";
 
     self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.confirmButton setTitle:NSLocalizedString(@"OK", @"Confirm Button Title") forState:UIControlStateNormal];
@@ -242,7 +256,13 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
     self.confirmButton.layer.cornerRadius = 8.0;
     [self.confirmButton addTarget:self action:@selector(confirmButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     self.confirmButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.alertView addSubview:self.confirmButton];
+    self.confirmButton.accessibilityIdentifier = @"new_library_confirm";
+
+    self.buttonStackView = [[UIStackView alloc] initWithArrangedSubviews:@[self.cancelButton, self.confirmButton]];
+    self.buttonStackView.distribution = UIStackViewDistributionFillEqually;
+    self.buttonStackView.spacing = 15.0;
+    self.buttonStackView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.alertView addSubview:self.buttonStackView];
 }
 
 - (UITextField *)createStyledTextFieldWithPlaceholder:(NSString *)placeholder isPassword:(BOOL)isPassword {
@@ -294,162 +314,90 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
 }
 
 - (void)setupConstraints {
-    if (IsIpad()) {
-        self.ipadAlertViewHeightConstraint = [self.alertView.heightAnchor constraintEqualToConstant:self.preferredContentSize.height];
-        [NSLayoutConstraint activateConstraints:@[
-            [self.alertView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-            [self.alertView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
-            [self.alertView.widthAnchor constraintEqualToConstant:self.preferredContentSize.width],
-            self.ipadAlertViewHeightConstraint // Use the stored height constraint
-        ]];
-    } else { // iPhone
-        self.alertViewBottomConstraint = [self.alertView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:kMkLibInitialOffScreenBottomConstant];
-        [NSLayoutConstraint activateConstraints:@[
-            [self.alertView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-            [self.alertView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-            self.alertViewBottomConstraint
-        ]];
+    self.availableLayoutGuide = [[UILayoutGuide alloc] init];
+    [self.view addLayoutGuide:self.availableLayoutGuide];
+    UILayoutGuide *safeArea = self.view.safeAreaLayoutGuide;
+    self.availableBottomConstraint = [self.availableLayoutGuide.bottomAnchor constraintEqualToAnchor:self.view.keyboardLayoutGuide.topAnchor];
+    self.alertViewBottomConstraint = [self.alertView.bottomAnchor constraintEqualToAnchor:self.availableLayoutGuide.bottomAnchor];
+    self.alertViewCenterYConstraint = [self.alertView.centerYAnchor constraintEqualToAnchor:self.availableLayoutGuide.centerYAnchor];
+
+    // Prefer the full safe width on compact windows; cap the form on larger ones.
+    NSLayoutConstraint *preferredWidth = [self.alertView.widthAnchor constraintEqualToAnchor:self.availableLayoutGuide.widthAnchor];
+    preferredWidth.priority = UILayoutPriorityDefaultHigh;
+    // Only the form scrolls when the keyboard leaves too little vertical space.
+    NSLayoutConstraint *preferredFormHeight = [self.formScrollView.heightAnchor constraintEqualToAnchor:self.formStackView.heightAnchor];
+    preferredFormHeight.priority = UILayoutPriorityDefaultHigh - 1;
+
+    [NSLayoutConstraint activateConstraints:@[
+        [self.availableLayoutGuide.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor],
+        [self.availableLayoutGuide.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor],
+        [self.availableLayoutGuide.topAnchor constraintEqualToAnchor:safeArea.topAnchor constant:8.0],
+        self.availableBottomConstraint,
+        [self.alertView.centerXAnchor constraintEqualToAnchor:self.availableLayoutGuide.centerXAnchor],
+        [self.alertView.leadingAnchor constraintGreaterThanOrEqualToAnchor:self.availableLayoutGuide.leadingAnchor],
+        [self.alertView.trailingAnchor constraintLessThanOrEqualToAnchor:self.availableLayoutGuide.trailingAnchor],
+        [self.alertView.widthAnchor constraintLessThanOrEqualToConstant:kMkLibMaximumWidth],
+        preferredWidth,
+        [self.alertView.topAnchor constraintGreaterThanOrEqualToAnchor:self.availableLayoutGuide.topAnchor],
+        [self.alertView.bottomAnchor constraintLessThanOrEqualToAnchor:self.availableLayoutGuide.bottomAnchor],
+        self.alertViewBottomConstraint,
+
+        [self.formScrollView.topAnchor constraintEqualToAnchor:self.alertView.topAnchor constant:30.0],
+        [self.formScrollView.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor],
+        [self.formScrollView.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor],
+        preferredFormHeight,
+        [self.formStackView.topAnchor constraintEqualToAnchor:self.formScrollView.contentLayoutGuide.topAnchor],
+        [self.formStackView.leadingAnchor constraintEqualToAnchor:self.formScrollView.contentLayoutGuide.leadingAnchor constant:25.0],
+        [self.formStackView.trailingAnchor constraintEqualToAnchor:self.formScrollView.contentLayoutGuide.trailingAnchor constant:-25.0],
+        [self.formStackView.bottomAnchor constraintEqualToAnchor:self.formScrollView.contentLayoutGuide.bottomAnchor],
+        [self.formStackView.widthAnchor constraintEqualToAnchor:self.formScrollView.frameLayoutGuide.widthAnchor constant:-50.0],
+        [self.nameTextField.heightAnchor constraintEqualToConstant:48.0],
+
+        [self.buttonStackView.topAnchor constraintEqualToAnchor:self.formScrollView.bottomAnchor constant:30.0],
+        [self.buttonStackView.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:25.0],
+        [self.buttonStackView.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor constant:-25.0],
+        [self.buttonStackView.heightAnchor constraintEqualToConstant:44.0],
+        [self.buttonStackView.bottomAnchor constraintEqualToAnchor:self.alertView.bottomAnchor constant:-20.0],
+    ]];
+
+    for (UITextField *field in @[self.passwordTextField, self.confirmPasswordTextField]) {
+        NSLayoutConstraint *height = [field.heightAnchor constraintEqualToConstant:48.0];
+        // UIStackView collapses a hidden arranged view to zero height.
+        height.priority = UILayoutPriorityRequired - 1;
+        height.active = YES;
     }
-
-    CGFloat horizontalPadding = 25.0;
-    CGFloat verticalPaddingFromAlertTop = 30.0;
-    CGFloat verticalPaddingToAlertBottom = 20.0;
-    CGFloat interElementSpacing = 18.0;
-    CGFloat textFieldHeight = 48.0;
-    CGFloat buttonHeight = 44.0;
-    CGFloat buttonTopMargin = 30.0;
-    CGFloat buttonSpacing = 15.0;
-
-    [NSLayoutConstraint activateConstraints:@[
-        [self.titleLabel.topAnchor constraintEqualToAnchor:self.alertView.topAnchor constant:verticalPaddingFromAlertTop],
-        [self.titleLabel.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding],
-        [self.titleLabel.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor constant:-horizontalPadding],
-
-        [self.nameTextField.topAnchor constraintEqualToAnchor:self.titleLabel.bottomAnchor constant:interElementSpacing],
-        [self.nameTextField.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding],
-        [self.nameTextField.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor constant:-horizontalPadding],
-        [self.nameTextField.heightAnchor constraintEqualToConstant:textFieldHeight],
-
-        [self.encryptLabel.topAnchor constraintEqualToAnchor:self.nameTextField.bottomAnchor constant:interElementSpacing + 5],
-        [self.encryptLabel.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding],
-        
-        [self.encryptSwitch.centerYAnchor constraintEqualToAnchor:self.encryptLabel.centerYAnchor],
-        [self.encryptSwitch.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor constant:-horizontalPadding],
-        [self.encryptLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.encryptSwitch.leadingAnchor constant:-10]
-    ]];
-
-    // Password field constraints (managed by self.passwordRelatedConstraints)
-    [self.passwordRelatedConstraints addObject:[self.passwordTextField.topAnchor constraintEqualToAnchor:self.encryptLabel.bottomAnchor constant:interElementSpacing]];
-    [self.passwordRelatedConstraints addObject:[self.passwordTextField.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding]];
-    [self.passwordRelatedConstraints addObject:[self.passwordTextField.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor constant:-horizontalPadding]];
-    [self.passwordRelatedConstraints addObject:[self.passwordTextField.heightAnchor constraintEqualToConstant:textFieldHeight]];
-
-    [self.passwordRelatedConstraints addObject:[self.confirmPasswordTextField.topAnchor constraintEqualToAnchor:self.passwordTextField.bottomAnchor constant:interElementSpacing - 8]];
-    [self.passwordRelatedConstraints addObject:[self.confirmPasswordTextField.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding]];
-    [self.passwordRelatedConstraints addObject:[self.confirmPasswordTextField.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor constant:-horizontalPadding]];
-    [self.passwordRelatedConstraints addObject:[self.confirmPasswordTextField.heightAnchor constraintEqualToConstant:textFieldHeight]];
-
-    // Button top constraints
-    self.cancelButtonTopAnchorToEncryptSwitchConstraint = [self.cancelButton.topAnchor constraintEqualToAnchor:self.encryptSwitch.bottomAnchor constant:buttonTopMargin];
-    self.cancelButtonTopAnchorToConfirmPasswordConstraint = [self.cancelButton.topAnchor constraintEqualToAnchor:self.confirmPasswordTextField.bottomAnchor constant:buttonTopMargin];
-
-    [NSLayoutConstraint activateConstraints:@[
-        self.cancelButtonTopAnchorToEncryptSwitchConstraint, // Initially active
-        [self.cancelButton.leadingAnchor constraintEqualToAnchor:self.alertView.leadingAnchor constant:horizontalPadding],
-        [self.cancelButton.heightAnchor constraintEqualToConstant:buttonHeight],
-        [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.alertView.bottomAnchor constant:-verticalPaddingToAlertBottom],
-
-        [self.confirmButton.topAnchor constraintEqualToAnchor:self.cancelButton.topAnchor],
-        [self.confirmButton.leadingAnchor constraintEqualToAnchor:self.cancelButton.trailingAnchor constant:buttonSpacing],
-        [self.confirmButton.trailingAnchor constraintEqualToAnchor:self.alertView.trailingAnchor constant:-horizontalPadding],
-        [self.confirmButton.widthAnchor constraintEqualToAnchor:self.cancelButton.widthAnchor],
-        [self.confirmButton.heightAnchor constraintEqualToAnchor:self.cancelButton.heightAnchor],
-        [self.confirmButton.bottomAnchor constraintEqualToAnchor:self.cancelButton.bottomAnchor],
-    ]];
-    self.cancelButtonTopAnchorToConfirmPasswordConstraint.active = NO; // Initially inactive
 }
 
-#pragma mark - Keyboard Notifications
-
-- (void)registerForKeyboardNotifications {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(keyboardWillShow:)
-                                                 name:UIKeyboardWillShowNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(keyboardWillHide:)
-                                                 name:UIKeyboardWillHideNotification object:nil];
+- (void)updatePreferredContentSize {
+    if (!IsIpad()) return;
+    CGSize formSize = [self.formStackView systemLayoutSizeFittingSize:CGSizeMake(kMkLibMaximumWidth - 50.0, 0)
+                                    withHorizontalFittingPriority:UILayoutPriorityRequired
+                                          verticalFittingPriority:UILayoutPriorityFittingSizeLevel];
+    // Form padding, button spacing/height, and 8pt above and below the panel.
+    self.preferredContentSize = CGSizeMake(kMkLibMaximumWidth, formSize.height + 30.0 + 30.0 + 44.0 + 20.0 + 16.0);
+    self.navigationController.preferredContentSize = self.preferredContentSize;
 }
 
-- (void)unregisterForKeyboardNotifications {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillShowNotification object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillHideNotification object:nil];
-}
-
-- (void)keyboardWillShow:(NSNotification *)notification {
-    if (IsIpad()) return; // iPhone only
-    NSDictionary *userInfo = notification.userInfo;
-    CGRect keyboardFrame = [userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    NSTimeInterval animationDuration = [userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
-    UIViewAnimationCurve animationCurve = [userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue];
-    
-    // Convert keyboard frame from screen coordinates to self.view's coordinate system.
-    // This is necessary because self.view may not extend to the screen bottom
-    // (e.g., when presented over a tab bar controller with UIModalPresentationOverCurrentContext).
-    CGRect keyboardFrameInView = [self.view convertRect:keyboardFrame fromView:nil];
-    CGFloat keyboardTopInView = keyboardFrameInView.origin.y;
-    CGFloat offsetFromViewBottom = self.view.bounds.size.height - keyboardTopInView;
-    
-    self.alertViewBottomConstraint.constant = -offsetFromViewBottom;
-    
-    [UIView animateWithDuration:animationDuration delay:0.0 options:(animationCurve << 16) | UIViewAnimationOptionBeginFromCurrentState animations:^{
-        self.alertView.alpha = 1.0;
-        self.backgroundDimmingView.alpha = 1.0;
-        [self.view layoutIfNeeded];
-    } completion:nil];
-}
-
-- (void)keyboardWillHide:(NSNotification *)notification {
-    if (IsIpad()) return; // iPhone only
-    NSDictionary *userInfo = notification.userInfo;
-    NSTimeInterval animationDuration = [userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
-    UIViewAnimationCurve animationCurve = [userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue];
-    
-    self.alertViewBottomConstraint.constant = kMkLibInitialOffScreenBottomConstant;
-    
-    [UIView animateWithDuration:animationDuration delay:0.0 options:(animationCurve << 16) | UIViewAnimationOptionBeginFromCurrentState animations:^{
-        self.alertView.alpha = 0.0;
-        self.backgroundDimmingView.alpha = 0.0;
-        [self.view layoutIfNeeded];
-    } completion:^(BOOL finished) {
-        if (self.isBeingDismissedProgrammatically) {
-            [self dismissViewControllerAnimated:NO completion:^{
-                if (!self.currentDismissalWasCancel && self.handlerBlock && [self.handlerBlock respondsToSelector:@selector(description)]) {
-                    NSString *name = self.nameTextField.text;
-                    NSString *pwd = self.encryptSwitch.isOn ? self.passwordTextField.text : nil;
-                    self.handlerBlock(name, pwd);
-                }
-                self.isBeingDismissedProgrammatically = NO;
-                self.currentDismissalWasCancel = NO;
-            }];
+- (void)scrollActiveTextFieldIntoViewAnimated:(BOOL)animated {
+    for (UITextField *field in @[self.nameTextField, self.passwordTextField, self.confirmPasswordTextField]) {
+        if (field.isFirstResponder && !field.hidden) {
+            CGRect rect = [self.formScrollView convertRect:field.bounds fromView:field];
+            [self.formScrollView scrollRectToVisible:CGRectInset(rect, 0, -8.0) animated:animated];
+            break;
         }
-    }];
+    }
 }
 
 #pragma mark - Actions
 
 - (void)handleBackgroundTap:(UITapGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
-        [self dismissAlertAndCallHandler:nil isCancel:YES];
+        [self dismissAlertIsCancel:YES];
     }
 }
 
 - (void)cancelButtonTapped:(UIButton *)sender {
-    if (IsIpad()) {
-        [self.view endEditing:YES]; // Dismiss keyboard if any field is active
-        [self dismissViewControllerAnimated:YES completion:nil]; // Cancel action, no handler call from here
-    } else { // iPhone logic
-        [self dismissAlertAndCallHandler:nil isCancel:YES];
-    }
+    [self dismissAlertIsCancel:YES];
 }
 
 - (void)confirmButtonTapped:(UIButton *)sender {
@@ -481,137 +429,54 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
         }
     }
 
-    if (IsIpad()) {
-        [self.view endEditing:YES]; // Dismiss keyboard
-        [self dismissViewControllerAnimated:YES completion:^{
-            if (self.handlerBlock) {
-                self.handlerBlock(name, encrypted ? pwd : nil); // Pass nil for pwd if not encrypted
-            }
-        }];
-    } else { // iPhone logic
-        [self dismissAlertAndCallHandler:self.handlerBlock isCancel:NO];
-    }
+    [self dismissAlertIsCancel:NO];
 }
 
-- (void)dismissAlertAndCallHandler:(HandlerBlock)handler isCancel:(BOOL)isCancel {
+- (void)dismissAlertIsCancel:(BOOL)isCancel {
+    if (self.isBeingDismissedProgrammatically) return;
     self.isBeingDismissedProgrammatically = YES;
-    self.currentDismissalWasCancel = isCancel;
+    NSString *name = [self.nameTextField.text copy];
+    NSString *password = self.encryptSwitch.isOn ? [self.passwordTextField.text copy] : nil;
+    HandlerBlock handler = isCancel ? nil : [self.handlerBlock copy];
+    [self.view endEditing:YES];
 
-    if (self.nameTextField.isFirstResponder) [self.nameTextField resignFirstResponder];
-    else if (self.passwordTextField.isFirstResponder) [self.passwordTextField resignFirstResponder];
-    else if (self.confirmPasswordTextField.isFirstResponder) [self.confirmPasswordTextField resignFirstResponder];
-    else {
-        [self.view endEditing:YES];
-        if (!self.alertView.alpha == 0) {
-             [self manuallyTriggerDismissAnimationIsCancel:isCancel];
-        }
+    void (^completion)(void) = ^{
+        if (handler) handler(name, password);
+    };
+    if (IsIpad()) {
+        [self dismissViewControllerAnimated:YES completion:completion];
+    } else {
+        // Dismiss directly even when no software keyboard is present.
+        [UIView animateWithDuration:0.2 animations:^{
+            self.alertView.alpha = 0.0;
+            self.alertView.transform = CGAffineTransformMakeTranslation(0, 30);
+            self.backgroundDimmingView.alpha = 0.0;
+        } completion:^(BOOL finished) {
+            [self dismissViewControllerAnimated:NO completion:completion];
+        }];
     }
 }
-
-- (void)manuallyTriggerDismissAnimationIsCancel:(BOOL)isCancel {
-    NSTimeInterval animationDuration = 0.25;
-    UIViewAnimationCurve animationCurve = UIViewAnimationCurveEaseInOut;
-    self.alertViewBottomConstraint.constant = kMkLibInitialOffScreenBottomConstant;
-    
-    [UIView animateWithDuration:animationDuration delay:0.0 options:(animationCurve << 16) | UIViewAnimationOptionBeginFromCurrentState animations:^{
-        self.alertView.alpha = 0.0;
-        self.backgroundDimmingView.alpha = 0.0;
-        [self.view layoutIfNeeded];
-    } completion:^(BOOL finished) {
-        [self dismissViewControllerAnimated:NO completion:^{
-            if (!isCancel && self.handlerBlock) {
-                NSString *name = self.nameTextField.text;
-                NSString *pwd = self.encryptSwitch.isOn ? self.passwordTextField.text : nil;
-                self.handlerBlock(name, pwd);
-            }
-        }];
-    }];
-}
-
 
 - (void)encryptSwitchValueChanged:(UISwitch *)sender {
-    BOOL przyszloIsOn = sender.isOn;
-    CGFloat newHeight = przyszloIsOn ? kIPadAlertHeightEncrypted : kIPadAlertHeightNoEncrypt;
-
-    if (IsIpad()) {
-        self.preferredContentSize = CGSizeMake(self.preferredContentSize.width, newHeight);
-        if (self.ipadAlertViewHeightConstraint) { // Ensure constraint is already created
-            self.ipadAlertViewHeightConstraint.constant = newHeight;
-        }
+    BOOL encrypted = sender.isOn;
+    if (!encrypted && (self.passwordTextField.isFirstResponder || self.confirmPasswordTextField.isFirstResponder)) {
+        [self.nameTextField becomeFirstResponder];
     }
-
-    [self updateEncryptionFieldsVisibility:przyszloIsOn animated:YES];
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (przyszloIsOn) {
-            if (self.encryptSwitch.isOn) {
-                 [self.passwordTextField becomeFirstResponder];
-            }
-    } else {
-            if (!self.encryptSwitch.isOn && (self.passwordTextField.isFirstResponder || self.confirmPasswordTextField.isFirstResponder)) {
-                [self.nameTextField becomeFirstResponder];
-            }
-        }
-    });
+    [self updateEncryptionFieldsVisibility:encrypted animated:YES];
+    if (encrypted) {
+        [self.passwordTextField becomeFirstResponder];
+    }
 }
 
 - (void)updateEncryptionFieldsVisibility:(BOOL)show animated:(BOOL)animated {
-    if (animated) {
-        if (show) {
-            self.passwordTextField.hidden = NO;
-            self.confirmPasswordTextField.hidden = NO;
-            self.passwordTextField.alpha = 0.0;
-            self.confirmPasswordTextField.alpha = 0.0;
-
-            [NSLayoutConstraint activateConstraints:self.passwordRelatedConstraints];
-            self.cancelButtonTopAnchorToEncryptSwitchConstraint.active = NO;
-            self.cancelButtonTopAnchorToConfirmPasswordConstraint.active = YES;
-
-            [self.alertView layoutIfNeeded];
-
-            [UIView animateWithDuration:0.3
-                             animations:^{
-                                 self.passwordTextField.alpha = 1.0;
-                                 self.confirmPasswordTextField.alpha = 1.0;
-                                 [self.alertView layoutIfNeeded];
-                             }
-                             completion:nil];
-        } else {
-            [UIView animateWithDuration:0.15
-                             animations:^{
-                                 self.passwordTextField.alpha = 0.0;
-                                 self.confirmPasswordTextField.alpha = 0.0;
-                             }
-                             completion:^(BOOL finishedFadeOut) {
-                                 if (finishedFadeOut) {
-                                     self.passwordTextField.hidden = YES;
-                                     self.confirmPasswordTextField.hidden = YES;
-
-                                     [NSLayoutConstraint deactivateConstraints:self.passwordRelatedConstraints];
-                                     self.cancelButtonTopAnchorToConfirmPasswordConstraint.active = NO;
-                                     self.cancelButtonTopAnchorToEncryptSwitchConstraint.active = YES;
-
-                                     [UIView animateWithDuration:0.15
-                                                      animations:^{
-                                                          [self.alertView layoutIfNeeded];
-                                                      }];
-                                 }
-                             }];
-        }
-    } else {
-        if (show) {
-            self.passwordTextField.alpha = 1.0;
-            self.confirmPasswordTextField.alpha = 1.0;
-            self.passwordTextField.hidden = NO;
-            self.confirmPasswordTextField.hidden = NO;
-        } else {
-            self.passwordTextField.alpha = 0.0;
-            self.confirmPasswordTextField.alpha = 0.0;
-            self.passwordTextField.hidden = YES;
-            self.confirmPasswordTextField.hidden = YES;
-        }
-        [self.alertView layoutIfNeeded];
-    }
+    self.passwordTextField.hidden = !show;
+    self.confirmPasswordTextField.hidden = !show;
+    [self updatePreferredContentSize];
+    [UIView animateWithDuration:animated ? 0.25 : 0.0 animations:^{
+        [self.view layoutIfNeeded];
+    } completion:^(BOOL finished) {
+        [self scrollActiveTextFieldIntoViewAnimated:animated];
+    }];
 }
 
 - (void)togglePasswordVisibility:(UIButton *)sender {
@@ -626,6 +491,13 @@ static CGFloat const kIPadAlertHeightEncrypted = 395.0f; // Calculated height fo
 }
 
 #pragma mark - UITextFieldDelegate
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.view layoutIfNeeded];
+        [self scrollActiveTextFieldIntoViewAnimated:YES];
+    });
+}
+
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     if (textField == self.nameTextField) {
         if (self.encryptSwitch.isOn) [self.passwordTextField becomeFirstResponder];

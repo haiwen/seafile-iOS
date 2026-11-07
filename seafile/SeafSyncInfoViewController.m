@@ -15,6 +15,7 @@
 #import "SeafGlobal.h"
 #import "SeafUploadOperation.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 #define CANCEL_UPLOAD NSLocalizedString(@"Cancel upload", @"Seafile")
 #define CANCEL_DOWNLOAD NSLocalizedString(@"Cancel download", @"Seafile")
@@ -45,6 +46,9 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(onTapBack) color:nil];
+
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 50.0;
     self.tableView.tableFooterView = [UIView new];
@@ -73,6 +77,10 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)onTapBack {
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 #pragma mark - Initialize Task Arrays

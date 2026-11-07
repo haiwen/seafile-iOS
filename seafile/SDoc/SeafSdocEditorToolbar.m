@@ -192,6 +192,7 @@ static const CGFloat kBaseWidth = 414.0;
     self.kbStack.layoutMarginsRelativeArrangement = YES;
     
     self.btnKeyboard = [self createButtonWithImageName:@"keyboard-off-nomal" action:@selector(onKeyboardTapped)];
+    self.btnKeyboard.accessibilityIdentifier = @"sdoc_dismiss_keyboard_button";
     [self.kbStack addArrangedSubview:self.btnKeyboard];
     
     [stack addArrangedSubview:self.undoRedoStack];

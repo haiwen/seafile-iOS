@@ -192,6 +192,12 @@ typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeho
 /// Check if the app is running in the main app.
 + (BOOL)isMainApp;
 
+#pragma mark - Photo asset resources
+
+/// Filename of a photo library resource, or nil if it has none.
+/// Reads `filename` on iOS 27+, where `originalFilename` is deprecated.
++ (NSString *)filenameForAssetResource:(PHAssetResource *)resource;
+
 #pragma mark - Photo library authorization
 
 /// Current photo library authorization status for read-write access.

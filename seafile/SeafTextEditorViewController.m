@@ -72,12 +72,12 @@
     // Do any additional setup after loading the view from its nib.
     self.navigationItem.rightBarButtonItems = nil;
 
-    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
-    self.navigationItem.rightBarButtonItem = cancelItem;
-
-    self.saveItem = [self getTextBarItem:NSLocalizedString(@"Save", @"Seafile") action:@selector(save) active:0];
-    NSMutableArray *litems = [[NSMutableArray alloc] initWithObjects:self.saveItem, nil];
-    self.navigationItem.leftBarButtonItems = litems;
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createCloseButtonWithTarget:self action:@selector(cancel)];
+    self.saveItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"checkmark"]
+                                                  style:UIBarButtonItemStyleDone target:self action:@selector(save)];
+    self.saveItem.title = NSLocalizedString(@"Save", @"Seafile");
+    self.saveItem.accessibilityLabel = self.saveItem.title;
+    self.navigationItem.rightBarButtonItem = self.saveItem;
     [[self textView] setText:_previewFile.strContent];
     [[self textView] setFont:[UIFont fontWithName:@"Courier" size:14.0]];
     [[self textView] setBackgroundColor:[SeafTheme primarySurface]];

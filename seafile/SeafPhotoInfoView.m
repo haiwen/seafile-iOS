@@ -4,6 +4,7 @@
 #import <ImageIO/ImageIO.h>
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "SeafTheme.h"
+#import "Constants.h"
 
 // Subview tags inside `infoScrollView`: EXIF card, profile rows section,
 // and the fixed-height loading placeholder for profile rows.
@@ -14,6 +15,9 @@ static const NSInteger kProfileLoadingTag = 997;
 @interface SeafPhotoInfoView()
 
 @property (nonatomic, strong) UIScrollView *infoScrollView;
+@property (nonatomic, copy) NSArray<NSDictionary *> *displayedProfileRows;
+@property (nonatomic, copy) NSDictionary *exifMetadata;
+@property (nonatomic, assign) CGFloat renderedWidth;
 
 @end
 
@@ -23,12 +27,13 @@ static const NSInteger kProfileLoadingTag = 997;
     self = [super initWithFrame:frame];
     if (self) {
         self.backgroundColor = [SeafTheme secondarySurface];
-        self.layer.cornerRadius = 8.0;
+        self.accessibilityIdentifier = @"gallery_info_panel";
+        self.layer.cornerRadius = 16.0;
         self.layer.masksToBounds = YES;
         
         // Create a scroll view inside the info view for scrollable content
         self.infoScrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
-        self.infoScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        self.infoScrollView.accessibilityIdentifier = @"gallery_info_content";
         self.infoScrollView.contentInset = UIEdgeInsetsMake(0, 0, 20, 0); // Add bottom padding
         // This nested scroll view lives entirely outside the device safe
         // area; default `.automatic` would later apply the screen's
@@ -40,8 +45,32 @@ static const NSInteger kProfileLoadingTag = 997;
     return self;
 }
 
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGFloat width = MIN(640.0, CGRectGetWidth(self.bounds));
+    self.infoScrollView.frame = CGRectMake((CGRectGetWidth(self.bounds) - width) / 2.0, 0,
+                                           width, CGRectGetHeight(self.bounds));
+    if (width <= 0 || fabs(width - self.renderedWidth) < 0.5) return;
+    self.renderedWidth = width;
+    CGPoint offset = self.infoScrollView.contentOffset;
+    NSArray *rows = self.displayedProfileRows;
+    NSDictionary *metadata = self.exifMetadata;
+    if (rows.count) [self renderProfileRows:rows];
+    if (metadata) [self renderExifMetadata:metadata];
+    UIView *loading = [self.infoScrollView viewWithTag:kProfileLoadingTag];
+    if (loading) {
+        CGRect frame = loading.frame;
+        frame.size.width = width;
+        loading.frame = frame;
+    }
+    [self recalculateContentSize];
+    CGFloat maxY = MAX(0, self.infoScrollView.contentSize.height - self.infoScrollView.bounds.size.height
+                          + self.infoScrollView.contentInset.bottom);
+    self.infoScrollView.contentOffset = CGPointMake(0, MIN(MAX(0, offset.y), maxY));
+}
 
 - (void)clearExifDataView {
+    self.exifMetadata = nil;
     UIView *exifSectionView = [self.infoScrollView viewWithTag:kExifSectionTag];
     if (exifSectionView) {
         [exifSectionView removeFromSuperview];
@@ -60,6 +89,13 @@ static const NSInteger kProfileLoadingTag = 997;
     CFRelease(source);
 
     if (!metadata) return;
+
+    [self renderExifMetadata:metadata];
+}
+
+- (void)renderExifMetadata:(NSDictionary *)metadata {
+    [self clearExifDataView];
+    self.exifMetadata = metadata;
 
     NSDictionary *exifDict = metadata[(NSString *)kCGImagePropertyExifDictionary];
     NSDictionary *tiffDict = metadata[(NSString *)kCGImagePropertyTIFFDictionary];
@@ -129,6 +165,7 @@ static const NSInteger kProfileLoadingTag = 997;
     UIFont *smallFont = [UIFont systemFontOfSize:12];
     UIColor *textColor = [SeafTheme secondaryText];
     UIColor *lightGrayColor = [SeafTheme separator];
+    CGFloat hairline = SEAF_SEPARATOR_HEIGHT_IN(self);
     UIColor *cardBackgroundColor = [SeafTheme secondarySurface];
     UIColor *modelBackgroundColor = [SeafTheme fill];
 
@@ -184,12 +221,13 @@ static const NSInteger kProfileLoadingTag = 997;
     
     // Set model background height
     CGRect modelBgFrame = modelBackgroundView.frame;
-    modelBgFrame.size.height = currentModelY;
+    modelBgFrame.size.height = modelRowHeight > 0 ? currentModelY : 0;
     modelBackgroundView.frame = modelBgFrame;
 
     // --- Separator Line (below model background) ---
-    UIView *separatorTop = [[UIView alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(modelBackgroundView.frame), availableWidth, 1.0 / [UIScreen mainScreen].scale)];
+    UIView *separatorTop = [[UIView alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(modelBackgroundView.frame), availableWidth, hairline)];
     separatorTop.backgroundColor = lightGrayColor;
+    separatorTop.hidden = modelRowHeight == 0;
     [exifSectionContainer addSubview:separatorTop]; // Add to main container
     
     // --- Position details background view ---
@@ -248,7 +286,7 @@ static const NSInteger kProfileLoadingTag = 997;
     currentDetailsY += verticalSpacing * 1.5; // More space after this block
 
     // --- Separator Line (within detailsBackgroundView) ---
-    UIView *separator1 = [[UIView alloc] initWithFrame:CGRectMake(0, currentDetailsY, availableWidth, 1.0 / [UIScreen mainScreen].scale)];
+    UIView *separator1 = [[UIView alloc] initWithFrame:CGRectMake(0, currentDetailsY, availableWidth, hairline)];
     separator1.backgroundColor = lightGrayColor;
     [detailsBackgroundView addSubview:separator1];
     currentDetailsY += separator1.frame.size.height + verticalSpacing * 1.5; // Space after separator
@@ -304,9 +342,9 @@ static const NSInteger kProfileLoadingTag = 997;
         
         // Add vertical separator (except for the last item)
         if (i < detailItems.count - 1) {
-            UIView *vSeparator = [[UIView alloc] initWithFrame:CGRectMake(currentDetailX + detailItemWidth - (1.0 / [UIScreen mainScreen].scale) / 2.0,
+            UIView *vSeparator = [[UIView alloc] initWithFrame:CGRectMake(currentDetailX + detailItemWidth - hairline / 2.0,
                                                                        currentDetailsY,
-                                                                       1.0 / [UIScreen mainScreen].scale,
+                                                                       hairline,
                                                                        label.frame.size.height)];
             vSeparator.backgroundColor = lightGrayColor;
             [detailsBackgroundView addSubview:vSeparator];
@@ -356,6 +394,7 @@ static const NSInteger kProfileLoadingTag = 997;
 #pragma mark - Profile Rows (Metadata from Aggregate API)
 
 - (void)clearProfileRows {
+    self.displayedProfileRows = nil;
     UIView *container = [self.infoScrollView viewWithTag:kProfileSectionTag];
     if (container) {
         [container removeFromSuperview];
@@ -407,14 +446,15 @@ static const NSInteger kProfileLoadingTag = 997;
 
     // Remove previous profile section if any
     [self clearProfileRows];
+    self.displayedProfileRows = rows;
 
     CGFloat outerPadding = 16.0;
-    CGFloat topPadding = 25.0;
+    CGFloat topPadding = 12.0;
     CGFloat iconSize = 14.0;
     CGFloat horizontalSpacing = 8.0;
     CGFloat rowSpacing = 10.0;
     CGFloat availableWidth = self.infoScrollView.bounds.size.width - (2 * outerPadding);
-    CGFloat leftColumnWidth = 140.0;
+    CGFloat leftColumnWidth = MIN(140.0, availableWidth * 0.38);
 
     UIFont *titleFont = [UIFont systemFontOfSize:14];
     UIFont *valueFont = [UIFont systemFontOfSize:14];
@@ -452,6 +492,7 @@ static const NSInteger kProfileLoadingTag = 997;
         titleLabel.font = titleFont;
         titleLabel.textColor = titleColor;
         titleLabel.text = title;
+        titleLabel.accessibilityIdentifier = @"gallery_property_label";
         titleLabel.numberOfLines = 1;
         [titleLabel sizeToFit];
         CGFloat titleX = outerPadding + iconSize + horizontalSpacing;
@@ -530,7 +571,7 @@ static const NSInteger kProfileLoadingTag = 997;
                         CGFloat nameW = ceil([name sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
                         // Align with SeafCollaboratorChipView: left 4 + avatar 16 + spacing 4 + text + right 8
                         CGFloat chipW = 4 + 16 + 4 + nameW + 8;
-                        [chipWidths addObject:@(chipW)];
+                        [chipWidths addObject:@(MIN(chipW, rightWidth))];
                     } else {
                         NSString *text = vText;
                         UIFont *chipFont = [UIFont systemFontOfSize:13];
@@ -543,7 +584,7 @@ static const NSInteger kProfileLoadingTag = 997;
                         } else {
                             chipW = 8 + textW + 8;
                         }
-                        [chipWidths addObject:@(chipW)];
+                        [chipWidths addObject:@(MIN(chipW, rightWidth))];
                     }
                 }
 
@@ -598,7 +639,6 @@ static const NSInteger kProfileLoadingTag = 997;
                         NSString *bgColor = v[@"color"] ?: @"";
                         NSString *txtColor = v[@"textColor"] ?: @"";
                         UIFont *chipFont = [UIFont systemFontOfSize:13];
-                        CGFloat textW = ceil([text sizeWithAttributes:@{NSFontAttributeName:chipFont}].width);
                         BOOL isDotStyle = [type isEqualToString:@"link"];
 
                         UIView *chip = [[UIView alloc] initWithFrame:CGRectMake(chipX, chipY, chipW, chipHeight)];
@@ -613,7 +653,7 @@ static const NSInteger kProfileLoadingTag = 997;
                             dot.backgroundColor = [self profileColorFromHex:bgColor] ?: [UIColor grayColor];
                             [chip addSubview:dot];
 
-                            UILabel *tl = [[UILabel alloc] initWithFrame:CGRectMake(5 + dotSize + 4, 0, textW, chipHeight)];
+                            UILabel *tl = [[UILabel alloc] initWithFrame:CGRectMake(5 + dotSize + 4, 0, MAX(0, chipW - 5 - dotSize - 4 - 8), chipHeight)];
                             tl.font = chipFont;
                             tl.textColor = [self profileColorFromHex:txtColor] ?: valueColor;
                             tl.text = text;
@@ -622,7 +662,7 @@ static const NSInteger kProfileLoadingTag = 997;
                             UIColor *bg = [self profileColorFromHex:bgColor];
                             chip.backgroundColor = bg ?: [SeafTheme fill];
 
-                            UILabel *tl = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, textW, chipHeight)];
+                            UILabel *tl = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, MAX(0, chipW - 16), chipHeight)];
                             tl.font = chipFont;
                             tl.textColor = [self profileColorFromHex:txtColor] ?: valueColor;
                             tl.text = text;
@@ -711,6 +751,7 @@ static const NSInteger kProfileLoadingTag = 997;
 - (void)recalculateContentSize {
     CGFloat maxBottom = 0;
     for (UIView *subview in self.infoScrollView.subviews) {
+        if (subview.tag != kProfileSectionTag && subview.tag != kExifSectionTag && subview.tag != kProfileLoadingTag) continue;
         CGFloat bottom = CGRectGetMaxY(subview.frame);
         if (bottom > maxBottom) maxBottom = bottom;
     }
