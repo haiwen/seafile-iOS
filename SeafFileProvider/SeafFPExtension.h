@@ -42,6 +42,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// library list). Never touches the network.
 - (nullable SeafFPItem *)resolveItem:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable * _Nullable)error;
 - (SeafFPItem *)itemForRepo:(SeafRepo *)repo;
+- (SeafFPItem *)itemForRepositoryState:(NSDictionary *)state;
+- (nullable NSError *)repositoryAccessError:(NSString *)repoId;
 - (SeafFPItem *)itemForRecord:(SeafFPRecord *)record;
 
 - (nullable SeafRepo *)repoWithId:(NSString *)repoId;

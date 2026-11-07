@@ -30,6 +30,58 @@
 static const NSUInteger kSeafFPThumbMaxInFlight = 4;
 static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
 
+/// What the listings say about a journaled move.
+typedef NS_ENUM(NSInteger, SeafFPMoveOutcome) {
+    SeafFPMoveOutcomeResolved,      // the item is at the destination under `name`
+    SeafFPMoveOutcomeUnknown,       // listings unavailable (error) or inconclusive (no error)
+};
+
+/// How recoverMoveOfRecord: ended a journal.
+typedef NS_ENUM(NSInteger, SeafFPMoveSettlement) {
+    SeafFPMoveSettlementRecovered,  // the original identity is at the journal's destination
+    SeafFPMoveSettlementExpired,    // past the grace: the source was re-listed and the journal dropped
+};
+
+static long long SeafFPServerTime(NSString *date)
+{
+    if (date.length == 0) return 0;
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    formatter.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
+    formatter.dateFormat = @"EEE, dd MMM yyyy HH:mm:ss zzz";
+    return (long long)[[formatter dateFromString:date] timeIntervalSince1970];
+}
+
+/// Transport errors raised before a request could reach the server: a
+/// mutation that failed this way was certainly not applied. Timeouts and
+/// connection losses are not among them (the request may have arrived).
+static BOOL SeafFPRequestNeverReachedServer(NSError *error)
+{
+    if (![error.domain isEqual:NSURLErrorDomain]) return NO;
+    switch (error.code) {
+        case NSURLErrorNotConnectedToInternet:
+        case NSURLErrorCannotFindHost:
+        case NSURLErrorCannotConnectToHost:
+        case NSURLErrorDNSLookupFailed:
+        case NSURLErrorSecureConnectionFailed:
+        case NSURLErrorServerCertificateHasBadDate:
+        case NSURLErrorServerCertificateUntrusted:
+        case NSURLErrorServerCertificateHasUnknownRoot:
+        case NSURLErrorServerCertificateNotYetValid:
+        case NSURLErrorClientCertificateRejected:
+        case NSURLErrorClientCertificateRequired:
+        case NSURLErrorDataNotAllowed:
+        case NSURLErrorInternationalRoamingOff:
+        case NSURLErrorCallIsActive:
+        case NSURLErrorAppTransportSecurityRequiresSecureConnection:
+        case NSURLErrorUnsupportedURL:
+        case NSURLErrorBadURL:
+            return YES;
+        default:
+            return NO;
+    }
+}
+
 @interface SeafFPExtension ()
 @property (nonatomic, strong) NSFileProviderDomain *domain;
 @property (nonatomic, strong) NSFileProviderManager *manager;
@@ -287,12 +339,25 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
 
 - (BOOL)isRepoEditable:(NSString *)repoId
 {
+    NSDictionary *state = [self.store repositoryStates][repoId];
+    if (state) return [state[@"availability"] isEqual:@"visible"] && [state[@"editable"] boolValue];
     return [self repoWithId:repoId].editable;
+}
+
+- (NSError *)repositoryAccessError:(NSString *)repoId
+{
+    NSDictionary *states = [self.store repositoryStates];
+    if (!states) return [SeafFPErrors cannotSynchronize];
+    NSDictionary *state = states[repoId];
+    if ([state[@"availability"] isEqual:@"removed"]) return [SeafFPErrors noSuchItem];
+    if ([state[@"availability"] isEqual:@"locked"] || [self repoWithId:repoId].passwordRequired) return [SeafFPErrors notAuthenticated];
+    return nil;
 }
 
 - (BOOL)repoListUnknownFor:(NSString *)repoId
 {
     if (repoId.length == 0) return NO;
+    if ([self.store repositoryStates][repoId]) return NO;
     if ([self repoWithId:repoId]) return NO;
     return self.connection.rootFolder.items.count == 0;
 }
@@ -302,6 +367,12 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
     SeafRepos *repos = self.connection.rootFolder;
     if (!repos) {
         completion(NO, NO);
+        return;
+    }
+    // Shared metadata is sufficient for offline enumeration even if this
+    // extension process has never loaded the SDK's in-memory library model.
+    if ([self.store repositoryStates].count > 0 || [self.store hasAuthoritativeRepositoryList]) {
+        completion(YES, NO);
         return;
     }
     if (repos.items.count > 0) {
@@ -325,7 +396,16 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
 
 - (SeafFPItem *)itemForRepo:(SeafRepo *)repo
 {
+    NSDictionary *state = [self.store repositoryStates][repo.repoId];
+    if (state) return [self itemForRepositoryState:state];
     SeafFPItem *item = [SeafFPItem itemForRepo:repo];
+    [item applyDecoration:[self.store decorationForItem:item.itemIdentifier]];
+    return item;
+}
+
+- (SeafFPItem *)itemForRepositoryState:(NSDictionary *)state
+{
+    SeafFPItem *item = [SeafFPItem itemForRepositoryMetadata:state];
     [item applyDecoration:[self.store decorationForItem:item.itemIdentifier]];
     return item;
 }
@@ -345,7 +425,12 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
         case SeafFPIdentifierKindTrash:
             return [SeafFPItem trashItem];
         case SeafFPIdentifierKindRepo: {
-            SeafRepo *repo = [self repoWithId:[SeafFPIdentifier repoIdFromIdentifier:identifier]];
+            NSString *repoId = [SeafFPIdentifier repoIdFromIdentifier:identifier];
+            NSError *access = [self repositoryAccessError:repoId];
+            if (access) { if (error) *error = access; return nil; }
+            NSDictionary *state = [self.store repositoryStates][repoId];
+            if (state) return [self itemForRepositoryState:state];
+            SeafRepo *repo = [self repoWithId:repoId];
             if (!repo) break;
             if (repo.passwordRequired) {
                 // Hidden from the listing, but the system may still hold items
@@ -358,6 +443,8 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
         case SeafFPIdentifierKindItem: {
             SeafFPRecord *record = [self.store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:identifier]];
             if (!record || record.deleted) break;
+            NSError *access = [self repositoryAccessError:record.repoId];
+            if (access) { if (error) *error = access; return nil; }
             return [self itemForRecord:record];
         }
         default:
@@ -374,8 +461,22 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
         case SeafFPIdentifierKindRoot:
             return self.connection.rootFolder;
         case SeafFPIdentifierKindRepo: {
-            SeafRepo *repo = [self repoWithId:[SeafFPIdentifier repoIdFromIdentifier:containerIdentifier]];
-            return repo.passwordRequired ? nil : repo;
+            NSString *repoId = [SeafFPIdentifier repoIdFromIdentifier:containerIdentifier];
+            NSDictionary *state = [self.store repositoryStates][repoId];
+            NSString *availability = state[@"availability"];
+            if ([availability isEqual:@"removed"] || [availability isEqual:@"locked"]) return nil;
+            SeafRepo *repo = [self repoWithId:repoId];
+            if (repo) return repo.passwordRequired ? nil : repo;
+            if (![availability isEqual:@"visible"]) return nil;
+            // A library root uses the same directory endpoint and cache key
+            // as SeafDir. The other process may have published it first.
+            return [[SeafDir alloc] initWithConnection:self.connection
+                                                  oid:nil
+                                               repoId:repoId
+                                                 perm:state[@"perm"]
+                                                 name:state[@"name"] ?: repoId
+                                                 path:@"/"
+                                                mtime:[state[@"mtime"] longLongValue]];
         }
         case SeafFPIdentifierKindItem: {
             SeafFPRecord *record = [self.store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:containerIdentifier]];
@@ -516,6 +617,8 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
         finish(nil, nil, [SeafFPErrors noSuchItem]);
         return progress;
     }
+    NSError *repositoryAccess = [self repositoryAccessError:record.repoId];
+    if (repositoryAccess) { finish(nil, nil, repositoryAccess); return progress; }
     if (record.isDir) {
         // Folders carry no payload. An error here makes iOS 26 flag the whole location.
         finish(nil, [self itemForRecord:record], nil);
@@ -530,6 +633,8 @@ static const NSTimeInterval kSeafFPThumbTimeout = 60.0;
             finish(nil, nil, [SeafFPErrors cannotSynchronize]);
             return;
         }
+        NSError *repositoryAccess = [strongSelf repositoryAccessError:record.repoId];
+        if (repositoryAccess) { finish(nil, nil, repositoryAccess); return; }
         // This block may run for a request that joined a download started by
         // another SeafFile instance for the same item (the cache evicted the
         // first one): pick up the finished download's oid before staging.
@@ -641,16 +746,53 @@ static BOOL SeafFPNamesEqual(NSString *a, NSString *b)
     return [a.precomposedStringWithCanonicalMapping isEqualToString:b.precomposedStringWithCanonicalMapping];
 }
 
+/// Equal content ids; nil and empty are the same (unknown).
+static BOOL SeafFPStringsEqual(NSString *a, NSString *b)
+{
+    return (a.length == 0 && b.length == 0) || [a isEqualToString:b];
+}
+
+/// CannotSynchronize is terminal for this version of the item (the system
+/// does not retry it in the background). Retain the journal and local edits,
+/// and explain the manual exit instead of pretending the move was undone.
+static NSError *SeafFPMoveResolutionError(void)
+{
+    return [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorCannotSynchronize userInfo:@{
+        @"reason": @"moveNeedsResolution",
+        NSLocalizedDescriptionKey: NSLocalizedString(@"This move needs your attention", @"Seafile"),
+        NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Seafile could not safely identify the moved file. Your local changes have been kept. Save a copy outside this Seafile location, then check the source and destination in Seafile before changing this item again.", @"Seafile")
+    }];
+}
+
+/// Let File Provider retry pending mutations even across extension restarts.
+static NSError *SeafFPMovePendingError(NSError *underlyingError)
+{
+    return [NSError errorWithDomain:NSCocoaErrorDomain code:NSXPCConnectionReplyInvalid userInfo:@{
+        @"reason": @"movePending",
+        NSUnderlyingErrorKey: underlyingError ?: [SeafFPErrors cannotSynchronize],
+        NSLocalizedDescriptionKey: NSLocalizedString(@"An earlier change to this item is still being confirmed", @"Seafile"),
+        NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Seafile is checking whether an earlier rename or move of this item reached the server. Your local changes have been kept. Try again later.", @"Seafile")
+    }];
+}
+
+static BOOL SeafFPIsDirectoryMissing(NSError *error)
+{
+    return [error.domain isEqual:NSFileProviderErrorDomain] && [error.userInfo[SeafFPErrorReasonKey] isEqual:@"directoryMissing"];
+}
+
 // A replicated extension may only signal the working set; other container
 // identifiers are ignored by the system (NSFileProviderManager.h). The
 // working set change enumeration re-lists the affected directories.
 - (void)signalContainer:(NSFileProviderItemIdentifier)containerIdentifier
 {
     if (containerIdentifier.length == 0) return;
+    [self.store requestWorkingSetSignal];
+    long long ticket = [self.store pendingWorkingSetSignalTicket];
     [self.manager signalEnumeratorForContainerItemIdentifier:NSFileProviderWorkingSetContainerItemIdentifier completionHandler:^(NSError * _Nullable error) {
         if (error) {
             Info("signal working set (for %@) failed: %@", containerIdentifier, error);
-        }
+            [self scheduleWorkingSetRecheckAt:[NSDate dateWithTimeIntervalSinceNow:5]];
+        } else if (ticket > 0) [self.store completeWorkingSetSignalTicket:ticket];
     }];
 }
 
@@ -730,53 +872,293 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
     while (taken(candidate) && guard++ < 100) {
         candidate = [Utils creatNewFileName:candidate];
     }
-    return candidate;
+    return taken(candidate) ? nil : candidate;
 }
 
-/// The name a record's entry carries after a server rename / move, read from
-/// a live listing of the directory it ended up in. Seafile keeps both
-/// operations succeeding on a name clash and picks a free name instead, so
-/// the expected name may now belong to another file. Seafile ids are content
-/// hashes (identical files share one), so entries the store knows as other
-/// live records are never candidates; a record without an id (a folder
-/// created from Files) is matched by "not known to the store yet". nil when
-/// no single entry can be told apart.
-- (NSString *)finalNameForRecord:(SeafFPRecord *)record expected:(NSString *)expected inDir:(SeafDir *)dir
+/// Distinguish the destination from its pre-dispatch occupants. Without a
+/// receipt, also require matching content and an absent original source.
+/// Inconclusive listings answer Unknown without an error; the caller waits
+/// or, past the grace, expires the journal (expireMoveOfRecord:).
+- (void)resolveMovedRecord:(SeafFPRecord *)source recovery:(NSDictionary *)recovery inDir:(SeafDir *)destination
+                completion:(void (^)(SeafFPMoveOutcome, NSString *, NSError *))completion
 {
-    BOOL hasOid = record.oid.length > 0;
-    NSMutableArray<SeafBase *> *sameKind = [NSMutableArray array];
-    for (SeafBase *obj in dir.items) {
-        if ([obj isKindOfClass:[SeafDir class]] == record.isDir) [sameKind addObject:obj];
-    }
-    NSMutableDictionary<NSString *, NSNumber *> *known = [NSMutableDictionary dictionary];   // path -> another live record sits there
-    BOOL (^other)(SeafBase *) = ^BOOL(SeafBase *obj) {
-        NSNumber *cached = known[obj.path];
-        if (cached) return cached.boolValue;
-        SeafFPRecord *live = [self.store recordForRepo:dir.repoId path:obj.path includeDeleted:NO];
-        BOOL result = live && ![live.uuid isEqualToString:record.uuid];
-        known[obj.path] = @(result);
-        return result;
+    BOOL unacknowledged = [recovery[@"confirmed"] isEqual:@NO];
+    dispatch_block_t inconclusive = ^{
+        completion(SeafFPMoveOutcomeUnknown, nil, nil);
     };
-    // The expected name, unless it is known to be another file.
-    for (SeafBase *obj in sameKind) {
-        if (!SeafFPNamesEqual(obj.name, expected)) continue;
-        if ((!hasOid || [obj.oid isEqualToString:record.oid]) && !other(obj)) return obj.name;
-        break;
+    if (unacknowledged) {
+        NSError *access = [self repositoryAccessError:source.repoId];
+        if (access.code == NSFileProviderErrorNoSuchItem) { inconclusive(); return; }
+        if (access) { completion(SeafFPMoveOutcomeUnknown, nil, access); return; }
+        if (!source.oid.length) { inconclusive(); return; }
     }
-    // Otherwise the one entry with this content id ...
-    NSMutableArray<SeafBase *> *pool = [NSMutableArray array];
-    if (hasOid) {
-        for (SeafBase *obj in sameKind) {
-            if ([obj.oid isEqualToString:record.oid] && !other(obj)) [pool addObject:obj];
+
+    NSString *expected = recovery[@"name"];
+    NSDictionary *existingEntries = recovery[@"existingDestinationEntries"];
+    NSArray<NSString *> *existingNames = recovery[@"existingDestinationNames"];
+    if (!existingNames) existingNames = existingEntries.allKeys;
+    NSSet<NSString *> *excludedNames = [NSSet setWithArray:existingNames ?: @[]];
+    long long start = [recovery[@"start"] longLongValue];
+    NSString *oldName = source.path.lastPathComponent;
+    NSString *path = source.directoryPath;
+    BOOL sameDirectory = [destination.repoId isEqual:source.repoId] && [destination.path isEqual:path];
+
+    [self loadDirectoryForMove:destination completion:^(BOOL loaded, NSError *error) {
+        BOOL missing = !loaded && SeafFPIsDirectoryMissing(error);
+        if (!loaded && !missing) { completion(SeafFPMoveOutcomeUnknown, nil, error ?: [SeafFPErrors serverUnreachable]); return; }
+        NSArray<SeafBase *> *targetSnapshot = missing ? @[] : [destination.items copy];
+        NSMutableArray<NSDictionary *> *candidates = [NSMutableArray array];
+        for (SeafBase *entry in targetSnapshot) {
+            if (sameDirectory && SeafFPNamesEqual(entry.name, oldName)) continue;
+            NSString *canonicalName = entry.name.precomposedStringWithCanonicalMapping.lowercaseString;
+            NSDictionary *indexEntry = SeafFPIndexEntryForBase(entry);
+            NSString *previousOid = existingEntries[canonicalName][SeafFPEntryOid];
+            NSString *currentOid = indexEntry[SeafFPEntryOid];
+            if ([excludedNames containsObject:canonicalName]) {
+                // A former conflict name can have been deleted and assigned
+                // to this move. Only differing, known content distinguishes
+                // it from the former occupant; legacy name-only journals and
+                // identical contents remain ambiguous.
+                if (!previousOid.length || !source.oid.length || ![currentOid isEqual:source.oid]
+                    || [previousOid isEqual:currentOid]) continue;
+            }
+            if (indexEntry) [candidates addObject:indexEntry];
         }
-        if (pool.count == 1) return pool.firstObject.name;
+        NSString *name = [self.store confirmedNameForRecord:source expected:expected inRepo:destination.repoId
+            directory:destination.path entries:candidates requestStartSeq:start];
+        if (name && !unacknowledged) { completion(SeafFPMoveOutcomeResolved, name, nil); return; }
+        if (!unacknowledged) { inconclusive(); return; }
+
+        // A legacy journal without a pre-dispatch listing can only recover the exact name.
+        if (name && !existingNames && !SeafFPNamesEqual(name, expected)) name = nil;
+        BOOL targetMatchesSource = NO;
+        for (NSDictionary *entry in candidates) {
+            if (name && SeafFPNamesEqual(entry[SeafFPEntryName], name) && [entry[SeafFPEntryOid] isEqual:source.oid]
+                && [entry[SeafFPEntryIsDir] boolValue] == source.isDir) {
+                targetMatchesSource = YES;
+                break;
+            }
+        }
+        if (!targetMatchesSource) { inconclusive(); return; }
+
+        // Our entry still at the source leaves two candidates (a copy, or a
+        // request still running). A directory's id changes with descendants,
+        // so for one the name and type alone count.
+        void (^settleFromSource)(NSArray<SeafBase *> *) = ^(NSArray<SeafBase *> *sourceSnapshot) {
+            for (SeafBase *entry in sourceSnapshot) {
+                if (!SeafFPNamesEqual(entry.name, oldName) || [entry isKindOfClass:[SeafDir class]] != source.isDir) continue;
+                if (source.isDir || [entry.oid isEqual:source.oid]) { inconclusive(); return; }
+            }
+            completion(SeafFPMoveOutcomeResolved, name, nil);
+        };
+        if (sameDirectory) { settleFromSource(targetSnapshot); return; }
+        SeafDir *origin = [[SeafDir alloc] initWithConnection:self.connection oid:nil repoId:source.repoId
+            perm:nil name:path.lastPathComponent path:path mtime:0];
+        [self loadDirectoryForMove:origin completion:^(BOOL sourceLoaded, NSError *sourceError) {
+            if (sourceLoaded) settleFromSource([origin.items copy]);
+            else if (SeafFPIsDirectoryMissing(sourceError)) settleFromSource(@[]);
+            else completion(SeafFPMoveOutcomeUnknown, nil, sourceError ?: [SeafFPErrors serverUnreachable]);
+        }];
+    }];
+}
+
+/// Past the settle grace the move's outcome is no longer awaited. The source
+/// directory is listed into the store while the journal still holds the
+/// item, so no operation acts on the item without the journal before the
+/// store shows the server's state; only then is the journal dropped. The
+/// completion gets the item's current row, or nil when it is gone; the
+/// caller decides from it (deleteItem rejects, modifyItem compares versions).
+/// Whatever landed at the destination is assigned by its own listing.
+- (void)expireMoveOfRecord:(SeafFPRecord *)record recovery:(NSDictionary *)recovery
+                completion:(void (^)(SeafFPRecord *, SeafFPMoveSettlement, NSError *))completion
+{
+    NSString *repoId = recovery[@"sourceRepo"];
+    NSString *path = [SeafFPIdentifier normalizedPath:[recovery[@"sourcePath"] stringByDeletingLastPathComponent]];
+    __weak typeof(self) weakSelf = self;
+    // `listed`: NO when the source directory or library is gone, so is the item.
+    void (^drop)(BOOL) = ^(BOOL listed) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || ![strongSelf.store expireMoveForUUID:record.uuid matchingRecovery:recovery]) {
+            completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(nil));
+            return;
+        }
+        Info("Expired the unsettled move of %@ to %@:%@/%@", record.uuid, recovery[@"repo"], recovery[@"dir"], recovery[@"name"]);
+        [strongSelf.store requestDirectoryCheckOfRepo:recovery[@"repo"] path:recovery[@"dir"]];
+        if (!listed) [strongSelf.store requestDirectoryCheckOfRepo:repoId path:path.stringByDeletingLastPathComponent];
+        [strongSelf forgetSeafObjectsForRecord:record];
+        [strongSelf signalWorkingSet];
+        SeafFPRecord *current = listed ? [strongSelf.store recordForUUID:record.uuid] : nil;
+        completion(current.deleted ? nil : current, SeafFPMoveSettlementExpired, nil);
+    };
+    NSError *access = [self repositoryAccessError:repoId];
+    if (access.code == NSFileProviderErrorNoSuchItem) { drop(NO); return; }
+    if (access) {
+        completion(nil, SeafFPMoveSettlementRecovered,
+                   access.code == NSFileProviderErrorNotAuthenticated ? access : SeafFPMovePendingError(access));
+        return;
     }
-    // ... or the one entry the store has never seen.
-    NSMutableArray<SeafBase *> *fresh = [NSMutableArray array];
-    for (SeafBase *obj in (pool.count > 0 ? pool : sameKind)) {
-        if (![self.store recordForRepo:dir.repoId path:obj.path includeDeleted:NO]) [fresh addObject:obj];
+    long long start = self.store.currentSeq;
+    SeafDir *origin = [[SeafDir alloc] initWithConnection:self.connection oid:nil repoId:repoId
+        perm:nil name:path.lastPathComponent path:path mtime:0];
+    [self loadDirectoryForMove:origin completion:^(BOOL loaded, NSError *error) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) { completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(nil)); return; }
+        if (!loaded) {
+            if (SeafFPIsDirectoryMissing(error)) drop(NO);
+            else completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(error));
+            return;
+        }
+        NSMutableArray<NSDictionary *> *entries = [NSMutableArray array];
+        for (SeafBase *entry in [origin.items copy]) {
+            NSDictionary *indexEntry = SeafFPIndexEntryForBase(entry);
+            if (indexEntry) [entries addObject:indexEntry];
+        }
+        if ([strongSelf.store applyDirectoryListingOfRepo:repoId directoryPath:path entries:entries
+                                          requestStartSeq:start] == SeafFPWriteFailed) {
+            // Rejected (a newer local write) or failed: a later attempt lists again.
+            completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(nil));
+            return;
+        }
+        drop(YES);
+    }];
+}
+
+/// Settles the item's move journal against the server: Recovered when the
+/// original identity is found at its destination, Expired when the settle
+/// grace has passed without that (the record is then the item's current
+/// row, nil when it is gone). Within the grace an inconclusive outcome is a
+/// transient error, so the system retries the operation.
+- (void)recoverMoveOfRecord:(SeafFPRecord *)record details:(NSDictionary *)recovery
+                 completion:(void (^)(SeafFPRecord *, SeafFPMoveSettlement, NSError *))completion
+{
+    if ([recovery[@"needsResolution"] boolValue]) { completion(nil, SeafFPMoveSettlementRecovered, SeafFPMoveResolutionError()); return; }
+    NSString *parentUUID = [recovery[@"parent"] length] ? recovery[@"parent"] : nil;
+    NSString *repoId = recovery[@"repo"];
+    long long start = [recovery[@"start"] longLongValue];
+    BOOL graceElapsed = [SeafFPStore moveSettleGraceElapsed:recovery now:(long long)[NSDate date].timeIntervalSince1970];
+    NSString *container = parentUUID ? [SeafFPIdentifier identifierForUUID:parentUUID] : [SeafFPIdentifier identifierForRepo:repoId];
+    NSError *access = [self repositoryAccessError:repoId];
+    SeafDir *dir = access ? nil : [self seafDirForContainer:container record:NULL];
+    if (!dir || ![dir.repoId isEqual:repoId] || ![dir.path isEqual:recovery[@"dir"]]) {
+        if (access.code == NSFileProviderErrorNotAuthenticated) { completion(nil, SeafFPMoveSettlementRecovered, access); return; }
+        BOOL destinationUnknown = access.code == NSFileProviderErrorCannotSynchronize || [self repoListUnknownFor:repoId];
+        // A missing or relocated parent prevents checking the journal's destination.
+        if (graceElapsed && !destinationUnknown) [self expireMoveOfRecord:record recovery:recovery completion:completion];
+        else completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(access));
+        return;
     }
-    return fresh.count == 1 ? fresh.firstObject.name : nil;
+    SeafFPRecord *source = [SeafFPRecord new];
+    source.uuid = record.uuid;
+    source.repoId = recovery[@"sourceRepo"];
+    source.path = recovery[@"sourcePath"];
+    source.oid = recovery[@"oid"];
+    source.isDir = [recovery[@"isDir"] boolValue];
+    source.seq = [recovery[@"sourceSeq"] longLongValue];
+    __weak typeof(self) weakSelf = self;
+    [self resolveMovedRecord:source recovery:recovery inDir:dir completion:^(SeafFPMoveOutcome outcome, NSString *name, NSError *error) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) { completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(nil)); return; }
+        NSError *repoError = error ?: [strongSelf repositoryAccessError:repoId];
+        if (repoError) {
+            if ([repoError.domain isEqual:NSFileProviderErrorDomain]
+                && (repoError.code == NSFileProviderErrorServerUnreachable || repoError.code == NSFileProviderErrorNoSuchItem
+                    || (repoError.code == NSFileProviderErrorCannotSynchronize && !repoError.userInfo[SeafFPErrorReasonKey]))) {
+                repoError = SeafFPMovePendingError(repoError);
+            }
+            completion(nil, SeafFPMoveSettlementRecovered, repoError);
+            return;
+        }
+        if (outcome != SeafFPMoveOutcomeResolved) {
+            if (graceElapsed) [strongSelf expireMoveOfRecord:record recovery:recovery completion:completion];
+            else completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(nil));
+            return;
+        }
+        SeafFPRecord *moved = [strongSelf.store finishPendingMoveOfRecord:source toRepo:repoId path:[dir.path stringByAppendingPathComponent:name]
+            parentUUID:parentUUID requestStartSeq:start serverTime:[recovery[@"serverTime"] longLongValue]];
+        if (!moved) { completion(nil, SeafFPMoveSettlementRecovered, SeafFPMovePendingError(nil)); return; }
+        [strongSelf forgetSeafObjectsForRecord:record];
+        [strongSelf signalWorkingSet];
+        completion(moved, SeafFPMoveSettlementRecovered, nil);
+    }];
+}
+
+/// Journal each mutation independently. A combined rename and reparent
+/// starts the move only after the intermediate rename has a local identity.
+- (void)relocateRecord:(SeafFPRecord *)record fromDir:(SeafDir *)source toDir:(SeafDir *)destination
+            parentUUID:(NSString *)parentUUID name:(NSString *)name requestedName:(NSString *)requestedName
+                rename:(BOOL)rename completion:(void (^)(SeafFPRecord *, NSError *))completion
+{
+    NSMutableArray<NSString *> *existingNames = [NSMutableArray array];
+    NSMutableDictionary<NSString *, NSDictionary *> *existingEntries = [NSMutableDictionary dictionary];
+    NSString *canonicalName = name.precomposedStringWithCanonicalMapping.lowercaseString;
+    for (SeafBase *entry in [destination.items copy]) {
+        if (rename && SeafFPNamesEqual(entry.name, record.name)) continue;
+        NSString *existing = entry.name.precomposedStringWithCanonicalMapping.lowercaseString;
+        if ([existing isEqual:canonicalName] || SeafFPIsConflictSiblingName(existing, canonicalName)) {
+            [existingNames addObject:existing];
+            NSDictionary *snapshot = SeafFPIndexEntryForBase(entry);
+            if (snapshot) existingEntries[existing] = snapshot;
+        }
+    }
+    long long start = [self.store beginMoveOfRecord:record toRepo:destination.repoId directory:destination.path
+                                       parentUUID:parentUUID expectedName:name requestedName:requestedName
+                         existingDestinationNames:existingNames existingDestinationEntries:existingEntries];
+    if (start < 0) { completion(nil, [SeafFPErrors cannotSynchronize]); return; }
+    __weak typeof(self) weakSelf = self;
+    dispatch_block_t defer = ^{
+        typeof(self) strongSelf = weakSelf;
+        [strongSelf.store requestDirectoryCheckOfRepo:source.repoId path:source.path];
+        [strongSelf.store requestDirectoryCheckOfRepo:destination.repoId path:destination.path];
+        [strongSelf signalWorkingSet];
+    };
+    void (^finishRequest)(BOOL, NSError *, NSHTTPURLResponse *) = ^(BOOL success, NSError *error, NSHTTPURLResponse *response) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) { completion(nil, [SeafFPErrors cannotSynchronize]); return; }
+        if (!success) {
+            // An absent or ambiguous reply leaves the intent available for
+            // reconciliation. Only errors known to precede the mutation free it.
+            NSInteger status = response.statusCode;
+            BOOL notSent = !response && SeafFPRequestNeverReachedServer(error);
+            // 440 / 441 are seahub's "library password required": checked
+            // before anything runs, like 443 ("above quota").
+            // A 404 can also come from the directory reload after a successful move.
+            BOOL rejected = notSent || status == 400 || status == 401 || status == 403
+                || status == 409 || status == 440 || status == 441 || status == 443;
+            BOOL cleanupFailed = rejected && ![strongSelf.store discardUnconfirmedMoveForUUID:record.uuid requestStartSeq:start];
+            if (!rejected || cleanupFailed) defer();
+            NSError *mapped = rejected && !cleanupFailed ? [SeafFPErrors errorForSeafError:error] : SeafFPMovePendingError(error);
+            [strongSelf noteError:mapped];
+            completion(nil, mapped);
+            return;
+        }
+        long long serverTime = SeafFPServerTime([response valueForHTTPHeaderField:@"Date"]);
+        if (![strongSelf.store noteMoveReceiptForUUID:record.uuid requestStartSeq:start serverTime:serverTime]) {
+            defer();
+            completion(nil, SeafFPMovePendingError(nil));
+            return;
+        }
+        NSDictionary *recovery = [strongSelf.store moveRecoveryForUUID:record.uuid];
+        if (!recovery.count || [recovery[@"start"] longLongValue] != start) {
+            completion(nil, SeafFPMovePendingError(nil));
+            return;
+        }
+        [strongSelf recoverMoveOfRecord:record details:recovery completion:^(SeafFPRecord *moved, SeafFPMoveSettlement settlement, NSError *resolveError) {
+            // The server acknowledged the request, so a journal still open
+            // here is only unsettled, never "not executed". (A fresh journal
+            // cannot have expired; if it somehow did, the system retries.)
+            BOOL applied = moved && !resolveError && settlement == SeafFPMoveSettlementRecovered;
+            if (!applied) defer();
+            completion(applied ? moved : nil, applied ? nil : (resolveError ?: SeafFPMovePendingError(nil)));
+        }];
+    };
+    if (rename) {
+        [[SeafFileOperationManager sharedManager] renameEntry:record.name newName:name inDir:source
+            responseCompletion:^(BOOL success, SeafBase *renamedFile, NSError *error, NSHTTPURLResponse *response) {
+                finishRequest(SeafFPRenameSucceeded(success, error), error, response);
+            }];
+    } else {
+        [[SeafFileOperationManager sharedManager] moveEntries:@[record.name] fromDir:source toDir:destination responseCompletion:finishRequest];
+    }
 }
 
 /// Copies the system-provided contents into the App Group temp directory,
@@ -799,6 +1181,15 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         return nil;
     }
     return dest;
+}
+
+- (void)loadDirectoryForMove:(SeafDir *)dir completion:(void (^)(BOOL, NSError *))completion
+{
+    [dir loadContentSuccess:^(SeafDir *loaded) {
+        completion(YES, nil);
+    } failure:^(SeafDir *failed, NSError *error) {
+        completion(NO, [SeafFPErrors directoryListingErrorForSeafError:error]);
+    } requireListing:YES];
 }
 
 - (void)loadDirectory:(SeafDir *)dir completion:(void (^)(BOOL loaded, BOOL fromCache, NSError * _Nullable error))completion
@@ -873,6 +1264,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
                   repoId:(NSString *)repoId
                     path:(NSString *)path
               parentUUID:(NSString *)parentUUID
+        creationStartSeq:(nullable NSNumber *)creationStartSeq
                 progress:(NSProgress *)progress
               completion:(void (^)(SeafFPRecord * _Nullable record, NSError * _Nullable error))completion
 {
@@ -884,7 +1276,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         return;
     }
     NSString *name = path.lastPathComponent;
-    SeafFPRecord *existing = [self.store recordForRepo:repoId path:path includeDeleted:NO];
+    SeafFPRecord *existing = creationStartSeq ? nil : [self.store recordForRepo:repoId path:path includeDeleted:NO];
     SeafFile *file = [[SeafFile alloc] initWithConnection:self.connection
                                                       oid:existing.oid
                                                    repoId:repoId
@@ -917,7 +1309,18 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:stagedURL.path error:nil];
         long long size = attrs ? (long long)[attrs fileSize] : (long long)uploadFile.filesize;
         long long mtime = (long long)[[NSDate date] timeIntervalSince1970];
-        SeafFPRecord *record = [strongSelf.store upsertRecordForRepo:repoId path:path isDir:NO parentUUID:parentUUID oid:oid mtime:mtime size:size];
+        SeafFPRecord *record = creationStartSeq
+            ? [strongSelf.store recordCreatedFileInRepo:repoId path:path parentUUID:parentUUID oid:oid mtime:mtime size:size
+                                       requestStartSeq:creationStartSeq.longLongValue serverTime:SeafFPServerTime(uploadFile.serverDateHeader)]
+            : [strongSelf.store upsertRecordForRepo:repoId path:path isDir:NO parentUUID:parentUUID oid:oid mtime:mtime size:size];
+        if (!record) {
+            // Uploaded, but the store could not record it (busy past its
+            // retries): an error, not a nil item, so the system does not drop
+            // its copy; the parent's next listing gives the file an identity.
+            Warning("createItem %@: uploaded, store not updated", path);
+            completion(nil, [SeafFPErrors cannotSynchronize]);
+            return;
+        }
         [strongSelf forgetSeafObjectsForRecord:record];
         [strongSelf noteSuccess];
         progress.completedUnitCount = progress.totalUnitCount;
@@ -1009,6 +1412,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
 
     NSString *repoId = parentDir.repoId;
     NSString *parentUUID = parentRecord.uuid;
+    long long creationStartSeq = [self.store currentSeq];
     __weak typeof(self) weakSelf = self;
     [self loadDirectory:parentDir completion:^(BOOL loaded, BOOL fromCache, NSError *loadError) {
         typeof(self) strongSelf = weakSelf;
@@ -1043,6 +1447,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
                 long long mtime = existingIsDir ? ((SeafDir *)existingObj).mtime : ((SeafFile *)existingObj).mtime;
                 long long size = existingIsDir ? -1 : (long long)((SeafFile *)existingObj).filesize;
                 SeafFPRecord *record = [strongSelf.store upsertRecordForRepo:repoId path:existingObj.path isDir:existingIsDir parentUUID:parentUUID oid:existingObj.oid mtime:mtime size:size];
+                if (!record) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
                 SeafFPItem *item = [strongSelf itemForRecord:record];
                 [strongSelf applyTemplateDecoration:itemTemplate fields:fields toItem:item];
                 finish(item, nil);
@@ -1053,6 +1458,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             while ([parentDir nameExist:name] && guard++ < 100) {
                 name = [Utils creatNewFileName:name];
             }
+            if ([parentDir nameExist:name]) { finish(nil, [SeafFPErrors filenameCollision]); return; }
         }
         if (!isFolder && !url) {
             // A dataless re-import that matches nothing on the server: nil
@@ -1073,6 +1479,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
                     return;
                 }
                 SeafFPRecord *record = [strongSelf.store upsertRecordForRepo:repoId path:fullPath isDir:YES parentUUID:parentUUID oid:nil mtime:(long long)[[NSDate date] timeIntervalSince1970] size:-1];
+                if (!record) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
                 SeafFPItem *item = [strongSelf itemForRecord:record];
                 [strongSelf applyTemplateDecoration:itemTemplate fields:fields toItem:item];
                 [strongSelf noteSuccess];
@@ -1087,7 +1494,17 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             finish(nil, stageError);
             return;
         }
-        [strongSelf uploadStagedFile:staged repoId:repoId path:fullPath parentUUID:parentUUID progress:progress completion:^(SeafFPRecord *record, NSError *error) {
+        if (progress.isCancelled) {
+            [[NSFileManager defaultManager] removeItemAtURL:staged.URLByDeletingLastPathComponent error:nil];
+            return;
+        }
+        long long uploadStart = [strongSelf.store prepareFileCreationInRepo:repoId path:fullPath requestStartSeq:creationStartSeq];
+        if (uploadStart < 0) {
+            [[NSFileManager defaultManager] removeItemAtURL:staged.URLByDeletingLastPathComponent error:nil];
+            finish(nil, [SeafFPErrors cannotSynchronize]);
+            return;
+        }
+        [strongSelf uploadStagedFile:staged repoId:repoId path:fullPath parentUUID:parentUUID creationStartSeq:@(uploadStart) progress:progress completion:^(SeafFPRecord *record, NSError *error) {
             if (!record) {
                 finish(nil, error);
                 return;
@@ -1101,6 +1518,166 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
 }
 
 #pragma mark - NSFileProviderReplicatedExtension: modify
+
+/// Continue from the current Store record after any earlier move has settled.
+- (void)applyModificationOfRecord:(SeafFPRecord *)record requestedItem:(NSFileProviderItem)item
+                    changedFields:(NSFileProviderItemFields)changedFields filenameRecovered:(BOOL)filenameRecovered
+                         contents:(NSURL *)newContents progress:(NSProgress *)progress
+                           finish:(void (^)(SeafFPItem *, NSError *))finish
+             finishFetchingContent:(void (^)(SeafFPItem *))finishFetchingContent
+{
+    if (progress.isCancelled) return;
+    NSString *requestedFilename = (changedFields & NSFileProviderItemFilename) ? item.filename : nil;
+    BOOL renamed = !filenameRecovered && requestedFilename.length > 0
+        && !SeafFPNamesEqual(requestedFilename, record.name);
+    BOOL reparented = (changedFields & NSFileProviderItemParentItemIdentifier) != 0
+        && item.parentItemIdentifier.length > 0
+        && ![item.parentItemIdentifier isEqualToString:record.parentItemIdentifier];
+    BOOL contentsChanged = (changedFields & NSFileProviderItemContents) != 0
+        && !record.isDir
+        && newContents != nil;
+    if (!renamed && !reparented && !contentsChanged) {
+        finish([self itemForRecord:record], nil);
+        return;
+    }
+    NSError *access = [self accessError];
+    if (access) {
+        finish(nil, access);
+        return;
+    }
+    if ([self repoListUnknownFor:record.repoId]) {
+        finish(nil, [SeafFPErrors serverUnreachable]);   // cold process: permissions unknown yet, retry later
+        return;
+    }
+    if (![self isRepoEditable:record.repoId]) {
+        SeafFPItem *current = [self itemForRecord:record];
+        if (contentsChanged) {
+            // Files keeps offering the editor (AllowsWriting stays set, see
+            // SeafFPItem). The unchanged item alone would make the system take
+            // the edited copy for the server version; the edit is dropped by
+            // fetching the server content back instead.
+            Info("modifyItem %@: content change in a read-only library, reverting to the server content", item.itemIdentifier);
+            finishFetchingContent(current);
+        } else {
+            finish(current, nil);
+        }
+        return;
+    }
+    Info("modifyItem %@ renamed=%d reparented=%d contents=%d", item.itemIdentifier, renamed, reparented, contentsChanged);
+
+    __weak typeof(self) weakSelf = self;
+    void (^uploadIfNeeded)(SeafFPRecord *) = ^(SeafFPRecord *latest) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
+        if (!contentsChanged) {
+            finish([strongSelf itemForRecord:latest], nil);
+            return;
+        }
+        NSError *stageError = nil;
+        NSURL *staged = [strongSelf stageUploadSource:newContents name:latest.name error:&stageError];
+        if (!staged) {
+            finish(nil, stageError);
+            return;
+        }
+        // First version: the device copy wins, the server keeps the history.
+        [strongSelf uploadStagedFile:staged repoId:latest.repoId path:latest.path parentUUID:latest.parentUUID creationStartSeq:nil progress:progress completion:^(SeafFPRecord *uploaded, NSError *uploadError) {
+            if (!uploaded) {
+                finish(nil, uploadError);
+                return;
+            }
+            finish([strongSelf itemForRecord:uploaded], nil);
+        }];
+    };
+
+    if (!renamed && !reparented) {
+        uploadIfNeeded(record);
+        return;
+    }
+
+    SeafFPRecord *dstRecord = nil;
+    NSString *srcContainer = record.parentItemIdentifier;
+    NSString *dstContainer = reparented ? item.parentItemIdentifier : srcContainer;
+    SeafDir *srcDir = [self seafDirForContainer:srcContainer record:NULL];
+    SeafDir *dstDir = [self seafDirForContainer:dstContainer record:&dstRecord];
+    if (!srcDir || !dstDir || ![self isRepoEditable:dstDir.repoId]) {
+        finish(nil, [SeafFPErrors cannotSynchronize]);
+        return;
+    }
+    NSString *requestedName = renamed ? requestedFilename.precomposedStringWithCanonicalMapping : record.name;
+    NSString *dstParentUUID = dstRecord.uuid;
+    void (^relocated)(SeafFPRecord *, NSError *) = ^(SeafFPRecord *moved, NSError *moveError) {
+        if (!moved) { finish(nil, moveError ?: [SeafFPErrors cannotSynchronize]); return; }
+        [weakSelf noteSuccess];
+        uploadIfNeeded(moved);
+    };
+    void (^start)(void) = ^{
+        if (progress.isCancelled) return;
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
+        SeafBase *origin = nil;
+        for (SeafBase *entry in [srcDir.items copy]) {
+            if (SeafFPNamesEqual(entry.name, record.name)) { origin = entry; break; }
+        }
+        if (!origin || [origin isKindOfClass:[SeafDir class]] != record.isDir) {
+            [strongSelf.store requestDirectoryCheckOfRepo:record.repoId path:record.directoryPath];
+            [strongSelf signalWorkingSet];
+            finish(nil, [SeafFPErrors cannotSynchronize]);
+            return;
+        }
+        // The identity is the entry at this path; its contents may have
+        // changed since the store last listed the directory (another client
+        // edited the file, or anything under the folder changed its id).
+        // The fresh listing is adopted so the journal records what moved.
+        SeafFPRecord *subject = record;
+        if (!SeafFPStringsEqual(origin.oid, record.oid)) {
+            BOOL originIsFile = [origin isKindOfClass:[SeafFile class]];
+            long long mtime = originIsFile ? ((SeafFile *)origin).mtime : ((SeafDir *)origin).mtime;
+            long long size = originIsFile ? (long long)((SeafFile *)origin).filesize : -1;
+            subject = [strongSelf.store refreshContentOfRecord:record oid:origin.oid mtime:mtime size:size];
+            if (!subject) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
+        }
+        NSArray<SeafDir *> *dirs = reparented ? @[dstDir, srcDir] : @[srcDir];
+        NSString *name = [strongSelf freeNameFor:requestedName inDirs:dirs ownName:subject.name inDir:srcDir];
+        if (!name) { finish(nil, [SeafFPErrors filenameCollision]); return; }
+        void (^afterRename)(SeafFPRecord *, NSError *) = ^(SeafFPRecord *source, NSError *renameError) {
+            if (!source || !reparented) { relocated(source, renameError); return; }
+            void (^move)(void) = ^{
+                if (progress.isCancelled) return;
+                [strongSelf relocateRecord:source fromDir:srcDir toDir:dstDir parentUUID:dstParentUUID
+                                       name:source.name requestedName:requestedFilename rename:NO completion:relocated];
+            };
+            if (SeafFPNamesEqual(source.name, subject.name)) {
+                move();
+            } else {
+                // The target listing from before the rename can be stale.
+                [strongSelf loadDirectoryForMove:dstDir completion:^(BOOL loaded, NSError *listError) {
+                    if (!loaded) relocated(nil, listError ?: [SeafFPErrors serverUnreachable]);
+                    else move();
+                }];
+            }
+        };
+        if (SeafFPNamesEqual(name, subject.name)) {
+            afterRename(subject, nil);
+        } else if (!progress.isCancelled) {
+            [strongSelf relocateRecord:subject fromDir:srcDir toDir:srcDir parentUUID:subject.parentUUID
+                                   name:name requestedName:requestedFilename rename:YES completion:afterRename];
+        }
+    };
+    // Unreachable here means nothing has happened on the server yet: the
+    // system retries later.
+    void (^listThen)(SeafDir *, BOOL, dispatch_block_t) = ^(SeafDir *dir, BOOL needed, dispatch_block_t next) {
+        if (!needed) { next(); return; }
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
+        [strongSelf loadDirectoryForMove:dir completion:^(BOOL loaded, NSError *listError) {
+            if (!loaded) { finish(nil, listError ?: [SeafFPErrors serverUnreachable]); return; }
+            next();
+        }];
+    };
+    listThen(dstDir, reparented, ^{
+        listThen(srcDir, YES, start);
+    });
+}
 
 - (NSProgress *)modifyItem:(NSFileProviderItem)item
                baseVersion:(NSFileProviderItemVersion *)version
@@ -1146,7 +1723,15 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         finish(nil, error);
         return progress;
     }
+    NSString *uuid = [SeafFPIdentifier uuidFromIdentifier:item.itemIdentifier];
+    NSFileProviderItemFields serverFields = NSFileProviderItemFilename | NSFileProviderItemParentItemIdentifier | NSFileProviderItemContents;
+    NSDictionary *recovery = uuid && (changedFields & serverFields) ? [self.store moveRecoveryForUUID:uuid] : @{};
+    if (!recovery) { finish(nil, [SeafFPErrors cannotSynchronize]); return progress; }
+    SeafFPRecord *record = uuid ? [self.store recordForUUID:uuid] : nil;
     SeafFPItem *current = [self resolveItem:item.itemIdentifier error:&error];
+    if (!current && recovery.count && record.tombReason == SeafFPTombReasonAbsent && ![self repositoryAccessError:record.repoId]) {
+        current = [self itemForRecord:record];
+    }
     if (!current) {
         finish(nil, error ?: [SeafFPErrors noSuchItem]);
         return progress;
@@ -1160,9 +1745,6 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         [self applyDecorationChangesFromItem:item changedFields:changedFields toItem:current];
     }
 
-    SeafFPIdentifierKind kind = [SeafFPIdentifier kindOfIdentifier:item.itemIdentifier];
-    SeafFPRecord *record = kind == SeafFPIdentifierKindItem
-        ? [self.store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:item.itemIdentifier]] : nil;
     if (!record) {
         // The domain root, libraries and the trash are server-owned containers:
         // renames, moves and uploads targeting them are answered with the
@@ -1171,198 +1753,51 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         return progress;
     }
 
-    BOOL renamed = (changedFields & NSFileProviderItemFilename) != 0
-        && item.filename.length > 0
-        && !SeafFPNamesEqual(item.filename, record.name);
-    BOOL reparented = (changedFields & NSFileProviderItemParentItemIdentifier) != 0
-        && item.parentItemIdentifier.length > 0
-        && ![item.parentItemIdentifier isEqualToString:record.parentItemIdentifier];
-    BOOL contentsChanged = (changedFields & NSFileProviderItemContents) != 0
-        && !record.isDir
-        && newContents != nil;
-    if (!renamed && !reparented && !contentsChanged) {
-        finish(current, nil);
+    if (!recovery.count) {
+        [self applyModificationOfRecord:record requestedItem:item changedFields:changedFields filenameRecovered:NO
+                               contents:newContents progress:progress finish:finish finishFetchingContent:finishFetchingContent];
         return progress;
     }
+
+    // Resolve the prior mutation before issuing any remaining changes.
     NSError *access = [self accessError];
-    if (access) {
-        finish(nil, access);
-        return progress;
-    }
-    if ([self repoListUnknownFor:record.repoId]) {
-        finish(nil, [SeafFPErrors serverUnreachable]);   // cold process: permissions unknown yet, retry later
-        return progress;
-    }
-    if (![self isRepoEditable:record.repoId]) {
-        if (contentsChanged) {
-            // Files keeps offering the editor (AllowsWriting stays set, see
-            // SeafFPItem). The unchanged item alone would make the system take
-            // the edited copy for the server version; the edit is dropped by
-            // fetching the server content back instead.
-            Info("modifyItem %@: content change in a read-only library, reverting to the server content", item.itemIdentifier);
-            finishFetchingContent(current);
-        } else {
-            finish(current, nil);
-        }
-        return progress;
-    }
-    Info("modifyItem %@ renamed=%d reparented=%d contents=%d", item.itemIdentifier, renamed, reparented, contentsChanged);
-
+    if (access) { finish(nil, access); return progress; }
     __weak typeof(self) weakSelf = self;
-    void (^uploadIfNeeded)(SeafFPRecord *) = ^(SeafFPRecord *latest) {
+    [self recoverMoveOfRecord:record details:recovery completion:^(SeafFPRecord *settled, SeafFPMoveSettlement settlement, NSError *resolveError) {
         typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
-        if (!contentsChanged) {
-            finish([strongSelf itemForRecord:latest], nil);
+        if (!strongSelf) { finish(nil, SeafFPMovePendingError(nil)); return; }
+        if (resolveError) { finish(nil, resolveError); return; }
+        if (settlement == SeafFPMoveSettlementExpired) {
+            // Gone from the fresh source listing: the system drops its copy
+            // and re-creates it if it holds local changes.
+            if (!settled) { finish(nil, [SeafFPErrors noSuchItem]); return; }
+            // The rename or move goes ahead only on the item it was asked
+            // for: still where the journal found it, with the contents of
+            // then or of the version the system based this change on (a
+            // directory's id changes with descendants: location alone).
+            NSData *baseContent = version.contentVersion;
+            BOOL unchanged = [settled.repoId isEqual:recovery[@"sourceRepo"]] && [settled.path isEqual:recovery[@"sourcePath"]]
+                && settled.isDir == [recovery[@"isDir"] boolValue]
+                && (settled.isDir || (settled.oid.length && [settled.oid isEqual:recovery[@"oid"]])
+                    || (baseContent.length && [[strongSelf itemForRecord:settled].itemVersion.contentVersion isEqual:baseContent]));
+            // Otherwise the item answers with the server's name and parent,
+            // so the system reverts the local rename or move; contents and
+            // other fields still apply as for any edit.
+            NSFileProviderItemFields fields = unchanged ? changedFields
+                : changedFields & ~(NSFileProviderItemFilename | NSFileProviderItemParentItemIdentifier);
+            if (!unchanged) Info("modifyItem %@: expired move, item changed on the server; not replaying the rename or move", item.itemIdentifier);
+            [strongSelf applyModificationOfRecord:settled requestedItem:item changedFields:fields filenameRecovered:NO
+                                         contents:newContents progress:progress finish:finish finishFetchingContent:finishFetchingContent];
             return;
         }
-        NSError *stageError = nil;
-        NSURL *staged = [strongSelf stageUploadSource:newContents name:latest.name error:&stageError];
-        if (!staged) {
-            finish(nil, stageError);
-            return;
-        }
-        // First version: the device copy wins, the server keeps the history.
-        [strongSelf uploadStagedFile:staged repoId:latest.repoId path:latest.path parentUUID:latest.parentUUID progress:progress completion:^(SeafFPRecord *uploaded, NSError *uploadError) {
-            if (!uploaded) {
-                finish(nil, uploadError);
-                return;
-            }
-            finish([strongSelf itemForRecord:uploaded], nil);
-        }];
-    };
-
-    if (!renamed && !reparented) {
-        uploadIfNeeded(record);
-        return progress;
-    }
-
-    SeafFPRecord *dstRecord = nil;
-    NSString *srcContainer = record.parentItemIdentifier;
-    NSString *dstContainer = reparented ? item.parentItemIdentifier : srcContainer;
-    SeafDir *srcDir = [self seafDirForContainer:srcContainer record:NULL];
-    SeafDir *dstDir = [self seafDirForContainer:dstContainer record:&dstRecord];
-    if (!srcDir || !dstDir || ![self isRepoEditable:dstDir.repoId]) {
-        finish(nil, [SeafFPErrors cannotSynchronize]);
-        return progress;
-    }
-    NSString *requestedName = renamed ? item.filename.precomposedStringWithCanonicalMapping : record.name;
-    NSString *dstParentUUID = dstRecord.uuid;
-    NSString *oldName = record.name;
-
-    void (^applyMove)(NSString *) = ^(NSString *finalName) {
-        typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
-        NSString *newPath = [SeafFPIdentifier normalizedPath:[dstDir.path stringByAppendingPathComponent:finalName]];
-        SeafFPRecord *moved = [strongSelf.store moveRecordUUID:record.uuid toRepo:dstDir.repoId path:newPath parentUUID:dstParentUUID];
-        [strongSelf forgetSeafObjectsForRecord:record];
-        [strongSelf noteSuccess];
-        [strongSelf signalContainer:srcContainer];
-        if (![dstContainer isEqualToString:srcContainer]) {
-            [strongSelf signalContainer:dstContainer];
-        }
-        uploadIfNeeded(moved ?: record);
-    };
-    // The server did rename / move the entry, but under a name the listing
-    // cannot tell apart. Binding the record to a guessed name would tombstone
-    // whatever really lives there and hand this record's identity (favorite,
-    // tags) to that file, so the record is retired instead: the system drops
-    // its copy and the next listing of the destination brings the file back
-    // as a new item. Its decorations, and a content change made in the same
-    // call, are lost.
-    void (^giveUp)(void) = ^{
-        typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
-        Warning("modifyItem %@: cannot tell which entry of %@ is %@ now, retiring the record", item.itemIdentifier, dstDir.path, requestedName);
-        [strongSelf.store markDeletedUUID:record.uuid];
-        [strongSelf forgetSeafObjectsForRecord:record];
-        [strongSelf noteSuccess];
-        [strongSelf signalWorkingSet];
-        finish(nil, nil);
-    };
-    void (^fail)(NSError *) = ^(NSError *opError) {
-        NSError *mapped = [SeafFPErrors errorForSeafError:opError];
-        [weakSelf noteError:mapped];
-        finish(nil, mapped);
-    };
-    // Reads the entry's actual name back from a live listing of `dir` and
-    // goes on with it; without a live listing nothing can be confirmed.
-    void (^settle)(SeafDir *, NSString *, void (^)(NSString *)) = ^(SeafDir *dir, NSString *expected, void (^next)(NSString *)) {
-        typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
-        [strongSelf loadDirectory:dir completion:^(BOOL loaded, BOOL fromCache, NSError *listError) {
-            typeof(self) listSelf = weakSelf;
-            if (!listSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
-            NSString *finalName = nil;
-            if (loaded && !fromCache) {
-                finalName = [listSelf finalNameForRecord:record expected:expected inDir:dir];
-            } else {
-                // No live listing right after the operation. The name was
-                // checked against one moments ago, so it stands unless the
-                // store knows another live file at that path.
-                NSString *path = [SeafFPIdentifier normalizedPath:[dir.path stringByAppendingPathComponent:expected]];
-                SeafFPRecord *occupant = [listSelf.store recordForRepo:dir.repoId path:path includeDeleted:NO];
-                if (!occupant || [occupant.uuid isEqualToString:record.uuid]) finalName = expected;
-            }
-            if (finalName) next(finalName); else giveUp();
-        }];
-    };
-    void (^moveStep)(NSString *) = ^(NSString *name) {
-        [[SeafFileOperationManager sharedManager] moveEntries:@[name] fromDir:srcDir toDir:dstDir completion:^(BOOL success, NSError *moveError) {
-            typeof(self) strongSelf = weakSelf;
-            if (!success) {
-                if (strongSelf && !SeafFPNamesEqual(name, oldName)) {
-                    // Renamed but not moved: keep the store in step, the system retries the move.
-                    NSString *renamedPath = [SeafFPIdentifier normalizedPath:[srcDir.path stringByAppendingPathComponent:name]];
-                    [strongSelf.store moveRecordUUID:record.uuid toRepo:record.repoId path:renamedPath parentUUID:record.parentUUID];
-                    [strongSelf forgetSeafObjectsForRecord:record];
-                }
-                fail(moveError);
-                return;
-            }
-            settle(dstDir, name, applyMove);
-        }];
-    };
-    // The rename goes first so it only ever touches our own entry in the
-    // source directory. The SDK looks the renamed entry up by name: one it
-    // could not find (-5), or one with another content id, may be a file the
-    // server gave a free name to, and is confirmed against a live listing.
-    void (^renameStep)(NSString *, void (^)(NSString *)) = ^(NSString *name, void (^next)(NSString *)) {
-        [[SeafFileOperationManager sharedManager] renameEntry:oldName newName:name inDir:srcDir completion:^(BOOL success, SeafBase *renamedFile, NSError *renameError) {
-            if (!SeafFPRenameSucceeded(success, renameError)) { fail(renameError); return; }
-            BOOL confirmed = success && record.oid.length > 0 && [renamedFile.oid isEqualToString:record.oid];
-            if (confirmed) next(name); else settle(srcDir, name, next);
-        }];
-    };
-    // Names are settled against live listings before anything changes on the
-    // server, so it rarely has to pick one itself: a clash in the destination
-    // (a file the system does not know yet) gets a free name the way
-    // createItem does, and the system writes that name to disk.
-    void (^start)(void) = ^{
-        typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
-        NSArray<SeafDir *> *dirs = reparented ? @[dstDir, srcDir] : @[srcDir];
-        NSString *name = [strongSelf freeNameFor:requestedName inDirs:dirs ownName:oldName inDir:srcDir];
-        if (!SeafFPNamesEqual(name, requestedName)) {
-            Info("modifyItem %@: %@ is taken in %@, using %@", item.itemIdentifier, requestedName, dstDir.path, name);
-        }
-        void (^afterRename)(NSString *) = reparented ? moveStep : applyMove;
-        if (SeafFPNamesEqual(name, oldName)) afterRename(name); else renameStep(name, afterRename);
-    };
-    // Unreachable here means nothing has happened on the server yet: the
-    // system retries later.
-    void (^listThen)(SeafDir *, BOOL, dispatch_block_t) = ^(SeafDir *dir, BOOL needed, dispatch_block_t next) {
-        if (!needed) { next(); return; }
-        typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
-        [strongSelf loadDirectory:dir completion:^(BOOL loaded, BOOL fromCache, NSError *listError) {
-            if (!loaded || fromCache) { finish(nil, listError ?: [SeafFPErrors serverUnreachable]); return; }
-            next();
-        }];
-    };
-    listThen(dstDir, reparented, ^{
-        listThen(srcDir, renamed, start);
-    });
+        if (!settled) { finish(nil, SeafFPMovePendingError(nil)); return; }
+        // The old request may have picked a free name before sending or
+        // received a conflict name from the server. Keep that result on retry.
+        NSString *priorRequestedName = recovery[@"requestedName"] ?: recovery[@"name"];
+        BOOL filenameRecovered = SeafFPNamesEqual(item.filename, priorRequestedName);
+        [strongSelf applyModificationOfRecord:settled requestedItem:item changedFields:changedFields filenameRecovered:filenameRecovered
+                                     contents:newContents progress:progress finish:finish finishFetchingContent:finishFetchingContent];
+    }];
     return progress;
 }
 
@@ -1403,68 +1838,100 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         finish(access);
         return progress;
     }
-    SeafFPRecord *record = [self.store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:identifier]];
-    if (!record || record.deleted) {
-        finish(nil);   // already gone
+    NSString *uuid = [SeafFPIdentifier uuidFromIdentifier:identifier];
+    SeafFPRecord *record = [self.store recordForUUID:uuid];
+    NSDictionary *recovery = [self.store moveRecoveryForUUID:uuid];
+    if (!recovery) { finish([SeafFPErrors cannotSynchronize]); return progress; }
+    if (!record || (record.deleted && (record.tombReason != SeafFPTombReasonAbsent || !recovery.count))) {
+        // An absence tombstone may belong to an item now at the pending
+        // move's destination. Resolve that journal before deleting there.
+        if (record && ![self.store discardMoveJournalForUUID:uuid]) { finish([SeafFPErrors cannotSynchronize]); return progress; }
+        finish(nil);
         return progress;
     }
-    if ([self repoListUnknownFor:record.repoId]) {
-        finish([SeafFPErrors serverUnreachable]);   // cold process: permissions unknown yet, retry later
-        return progress;
-    }
-    if (![self isRepoEditable:record.repoId]) {
-        finish([SeafFPErrors deletionRejected]);
-        return progress;
-    }
-    SeafDir *parentDir = [self seafDirForContainer:record.parentItemIdentifier record:NULL];
-    if (!parentDir) {
-        finish([SeafFPErrors noSuchItem]);
-        return progress;
-    }
-    Info("deleteItem %@ (%@) options=%lu", identifier, record.path, (unsigned long)options);
-
     __weak typeof(self) weakSelf = self;
-    void (^deleteOnServer)(void) = ^{
-        [[SeafFileOperationManager sharedManager] deleteEntries:@[record.name] inDir:parentDir completion:^(BOOL success, NSError *error) {
-            typeof(self) strongSelf = weakSelf;
-            if (!strongSelf) { finish([SeafFPErrors cannotSynchronize]); return; }
-            NSError *mapped = success ? nil : [SeafFPErrors errorForSeafError:error];
-            if (mapped && mapped.code != NSFileProviderErrorNoSuchItem) {
-                [strongSelf noteError:mapped];
-                finish(mapped);
-                return;
-            }
-            for (SeafFPRecord *gone in [strongSelf.store subtreeRecordsOfUUID:record.uuid]) {
-                [strongSelf.store removeDecorationForItem:gone.itemIdentifier];
-                [strongSelf.store removeWorkingSetItem:gone.itemIdentifier];
-                [strongSelf.seafObjects removeObjectForKey:gone.itemIdentifier];
-            }
-            [strongSelf.store markDeletedUUID:record.uuid];
-            [strongSelf noteSuccess];
-            [strongSelf signalContainer:record.parentItemIdentifier];
-            finish(nil);
-        }];
+    void (^deleteRecord)(SeafFPRecord *) = ^(SeafFPRecord *target) {
+        typeof(self) owner = weakSelf;
+        if (!owner) { finish([SeafFPErrors cannotSynchronize]); return; }
+        if ([owner repoListUnknownFor:target.repoId]) {
+            finish([SeafFPErrors serverUnreachable]);   // cold process: permissions unknown yet, retry later
+            return;
+        }
+        if (![owner isRepoEditable:target.repoId]) {
+            finish([SeafFPErrors deletionRejected]);
+            return;
+        }
+        SeafDir *parentDir = [owner seafDirForContainer:target.parentItemIdentifier record:NULL];
+        if (!parentDir) {
+            // The library is locked or its list is not known: the item is not
+            // gone, the deletion just cannot be carried out now.
+            finish([owner repositoryAccessError:target.repoId] ?: [SeafFPErrors cannotSynchronize]);
+            return;
+        }
+        Info("deleteItem %@ (%@) options=%lu", identifier, target.path, (unsigned long)options);
+
+        void (^deleteOnServer)(void) = ^{
+            [[SeafFileOperationManager sharedManager] deleteEntries:@[target.name] inDir:parentDir completion:^(BOOL success, NSError *error) {
+                typeof(self) strongSelf = weakSelf;
+                if (!strongSelf) { finish([SeafFPErrors cannotSynchronize]); return; }
+                NSError *mapped = success ? nil : [SeafFPErrors errorForSeafError:error];
+                if (mapped && mapped.code != NSFileProviderErrorNoSuchItem) {
+                    [strongSelf noteError:mapped];
+                    finish(mapped);
+                    return;
+                }
+                for (SeafFPRecord *gone in [strongSelf.store subtreeRecordsOfUUID:target.uuid]) {
+                    [strongSelf.store removeDecorationForItem:gone.itemIdentifier];
+                    [strongSelf.store removeWorkingSetItem:gone.itemIdentifier];
+                    [strongSelf.seafObjects removeObjectForKey:gone.itemIdentifier];
+                }
+                [strongSelf.store markDeletedUUID:target.uuid];   // also drops any move journal
+                [strongSelf noteSuccess];
+                [strongSelf signalContainer:target.parentItemIdentifier];
+                finish(nil);
+            }];
+        };
+
+        if (target.isDir && (options & NSFileProviderDeleteItemRecursive) == 0) {
+            // Without the recursive flag only an empty folder may go.
+            SeafDir *dir = [owner seafDirForContainer:identifier record:NULL];
+            [owner loadDirectory:dir completion:^(BOOL loaded, BOOL fromCache, NSError *loadError) {
+                if (!loaded) { finish(loadError); return; }
+                if (fromCache) {
+                    // "Empty" must come from the server: the delete is recursive there.
+                    finish([SeafFPErrors serverUnreachable]);
+                    return;
+                }
+                if (dir.items.count > 0) {
+                    finish([NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorDirectoryNotEmpty userInfo:nil]);
+                    return;
+                }
+                deleteOnServer();
+            }];
+            return;
+        }
+        deleteOnServer();
     };
 
-    if (record.isDir && (options & NSFileProviderDeleteItemRecursive) == 0) {
-        // Without the recursive flag only an empty folder may go.
-        SeafDir *dir = [self seafDirForContainer:identifier record:NULL];
-        [self loadDirectory:dir completion:^(BOOL loaded, BOOL fromCache, NSError *loadError) {
-            if (!loaded) { finish(loadError); return; }
-            if (fromCache) {
-                // "Empty" must come from the server: the delete is recursive there.
-                finish([SeafFPErrors serverUnreachable]);
-                return;
-            }
-            if (dir.items.count > 0) {
-                finish([NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorDirectoryNotEmpty userInfo:nil]);
-                return;
-            }
-            deleteOnServer();
-        }];
+    // A move of the item that is still being reconciled decides where the
+    // item is before it is deleted there.
+    if (!recovery.count) {
+        deleteRecord(record);
         return progress;
     }
-    deleteOnServer();
+    [self recoverMoveOfRecord:record details:recovery completion:^(SeafFPRecord *settled, SeafFPMoveSettlement settlement, NSError *resolveError) {
+        if (resolveError) { finish(resolveError); return; }
+        if (settlement == SeafFPMoveSettlementExpired) {
+            // The move was given up without knowing where the item went.
+            // Gone from the fresh source listing: nothing left to delete.
+            // Still there: not deleted blind; the system restores it from
+            // the refreshed row, and a delete after that runs normally.
+            finish(settled ? [SeafFPErrors deletionRejected] : nil);
+            return;
+        }
+        if (!settled) { finish(SeafFPMovePendingError(nil)); return; }
+        deleteRecord(settled);
+    }];
     return progress;
 }
 

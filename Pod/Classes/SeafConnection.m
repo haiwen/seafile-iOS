@@ -1232,6 +1232,13 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
              [self handleStarredData:JSON];
              NSData *data = [Utils JSONEncode:JSON];
              [self setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_STARREDFILES entityName:ENTITY_OBJECT];
+             // Fresh from the server only: the cached copy read at launch
+             // (getCachedStarredFiles) may list items deleted since.
+             id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+             NSArray *starredItems = [JSON isKindOfClass:[NSDictionary class]] ? JSON[@"starred_item_list"] : nil;
+             if (indexer && [starredItems isKindOfClass:[NSArray class]]) {
+                 [indexer fp_indexStarredItems:starredItems connection:self];
+             }
              if (success)
                  success (response, JSON);
          }
@@ -1338,6 +1345,7 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
                 [results addObject:file];
             }
         }
+        [self fp_indexSearchResults:results];
         success(request, response, JSON, results);
     } failure:failure];
 }
@@ -1908,6 +1916,77 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 {
     NSString *url = [NSString stringWithFormat:@"/api2/repos/%@/file/?p=%@&op=download&reuse=1", repoId, [path escapedUrl]];
     [self sendRequest:url success:success failure:failure];
+}
+
+@end
+
+#pragma mark - Files app index bridge
+
+NSString * const SeafFPIndexKeyName = @"name";
+NSString * const SeafFPIndexKeyPath = @"path";
+NSString * const SeafFPIndexKeyIsDir = @"isDir";
+NSString * const SeafFPIndexKeyOid = @"oid";
+NSString * const SeafFPIndexKeySize = @"size";
+NSString * const SeafFPIndexKeyMtime = @"mtime";
+NSString * const SeafFPIndexKeyRepoId = @"repoId";
+
+NSDictionary *SeafFPIndexEntryForBase(SeafBase *obj)
+{
+    BOOL isDir = [obj isKindOfClass:[SeafDir class]];
+    if (!isDir && ![obj isKindOfClass:[SeafFile class]]) return nil;
+    NSMutableDictionary *entry = [NSMutableDictionary dictionaryWithCapacity:7];
+    if (obj.name.length > 0) entry[SeafFPIndexKeyName] = obj.name;
+    if (obj.path.length > 0) entry[SeafFPIndexKeyPath] = obj.path;
+    if (obj.repoId.length > 0) entry[SeafFPIndexKeyRepoId] = obj.repoId;
+    if (obj.oid.length > 0) entry[SeafFPIndexKeyOid] = obj.oid;
+    entry[SeafFPIndexKeyIsDir] = @(isDir);
+    if (isDir) {
+        entry[SeafFPIndexKeySize] = @(-1);
+        entry[SeafFPIndexKeyMtime] = @(((SeafDir *)obj).mtime);
+    } else {
+        SeafFile *file = (SeafFile *)obj;
+        entry[SeafFPIndexKeySize] = @(file.filesize);
+        entry[SeafFPIndexKeyMtime] = @(file.mtime);
+    }
+    return entry;
+}
+
+static __weak id<SeafFPIndexingSink> gSeafFPIndexer = nil;
+
+@implementation SeafConnection (FileProviderIndexing)
+
++ (id<SeafFPIndexingSink>)fileProviderIndexer
+{
+    @synchronized ([SeafConnection class]) {
+        return gSeafFPIndexer;
+    }
+}
+
++ (void)setFileProviderIndexer:(id<SeafFPIndexingSink>)indexer
+{
+    @synchronized ([SeafConnection class]) {
+        gSeafFPIndexer = indexer;
+    }
+}
+
++ (id<SeafFPIndexingSink>)activeFileProviderIndexer
+{
+    id<SeafFPIndexingSink> indexer = self.fileProviderIndexer;
+    return (indexer && [Utils isMainApp]) ? indexer : nil;
+}
+
+- (void)fp_indexSearchResults:(NSArray<SeafBase *> *)results
+{
+    id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+    if (!indexer || results.count == 0) return;
+    NSMutableArray<NSDictionary *> *entries = [NSMutableArray arrayWithCapacity:results.count];
+    for (SeafBase *obj in results) {
+        NSDictionary *entry = SeafFPIndexEntryForBase(obj);
+        if (entry[SeafFPIndexKeyPath] && entry[SeafFPIndexKeyRepoId]) [entries addObject:entry];
+    }
+    if (entries.count > 0) {
+        [indexer fp_indexSparseEntries:entries connection:self allowRevive:NO];
+    }
 }
 
 @end
