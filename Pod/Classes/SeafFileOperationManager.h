@@ -66,6 +66,11 @@ typedef void(^SeafOperationCompletion)(BOOL success, NSError *_Nullable error);
             newName:(NSString *)newName
               inDir:(SeafDir *)directory
          completion:(void(^)(BOOL success, SeafBase *renamedFile, NSError *error))completion;
+- (void)renameEntry:(NSString *)oldName
+            newName:(NSString *)newName
+              inDir:(SeafDir *)directory
+ responseCompletion:(void (^)(BOOL success, SeafBase * _Nullable renamedFile, NSError * _Nullable error,
+                               NSHTTPURLResponse * _Nullable response))completion;
 
 /**
  Copy
@@ -92,6 +97,10 @@ typedef void(^SeafOperationCompletion)(BOOL success, NSError *_Nullable error);
              fromDir:(SeafDir *)srcDir
                toDir:(SeafDir *)dstDir
           completion:(SeafOperationCompletion)completion;
+- (void)moveEntries:(NSArray<NSString *> *)entries
+             fromDir:(SeafDir *)srcDir
+               toDir:(SeafDir *)dstDir
+  responseCompletion:(void (^)(BOOL success, NSError * _Nullable error, NSHTTPURLResponse * _Nullable response))completion;
 
 - (void)renameEntry:(NSString *)oldName
             newName:(NSString *)newName

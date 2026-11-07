@@ -10,6 +10,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FileProvider/FileProvider.h>
+#import "SeafFPErrors.h"
 
 @class SeafConnection;
 @class SeafRepo;
@@ -18,6 +19,7 @@
 @class SeafFPStore;
 @class SeafFPRecord;
 @class SeafFPItem;
+@class SeafFPCheckSchedule;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -29,6 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 // re-login check may replace them: atomic on purpose.
 @property (strong, readonly, nullable) SeafConnection *connection;
 @property (strong, readonly, nullable) SeafFPStore *store;
+/// Failed directory listings the working set passes must leave alone for a while.
+@property (nonatomic, strong, readonly) SeafFPCheckSchedule *checkSchedule;
 
 #pragma mark Helpers shared with the enumerator
 
@@ -42,6 +46,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// library list). Never touches the network.
 - (nullable SeafFPItem *)resolveItem:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable * _Nullable)error;
 - (SeafFPItem *)itemForRepo:(SeafRepo *)repo;
+- (SeafFPItem *)itemForRepositoryState:(NSDictionary *)state;
+- (nullable NSError *)repositoryAccessError:(NSString *)repoId;
 - (SeafFPItem *)itemForRecord:(SeafFPRecord *)record;
 
 - (nullable SeafRepo *)repoWithId:(NSString *)repoId;
@@ -60,9 +66,16 @@ NS_ASSUME_NONNULL_BEGIN
 /// Lists a directory from the server; falls back to the cache when unreachable
 /// (fromCache = YES). loaded = NO only when neither is available.
 - (void)loadDirectory:(SeafDir *)dir completion:(void (^)(BOOL loaded, BOOL fromCache, NSError * _Nullable error))completion;
+/// The same, and what the server's failure says about the directory: also
+/// when the cache then served the listing (a cached listing hides a 404).
+- (void)loadDirectory:(SeafDir *)dir
+              listing:(void (^)(BOOL loaded, BOOL fromCache, NSError * _Nullable error, SeafFPListingFailure failure))completion;
 
 /// Error bookkeeping for -[NSFileProviderManager signalErrorResolved:].
 - (void)noteError:(nullable NSError *)error;
+/// aboutOneItem: the server (or the device) refused this one item; a later
+/// success elsewhere is then no evidence that the refusal is over.
+- (void)noteError:(nullable NSError *)error aboutOneItem:(BOOL)aboutOneItem;
 - (void)noteSuccess;
 
 /// Asks the system to enumerate working set changes (the only container a

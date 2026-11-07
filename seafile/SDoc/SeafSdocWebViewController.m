@@ -38,6 +38,9 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     UIDocumentPickerDelegate, SeafImagePickerHelperDelegate>
 
 @property (nonatomic, strong) WKWebView *webView;
+// Re-routes of a login redirect through mobile-login (see -shouldRerouteToMobileLogin).
+@property (nonatomic, assign) NSUInteger mobileLoginReroutes;
+@property (nonatomic, strong) NSDate *mobileLoginRerouteWindowStart;
 @property (nonatomic, strong) UIBarButtonItem *editItem;
 @property (nonatomic, strong) UIButton *editButton;
 @property (nonatomic, assign) CGFloat editButtonFixedWidth;
@@ -1880,12 +1883,29 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
     }];
 }
 
+/// A login redirect is answered by loading mobile-login, which signs the web
+/// view in and sends it back. When the page then redirects to the login page
+/// again (the session cookie was not kept) that would go round for as long as
+/// the page is open: after a few re-routes in a short time the login page is
+/// let through instead.
+- (BOOL)shouldRerouteToMobileLogin
+{
+    NSDate *now = [NSDate date];
+    if (!self.mobileLoginRerouteWindowStart || [now timeIntervalSinceDate:self.mobileLoginRerouteWindowStart] > 30.0) {
+        self.mobileLoginRerouteWindowStart = now;
+        self.mobileLoginReroutes = 0;
+    }
+    self.mobileLoginReroutes += 1;
+    return self.mobileLoginReroutes <= 3;
+}
+
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
     NSURL *originalURL = navigationAction.request.URL;
     NSString *abs = originalURL.absoluteString ?: @"";
     if ([_file isWebOpenFile]) {
-        if ([abs containsString:@"login/?next"] && ![abs containsString:@"mobile-login/?next"]) {
+        if ([abs containsString:@"login/?next"] && ![abs containsString:@"mobile-login/?next"]
+            && [self shouldRerouteToMobileLogin]) {
             decisionHandler(WKNavigationActionPolicyCancel);
             NSString *webViewURLString = [_file getWebViewURLString];
             NSString *mobileLoginURLString = [NSString stringWithFormat:@"%@/mobile-login/?next=%@", _file.connection.address, webViewURLString];

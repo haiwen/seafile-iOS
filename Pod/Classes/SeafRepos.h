@@ -61,6 +61,9 @@
  * Manages and groups multiple `SeafRepo` objects.
  */
 @interface SeafRepos : SeafDir
+/// File Provider metadata values, including locked libraries (not filtered as
+/// absent). No shared Store or app-only dependency is used by this model.
+- (NSArray<NSDictionary *> *)fp_repositorySnapshot;
 @property NSMutableArray *repoGroups;///< Groups of repositories.
 
 /**

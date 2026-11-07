@@ -103,6 +103,9 @@
  * @param failure A block called on failure to load the directory.
  */
 - (void)loadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure;
+/// Require a directory listing or a server confirmation of already loaded items.
+- (void)loadContentSuccess:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
+           requireListing:(BOOL)requireListing;
 
 /**
  * Checks if a given name already exists in the directory's items.

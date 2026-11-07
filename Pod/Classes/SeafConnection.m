@@ -26,6 +26,7 @@
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFileModel.h"
 #import "SeafConstants.h"
+#import "SeafRetryBackoff.h"
 
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
@@ -117,6 +118,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 @property SeafDir *syncDir;
 @property (readonly) id<SeafCacheProvider> cacheProvider;
+
+// The camera upload folder could not be resolved (library gone, folder cannot
+// be created): the periodic check asks again, each time after a longer wait
+// (SeafRetryBackoff). Guarded by @synchronized(self).
+@property (nonatomic, assign) NSUInteger syncDirCheckFailures;
+@property (nonatomic, strong, nullable) NSDate *syncDirCheckNotBefore;
+// The last round of library password refreshes a 400 response started.
+@property (nonatomic, strong, nullable) NSDate *lastBadRequestPasswordRefresh;
 
 @property (readonly) NSString *platformVersion;
 @property (readonly) NSString *tagDataKey;
@@ -1127,7 +1136,7 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
                     [self.delegate outOfQuota:self];
                 }
             } else if (resp.statusCode == HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED) {
-                [self refreshRepoPasswords];
+                [self refreshRepoPasswordsAfterBadRequest];
             }
         } else {
             success(request, resp, responseObject);
@@ -1547,6 +1556,20 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
             self.syncDir = nil;
             self.photoBackup.syncDir = nil;
         }
+        @synchronized (self) {
+            if (success || SeafRetryErrorIsNetworkOnly(error)) {
+                // Resolved, or the network did not answer: the latter says
+                // nothing about the folder, the next periodic check asks again.
+                self.syncDirCheckFailures = 0;
+                self.syncDirCheckNotBefore = nil;
+            } else {
+                // The library is gone or the folder cannot be created: it
+                // fails the same way next time, so the periodic check waits
+                // longer after every failure (see -photosDidChange:).
+                self.syncDirCheckFailures += 1;
+                self.syncDirCheckNotBefore = [NSDate dateWithTimeIntervalSinceNow:SeafRetryBackoffDelay(self.syncDirCheckFailures)];
+            }
+        }
         if (handler) {
             handler(success, error);
         }
@@ -1577,6 +1600,17 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     Debug("photos changed %d for server %@, current: %u, _syncDir:%@", _inAutoSync, _address, (unsigned)self.photoBackup.photosArray.count, _syncDir);
 
     if (!_syncDir) {
+        // Reached from the account queue's 30 s timer while photos are
+        // queued. A library that was deleted or a folder that cannot be
+        // created fails the same way every time: -checkPhotosUploadDir:
+        // makes each attempt wait longer than the one before. Until this
+        // one reports back, the next tick does not start another.
+        @synchronized (self) {
+            if (self.syncDirCheckNotBefore && [self.syncDirCheckNotBefore timeIntervalSinceNow] > 0) {
+                return;
+            }
+            self.syncDirCheckNotBefore = [NSDate dateWithTimeIntervalSinceNow:SeafRetryBackoffBase];
+        }
         Warning("Sync dir not exists, create.");
         [self checkPhotosUploadDir:nil];
     } else {
@@ -1672,7 +1706,15 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     if (!repo) {
         Warning("No such repo %@, force update cache", repoId);
         [_rootFolder loadContentSuccess:^(SeafDir *dir) {
-            [self checkMakeUploadDirectoryInRepo:repo subdir:dirName completion:completionHandler];
+            // Looked up again: `repo` above is nil, and a message to nil
+            // would leave the completion handler uncalled.
+            SeafRepo *reloaded = [self getRepo:repoId];
+            if (!reloaded) {
+                Warning("Repo %@ is not in the library list", repoId);
+                completionHandler(nil, [Utils defaultError]);
+                return;
+            }
+            [self checkMakeUploadDirectoryInRepo:reloaded subdir:dirName completion:completionHandler];
         } failure:^(SeafDir *dir, NSError *error) {
             completionHandler(nil, error);
         }];
@@ -1733,6 +1775,22 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     } failure:^(SeafDir *dir, NSError *error) {
         Warning("Failed to download dir %@ %@:  %@", dir.repoId, dir.path, error);
     }];
+}
+
+/// A 400 may mean the server no longer holds a library's password. The
+/// refresh posts every saved password through sendRequestAsync: again, and
+/// only an "Incorrect password" answer drops one: any other 400 to those
+/// requests would start the next round at once, and every unrelated 400 (an
+/// invalid name, say) costs a full round. One round per interval is enough
+/// for the request that needed it to succeed when it is retried.
+- (void)refreshRepoPasswordsAfterBadRequest {
+    static const NSTimeInterval kMinInterval = 30.0;
+    @synchronized (self) {
+        NSDate *last = self.lastBadRequestPasswordRefresh;
+        if (last && fabs([last timeIntervalSinceNow]) < kMinInterval) return;
+        self.lastBadRequestPasswordRefresh = [NSDate date];
+    }
+    [self refreshRepoPasswords];
 }
 
 - (void)refreshRepoPasswords {

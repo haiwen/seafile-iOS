@@ -68,6 +68,9 @@ enum SHARE_STATUS {
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (nonatomic, strong) WKWebView *webView;
+// Re-routes of a login redirect through mobile-login (see -shouldRerouteToMobileLogin).
+@property (nonatomic, assign) NSUInteger mobileLoginReroutes;
+@property (nonatomic, strong) NSDate *mobileLoginRerouteWindowStart;
 @property (nonatomic, strong) MWPhotoBrowser *mwPhotoBrowser;
 @property (nonatomic, strong) UITextView *textView;
 
@@ -906,12 +909,29 @@ enum SHARE_STATUS {
     }
 }
 
+/// A login redirect is answered by loading mobile-login, which signs the web
+/// view in and sends it back. When the page then redirects to the login page
+/// again (the session cookie was not kept) that would go round for as long as
+/// the page is open: after a few re-routes in a short time the login page is
+/// let through instead.
+- (BOOL)shouldRerouteToMobileLogin
+{
+    NSDate *now = [NSDate date];
+    if (!self.mobileLoginRerouteWindowStart || [now timeIntervalSinceDate:self.mobileLoginRerouteWindowStart] > 30.0) {
+        self.mobileLoginRerouteWindowStart = now;
+        self.mobileLoginReroutes = 0;
+    }
+    self.mobileLoginReroutes += 1;
+    return self.mobileLoginReroutes <= 3;
+}
+
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
     SeafFile *sFile = (SeafFile *)self.preViewItem;
     if ([sFile isWebOpenFile]) {
         NSURL *originalURL = navigationAction.request.URL;
         Debug(@"Request URL: %@", navigationAction.request.URL);
-        if ([originalURL.absoluteString containsString:@"login/?next"] && ![originalURL.absoluteString containsString:@"mobile-login/?next"]) {
+        if ([originalURL.absoluteString containsString:@"login/?next"] && ![originalURL.absoluteString containsString:@"mobile-login/?next"]
+            && [self shouldRerouteToMobileLogin]) {
             // Cancel current loading first
             decisionHandler(WKNavigationActionPolicyCancel);
             

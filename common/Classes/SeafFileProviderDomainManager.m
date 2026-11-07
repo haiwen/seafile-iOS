@@ -10,6 +10,10 @@
 #import "SeafStorage.h"
 #import "SeafConstants.h"
 #import "Debug.h"
+#if defined(SEAFILE_APP)
+#import "SeafFPStore.h"
+#import "SeafGlobal.h"
+#endif
 
 static NSString * const kSeafFPLegacyStorageCleaned = @"com.seafile.seafilePro.fileprovider.legacyStorageCleaned";
 static NSString * const kSeafFPLegacyStorageDirectory = @"File Provider Storage";
@@ -18,6 +22,9 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
 @interface SeafFileProviderDomainManager ()
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSFileProviderDomain *> *pendingSignals;   // domainId -> domain
 @property (nonatomic, assign) BOOL observingChanges;
+@property (nonatomic, strong) dispatch_queue_t signalQueue;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *signalGenerations;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *signalRetries;
 // Every domain mutation runs through this queue, one at a time: each one is a
 // getDomains round trip followed by a decision, and two of them in flight
 // undo each other (a login racing the logout of the same account, a Face ID
@@ -45,6 +52,9 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
     if (self) {
         _pendingSignals = [NSMutableDictionary dictionary];
         _domainOps = [NSMutableArray array];
+        _signalQueue = dispatch_queue_create("com.seafile.fileprovider.signals", DISPATCH_QUEUE_SERIAL);
+        _signalGenerations = [NSMutableDictionary dictionary];
+        _signalRetries = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -108,6 +118,7 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
     NSString *identifier = domain.identifier;
     // The main app stops writing the store before the domain goes away.
     [self.domainObserver fileProviderDomainWillDeactivate:identifier];
+    [self invalidatePendingSignalsForDomainIdentifier:identifier];
     // RemoveAll is the only mode iOS offers (PreserveDirtyUserData and
     // PreserveDownloadedUserData are macOS-only), so removing a domain always
     // discards the system's replica -- including a file the user edited in
@@ -211,6 +222,7 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
     BOOL wants = [self.class connectionWantsDomain:conn];
     if (!wants) {
         [self.domainObserver fileProviderDomainWillDeactivate:domain.identifier];
+        [self invalidatePendingSignalsForDomainIdentifier:domain.identifier];
     }
     [self enqueueDomainOp:^(dispatch_block_t done) {
         [NSFileProviderManager getDomainsWithCompletionHandler:^(NSArray<NSFileProviderDomain *> *domains, NSError *error) {
@@ -243,6 +255,7 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
                     [self.domainObserver fileProviderDomainDidActivate:domain.identifier];
                 } else if (!wants) {
                     [self.domainObserver fileProviderDomainWillDeactivate:domain.identifier];
+                    [self invalidatePendingSignalsForDomainIdentifier:domain.identifier];
                 }
                 finish(nil);
             }
@@ -254,6 +267,7 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
 {
     NSFileProviderDomain *domain = [self domainForConnection:conn];
     [self.domainObserver fileProviderDomainWillDeactivate:domain.identifier];
+    [self invalidatePendingSignalsForDomainIdentifier:domain.identifier];
     [self enqueueDomainOp:^(dispatch_block_t done) {
         [NSFileProviderManager getDomainsWithCompletionHandler:^(NSArray<NSFileProviderDomain *> *domains, NSError *error) {
             void (^finish)(NSError *) = ^(NSError *finishError) {
@@ -354,6 +368,8 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
 {
     if (self.observingChanges) return;
     self.observingChanges = YES;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(retryPendingSignals:) name:UIApplicationDidBecomeActiveNotification object:nil];
+    [self retryPendingSignals:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleChangeNotification:)
                                                  name:SeafFileProviderShouldSignalNotification
@@ -381,48 +397,121 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
 // Only the working set can be signalled for a replicated extension (other
 // container identifiers are ignored by the system), so every signal ends up
 // there; the extension re-lists the library list and member directories.
+- (void)invalidatePendingSignalsForDomainIdentifier:(NSString *)identifier
+{
+    @synchronized (self.pendingSignals) {
+        self.signalGenerations[identifier] = @([self.signalGenerations[identifier] unsignedLongLongValue] + 1);
+        [self.pendingSignals removeObjectForKey:identifier];
+        [self.signalRetries removeObjectForKey:identifier];
+    }
+}
+
+- (BOOL)signalGeneration:(uint64_t)generation isActiveFor:(NSString *)identifier
+{
+    @synchronized (self.pendingSignals) { return [self.signalGenerations[identifier] unsignedLongLongValue] == generation; }
+}
+
 - (void)signalContainer:(NSFileProviderItemIdentifier)container forConnection:(SeafConnection *)conn
 {
     if (![self.class connectionWantsDomain:conn]) return;
+#if defined(SEAFILE_APP)
+    if (![SeafGlobal.sharedObject.conns containsObject:conn]) return;
+#endif
     NSFileProviderDomain *domain = [self domainForConnection:conn];
-    @synchronized (self.pendingSignals) {
-        if (self.pendingSignals[domain.identifier]) return;
-        self.pendingSignals[domain.identifier] = domain;
-    }
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSeafFPSignalCoalesceInterval * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        [self sendPendingSignalForDomainIdentifier:domain.identifier];
+    uint64_t generation;
+    @synchronized (self.pendingSignals) { generation = [self.signalGenerations[domain.identifier] unsignedLongLongValue]; }
+    dispatch_async(self.signalQueue, ^{
+        if (![self signalGeneration:generation isActiveFor:domain.identifier]) return;
+#if defined(SEAFILE_APP)
+        SeafFPStore *store = [SeafFPStore openExistingStoreForDomainIdentifier:domain.identifier];
+        [store requestWorkingSetSignal];
+        [store close];
+#endif
+        [self queueSignalForDomain:domain generation:generation delay:kSeafFPSignalCoalesceInterval];
     });
 }
 
-- (void)sendPendingSignalForDomainIdentifier:(NSString *)identifier
+/// Called on signalQueue. Persistence has completed before a background flush
+/// crosses the same queue, so the background task covers both commit and send.
+- (void)queueSignalForDomain:(NSFileProviderDomain *)domain generation:(uint64_t)generation delay:(NSTimeInterval)delay
 {
-    [self sendPendingSignalForDomainIdentifier:identifier completion:nil];
+    @synchronized (self.pendingSignals) {
+        if (![self signalGeneration:generation isActiveFor:domain.identifier] || self.pendingSignals[domain.identifier]) return;
+        self.pendingSignals[domain.identifier] = domain;
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), self.signalQueue, ^{
+        if ([self signalGeneration:generation isActiveFor:domain.identifier]) [self sendQueuedSignalForDomainIdentifier:domain.identifier completion:nil];
+    });
 }
 
-/// completion runs once the system answered, or right away when nothing was pending.
 - (void)sendPendingSignalForDomainIdentifier:(NSString *)identifier completion:(nullable dispatch_block_t)completion
 {
-    NSFileProviderDomain *domain = nil;
+    dispatch_async(self.signalQueue, ^{ [self sendQueuedSignalForDomainIdentifier:identifier completion:completion]; });
+}
+
+- (void)sendQueuedSignalForDomainIdentifier:(NSString *)identifier completion:(nullable dispatch_block_t)completion
+{
+    NSFileProviderDomain *domain;
+    uint64_t generation;
     @synchronized (self.pendingSignals) {
         domain = self.pendingSignals[identifier];
+        generation = [self.signalGenerations[identifier] unsignedLongLongValue];
         [self.pendingSignals removeObjectForKey:identifier];
     }
-    if (!domain) {   // already flushed
-        if (completion) completion();
-        return;
-    }
+    if (!domain) { if (completion) completion(); return; }
+    long long ticket = 0;
+#if defined(SEAFILE_APP)
+    SeafFPStore *store = [SeafFPStore openExistingStoreForDomainIdentifier:identifier];
+    ticket = [store pendingWorkingSetSignalTicket];
+    [store close];
+#else
+    (void)ticket;
+#endif
+    void (^finished)(NSError *) = ^(NSError *error) {
+        dispatch_async(self.signalQueue, ^{
+            if (![self signalGeneration:generation isActiveFor:identifier]) { if (completion) completion(); return; }
+            BOOL completed = error == nil;
+#if defined(SEAFILE_APP)
+            SeafFPStore *current = [SeafFPStore openExistingStoreForDomainIdentifier:identifier];
+            if (completed && ticket > 0) completed = [current completeWorkingSetSignalTicket:ticket];
+            [current close];
+#endif
+            if (!completed) {
+                NSUInteger retry;
+                @synchronized (self.pendingSignals) {
+                    retry = [self.signalRetries[identifier] unsignedIntegerValue] + 1;
+                    self.signalRetries[identifier] = @(retry);
+                }
+                Debug("signal working set for domain %@ failed: %@", identifier, error);
+                [self queueSignalForDomain:domain generation:generation delay:MIN(60.0, (double)(1ULL << MIN(retry - 1, (NSUInteger)6)))];
+            } else {
+                @synchronized (self.pendingSignals) { [self.signalRetries removeObjectForKey:identifier]; }
+            }
+            if (completion) completion();
+        });
+    };
     NSFileProviderManager *manager = [NSFileProviderManager managerForDomain:domain];
-    if (!manager) {
-        if (completion) completion();
-        return;
+    if (!manager) { finished([NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorCannotSynchronize userInfo:nil]); return; }
+    [manager signalEnumeratorForContainerItemIdentifier:NSFileProviderWorkingSetContainerItemIdentifier completionHandler:finished];
+}
+
+- (void)retryPendingSignals:(NSNotification *)notification
+{
+#if defined(SEAFILE_APP)
+    for (SeafConnection *conn in [SeafGlobal.sharedObject.conns copy]) {
+        if (![self.class connectionWantsDomain:conn]) continue;
+        NSFileProviderDomain *domain = [self domainForConnection:conn];
+        uint64_t generation;
+        @synchronized (self.pendingSignals) { generation = [self.signalGenerations[domain.identifier] unsignedLongLongValue]; }
+        dispatch_async(self.signalQueue, ^{
+            if (![self signalGeneration:generation isActiveFor:domain.identifier]) return;
+            SeafFPStore *store = [SeafFPStore openExistingStoreForDomainIdentifier:domain.identifier];
+            BOOL pending = [store pendingWorkingSetSignalTicket] > 0;
+            [store close];
+            if (pending) [self queueSignalForDomain:domain generation:generation delay:0];
+        });
     }
-    [manager signalEnumeratorForContainerItemIdentifier:NSFileProviderWorkingSetContainerItemIdentifier completionHandler:^(NSError * _Nullable error) {
-        if (error) {
-            Debug("signal working set for domain %@ failed: %@", domain.identifier, error);
-        }
-        if (completion) completion();
-    }];
+#endif
 }
 
 - (void)flushPendingSignals
@@ -432,6 +521,11 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
 
 - (void)flushPendingSignalsWithCompletion:(dispatch_block_t)completion
 {
+    dispatch_async(self.signalQueue, ^{ [self flushQueuedSignalsWithCompletion:completion]; });
+}
+
+- (void)flushQueuedSignalsWithCompletion:(dispatch_block_t)completion
+{
     NSArray<NSString *> *identifiers = nil;
     @synchronized (self.pendingSignals) {
         identifiers = self.pendingSignals.allKeys;
@@ -440,7 +534,7 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
         if (completion) completion();
         return;
     }
-#if !defined(AF_APP_EXTENSIONS)
+#if defined(SEAFILE_APP)
     UIApplication *app = [UIApplication sharedApplication];
     __block UIBackgroundTaskIdentifier bgTask = UIBackgroundTaskInvalid;
     NSObject *token = [NSObject new];
@@ -465,7 +559,7 @@ static const NSTimeInterval kSeafFPSignalCoalesceInterval = 0.5;
     dispatch_group_t group = dispatch_group_create();
     for (NSString *identifier in identifiers) {
         dispatch_group_enter(group);
-        [self sendPendingSignalForDomainIdentifier:identifier completion:^{
+        [self sendQueuedSignalForDomainIdentifier:identifier completion:^{
             dispatch_group_leave(group);
         }];
     }

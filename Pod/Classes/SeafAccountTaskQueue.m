@@ -13,6 +13,8 @@
 #import "SeafBase.h"
 #import "SeafDir.h"
 #import "Debug.h"
+#import "SeafRetryBackoff.h"
+#import "SeafPhotoBackupTool.h"
 
 #define THUMB_MAX_COUNT 20
 #define UPLOAD_MAX_COUNT 5
@@ -30,6 +32,14 @@
 
 // Used to record the last error code that caused the queue to pause (e.g., 443, 401, etc.)
 @property (nonatomic, strong, nullable) NSNumber *lastPausedErrorCode;
+
+// The upload queue is suspended because uploads kept failing (quota, the same
+// status five times). The periodic check resumes it, but not before
+// errorPauseUntil; every pause in a row doubles the wait (SeafRetryBackoff),
+// an upload that succeeds starts over. Guarded by @synchronized(self).
+@property (nonatomic, assign) BOOL suspendedForErrors;
+@property (nonatomic, assign) NSUInteger errorPauseCount;
+@property (nonatomic, strong, nullable) NSDate *errorPauseUntil;
 
 @end
 
@@ -137,12 +147,31 @@
     }
     
     [self.uploadQueue addOperation:operation];
+    // The queue is shared with the photo backup. An upload the user starts
+    // must not sit behind a pause the backup's failures caused: it gets its
+    // attempt now, and counts like any other if it fails too.
+    if (!ufile.uploadFileAutoSync) {
+        [self endErrorPauseIfDue:NO];
+    }
     return YES;
 }
 
 - (void)addUploadTasksInBatch:(NSArray<SeafUploadFile *> *)tasks {
+    BOOL startedByUser = NO;
+    for (SeafUploadFile *ufile in tasks) {
+        if (!ufile.uploadFileAutoSync) {
+            startedByUser = YES;
+            break;
+        }
+    }
     @synchronized (self.pendingUploadTasks) {
         [self.pendingUploadTasks addObjectsFromArray:tasks];
+    }
+    // The photo picker queues its files here, not through -addUploadTask:.
+    // While the queue is suspended for errors and still holds tasks, nothing
+    // loads the next batch, so the pause is ended here as well.
+    if (startedByUser) {
+        [self endErrorPauseIfDue:NO];
     }
     // If there are no ongoing or waiting tasks in uploadQueue, start the next batch
     if ([self getOngoingTasks].count == 0 && [self getWaitingTasks].count == 0) {
@@ -232,7 +261,11 @@
                     [self addTask:ufile toArray:self.completedSuccessfulTasks];
                     
                     // reset errorCode count
-                    [self.errorCodeCountDict removeAllObjects];
+                    @synchronized (self) {
+                        [self.errorCodeCountDict removeAllObjects];
+                        self.errorPauseCount = 0;
+                        self.errorPauseUntil = nil;
+                    }
                     [[SeafDataTaskManager sharedObject] removeUploadFileTaskInStorage:ufile];
 
                 } else {
@@ -770,6 +803,10 @@
             
             // Unsuspend the queues
             [self.uploadQueue setSuspended:NO];
+            // Uploads run again, so a pause for errors is over as well. Left
+            // set, the next failure would neither count nor get a new wait
+            // (-pauseUploadTasksWithCode:quota:); the count itself stays.
+            self.suspendedForErrors = NO;
             [self.downloadQueue setSuspended:NO];
             [self.thumbQueue setSuspended:NO];
         }
@@ -908,22 +945,52 @@
         return;
     }
     
-    BOOL shouldResumeQueue = NO;
-    @synchronized (self.pausedUploadTasks) {
-        if (self.pausedUploadTasks.count > 0) {
-            for (SeafUploadFile *ufile in self.pausedUploadTasks) {
-                [self addUploadTask:ufile];
+    if (![self endErrorPauseIfDue:YES]) {
+        return;
+    }
+    
+    Debug(@"[resumeUploadTasks] All upload tasks have been resumed.");
+
+    // Send task status update notification (can trigger UI refresh, etc.)
+    [self postUploadTaskStatusChangedNotification];
+}
+
+/// Ends a pause caused by failing uploads: puts back the tasks that were
+/// running when it began and lets the queue run again. onlyIfDue: called by
+/// the periodic check, which leaves the pause alone until its wait is over
+/// (it used to end every pause 30 s later whatever its reason, so a full
+/// quota was tried again twice a minute). NO when the pause stays.
+/// The queue is released whether or not tasks were set aside: with none (the
+/// failing upload was the only one running) it used to stay suspended for good.
+- (BOOL)endErrorPauseIfDue:(BOOL)onlyIfDue {
+    BOOL wasSuspendedForErrors = NO;
+    @synchronized (self) {
+        if (self.suspendedForErrors) {
+            NSDate *until = self.errorPauseUntil;
+            if (onlyIfDue && until && [until timeIntervalSinceNow] > 0) {
+                Debug(@"[AccountQueue] Uploads paused after errors (code %@) until %@.", self.lastPausedErrorCode, until);
+                return NO;
             }
-            [self.pausedUploadTasks removeAllObjects];
-            shouldResumeQueue = YES; // Mark that we've processed paused tasks
+            self.suspendedForErrors = NO;
+            wasSuspendedForErrors = YES;
+        } else if (!onlyIfDue) {
+            return YES;   // nothing to end
         }
     }
 
-    // Resume the upload queue only if it was previously suspended by this specific logic
-    // or if we've just re-added tasks from pausedUploadTasks.
+    BOOL shouldResumeQueue = wasSuspendedForErrors;
+    NSArray<SeafUploadFile *> *paused = nil;
+    @synchronized (self.pausedUploadTasks) {
+        paused = [self.pausedUploadTasks copy];
+        [self.pausedUploadTasks removeAllObjects];
+    }
+    for (SeafUploadFile *ufile in paused) {
+        [self addUploadTask:ufile];
+        shouldResumeQueue = YES;
+    }
+
     // The global self.isPaused state handles the overall queue suspension.
     if (shouldResumeQueue && self.uploadQueue.isSuspended) {
-         // Check if the queue should be unsuspended based on global pause state
         BOOL globallyPaused;
         @synchronized(self) {
             globallyPaused = self.isPaused;
@@ -932,11 +999,7 @@
             [self.uploadQueue setSuspended:NO];
         }
     }
-    
-    Debug(@"[resumeUploadTasks] All upload tasks have been resumed.");
-
-    // Send task status update notification (can trigger UI refresh, etc.)
-    [self postUploadTaskStatusChangedNotification];
+    return YES;
 }
 
 #pragma mark - Resume Helpers
@@ -951,11 +1014,16 @@
         return;
     }
 
+    // Taken out first: -addUploadTask: ends a pause for errors when the task
+    // is one the user started, and that empties this very array
+    // (-endErrorPauseIfDue:) while it would still be enumerated here.
+    NSArray<SeafUploadFile *> *paused = nil;
     @synchronized (self.pausedUploadTasks) {
-        for (SeafUploadFile *ufile in self.pausedUploadTasks) {
-            [self addUploadTask:ufile];
-        }
+        paused = [self.pausedUploadTasks copy];
         [self.pausedUploadTasks removeAllObjects];
+    }
+    for (SeafUploadFile *ufile in paused) {
+        [self addUploadTask:ufile];
     }
 }
 
@@ -1013,7 +1081,11 @@
             return;
         }
         
-        if (self.conn && self.conn.photoBackup && self.conn.photoBackup.photosArray.count > 0 && self.ongoingTasks.count == 0 && self.waitingTasks.count == 0) {
+        // Only when a queued photo may be tried now. Photos whose upload
+        // failed wait (SeafPhotoBackupTool); with nothing else queued a check
+        // would rescan the photo library and list the folder for nothing,
+        // every 30 seconds.
+        if (self.conn && self.conn.photoBackup && [self.conn.photoBackup hasPhotosDueForUpload] && self.ongoingTasks.count == 0 && self.waitingTasks.count == 0) {
             NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
             [self.conn photosDidChange:note];
         }
@@ -1139,7 +1211,7 @@
             Debug(@"Raw Response Data: %@", rawResponse);
             if ([rawResponse containsString:@"Out of quota"]) {
                 Debug(@"Detected 'Out of quota.' error. Pausing upload queue...");
-                [self pauseUploadTasksWithCode:statusCode];
+                [self pauseUploadTasksWithCode:statusCode quota:YES];
                 return;
             }
         } else {
@@ -1164,7 +1236,7 @@
             // If it's "Out of quota.", immediately pause the queue
             if ([errorMsg isEqualToString:@"Out of quota."]) {
                 Debug(@"Detected 'Out of quota.' error. Pausing upload queue...");
-                [self pauseUploadTasksWithCode:statusCode];
+                [self pauseUploadTasksWithCode:statusCode quota:YES];
             }
             break;
         }
@@ -1191,14 +1263,15 @@
 - (void)recordErrorCode:(NSInteger)statusCode
 {
     NSNumber *codeKey = @(statusCode);
-    NSNumber *count = self.errorCodeCountDict[codeKey];
-    if (!count) {
-        count = @(1);
-    } else {
-        count = @(count.integerValue + 1);
+    NSNumber *count = nil;
+    // Uploads finish on the main thread (network callbacks) and on PhotoKit's
+    // threads (an export that failed). Only the dictionary is guarded: the
+    // pause below takes other locks.
+    @synchronized (self) {
+        count = @(self.errorCodeCountDict[codeKey].integerValue + 1);
+        self.errorCodeCountDict[codeKey] = count;
     }
-    self.errorCodeCountDict[codeKey] = count;
-    
+
     // If the same error code occurs 5 times consecutively, pause the queue
     if (count.integerValue >= 5) {
         Debug(@"Error code %ld appeared 5 times consecutively, pausing the upload queue...", (long)statusCode);
@@ -1208,7 +1281,27 @@
 
 - (void)pauseUploadTasksWithCode:(NSInteger)statusCode
 {
+    [self pauseUploadTasksWithCode:statusCode quota:NO];
+}
+
+- (void)pauseUploadTasksWithCode:(NSInteger)statusCode quota:(BOOL)quota
+{
     self.lastPausedErrorCode = @(statusCode);
+    @synchronized (self) {
+        // Uploads running side by side fail side by side: they are one pause,
+        // counted once, until the periodic check has ended it.
+        if (!self.suspendedForErrors) {
+            // 999 stands for "no HTTP response" (-handleUploadErrorIfNeeded:):
+            // the network, or a file that failed on the device. Neither is
+            // the server refusing uploads, so those pauses stay as short as
+            // they were and uploads go on as soon as the network is back;
+            // quota is refused by the server whatever the code.
+            if (statusCode != 999 || quota) self.errorPauseCount += 1;
+            self.errorPauseUntil = [NSDate dateWithTimeIntervalSinceNow:SeafRetryBackoffDelay(MAX(self.errorPauseCount, (NSUInteger)1))];
+            self.suspendedForErrors = YES;
+            Debug(@"[AccountQueue] Uploads paused after errors (code %ld), pause %lu, until %@.", (long)statusCode, (unsigned long)self.errorPauseCount, self.errorPauseUntil);
+        }
+    }
     [self pauseUploadTasks];
 }
 

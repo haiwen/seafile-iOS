@@ -537,6 +537,8 @@
 		BAFF000000000000FFFE0004 /* SeafPhotoHeroAnimator.m in Sources */ = {isa = PBXBuildFile; fileRef = BAFF000000000000FFFE0003 /* SeafPhotoHeroAnimator.m */; };
 		C116A0493213467193079AA2 /* local-image-nomal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 86D097C4B366FDB3900A826F /* local-image-nomal@2x.png */; };
 		C49D6912B6ACC75F3EE2E97C /* SeafFPErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAEA876F9CE98320A1408ED /* SeafFPErrors.m */; };
+		B3FEABBF706079D9B2E8D88C /* SeafFPCheckSchedule.m in Sources */ = {isa = PBXBuildFile; fileRef = AED6DF57E11B4D8467D5C6A9 /* SeafFPCheckSchedule.m */; };
+		C4A1E77B5D2F4E0A9B6C1D31 /* SeafFPErrorResolution.m in Sources */ = {isa = PBXBuildFile; fileRef = C4A1E77B5D2F4E0A9B6C1D32 /* SeafFPErrorResolution.m */; };
 		CBF3F952B96D7D3835F945A4 /* SeafWebViewBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B5DE0A087D90BD6B117BD87E /* SeafWebViewBridge.m */; };
 		D12601A297A2C1C691932FD0 /* SeafFPItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 2825E18C6255AECB8DBB3642 /* SeafFPItem.m */; };
 		D39F0DA10361CD52EAD6E7D5 /* SeafWikiViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27192FBD78A91A8AE45E053D /* SeafWikiViewController.m */; };
@@ -1120,6 +1122,10 @@
 		AA1234560002000000000002 /* SeafSdocLongTextEditorViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafSdocLongTextEditorViewController.m; sourceTree = "<group>"; };
 		AA1234560003000000000003 /* SeafSdocLongTextEditorViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafSdocLongTextEditorViewController.h; sourceTree = "<group>"; };
 		ABAEA876F9CE98320A1408ED /* SeafFPErrors.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPErrors.m; sourceTree = "<group>"; };
+		AED6DF57E11B4D8467D5C6A9 /* SeafFPCheckSchedule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPCheckSchedule.m; sourceTree = "<group>"; };
+		C4A1E77B5D2F4E0A9B6C1D32 /* SeafFPErrorResolution.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPErrorResolution.m; sourceTree = "<group>"; };
+		0B9B12DD148443C71CE78E6B /* SeafFPCheckSchedule.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafFPCheckSchedule.h; sourceTree = "<group>"; };
+		C4A1E77B5D2F4E0A9B6C1D33 /* SeafFPErrorResolution.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafFPErrorResolution.h; sourceTree = "<group>"; };
 		ACB60280293B649179470147 /* SeafWikiWebViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiWebViewController.m; sourceTree = "<group>"; };
 		AEAF14322A9ECA9761843E89 /* SeafFPIdentifier.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPIdentifier.m; sourceTree = "<group>"; };
 		B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-seafileApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1683,6 +1689,10 @@
 				C7F1131E20E3AC3977438A0A /* SeafFPStore.m */,
 				B60E9FE7EFC7455BECA710BE /* SeafFPErrors.h */,
 				ABAEA876F9CE98320A1408ED /* SeafFPErrors.m */,
+				0B9B12DD148443C71CE78E6B /* SeafFPCheckSchedule.h */,
+				C4A1E77B5D2F4E0A9B6C1D33 /* SeafFPErrorResolution.h */,
+				AED6DF57E11B4D8467D5C6A9 /* SeafFPCheckSchedule.m */,
+				C4A1E77B5D2F4E0A9B6C1D32 /* SeafFPErrorResolution.m */,
 				2542E66D944D4B758590BDD8 /* SeafFPItem.h */,
 				2825E18C6255AECB8DBB3642 /* SeafFPItem.m */,
 				FB65A19ED544ACE8AD946066 /* SeafFPEnumerator.h */,
@@ -3594,6 +3604,8 @@
 				222F65EEA24D4F34AD8E0F53 /* SeafFPIdentifier.m in Sources */,
 				07AA1F25181CFB0B481FA1AF /* SeafFPStore.m in Sources */,
 				C49D6912B6ACC75F3EE2E97C /* SeafFPErrors.m in Sources */,
+				B3FEABBF706079D9B2E8D88C /* SeafFPCheckSchedule.m in Sources */,
+				C4A1E77B5D2F4E0A9B6C1D31 /* SeafFPErrorResolution.m in Sources */,
 				D12601A297A2C1C691932FD0 /* SeafFPItem.m in Sources */,
 				D7DA92754AC6E51DE3805D61 /* SeafFPEnumerator.m in Sources */,
 				FAFF06CA0C03C0F3A206A197 /* SeafFPExtension.m in Sources */,

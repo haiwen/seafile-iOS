@@ -44,14 +44,53 @@
     }
 
     // Begin the upload process
+    __block BOOL answered = NO;
     [self.uploadFile prepareForUploadWithCompletion:^(BOOL success, NSError *error) {
-        if (!success || self.isCancelled) {
+        // An asset that has to come from iCloud can answer twice: PhotoKit
+        // reports the failed download to the progress handler and then calls
+        // the result handler without data (SeafAssetManager). The first
+        // answer carries the reason; the second would report the same
+        // failure again.
+        @synchronized (self) {
+            if (answered) return;
+            answered = YES;
+        }
+        if (self.isCancelled) {
             [self completeOperation];
+            return;
+        }
+        if (!success) {
+            [self failPreparation:error];
             return;
         }
 
         [self beginUpload];
     }];
+}
+
+/// The upload fails before anything was sent (the local file or the library
+/// is gone). SeafUploadFile only reports the end of an upload it considers
+/// started, so the file is marked first: a failure nobody hears about is
+/// neither counted by the queue nor remembered by whoever queued the file,
+/// which then queues it again on every timer tick.
+- (void)failBeforeTransfer:(NSError *)error
+{
+    self.uploadFile.model.uploading = YES;
+    [self finishUpload:NO oid:nil error:error ?: [Utils defaultError]];
+}
+
+/// The file could not be prepared (the asset could not be exported). Reported
+/// like any failure before the transfer, but never retried from here: a retry
+/// starts at -beginUpload and does not prepare again, so it would wait out
+/// its delays, replace this error with a placeholder, and send whatever a
+/// failed export left at the path (an empty or truncated file passes the
+/// "file exists" check).
+- (void)failPreparation:(NSError *)error
+{
+    self.uploadFile.model.uploading = YES;
+    NSString *oid = nil;
+    [self.uploadFile finishUpload:NO oid:oid error:error ?: [Utils defaultError]];
+    [self completeOperation];
 }
 
 - (void)cancel
@@ -74,7 +113,7 @@
 - (void)beginUpload
 {
     if (!self.uploadFile.udir.repoId || !self.uploadFile.udir.path) {
-        [self finishUpload:NO oid:nil error:[Utils defaultError]];
+        [self failBeforeTransfer:nil];
         return;
     }
 
@@ -90,14 +129,14 @@
 {
     if (![Utils fileExistsAtPath:self.uploadFile.lpath]) {
         Warning("File %@ does not exist", self.uploadFile.lpath);
-        [self finishUpload:NO oid:nil error:[Utils defaultError]];
+        [self failBeforeTransfer:nil];
         return;
     }
     
     SeafRepo *repo = [connection getRepo:repoId];
     if (!repo) {
         Warning("Repo %@ does not exist", repoId);
-        [self finishUpload:NO oid:nil error:[Utils defaultError]];
+        [self failBeforeTransfer:nil];
         return;
     }
     
@@ -301,6 +340,8 @@
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
             Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.uploadFileName, self.uploadFile.uploadFileAutoSync, oid, responseObject);
+            self.uploadFile.serverDateHeader = [response isKindOfClass:NSHTTPURLResponse.class]
+                ? [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Date"] : nil;
             [self finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -395,6 +436,8 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
+            strongSelf.uploadFile.serverDateHeader = [response isKindOfClass:NSHTTPURLResponse.class]
+                ? [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Date"] : nil;
             [strongSelf finishUpload:YES oid:oid error:nil];
         }
     }];

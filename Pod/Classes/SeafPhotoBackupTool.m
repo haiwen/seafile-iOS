@@ -16,6 +16,7 @@
 #import <FileProvider/NSFileProviderError.h>
 #import "SeafUploadFileModel.h"
 #import "SeafFileOperationManager.h"
+#import "SeafRetryBackoff.h"
 
 #define DEFAULT_UPLOADINGARRAY_INTERVAL 10*60 // 10 min
 
@@ -31,6 +32,11 @@
 
 @property (nonatomic, strong) PHFetchResult *fetchResult;
 
+// Photos whose upload failed, by local identifier, and when each may be tried
+// again (SeafRetryBackoff). Without it a photo that keeps failing is queued
+// again on every 30 s tick of the account queue.
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSArray *> *photoFailures;
+
 @end
 
 @implementation SeafPhotoBackupTool
@@ -42,6 +48,7 @@
         self.connection = connection;
         self.accountIdentifier = connection.accountIdentifier;
         self.localUploadDir = localUploadDir;
+        _photoFailures = [NSMutableDictionary dictionary];
         [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     }
     return self;
@@ -52,6 +59,7 @@
     if (self) {
         self.inAutoSync = false;
         self.inCheckPhotos = false;
+        _photoFailures = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -65,6 +73,51 @@
     _inCheckPhotos = false;
     _fetchResult = nil;
     _syncDir = nil;
+    [self forgetPhotoFailures];
+}
+
+#pragma mark - Failed photos
+
+- (void)forgetPhotoFailures {
+    @synchronized (self.photoFailures) {
+        [self.photoFailures removeAllObjects];
+    }
+}
+
+- (BOOL)isPhotoWaitingAfterFailure:(NSString *)localIdentifier at:(NSDate *)now {
+    @synchronized (self.photoFailures) {
+        return SeafRetryBackoffIsWaiting(self.photoFailures, localIdentifier, now);
+    }
+}
+
+- (BOOL)hasPhotosDueForUpload {
+    NSArray *photos = nil;
+    @synchronized(self.photosArray) {
+        photos = [self.photosArray copy];
+    }
+    if (photos.count == 0) return NO;
+    NSDate *now = [NSDate date];
+    @synchronized (self.photoFailures) {
+        if (self.photoFailures.count == 0) return YES;
+        for (NSString *localIdentifier in photos) {
+            if (!SeafRetryBackoffIsWaiting(self.photoFailures, localIdentifier, now)) return YES;
+        }
+    }
+    return NO;
+}
+
+/// Failures of photos that are no longer queued (deleted, or uploaded by a
+/// later attempt nobody reported) would otherwise stay for good.
+- (void)prunePhotoFailures {
+    NSSet *queued = nil;
+    @synchronized(self.photosArray) {
+        queued = [NSSet setWithArray:self.photosArray ?: @[]];
+    }
+    @synchronized (self.photoFailures) {
+        for (NSString *localIdentifier in self.photoFailures.allKeys) {
+            if (![queued containsObject:localIdentifier]) [self.photoFailures removeObjectForKey:localIdentifier];
+        }
+    }
 }
 
 - (void)checkPhotos:(BOOL)force {
@@ -152,8 +205,15 @@
     NSMutableArray *uploadFilesArray = [[NSMutableArray alloc] init];
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
     BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
+    NSDate *now = [NSDate date];
+    NSUInteger waiting = 0;
     
     for (PHAsset *asset in result) {
+        // Failed a moment ago: stays queued, and gets its turn when its wait is over.
+        if (asset && [self isPhotoWaitingAfterFailure:asset.localIdentifier at:now]) {
+            waiting++;
+            continue;
+        }
         if (asset) {
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
             NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
@@ -187,6 +247,9 @@
         }
     }
     
+    if (waiting > 0) {
+        Debug("%lu photos left alone after a failed upload, %lu queued", (unsigned long)waiting, (unsigned long)uploadFilesArray.count);
+    }
     [SeafDataTaskManager.sharedObject addUploadTasksInBatch:uploadFilesArray forConnection:self.connection];
 }
 
@@ -281,9 +344,23 @@
         @synchronized(self.photosArray) {
             [self.photosArray removeObject:ufile.assetIdentifier];
         }
+        @synchronized (self.photoFailures) {
+            SeafRetryBackoffNoteSuccess(self.photoFailures, ufile.assetIdentifier);
+        }
+    } else if (SeafRetryErrorCountsAgainstFile(error)) {
+        // The photo stays queued and the account queue's 30 s timer picks it
+        // up again, but not before the wait is over: the server refused it
+        // (or it could not be exported), and the next attempt would end the
+        // same way.
+        NSDate *until = nil;
+        @synchronized (self.photoFailures) {
+            until = SeafRetryBackoffNoteFailure(self.photoFailures, ufile.assetIdentifier, [NSDate date]);
+        }
+        Warning("Failed to upload photo %@, left alone until %@: %@", ufile.name, until, error);
     } else {
+        // Cancelled, or the network did not answer: nothing about this photo.
+        // It goes again with the next check.
         Warning("Failed to upload photo %@: %@", ufile.name, error);
-        //will retry by SeafAccountTaskQueue timer every 30s.
     }
 }
 
@@ -339,6 +416,7 @@
         }
     }];
     
+    [self prunePhotoFailures];
     Debug("filterOutNeedUploadPhotos summary: totalToUpload=%lu", (unsigned long)self.photosArray.count);
 }
 
@@ -438,6 +516,7 @@
     @synchronized(self.photosArray) {
         _photosArray = [[NSMutableArray alloc] init];
     }
+    [self forgetPhotoFailures];
     [[SeafRealmManager shared] clearAllCachedPhotosInAccount:self.accountIdentifier];
 }
 

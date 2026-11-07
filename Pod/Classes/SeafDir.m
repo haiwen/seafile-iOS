@@ -262,17 +262,14 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     self.state = SEAF_DENTRY_INIT;
 }
 
+static BOOL SeafFPResponseHasListing(id JSON);
+
 - (BOOL)handleData:(NSString *)oid data:(id)JSON
 {
+    if (!SeafFPResponseHasListing(JSON)) return NO;
+    if ([@"uptodate" isEqual:JSON]) return NO;
     @synchronized(self) {
-        if (oid) {
-            if ([oid isEqualToString:self.ooid])
-                return NO;
-            self.ooid = oid;
-        } else {
-            if ([@"uptodate" isEqual:JSON])
-                return NO;
-        }
+        if (oid && _items && [oid isEqualToString:self.ooid]) return NO;
     }
     
     // v2.1: the server returns a dictionary { "dirent_list": [...] }
@@ -354,6 +351,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
     [self buildFileIndexFromItems:newItems];
     [self loadedItems:newItems];
+    self.ooid = oid;
     return YES;
 }
 
@@ -380,6 +378,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON
 {
+    if (!SeafFPResponseHasListing(JSON)) { self.state = SEAF_DENTRY_INIT; return; }
     @synchronized(self) {
         self.state = SEAF_DENTRY_UPTODATE;
         NSString *curId = nil;
@@ -430,15 +429,30 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
  */
 - (void)loadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
+    [self loadContentSuccess:success failure:failure requireListing:NO];
+}
+
+- (void)loadContentSuccess:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
+           requireListing:(BOOL)requireListing
+{
     // Files app index (main app only): the store's seq before the request
     // lets the indexer tell whether the extension changed the directory
     // while the listing was in flight.
     long long indexStartSeq = [self fp_indexStartSeq];
     [self.connection sendRequest:self.url
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+                        if (requireListing && (!SeafFPResponseHasListing(JSON)
+                            || ([@"uptodate" isEqual:JSON] && !self.items))) {
+                            if (failure) failure(self, [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorCannotParseResponse userInfo:nil]);
+                            return;
+                        }
                         // Force reload uplaodItems from task queue.
                         self->_uploadItems = nil;
                         [self handleResponse:response json:JSON];
+                        if (!self.items || !SeafFPResponseHasListing(JSON)) {
+                            if (failure) failure(self, [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorCannotParseResponse userInfo:nil]);
+                            return;
+                        }
                         // Also after "Already uptodate": the server confirmed
                         // that the cached items are its current listing. Not
                         // after a response that could not be parsed.
@@ -447,7 +461,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
                     }
                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
                         self.state = SEAF_DENTRY_INIT;
-                        [self fp_indexListingForResponse:self->_items startSeq:-1];
+                        [self fp_indexListingForResponse:(self->_items ? @"uptodate" : nil) startSeq:-1];
                         if (failure) failure(self, error);
                         [self.delegate download:self failed:error];
                     }];
@@ -457,11 +471,19 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 static BOOL SeafFPResponseHasListing(id JSON)
 {
-    if ([JSON isKindOfClass:[NSArray class]] || [@"uptodate" isEqual:JSON]) return YES;
-    if ([JSON isKindOfClass:[NSDictionary class]]) {
-        return [JSON[@"dirent_list"] isKindOfClass:[NSArray class]];
+    if ([@"uptodate" isEqual:JSON]) return YES;
+    if ([JSON isKindOfClass:[NSDictionary class]] && JSON[@"dir_id"]
+        && ![JSON[@"dir_id"] isKindOfClass:[NSString class]]) return NO;
+    id entries = [JSON isKindOfClass:[NSDictionary class]] ? JSON[@"dirent_list"] : JSON;
+    if (![entries isKindOfClass:[NSArray class]]) return NO;
+    for (id entry in entries) {
+        if (![entry isKindOfClass:[NSDictionary class]]) return NO;
+        NSString *name = entry[@"name"], *type = entry[@"type"];
+        if (![name isKindOfClass:[NSString class]] || name.length == 0 || [name containsString:@"/"]
+            || (![@"file" isEqual:type] && ![@"dir" isEqual:type])) return NO;
+        if (entry[@"id"] && ![entry[@"id"] isKindOfClass:[NSString class]]) return NO;
     }
-    return NO;
+    return YES;
 }
 
 - (long long)fp_indexStartSeq

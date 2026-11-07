@@ -9,27 +9,34 @@
 #import "SeafFPItem.h"
 #import "SeafFPStore.h"
 #import "SeafFPErrors.h"
+#import "SeafFPCheckSchedule.h"
 #import "SeafConnection.h"
 #import "SeafRepos.h"
 #import "SeafDir.h"
 #import "SeafFile.h"
 #import "Debug.h"
+#import <errno.h>
+#import <limits.h>
 
 // A working set change enumeration re-checks the directories its members live
 // in, a few at a time, least recently checked first (design §8.2). Listings
 // signal the working set, so a pass may follow every browse: a directory
-// listed within the re-check interval is left alone by the pass.
+// listed within the re-check interval is left alone by the pass, and so is
+// one whose last listing failed, for as long as SeafFPCheckSchedule says.
 static const NSUInteger kSeafFPWorkingSetDirectoryChecksPerPass = 5;
 static const NSTimeInterval kSeafFPWorkingSetCheckBudget = 20.0;
 static const NSTimeInterval kSeafFPWorkingSetRecheckInterval = 120.0;
+// A directory the server no longer has is retired by a fresh listing of its
+// parent; when that one is gone too the pass climbs, this many levels at most.
+static const NSUInteger kSeafFPMissingParentLevels = 3;
 
 // The working set is everything the system has learnt through this extension
 // (design §7.4): a full enumeration hands out the library list and then the
-// identity table in uuid order, this many rows per page; a change enumeration
+// identity table parents first, this many rows per page; a change enumeration
 // reports at most this many identity rows per pass and asks for another pass.
 static const NSInteger kSeafFPWorkingSetPageSize = 200;
 static const NSInteger kSeafFPWorkingSetChangesPerPass = 500;
-static NSString * const kSeafFPWorkingSetPagePrefix = @"u:";
+static NSString * const kSeafFPWorkingSetPagePrefix = @"w2|";
 // Working set anchors are "<generation>:<seq>". An anchor of an earlier
 // generation (a bare seq, before the working set covered every known item)
 // expires once, which makes the system rescan the full working set.
@@ -61,26 +68,6 @@ static long long SeafFPWorkingSetSeqFromAnchor(NSString *anchor)
     return SeafFPIsDecimal(digits) ? digits.longLongValue : -1;
 }
 
-/// The libraries Files may see: unlocked, one per id (the SDK lists a library
-/// once per type: mine / shared / group).
-static NSArray<SeafRepo *> *SeafFPVisibleRepos(SeafRepos *repos)
-{
-    if (repos && repos.items.count == 0) {
-        [repos loadCache];
-    }
-    NSMutableArray<SeafRepo *> *result = [NSMutableArray array];
-    NSMutableSet<NSString *> *seen = [NSMutableSet set];
-    for (SeafBase *obj in repos.items) {
-        if (![obj isKindOfClass:[SeafRepo class]]) continue;
-        SeafRepo *repo = (SeafRepo *)obj;
-        if (repo.passwordRequired) continue;
-        if (repo.repoId.length == 0 || [seen containsObject:repo.repoId]) continue;
-        [seen addObject:repo.repoId];
-        [result addObject:repo];
-    }
-    return result;
-}
-
 static NSUInteger SeafFPPathDepth(NSString *path)
 {
     NSUInteger depth = 0;
@@ -91,17 +78,19 @@ static NSUInteger SeafFPPathDepth(NSString *path)
     return depth;
 }
 
+static NSComparisonResult SeafFPComparePosition(NSUInteger aDepth, BOOL aDir, long long aSeq, NSString *aUUID,
+                                              NSUInteger bDepth, BOOL bDir, long long bSeq, NSString *bUUID)
+{
+    if (aDepth != bDepth) return aDepth < bDepth ? NSOrderedAscending : NSOrderedDescending;
+    if (aDir != bDir) return aDir ? NSOrderedAscending : NSOrderedDescending;
+    if (aSeq != bSeq) return aSeq < bSeq ? NSOrderedAscending : NSOrderedDescending;
+    return [aUUID compare:bUUID];
+}
+
 static NSComparisonResult SeafFPCompareRecordsParentFirst(SeafFPRecord *a, SeafFPRecord *b)
 {
-    NSUInteger depthA = SeafFPPathDepth(a.path);
-    NSUInteger depthB = SeafFPPathDepth(b.path);
-    if (depthA != depthB) return depthA < depthB ? NSOrderedAscending : NSOrderedDescending;
-    if (a.isDir != b.isDir) return a.isDir ? NSOrderedAscending : NSOrderedDescending;
-    if (a.seq != b.seq) return a.seq < b.seq ? NSOrderedAscending : NSOrderedDescending;
-    NSComparisonResult byRepo = [a.repoId compare:b.repoId];
-    if (byRepo != NSOrderedSame) return byRepo;
-    NSComparisonResult byPath = [a.path compare:b.path];
-    return byPath != NSOrderedSame ? byPath : [a.uuid compare:b.uuid];
+    return SeafFPComparePosition(SeafFPPathDepth(a.path), a.isDir, a.seq, a.uuid,
+                                 SeafFPPathDepth(b.path), b.isDir, b.seq, b.uuid);
 }
 
 /// Sorts identity rows parent-before-child (by path depth, directories before
@@ -115,41 +104,34 @@ static NSArray<SeafFPRecord *> *SeafFPSortRecordsParentFirst(NSArray<SeafFPRecor
     }];
 }
 
-static NSString * _Nullable SeafFPWorkingSetPageTokenForRecord(SeafFPRecord *record)
+static NSString * _Nullable SeafFPWorkingSetPageTokenForRecord(SeafFPRecord *record, long long scanStart)
 {
-    if (!record || record.uuid.length == 0) return nil;
-    return [NSString stringWithFormat:@"%@%@\n%d\n%lld\n%@\n%@",
-            kSeafFPWorkingSetPagePrefix,
-            record.uuid,
-            record.isDir ? 1 : 0,
-            record.seq,
-            record.repoId ?: @"",
-            record.path ?: @""];
+    if (!record || record.uuid.length == 0 || scanStart < 0) return nil;
+    return [NSString stringWithFormat:@"%@%lld|%lu|%d|%lld|%@", kSeafFPWorkingSetPagePrefix,
+            scanStart, (unsigned long)SeafFPPathDepth(record.path), record.isDir ? 1 : 0, record.seq, record.uuid];
 }
 
-static SeafFPRecord * _Nullable SeafFPWorkingSetCursorFromToken(NSString *token, NSString * _Nullable * _Nullable outUUID)
+static BOOL SeafFPParseInteger(NSString *text, unsigned long long maximum, unsigned long long *value)
 {
-    if (![token hasPrefix:kSeafFPWorkingSetPagePrefix]) return nil;
-    NSString *payload = [token substringFromIndex:kSeafFPWorkingSetPagePrefix.length];
-    if (payload.length == 0) return nil;
-    NSArray<NSString *> *parts = [payload componentsSeparatedByString:@"\n"];
-    NSString *uuid = parts.firstObject;
-    if (outUUID) *outUUID = uuid;
-    if (parts.count < 5 || uuid.length == 0) return nil;
-    NSString *isDirStr = parts[1];
-    NSString *seqStr = parts[2];
-    NSString *repoId = parts[3];
-    NSString *path = [[parts subarrayWithRange:NSMakeRange(4, parts.count - 4)] componentsJoinedByString:@"\n"];
-    if (!SeafFPIsDecimal(isDirStr) || !SeafFPIsDecimal(seqStr) || repoId.length == 0 || path.length == 0) {
-        return nil;
-    }
-    SeafFPRecord *cursor = [SeafFPRecord new];
-    cursor.uuid = uuid;
-    cursor.isDir = isDirStr.intValue != 0;
-    cursor.seq = seqStr.longLongValue;
-    cursor.repoId = repoId;
-    cursor.path = path;
-    return cursor;
+    if (text.length == 0 || text.length > 20
+        || [text rangeOfCharacterFromSet:[[NSCharacterSet characterSetWithCharactersInString:@"0123456789"] invertedSet]].location != NSNotFound) return NO;
+    errno = 0;
+    unsigned long long parsed = strtoull(text.UTF8String, NULL, 10);
+    if (errno == ERANGE || parsed > maximum) return NO;
+    *value = parsed;
+    return YES;
+}
+
+static NSDictionary * _Nullable SeafFPWorkingSetCursorFromToken(NSString *token)
+{
+    if (![token hasPrefix:kSeafFPWorkingSetPagePrefix] || [token lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 500) return nil;
+    NSArray<NSString *> *parts = [token componentsSeparatedByString:@"|"];
+    if (parts.count != 6 || parts[5].length != 32
+        || [parts[5] rangeOfCharacterFromSet:[[NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdef"] invertedSet]].location != NSNotFound) return nil;
+    unsigned long long start = 0, depth = 0, isDir = 0, seq = 0;
+    if (!SeafFPParseInteger(parts[1], LLONG_MAX, &start) || !SeafFPParseInteger(parts[2], NSUIntegerMax, &depth)
+        || !SeafFPParseInteger(parts[3], 1, &isDir) || !SeafFPParseInteger(parts[4], LLONG_MAX, &seq)) return nil;
+    return @{@"start":@(start), @"depth":@(depth), @"isDir":@(isDir), @"seq":@(seq), @"uuid":parts[5]};
 }
 
 #pragma mark - Container load result
@@ -164,12 +146,44 @@ static SeafFPRecord * _Nullable SeafFPWorkingSetCursorFromToken(NSString *token,
 @property (nonatomic, copy) NSArray<SeafFPItem *> *items;
 @property (nonatomic, copy) NSArray<SeafFPItem *> *updatedItems;
 @property (nonatomic, copy) NSArray<NSFileProviderItemIdentifier> *deletedIdentifiers;
+// A listing served from the cache: what the server's failure said (a cached
+// listing would otherwise hide that the directory is gone).
+@property (nonatomic, assign) SeafFPListingFailure failure;
 @end
 
 @implementation SeafFPContainerLoad
 @end
 
 typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, NSError * _Nullable error);
+
+static NSString * const kSeafFPListingFailureKey = @"SeafFPListingFailure";
+
+/// The error for the system, remembering what the server's failure said.
+static NSError *SeafFPErrorWithListingFailure(NSError *error, SeafFPListingFailure failure)
+{
+    if (!error || failure == SeafFPListingFailureNone) return error;
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:error.userInfo ?: @{}];
+    userInfo[kSeafFPListingFailureKey] = @(failure);
+    return [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+}
+
+/// A library that is locked or gone refuses its own directories and says
+/// nothing about the session or the other libraries: a working set pass backs
+/// the directory off and goes on. The store failing to answer is not that.
+static NSError *SeafFPLibraryAccessError(NSError *error)
+{
+    if (error.code == NSFileProviderErrorCannotSynchronize) return error;
+    return SeafFPErrorWithListingFailure(error, SeafFPListingFailureDirectory);
+}
+
+/// None for a fresh listing, and for an error decided without asking the
+/// server (no account, store closed, the row is already retired).
+static SeafFPListingFailure SeafFPListingFailureOf(SeafFPContainerLoad *load, NSError *error)
+{
+    if (load) return load.failure;
+    NSNumber *failure = error.userInfo[kSeafFPListingFailureKey];
+    return [failure isKindOfClass:[NSNumber class]] ? (SeafFPListingFailure)failure.integerValue : SeafFPListingFailureNone;
+}
 
 #pragma mark - Change set
 
@@ -231,10 +245,10 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
     for (SeafFPItem *item in updates) {
         NSUInteger depth = ([SeafFPIdentifier kindOfIdentifier:item.itemIdentifier] == SeafFPIdentifierKindRepo) ? 0 : 1;
         NSString *parentID = item.parentItemIdentifier;
-        NSUInteger hops = 0;
-        while (parentID.length > 0 && self.updated[parentID] && ![self.deleted containsObject:parentID] && hops < 64) {
+        NSMutableSet *visited = [NSMutableSet setWithObject:item.itemIdentifier];
+        while (parentID.length > 0 && self.updated[parentID] && ![self.deleted containsObject:parentID] && ![visited containsObject:parentID]) {
+            [visited addObject:parentID];
             depth++;
-            hops++;
             parentID = self.updated[parentID].parentItemIdentifier;
         }
         depthByID[item.itemIdentifier] = @(depth);
@@ -267,17 +281,45 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 
 @end
 
+#pragma mark - Check pass
+
+/// One round of directory checks: what they changed, how long they may take,
+/// the parents already listed for a missing child, and whether the server
+/// stopped answering (the rest of the round is then skipped).
+@interface SeafFPCheckPass : NSObject
+@property (nonatomic, strong) SeafFPChangeSet *changes;
+@property (nonatomic, strong) NSDate *deadline;
+@property (nonatomic, strong) NSMutableSet<NSString *> *verifiedParents;
+@property (nonatomic, assign) BOOL aborted;
+@end
+
+@implementation SeafFPCheckPass
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _changes = [SeafFPChangeSet new];
+        _verifiedParents = [NSMutableSet set];
+        _deadline = [NSDate dateWithTimeIntervalSinceNow:kSeafFPWorkingSetCheckBudget];
+    }
+    return self;
+}
+
+@end
+
 #pragma mark - Enumerator
 
 @interface SeafFPEnumerator ()
 @property (nonatomic, strong) SeafFPExtension *extension;
 @property (nonatomic, copy) NSFileProviderItemIdentifier containerIdentifier;
 @property (nonatomic, assign) SeafFPIdentifierKind kind;
-// seq when the full working set enumeration on this enumerator started; the
-// anchor handed out after it, so rows written during the scan are not skipped.
-// -1 until a scan started: 0 is a valid seq (a fresh or rebuilt store).
+// seq when the full working set enumeration this enumerator served a page of
+// started (carried in the page token); the anchor handed out after it, so rows
+// written during the scan are not skipped. -1 until it served a page: 0 is a
+// valid seq (a fresh or rebuilt store).
 @property (nonatomic, assign) long long scanStartSeq;
-@property (nonatomic, copy, nullable) NSArray<SeafFPRecord *> *scanSnapshot;
+@property (nonatomic, assign) BOOL scanFailed;
 @end
 
 @implementation SeafFPEnumerator
@@ -332,6 +374,8 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 - (void)loadRoot:(NSFileProviderItemIdentifier)containerIdentifier completion:(SeafFPContainerCompletion)completion
 {
     SeafRepos *repos = self.extension.connection.rootFolder;
+    long long requestStartSeq = [self.extension.store beginRepositoryRequest];
+    if (requestStartSeq < 0) { completion(nil, [SeafFPErrors cannotSynchronize]); return; }
     __weak typeof(self) weakSelf = self;
     [repos loadContentSuccess:^(SeafDir *dir) {
         typeof(self) strongSelf = weakSelf;
@@ -339,14 +383,14 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
             completion(nil, [SeafFPErrors cannotSynchronize]);
             return;
         }
-        [strongSelf deliverRoot:(SeafRepos *)dir fromCache:NO container:containerIdentifier completion:completion];
+        [strongSelf deliverRoot:(SeafRepos *)dir fromCache:NO requestStartSeq:requestStartSeq container:containerIdentifier completion:completion];
     } failure:^(SeafDir *dir, NSError *error) {
         typeof(self) strongSelf = weakSelf;
         SeafRepos *r = (SeafRepos *)dir;
         BOOL cached = r.hasCache || [r loadCache];
         if (cached && strongSelf) {
             Info("Library list unreachable, serving cache: %@", error);
-            [strongSelf deliverRoot:r fromCache:YES container:containerIdentifier completion:completion];
+            [strongSelf deliverRoot:r fromCache:YES requestStartSeq:-1 container:containerIdentifier completion:completion];
         } else {
             NSError *mapped = [SeafFPErrors errorForSeafError:error];
             [strongSelf.extension noteError:mapped];
@@ -357,18 +401,26 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 
 - (void)deliverRoot:(SeafRepos *)repos
           fromCache:(BOOL)fromCache
+    requestStartSeq:(long long)requestStartSeq
           container:(NSFileProviderItemIdentifier)containerIdentifier
          completion:(SeafFPContainerCompletion)completion
 {
     SeafFPStore *store = self.extension.store;
+    SeafFPWriteResult result = [store applyRepositorySnapshotResult:[repos fp_repositorySnapshot]
+        complete:!fromCache fromCache:fromCache requestStartSeq:(fromCache ? -1 : requestStartSeq)];
+    if (result == SeafFPWriteFailed) { completion(nil, [SeafFPErrors cannotSynchronize]); return; }
     NSString *previousAnchor = [store anchorForContainer:containerIdentifier];
     NSSet<NSString *> *previous = [NSSet setWithArray:[store snapshotForContainer:containerIdentifier]];
 
     NSMutableArray<SeafFPItem *> *items = [NSMutableArray array];
     NSMutableArray<NSString *> *lines = [NSMutableArray array];
-    for (SeafRepo *repo in SeafFPVisibleRepos(repos)) {
-        [items addObject:[self.extension itemForRepo:repo]];
-        [lines addObject:[NSString stringWithFormat:@"%@|%lld|%@|%@", repo.repoId, repo.mtime, repo.perm ?: @"", repo.name ?: @""]];
+    NSDictionary *repositoryStates = [store repositoryStates];
+    if (!repositoryStates) { completion(nil, [SeafFPErrors cannotSynchronize]); return; }
+    for (NSString *repoId in [repositoryStates.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+        NSDictionary *state = repositoryStates[repoId];
+        if (![state[@"availability"] isEqual:@"visible"]) continue;
+        [items addObject:[self.extension itemForRepositoryState:state]];
+        [lines addObject:[NSString stringWithFormat:@"%@|%@|%@|%@", repoId, state[@"mtime"], state[@"perm"], state[@"name"]]];
     }
     [lines sortUsingSelector:@selector(compare:)];
     NSString *anchor = [SeafFPIdentifier sha1Hex:[lines componentsJoinedByString:@"\n"]];
@@ -389,6 +441,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
         return;
     }
     [store setAnchor:anchor snapshot:snapshot forContainer:containerIdentifier];
+    [self.extension.checkSchedule noteServerAnswered];
     load.anchor = anchor;
     if ([anchor isEqualToString:previousAnchor]) {
         load.updatedItems = @[];
@@ -400,7 +453,8 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
         NSSet<NSString *> *current = [NSSet setWithArray:snapshot];
         NSMutableArray<NSString *> *gone = [NSMutableArray array];
         for (NSString *identifier in previous) {
-            if (![current containsObject:identifier]) [gone addObject:identifier];
+            NSString *repoId = [SeafFPIdentifier repoIdFromIdentifier:identifier];
+            if (![current containsObject:identifier] && ![repositoryStates[repoId][@"availability"] isEqual:@"locked"]) [gone addObject:identifier];
         }
         load.deletedIdentifiers = gone;
     }
@@ -430,35 +484,46 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 {
     SeafFPRecord *record = nil;
     SeafDir *dir = [self.extension seafDirForContainer:containerIdentifier record:&record];
+    NSString *repoId = dir.repoId ?: [SeafFPIdentifier repoIdFromIdentifier:containerIdentifier];
+    NSError *access = repoId ? [self.extension repositoryAccessError:repoId] : nil;
+    if (access) { completion(nil, SeafFPLibraryAccessError(access)); return; }
     if (!dir) {
-        // A locked library is hidden, not gone: the system keeps what it has below it.
-        SeafRepo *repo = [self.extension repoWithId:[SeafFPIdentifier repoIdFromIdentifier:containerIdentifier]];
-        completion(nil, repo.passwordRequired ? [SeafFPErrors notAuthenticated] : [SeafFPErrors noSuchItem]);
+        completion(nil, [SeafFPErrors noSuchItem]);
         return;
     }
+    // Read before the request: rows the main app (or this process) writes
+    // while it is in flight are newer than the listing and are left alone.
+    long long requestStartSeq = [self.extension.store currentSeq];
     __weak typeof(self) weakSelf = self;
-    [self.extension loadDirectory:dir completion:^(BOOL loaded, BOOL fromCache, NSError *error) {
+    [self.extension loadDirectory:dir listing:^(BOOL loaded, BOOL fromCache, NSError *error, SeafFPListingFailure failure) {
         typeof(self) strongSelf = weakSelf;
         if (!loaded) {
-            completion(nil, error ?: [SeafFPErrors serverUnreachable]);
+            completion(nil, SeafFPErrorWithListingFailure(error ?: [SeafFPErrors serverUnreachable], failure));
             return;
         }
         if (!strongSelf) {
             completion(nil, [SeafFPErrors cannotSynchronize]);
             return;
         }
-        [strongSelf deliverDirectory:dir record:record fromCache:fromCache container:containerIdentifier completion:completion];
+        [strongSelf deliverDirectory:dir record:record fromCache:fromCache requestStartSeq:requestStartSeq
+                           container:containerIdentifier completion:^(SeafFPContainerLoad *load, NSError *deliverError) {
+            load.failure = failure;
+            completion(load, deliverError);
+        }];
     }];
 }
 
 - (void)deliverDirectory:(SeafDir *)dir
                   record:(SeafFPRecord *)record
                fromCache:(BOOL)fromCache
+         requestStartSeq:(long long)requestStartSeq
                container:(NSFileProviderItemIdentifier)containerIdentifier
               completion:(SeafFPContainerCompletion)completion
 {
     SeafFPStore *store = self.extension.store;
     NSString *repoId = dir.repoId;
+    NSError *access = [self.extension accessError] ?: SeafFPLibraryAccessError([self.extension repositoryAccessError:repoId]);
+    if (access) { completion(nil, access); return; }
     NSString *parentUUID = record.uuid;   // nil for the library root
     BOOL editable = [self.extension isRepoEditable:repoId];
 
@@ -470,52 +535,55 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
     }
     NSArray<SeafBase *> *entries = [dir.items copy];
 
+    // The same store method as the main app's listings: cached listings only
+    // admit unknown paths; fresh ones skip rows written after the request,
+    // tombstone the rest of the vanished children as absent (a later rename
+    // can bring them back) and confirm pending directory checks.
+    NSMutableArray<NSDictionary *> *listing = [NSMutableArray arrayWithCapacity:entries.count];
+    for (SeafBase *obj in entries) {
+        NSString *name = obj.name ?: obj.path.lastPathComponent;
+        if (name.length == 0) continue;
+        BOOL isDir = [obj isKindOfClass:[SeafDir class]];
+        NSMutableDictionary *entry = [@{
+            SeafFPEntryName: name,
+            SeafFPEntryIsDir: @(isDir),
+            SeafFPEntryMtime: @(isDir ? ((SeafDir *)obj).mtime : ((SeafFile *)obj).mtime),
+            SeafFPEntrySize: @(isDir ? -1 : (long long)((SeafFile *)obj).filesize),
+        } mutableCopy];
+        if (obj.oid.length > 0) entry[SeafFPEntryOid] = obj.oid;
+        [listing addObject:entry];
+    }
+    SeafFPWriteResult result = [store applyDirectoryListingOfRepo:repoId directoryPath:dir.path entries:listing
+                                                  requestStartSeq:(fromCache ? -1 : requestStartSeq)];
+    // Not applied (busy, or the chain changed while the request was in
+    // flight): answer from the store and keep the old anchor, like a cache hit,
+    // so the next enumeration lists the directory again.
+    if (!fromCache && result == SeafFPWriteFailed) fromCache = YES;
+
     NSMutableArray<SeafFPItem *> *items = [NSMutableArray array];
     NSMutableArray<SeafFPItem *> *updated = [NSMutableArray array];
-    NSMutableArray<NSString *> *stale = [NSMutableArray array];
-    __block long long seqBefore = 0;
-    // One queue hop and one transaction for the whole listing.
-    [store performBatch:^{
-        seqBefore = [store currentSeq];
-        NSMutableSet<NSString *> *seen = [NSMutableSet set];
-        for (SeafBase *obj in entries) {
-            BOOL isDir = [obj isKindOfClass:[SeafDir class]];
-            long long mtime = isDir ? ((SeafDir *)obj).mtime : ((SeafFile *)obj).mtime;
-            long long size = isDir ? -1 : (long long)((SeafFile *)obj).filesize;
-            SeafFPRecord *child = nil;
-            if (fromCache) {
-                // A stale cache must neither revive tombstoned rows nor overwrite
-                // fresher ones (an edit uploaded from Files, say): existing rows
-                // are served as they are, only unknown entries get a row.
-                child = [store recordForRepo:repoId path:obj.path includeDeleted:YES];
-                if (child.deleted) continue;
-            }
-            if (!child) {
-                child = [store upsertRecordForRepo:repoId
-                                              path:obj.path
-                                             isDir:isDir
-                                        parentUUID:parentUUID
-                                               oid:obj.oid
-                                             mtime:mtime
-                                              size:size];
-            }
-            if (!child) continue;
-            [seen addObject:child.uuid];
-            SeafFPItem *item = [SeafFPItem itemForRecord:child repoEditable:editable];
-            [item applyDecoration:decorations[item.itemIdentifier]];
-            [items addObject:item];
-            // New to this listing, or its identity row changed during this pass.
-            if (child.seq > seqBefore || ![previous containsObject:item.itemIdentifier]) {
-                [updated addObject:item];
-            }
+    NSMutableDictionary<NSString *, SeafFPRecord *> *byPath = [NSMutableDictionary dictionary];
+    for (SeafFPRecord *child in [store childRecordsOfRepo:repoId parentUUID:parentUUID]) {
+        byPath[child.path] = child;
+    }
+    NSMutableArray<SeafFPRecord *> *children = [NSMutableArray arrayWithCapacity:byPath.count];
+    for (SeafBase *obj in entries) {
+        SeafFPRecord *child = byPath[[SeafFPIdentifier normalizedPath:obj.path]];
+        if (!child) continue;
+        [children addObject:child];
+        [byPath removeObjectForKey:child.path];
+    }
+    // Live rows the listing did not show were written after the request.
+    [children addObjectsFromArray:byPath.allValues];
+    for (SeafFPRecord *child in children) {
+        SeafFPItem *item = [SeafFPItem itemForRecord:child repoEditable:editable];
+        [item applyDecoration:decorations[item.itemIdentifier]];
+        [items addObject:item];
+        // New to this listing, or its identity row changed since the request.
+        if ((requestStartSeq >= 0 && child.seq > requestStartSeq) || ![previous containsObject:item.itemIdentifier]) {
+            [updated addObject:item];
         }
-        if (!fromCache) {
-            for (SeafFPRecord *gone in [store childRecordsOfRepo:repoId parentUUID:parentUUID]) {
-                if (![seen containsObject:gone.uuid]) [stale addObject:gone.uuid];
-            }
-            [store markDeletedUUIDs:stale];
-        }
-    }];
+    }
 
     NSString *anchor = dir.ooid.length > 0 ? dir.ooid : (dir.oid.length > 0 ? dir.oid : @"0");
     SeafFPContainerLoad *load = [SeafFPContainerLoad new];
@@ -525,6 +593,8 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
         completion(nil, [SeafFPErrors cannotSynchronize]);
         return;
     }
+    access = [self.extension accessError] ?: [self.extension repositoryAccessError:repoId];
+    if (access) { completion(nil, access); return; }
     if (fromCache) {
         load.anchor = previousAnchor ?: anchor;
         load.updatedItems = @[];
@@ -538,6 +608,9 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
         [snapshot addObject:item.itemIdentifier];
     }
     [store setAnchor:anchor snapshot:snapshot forContainer:containerIdentifier];
+    SeafFPCheckSchedule *schedule = self.extension.checkSchedule;
+    [schedule noteSuccessOfContainer:containerIdentifier];
+    [schedule noteServerAnswered];
 
     NSSet<NSString *> *current = [NSSet setWithArray:snapshot];
     NSMutableArray<NSString *> *deleted = [NSMutableArray array];
@@ -572,9 +645,10 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 /// (unshared, or locked) have no parent chain the system could resolve.
 - (NSSet<NSString *> *)visibleRepoIds
 {
-    NSMutableSet<NSString *> *ids = [NSMutableSet set];
-    for (SeafRepo *repo in SeafFPVisibleRepos(self.extension.connection.rootFolder)) {
-        [ids addObject:repo.repoId];
+    NSMutableSet *ids = [NSMutableSet set];
+    NSDictionary *states = [self.extension.store repositoryStates];
+    for (NSString *repoId in states) {
+        if ([states[repoId][@"availability"] isEqual:@"visible"]) [ids addObject:repoId];
     }
     return ids;
 }
@@ -584,90 +658,104 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 /// (NSFileProviderReplicatedExtension.h: an enumerated directory and its
 /// children are part of it) and only working set items are indexed for
 /// Spotlight, which is what the Tags list and, on iOS 26, the favorites
-/// sidebar of Files are built from. The first page carries the library list,
-/// the identity table follows in uuid order; the page token is the last uuid.
+/// sidebar of Files are built from.
+///
+/// fileproviderd invalidates the enumerator after every page and asks for the
+/// next one on a new enumerator, so each page is read on its own from the
+/// position in its token (scan start, then the last row's place in the scan
+/// order). Rows unchanged since the scan started keep their place and are
+/// delivered exactly once, after their parents. A row written after the start
+/// may move behind the position and be missed: the anchor of the scan is the
+/// start, so the change enumeration that follows reports it.
 - (void)enumerateWorkingSetPage:(NSFileProviderPage)page observer:(id<NSFileProviderEnumerationObserver>)observer
 {
     SeafFPStore *store = self.extension.store;
-    NSString *token = SeafFPAnchorString(page);
-    BOOL firstPage = ![token hasPrefix:kSeafFPWorkingSetPagePrefix];
-    NSString *afterUUID = nil;
-    SeafFPRecord *cursorRecord = firstPage ? nil : SeafFPWorkingSetCursorFromToken(token, &afterUUID);
-
-    NSMutableArray<SeafFPItem *> *items = [NSMutableArray array];
-    NSArray<SeafFPRecord *> *allRecords = nil;
+    BOOL firstPage = page.length == 0 || [page isEqual:NSFileProviderInitialPageSortedByDate] || [page isEqual:NSFileProviderInitialPageSortedByName];
+    NSDictionary *cursor = firstPage ? nil : SeafFPWorkingSetCursorFromToken(SeafFPAnchorString(page));
+    if (!firstPage && !cursor) {
+        [observer finishEnumeratingWithError:[SeafFPErrors pageExpired]];
+        return;
+    }
     if (firstPage) {
-        self.scanStartSeq = [store currentSeq];
-        allRecords = SeafFPSortRecordsParentFirst([store liveRecordsAfterUUID:nil limit:0]);
-        self.scanSnapshot = allRecords;
-        for (SeafRepo *repo in SeafFPVisibleRepos(self.extension.connection.rootFolder)) {
-            [items addObject:[self.extension itemForRepo:repo]];
-        }
-    } else if (self.scanSnapshot && self.scanStartSeq >= 0 && [store currentSeq] == self.scanStartSeq) {
-        allRecords = self.scanSnapshot;
-    } else {
-        allRecords = SeafFPSortRecordsParentFirst([store liveRecordsAfterUUID:nil limit:0]);
+        [store applyRepositorySnapshot:[self.extension.connection.rootFolder fp_repositorySnapshot] complete:NO fromCache:YES requestStartSeq:-1];
     }
-    NSSet<NSString *> *repoIds = [self visibleRepoIds];
-    NSMutableDictionary<NSString *, SeafFPDecoration *> *decorations = [NSMutableDictionary dictionary];
-    for (SeafFPDecoration *decoration in [store allDecorations]) {
-        decorations[decoration.itemIdentifier] = decoration;
+    SeafFPWorkingSetPage *batch = [store workingSetPageAfterDepth:[cursor[@"depth"] unsignedIntegerValue]
+                                                            isDir:[cursor[@"isDir"] boolValue]
+                                                              seq:[cursor[@"seq"] longLongValue]
+                                                             uuid:cursor[@"uuid"]
+                                                            limit:kSeafFPWorkingSetPageSize];
+    if (!batch) {
+        self.scanFailed = YES;
+        [observer finishEnumeratingWithError:[SeafFPErrors cannotSynchronize]];
+        return;
     }
-    NSUInteger startIndex = 0;
-    if (!firstPage) {
-        if (!cursorRecord && afterUUID.length > 0 && self.scanSnapshot.count > 0) {
-            for (SeafFPRecord *snap in self.scanSnapshot) {
-                if ([snap.uuid isEqualToString:afterUUID]) {
-                    cursorRecord = snap;
-                    break;
-                }
-            }
-        }
-        if (cursorRecord) {
-            startIndex = [allRecords indexOfObject:cursorRecord
-                                     inSortedRange:NSMakeRange(0, allRecords.count)
-                                           options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
-                                   usingComparator:^NSComparisonResult(SeafFPRecord *a, SeafFPRecord *b) {
-                                       return SeafFPCompareRecordsParentFirst(a, b);
-                                   }];
-        } else if (afterUUID.length > 0) {
-            BOOL found = NO;
-            for (NSUInteger i = 0; i < allRecords.count; i++) {
-                if ([allRecords[i].uuid isEqualToString:afterUUID]) {
-                    startIndex = i + 1;
-                    found = YES;
-                    break;
-                }
-            }
-            if (!found) {
-                [observer finishEnumeratingWithError:[SeafFPErrors syncAnchorExpired]];
-                return;
-            }
-        } else {
-            [observer finishEnumeratingWithError:[SeafFPErrors syncAnchorExpired]];
-            return;
-        }
+    long long start = cursor ? [cursor[@"start"] longLongValue] : batch.sequence;
+    if (start > batch.sequence) {
+        // The store was rebuilt since the scan started: the position means nothing now.
+        [observer finishEnumeratingWithError:[SeafFPErrors pageExpired]];
+        return;
     }
-    NSUInteger remaining = startIndex < allRecords.count ? (allRecords.count - startIndex) : 0;
-    NSUInteger pageCount = MIN(remaining, (NSUInteger)kSeafFPWorkingSetPageSize);
-    NSArray<SeafFPRecord *> *records = pageCount > 0 ? [allRecords subarrayWithRange:NSMakeRange(startIndex, pageCount)] : @[];
-    SeafFPRecord *lastRecord = records.lastObject;
-    NSString *nextPageToken = SeafFPWorkingSetPageTokenForRecord(lastRecord);
-    BOOL more = (startIndex + pageCount) < allRecords.count && nextPageToken.length > 0;
-    for (SeafFPRecord *record in records) {
-        if (![repoIds containsObject:record.repoId]) continue;
-        SeafFPItem *item = [SeafFPItem itemForRecord:record repoEditable:[self.extension isRepoEditable:record.repoId]];
-        [item applyDecoration:decorations[item.itemIdentifier]];
+    NSDictionary *states = batch.repositories;
+    NSMutableArray<SeafFPItem *> *items = [NSMutableArray array];
+    NSMutableSet<NSString *> *emitted = [NSMutableSet set];
+    void (^emitLibrary)(NSString *) = ^(NSString *repoId) {
+        SeafFPItem *item = [SeafFPItem itemForRepositoryMetadata:states[repoId]];
+        [item applyDecoration:batch.decorations[item.itemIdentifier]];
         [items addObject:item];
+        [emitted addObject:item.itemIdentifier];
+    };
+    void (^emitRecord)(SeafFPRecord *) = ^(SeafFPRecord *record) {
+        SeafFPItem *item = [SeafFPItem itemForRecord:record repoEditable:[states[record.repoId][@"editable"] boolValue]];
+        [item applyDecoration:batch.decorations[item.itemIdentifier]];
+        [items addObject:item];
+        [emitted addObject:item.itemIdentifier];
+    };
+    if (firstPage) {
+        for (NSString *repoId in [states.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+            if ([states[repoId][@"availability"] isEqual:@"visible"]) emitLibrary(repoId);
+        }
     }
-    Info("working set page after %@: %lu items%@", afterUUID ?: @"(start)", (unsigned long)items.count, more ? @", more" : @", last");
-    if (!more) {
-        self.scanSnapshot = nil;
+    NSUInteger unplaced = 0;
+    for (SeafFPRecord *record in batch.records) {
+        NSDictionary *state = states[record.repoId];
+        if (![state[@"availability"] isEqual:@"visible"]) continue;
+        // A library whose state changed after the start may not have been
+        // visible on the earlier pages: deliver it and the whole chain again.
+        BOOL libraryChanged = [state[@"eventSeq"] longLongValue] > start;
+        NSMutableArray<SeafFPRecord *> *chain = [NSMutableArray array];   // nearest parent first
+        NSMutableSet<NSString *> *visited = [NSMutableSet setWithObject:record.uuid];
+        BOOL placed = YES;
+        for (NSString *parentUUID = record.parentUUID; parentUUID.length > 0; ) {
+            SeafFPRecord *parent = batch.ancestors[parentUUID];
+            if (!parent || parent.deleted || !parent.isDir || ![parent.repoId isEqual:record.repoId] || [visited containsObject:parent.uuid]) {
+                placed = NO;
+                break;
+            }
+            [visited addObject:parent.uuid];
+            // A parent unchanged since the start sorts before its children
+            // and went out on an earlier page or earlier on this one.
+            if ((libraryChanged || parent.seq > start) && ![emitted containsObject:parent.itemIdentifier]) [chain addObject:parent];
+            parentUUID = parent.parentUUID;
+        }
+        // The page and its ancestors come from one read, so a broken chain is
+        // the store's state, not a race: the row has no place in the
+        // hierarchy. Leaving it out keeps one bad row from failing the whole
+        // scan on every retry; a write that fixes it is a change of its own.
+        if (!placed) { unplaced++; continue; }
+        if (libraryChanged && ![emitted containsObject:[SeafFPIdentifier identifierForRepo:record.repoId]]) emitLibrary(record.repoId);
+        for (SeafFPRecord *parent in chain.reverseObjectEnumerator) emitRecord(parent);
+        if (![emitted containsObject:record.itemIdentifier]) emitRecord(record);
     }
-    if (items.count > 0) {
-        [observer didEnumerateItems:items];
+    if (unplaced) Warning("working set scan left out %lu rows without a parent chain", (unsigned long)unplaced);
+    NSString *token = batch.moreComing ? SeafFPWorkingSetPageTokenForRecord(batch.records.lastObject, start) : nil;
+    if (batch.moreComing && (!token || [token lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 500)) {
+        [observer finishEnumeratingWithError:[SeafFPErrors pageExpired]];
+        return;
     }
-    [observer finishEnumeratingUpToPage:more ? SeafFPAnchorData(nextPageToken) : nil];
+    self.scanStartSeq = start;
+    self.scanFailed = NO;
+    if (items.count) [observer didEnumerateItems:items];
+    [observer finishEnumeratingUpToPage:token ? SeafFPAnchorData(token) : nil];
 }
 
 /// A listing that changed the local view changed the working set; the system
@@ -680,22 +768,30 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 }
 
 /// Directories the working set members live in (a directory member is its
-/// own container), least recently checked first, capped per pass. recheckAt:
-/// when directories were left alone because they were listed within the
-/// re-check interval, the moment the first of them may be checked again.
+/// own container), least recently checked first, capped per pass. Left alone:
+/// directories listed within the re-check interval, and directories whose
+/// last listing failed (SeafFPCheckSchedule). recheckAt: the moment the first
+/// of those may be checked again.
 - (NSArray<NSFileProviderItemIdentifier> *)workingSetContainersToCheckRecheckAt:(NSDate **)recheckAt
 {
     if (recheckAt) *recheckAt = nil;
     SeafFPStore *store = self.extension.store;
+    // A library that is locked, removed or no longer shared answers no
+    // listing; its directories wait until the library list shows it again.
+    NSDictionary<NSString *, NSDictionary *> *states = [store repositoryStates];
+    BOOL (^listable)(NSString *) = ^BOOL(NSString *repoId) {
+        NSDictionary *state = states[repoId];
+        return !state || [state[@"availability"] isEqual:@"visible"];
+    };
     NSMutableSet<NSString *> *containers = [NSMutableSet set];
     for (NSString *identifier in [store workingSetItemIdentifiers]) {
         switch ([SeafFPIdentifier kindOfIdentifier:identifier]) {
             case SeafFPIdentifierKindRepo:
-                [containers addObject:identifier];
+                if (listable([SeafFPIdentifier repoIdFromIdentifier:identifier])) [containers addObject:identifier];
                 break;
             case SeafFPIdentifierKindItem: {
                 SeafFPRecord *record = [store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:identifier]];
-                if (!record || record.deleted) break;
+                if (!record || record.deleted || !listable(record.repoId)) break;
                 [containers addObject:record.isDir ? identifier : record.parentItemIdentifier];
                 break;
             }
@@ -703,44 +799,37 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
                 break;
         }
     }
-    NSDictionary<NSString *, NSDate *> *checkedAt = [store enumeratedAtByContainer];
-    NSDate *never = [NSDate distantPast];
-    NSDate *recent = [NSDate dateWithTimeIntervalSinceNow:-kSeafFPWorkingSetRecheckInterval];
-    NSDate *earliestSkipped = nil;
-    for (NSString *container in containers.allObjects) {
-        NSDate *at = checkedAt[container];
-        if (!at || [at compare:recent] != NSOrderedDescending) continue;
-        [containers removeObject:container];
-        if (!earliestSkipped || [at compare:earliestSkipped] == NSOrderedAscending) earliestSkipped = at;
-    }
-    if (recheckAt && earliestSkipped) {
-        *recheckAt = [earliestSkipped dateByAddingTimeInterval:kSeafFPWorkingSetRecheckInterval];
-    }
-    NSArray<NSString *> *sorted = [containers.allObjects sortedArrayUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
-        NSComparisonResult byDate = [(checkedAt[a] ?: never) compare:(checkedAt[b] ?: never)];
-        return byDate != NSOrderedSame ? byDate : [a compare:b];
-    }];
-    if (sorted.count > kSeafFPWorkingSetDirectoryChecksPerPass) {
-        sorted = [sorted subarrayWithRange:NSMakeRange(0, kSeafFPWorkingSetDirectoryChecksPerPass)];
-        // The ones that did not fit are due now, not in a re-check interval:
-        // without a pass of their own they would wait for an unrelated signal.
-        // Each pass stamps what it checked, so the passes that follow move on
-        // to the next containers and the chain ends.
-        if (recheckAt) *recheckAt = [NSDate date];
-    }
+    NSArray<NSString *> *due = [self.extension.checkSchedule containersToCheckAmong:containers
+                                                                          checkedAt:[store enumeratedAtByContainer]
+                                                                                now:[NSDate date]
+                                                                              limit:kSeafFPWorkingSetDirectoryChecksPerPass
+                                                                           interval:kSeafFPWorkingSetRecheckInterval
+                                                                          recheckAt:recheckAt];
     // The library list is always re-checked: the system ignores signals for
     // any container but the working set, so a library that was unlocked,
     // renamed or shared in the app can only reach Files through here.
-    return [@[NSFileProviderRootContainerItemIdentifier] arrayByAddingObjectsFromArray:sorted];
+    return [@[NSFileProviderRootContainerItemIdentifier] arrayByAddingObjectsFromArray:due];
 }
 
+/// YES when a failed listing says the next directory would fail the same way:
+/// the server did not answer, or the error came from the session or the store
+/// before any request was made. NoSuchItem without a request is one retired
+/// row, nothing more.
+static BOOL SeafFPFailureStopsPass(SeafFPListingFailure failure, NSError *error)
+{
+    if (failure == SeafFPListingFailureServer) return YES;
+    return error && failure == SeafFPListingFailureNone && error.code != NSFileProviderErrorNoSuchItem;
+}
+
+/// Lists the containers one after the other. Each one ends up listed (the
+/// store stamps it), retired by its parent's listing, or backed off in the
+/// schedule, so the pass that follows moves on to other directories.
 - (void)checkContainers:(NSArray<NSFileProviderItemIdentifier> *)containers
                   index:(NSUInteger)index
-               deadline:(NSDate *)deadline
-                changes:(SeafFPChangeSet *)changes
+                   pass:(SeafFPCheckPass *)pass
              completion:(dispatch_block_t)completion
 {
-    if (index >= containers.count || [deadline timeIntervalSinceNow] <= 0) {
+    if (index >= containers.count || pass.aborted || [pass.deadline timeIntervalSinceNow] <= 0) {
         completion();
         return;
     }
@@ -752,22 +841,104 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
             completion();
             return;
         }
-        if (error) {
-            Info("working set check of %@ failed: %@", container, error);
-            if (error.code == NSFileProviderErrorNoSuchItem) {
-                // Gone locally; the next container may still be fine.
-                [strongSelf checkContainers:containers index:index + 1 deadline:deadline changes:changes completion:completion];
-            } else {
-                // Unreachable: report what was collected, the rest waits for the next pass.
-                completion();
-            }
+        dispatch_block_t next = ^{
+            [strongSelf checkContainers:containers index:index + 1 pass:pass completion:completion];
+        };
+        if (load) [pass.changes addLoad:load];
+        if (load && !load.fromCache) {
+            next();   // listed: stamped, and its backoff cleared, when it was delivered
             return;
         }
-        [changes addLoad:load];
-        // A listing served from the cache (one flaky request, or offline) does
-        // not stop the pass: the remaining loads fail fast or hit their own
-        // cache, and the deadline bounds the total.
-        [strongSelf checkContainers:containers index:index + 1 deadline:deadline changes:changes completion:completion];
+        SeafFPListingFailure failure = SeafFPListingFailureOf(load, error);
+        if ([SeafFPIdentifier kindOfIdentifier:container] == SeafFPIdentifierKindRoot) {
+            // Without the library list from the server the directories below
+            // fail the same way, or answer from their cache and learn nothing.
+            Info("working set check: library list not fresh (%@), stopping the pass", error);
+            pass.aborted = YES;
+            completion();
+            return;
+        }
+        NSDate *until = [strongSelf.extension.checkSchedule noteFailureOfContainer:container at:[NSDate date]];
+        Info("working set check of %@ failed (%ld, %@), left alone until %@", container, (long)failure, error, until);
+        if (failure == SeafFPListingFailureMissing) {
+            [strongSelf listParentOfMissingContainer:container level:1 pass:pass completion:next];
+        } else if (SeafFPFailureStopsPass(failure, error)) {
+            pass.aborted = YES;
+            completion();
+        } else {
+            // This directory only (denied, its library locked since the pass
+            // picked it, its row already retired, a listing the store could
+            // not take): the next one may still be fine.
+            next();
+        }
+    }];
+}
+
+/// The server no longer has `container`. Its row, and what is known below it,
+/// is retired by a fresh listing of the directory above -- the same way as
+/// when a pass reaches that directory by itself; a 404 alone retires nothing
+/// (a proxy can answer 404 for everything). Nothing else gets that listing
+/// done: the system shows its replica when the parent is opened, and in a
+/// pass the missing directories are ahead of their parent. When the parent is
+/// gone too, the pass climbs.
+- (void)listParentOfMissingContainer:(NSFileProviderItemIdentifier)container
+                               level:(NSUInteger)level
+                                pass:(SeafFPCheckPass *)pass
+                          completion:(dispatch_block_t)completion
+{
+    // A library that is gone is the library list's business (first in every pass).
+    SeafFPRecord *record = [SeafFPIdentifier kindOfIdentifier:container] == SeafFPIdentifierKindItem
+        ? [self.extension.store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:container]] : nil;
+    if (!record || record.deleted) {
+        completion();
+        return;
+    }
+    NSString *parent = record.parentItemIdentifier;
+    SeafFPCheckSchedule *schedule = self.extension.checkSchedule;
+    if (level > kSeafFPMissingParentLevels || [pass.verifiedParents containsObject:parent]
+        || [pass.deadline timeIntervalSinceNow] <= 0 || [schedule isContainerBackedOff:parent at:[NSDate date]]) {
+        completion();
+        return;
+    }
+    [pass.verifiedParents addObject:parent];
+    __weak typeof(self) weakSelf = self;
+    [self loadContainer:parent completion:^(SeafFPContainerLoad *load, NSError *error) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            completion();
+            return;
+        }
+        if (load) [pass.changes addLoad:load];
+        if (load && !load.fromCache) {
+            Info("listed %@ for its missing child %@: %lu deleted", parent, container, (unsigned long)load.deletedIdentifiers.count);
+            completion();
+            return;
+        }
+        SeafFPListingFailure failure = SeafFPListingFailureOf(load, error);
+        NSDate *until = [schedule noteFailureOfContainer:parent at:[NSDate date]];
+        Info("listing %@ for its missing child %@ failed (%ld, %@), left alone until %@", parent, container, (long)failure, error, until);
+        if (failure == SeafFPListingFailureMissing) {
+            [strongSelf listParentOfMissingContainer:parent level:level + 1 pass:pass completion:completion];
+            return;
+        }
+        if (SeafFPFailureStopsPass(failure, error)) pass.aborted = YES;
+        completion();
+    }];
+}
+
+/// The system asked for this directory and the server no longer has it (the
+/// listing failed, or the cache answered instead). List the parent now, like a
+/// pass would; the working set pass that follows reports what that retired.
+- (void)followUpListingFailure:(SeafFPListingFailure)failure
+{
+    if (failure != SeafFPListingFailureMissing) return;
+    NSString *container = self.containerIdentifier;
+    [self.extension.checkSchedule noteFailureOfContainer:container at:[NSDate date]];
+    SeafFPCheckPass *pass = [SeafFPCheckPass new];
+    [self listParentOfMissingContainer:container level:1 pass:pass completion:^{
+        if (pass.changes.updated.count > 0 || pass.changes.deleted.count > 0) {
+            [self.extension signalWorkingSet];
+        }
     }];
 }
 
@@ -775,103 +946,102 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 {
     SeafFPStore *store = self.extension.store;
     SeafFPChangeSet *changes = [SeafFPChangeSet new];
-    // A long backlog (a big listing just came in, or the first pass after an
-    // upgrade) is reported in slices without re-listing anything.
-    NSArray<SeafFPRecord *> *backlog = [store recordsChangedSinceSeq:known limit:kSeafFPWorkingSetChangesPerPass];
-    BOOL backlogMode = backlog.count == (NSUInteger)kSeafFPWorkingSetChangesPerPass;
+    [store applyRepositorySnapshot:[self.extension.connection.rootFolder fp_repositorySnapshot] complete:NO fromCache:YES requestStartSeq:-1];
+    [store publishPendingRepositoryRecordsWithLimit:500];
+    SeafFPPublicationBatch *waiting = [store publicationBatchAfterSequence:known limit:kSeafFPWorkingSetChangesPerPass];
+    if (!waiting) { [observer finishEnumeratingWithError:[SeafFPErrors cannotSynchronize]]; return; }
+    BOOL localChanges = waiting.records.count || waiting.repositoryEvents.count || waiting.decorationIdentifiers.count || [store hasPendingRepositoryPublications];
     NSDate *recheckAt = nil;
-    NSArray<NSString *> *containers = nil;
-    if (backlog.count > 0) {
-        // Local store rows are already waiting to be reported (a directory was
-        // just browsed in the app): deliver them immediately without blocking on
-        // network container checks unless a record belongs to an unknown library
-        // or the library list was never anchored.
-        NSSet<NSString *> *knownRepos = [self visibleRepoIds];
-        BOOL needsRootRefresh = ([store anchorForContainer:NSFileProviderRootContainerItemIdentifier].length == 0);
-        if (!needsRootRefresh) {
-            for (SeafFPRecord *rec in backlog) {
-                if (!rec.deleted && rec.repoId.length > 0 && ![knownRepos containsObject:rec.repoId]) {
-                    needsRootRefresh = YES;
-                    break;
-                }
-            }
-        }
-        containers = (backlogMode || !needsRootRefresh) ? @[] : @[NSFileProviderRootContainerItemIdentifier];
-    } else {
-        containers = [self workingSetContainersToCheckRecheckAt:&recheckAt];
+    SeafFPCheckSchedule *schedule = self.extension.checkSchedule;
+    // Already-committed metadata must reach the system without waiting for network IO.
+    NSArray<NSString *> *containers = @[];
+    if (!localChanges) {
+        // After a pass the server did not answer, the passes that follow list
+        // nothing until the wait is over (any fresh listing ends it early).
+        recheckAt = [schedule passBlockedUntilAt:[NSDate date]];
+        if (!recheckAt) containers = [self workingSetContainersToCheckRecheckAt:&recheckAt];
     }
-    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:kSeafFPWorkingSetCheckBudget];
+    SeafFPCheckPass *pass = [SeafFPCheckPass new];
+    pass.changes = changes;
+    NSDate *deadline = pass.deadline;
     __weak typeof(self) weakSelf = self;
     // Directories are re-listed first so every row they touch (including
     // tombstoned subtrees) is still above the anchor when the changes are read.
-    [self checkContainers:containers index:0 deadline:deadline changes:changes completion:^{
+    [self checkContainers:containers index:0 pass:pass completion:^{
         typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             [observer finishEnumeratingWithError:[SeafFPErrors cannotSynchronize]];
             return;
         }
-        // Every identity row written since the anchor is reported: the whole
-        // local view is the working set (see enumerateWorkingSetPage:).
-        long long cut = [store currentSeq];
-        NSArray<SeafFPRecord *> *records = backlogMode ? backlog : [store recordsChangedSinceSeq:known limit:kSeafFPWorkingSetChangesPerPass];
-        BOOL moreComing = records.count == (NSUInteger)kSeafFPWorkingSetChangesPerPass && records.lastObject.seq < cut;
-        if (moreComing) cut = records.lastObject.seq;
-        NSSet<NSString *> *repoIds = [strongSelf visibleRepoIds];
-        NSMutableDictionary<NSString *, SeafFPDecoration *> *decorations = [NSMutableDictionary dictionary];
-        for (SeafFPDecoration *decoration in [store allDecorations]) {
-            decorations[decoration.itemIdentifier] = decoration;
-        }
+        [store publishPendingRepositoryRecordsWithLimit:500];
+        SeafFPPublicationBatch *batch = [store publicationBatchAfterSequence:known limit:kSeafFPWorkingSetChangesPerPass];
+        if (!batch) { [observer finishEnumeratingWithError:[SeafFPErrors cannotSynchronize]]; return; }
+        long long cut = batch.sequence;
+        BOOL moreComing = batch.moreComing || [store hasPendingRepositoryPublications];
+        NSDictionary *states = batch.repositories;
+        NSMutableSet *repoIds = [NSMutableSet set];
+        for (NSString *repoId in states) if ([states[repoId][@"availability"] isEqual:@"visible"]) [repoIds addObject:repoId];
         NSMutableDictionary<NSString *, SeafFPRecord *> *liveRecordsByUUID = [NSMutableDictionary dictionary];
-        void (^includeRecordAndAncestors)(SeafFPRecord *) = ^(SeafFPRecord *rec) {
-            SeafFPRecord *cur = rec;
-            NSUInteger hops = 0;
-            while (cur && !cur.deleted && cur.uuid.length > 0 && !liveRecordsByUUID[cur.uuid] && hops < 64) {
-                if (![repoIds containsObject:cur.repoId]) break;
-                liveRecordsByUUID[cur.uuid] = cur;
-                hops++;
+        __block BOOL readFailed = NO;
+        __block NSUInteger unplaced = 0;
+        // Adds the row and the ancestors not added yet; NO when the chain
+        // breaks (a parent that is gone, a tombstone, a file, in another
+        // library, or a cycle) and nothing was added. Such a row has no place
+        // the system could put it, so it is left out instead of holding back
+        // every other change: a write that fixes it is a change of its own.
+        // A parent that could not be read is a failure of this pass.
+        BOOL (^includeRecordAndAncestors)(SeafFPRecord *) = ^BOOL(SeafFPRecord *rec) {
+            NSMutableArray<SeafFPRecord *> *chain = [NSMutableArray array];
+            NSMutableSet *visited = [NSMutableSet set];
+            for (SeafFPRecord *cur = rec; cur; ) {
+                if ([visited containsObject:cur.uuid] || cur.deleted || ![repoIds containsObject:cur.repoId]) { unplaced++; return NO; }
+                [visited addObject:cur.uuid];
+                if (liveRecordsByUUID[cur.uuid]) break;
+                [chain addObject:cur];
                 if (cur.parentUUID.length == 0) break;
-                cur = [store recordForUUID:cur.parentUUID];
+                BOOL failed = NO;
+                SeafFPRecord *parent = [store recordForUUID:cur.parentUUID failed:&failed];
+                if (failed) { readFailed = YES; return NO; }
+                if (!parent || !parent.isDir || ![parent.repoId isEqual:rec.repoId]) { unplaced++; return NO; }
+                cur = parent;
             }
+            for (SeafFPRecord *r in chain) liveRecordsByUUID[r.uuid] = r;
+            return YES;
         };
-        for (NSString *existingId in [changes.updated.allKeys copy]) {
-            if ([SeafFPIdentifier kindOfIdentifier:existingId] == SeafFPIdentifierKindItem) {
-                SeafFPRecord *rec = [store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:existingId]];
-                if (rec && !rec.deleted) includeRecordAndAncestors(rec);
-            }
-        }
-        for (SeafFPRecord *record in records) {
-            if (record.seq > cut) continue;   // written after the cut, next pass
-            if (record.deleted) {
-                [changes addDeletedIdentifiers:@[record.itemIdentifier]];
-                continue;
-            }
-            if (![repoIds containsObject:record.repoId]) continue;
-            includeRecordAndAncestors(record);
-        }
-        // Favorite / tag changes of rows whose identity did not change.
-        for (NSString *identifier in [store workingSetItemIdentifiersChangedSinceSeq:known]) {
+        for (NSString *identifier in [changes.updated.allKeys copy]) {
             if ([SeafFPIdentifier kindOfIdentifier:identifier] == SeafFPIdentifierKindItem) {
                 SeafFPRecord *rec = [store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:identifier]];
-                if (rec && !rec.deleted && [repoIds containsObject:rec.repoId]) {
-                    includeRecordAndAncestors(rec);
-                    continue;
+                if (!rec || rec.deleted || ![repoIds containsObject:rec.repoId] || !includeRecordAndAncestors(rec)) {
+                    [changes.updated removeObjectForKey:identifier];
                 }
-            }
-            SeafFPItem *item = [strongSelf.extension resolveItem:identifier error:nil];
-            if (item) {
-                [changes addUpdatedItems:@[item]];
             }
         }
+        for (NSDictionary *event in batch.repositoryEvents) {
+            NSString *identifier = [SeafFPIdentifier identifierForRepo:event[@"repoId"]];
+            if ([event[@"eventKind"] isEqual:@"delete"]) [changes addDeletedIdentifiers:@[identifier]];
+            else if ([event[@"availability"] isEqual:@"visible"]) [changes addUpdatedItems:@[[strongSelf.extension itemForRepositoryState:event]]];
+        }
+        for (SeafFPRecord *record in batch.records) {
+            if (record.deleted) { [changes addDeletedIdentifiers:@[record.itemIdentifier]]; continue; }
+            if ([repoIds containsObject:record.repoId]) includeRecordAndAncestors(record);
+        }
+        for (NSString *identifier in batch.decorationIdentifiers) {
+            if ([SeafFPIdentifier kindOfIdentifier:identifier] == SeafFPIdentifierKindItem) {
+                SeafFPRecord *rec = [store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:identifier]];
+                if (rec && !rec.deleted && [repoIds containsObject:rec.repoId]) includeRecordAndAncestors(rec);
+            } else if ([SeafFPIdentifier kindOfIdentifier:identifier] == SeafFPIdentifierKindRepo) {
+                NSDictionary *state = states[[SeafFPIdentifier repoIdFromIdentifier:identifier]];
+                if ([state[@"availability"] isEqual:@"visible"]) [changes addUpdatedItems:@[[strongSelf.extension itemForRepositoryState:state]]];
+            }
+        }
+        if (readFailed) { [observer finishEnumeratingWithError:[SeafFPErrors cannotSynchronize]]; return; }
+        if (unplaced) Warning("working set changes left out %lu rows without a parent chain", (unsigned long)unplaced);
         for (SeafFPRecord *record in SeafFPSortRecordsParentFirst(liveRecordsByUUID.allValues)) {
             NSString *repoItemIdentifier = [SeafFPIdentifier identifierForRepo:record.repoId];
-            if (!changes.updated[repoItemIdentifier]) {
-                SeafRepo *repo = [strongSelf.extension repoWithId:record.repoId];
-                if (repo && !repo.passwordRequired) {
-                    [changes addUpdatedItems:@[[strongSelf.extension itemForRepo:repo]]];
-                }
-            }
-            SeafFPItem *item = [SeafFPItem itemForRecord:record repoEditable:[strongSelf.extension isRepoEditable:record.repoId]];
-            [item applyDecoration:decorations[item.itemIdentifier]];
+            NSDictionary *state = states[record.repoId];
+            if (!changes.updated[repoItemIdentifier]) [changes addUpdatedItems:@[[strongSelf.extension itemForRepositoryState:state]]];
+            SeafFPItem *item = [SeafFPItem itemForRecord:record repoEditable:[state[@"editable"] boolValue]];
+            [item applyDecoration:batch.decorations[item.itemIdentifier]];
             [changes addUpdatedItems:@[item]];
         }
         [changes deliverToObserver:observer];
@@ -886,6 +1056,11 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
         NSDate *nextPass = recheckAt;
         if ([deadline timeIntervalSinceNow] <= 0) {
             nextPass = [NSDate date];
+        }
+        // The server did not answer: not "due now" but after a wait that
+        // grows, or the pass repeats once a second for as long as it is down.
+        if (pass.aborted) {
+            nextPass = [schedule notePassAbortedAt:[NSDate date]];
         }
         if (nextPass && !moreComing) {
             [strongSelf.extension scheduleWorkingSetRecheckAt:nextPass];
@@ -923,11 +1098,13 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
                 if (error) {
                     Warning("enumerate %@ failed: %@", self.containerIdentifier, error);
                     [observer finishEnumeratingWithError:error];
+                    [self followUpListingFailure:SeafFPListingFailureOf(nil, error)];
                     return;
                 }
                 [observer didEnumerateItems:load.items];
                 [observer finishEnumeratingUpToPage:nil];
                 [self signalWorkingSetIfChanged:load];
+                [self followUpListingFailure:load.failure];
             }];
             return;
         }
@@ -978,10 +1155,12 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
             [self loadContainer:self.containerIdentifier completion:^(SeafFPContainerLoad *load, NSError *error) {
                 if (error) {
                     [observer finishEnumeratingWithError:error];
+                    [self followUpListingFailure:SeafFPListingFailureOf(nil, error)];
                     return;
                 }
                 if (load.fromCache || [load.anchor isEqualToString:known]) {
                     [observer finishEnumeratingChangesUpToSyncAnchor:syncAnchor moreComing:NO];
+                    [self followUpListingFailure:load.failure];
                     return;
                 }
                 SeafFPChangeSet *changes = [SeafFPChangeSet new];
@@ -1004,7 +1183,7 @@ typedef void (^SeafFPContainerCompletion)(SeafFPContainerLoad * _Nullable load, 
 {
     switch (self.kind) {
         case SeafFPIdentifierKindWorkingSet:
-            completionHandler(SeafFPAnchorData([self workingSetAnchor]));
+            completionHandler(self.scanFailed ? nil : SeafFPAnchorData([self workingSetAnchor]));
             return;
         case SeafFPIdentifierKindRoot:
         case SeafFPIdentifierKindRepo:
