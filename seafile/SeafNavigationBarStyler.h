@@ -48,6 +48,23 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (UIBarButtonItem *)createBackButtonWithTarget:(id)target action:(SEL)action color:(nullable UIColor *)color;
 
+/// `arrowLeft_black` drawn at a fixed 10×20 pt as a template image. The asset
+/// is an 18×36 px 1x bitmap; image edge insets stretch it into whatever content
+/// box the button has, which on iPhone Duo made the chevron tall, thin, and blurry.
++ (UIImage *)backArrowImage;
+
+/// Page backdrop for card-style lists (Duo outer display: gray fills camera/status gutters).
++ (void)applyListPageBackgroundToViewController:(UIViewController *)viewController;
+
+/// Pin a scroll view to the host view's safe area so separators/backgrounds do not bleed into layout margins.
++ (void)pinViewToSafeArea:(UIView *)subview inHostView:(UIView *)hostView;
+
+/// Top and horizontal edges stay in the safe area. The bottom edge follows the
+/// host view, so rows remain visible in the bottom safe area (home indicator).
++ (void)pinViewToSafeAreaExtendingToHostBottom:(UIView *)subview inHostView:(UIView *)hostView;
+
++ (void)updateTableViewBackgroundViewFrame:(UITableView *)tableView;
+
 @end
 
 NS_ASSUME_NONNULL_END 

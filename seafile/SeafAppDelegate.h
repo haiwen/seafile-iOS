@@ -65,6 +65,13 @@ enum {
 - (void)enterAccount:(SeafConnection *)conn;
 - (void)exitAccount;
 
+// Scene lifecycle, forwarded by SeafSceneDelegate (the app has a single scene).
+- (void)sceneDidConnectWithWindow:(UIWindow *)window options:(UISceneConnectionOptions *)options;
+- (BOOL)handleOpenURL:(NSURL *)url;
+- (void)sceneDidBecomeActive;
+- (void)sceneWillEnterForeground;
+- (void)sceneDidEnterBackground;
+
 - (UIViewController *)detailViewControllerAtIndex:(int)index;
 
 - (void)showDetailView:(UIViewController *) c;
@@ -84,8 +91,5 @@ enum {
 
 /// Height of the status bar, or 0 while no window is attached yet.
 + (CGFloat)statusBarHeight;
-
-/// Interface orientation of the active window, portrait when none can be resolved.
-+ (UIInterfaceOrientation)activeInterfaceOrientation;
 
 @end

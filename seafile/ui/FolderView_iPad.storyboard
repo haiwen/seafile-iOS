@@ -569,7 +569,7 @@
         <!--Tab Bar Controller-->
         <scene sceneID="IDr-x3-K7D">
             <objects>
-                <tabBarController storyboardIdentifier="TABVC" definesPresentationContext="YES" id="cyW-Je-Rn4" sceneMemberID="viewController">
+                <tabBarController storyboardIdentifier="TABVC" customClass="SeafTabBarController" definesPresentationContext="YES" id="cyW-Je-Rn4" sceneMemberID="viewController">
                     <nil key="simulatedBottomBarMetrics"/>
                     <tabBar key="tabBar" contentMode="scaleToFill" itemPositioning="centered" id="nRy-eg-aBb">
                         <rect key="frame" x="129" y="330" width="163" height="49"/>
