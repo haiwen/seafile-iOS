@@ -5,10 +5,7 @@
 
 #import "SeafFPIndexer.h"
 #import <UIKit/UIKit.h>
-#import <CoreSpotlight/CoreSpotlight.h>
 #import <FileProvider/FileProvider.h>
-#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
-#import <objc/message.h>
 #import <os/lock.h>
 #import <stdatomic.h>
 #import "SeafFPStore.h"
@@ -23,231 +20,14 @@
 
 static NSString * const kSeafFPIndexerEnabledKey = @"SeafFPIndexerEnabled";
 static NSString * const kSeafFPActivityIndexEnabledKey = @"SeafFPActivityIndexEnabled";
-static NSString * const kSeafFPSpotlightIndexPrefix = @"com.seafile.fpindexer/";
-static NSString * const kSeafFPMetaSpotlightSeqKey = @"spotlight_seq_v8";
-static NSString * const kSeafFPMetaSpotlightReposKey = @"spotlight_repos_v8";
-static const NSInteger kSeafFPSpotlightBatchSize = 500;
 /// An account's activity log is fetched in the background at most this often.
 static const NSTimeInterval kSeafFPActivityFetchInterval = 15 * 60;
 /// Gives the library list a moment to load after the app became active.
 static const NSTimeInterval kSeafFPActivityFetchDelay = 3.0;
-/// Directory refreshes asked for within this window are merged (an upload of
-/// many files into one directory lists it once).
-static const NSTimeInterval kSeafFPRefreshCoalesceInterval = 1.0;
+/// Wait before a library list is asked for again because its request seq was unknown.
+static const NSTimeInterval kSeafFPRepoReloadDelay = 5.0;
 /// Timestamps below this are not unix times (some search APIs send strings).
 static const long long kSeafFPMinPlausibleMtime = 946684800;   // 2000-01-01
-
-#pragma mark - CoreSpotlight helpers
-
-@interface SeafFPSpotlightVendorItem : NSObject <NSFileProviderItem>
-@property (nonatomic, copy) NSFileProviderItemIdentifier itemIdentifier;
-@property (nonatomic, copy) NSFileProviderItemIdentifier parentItemIdentifier;
-@property (nonatomic, copy) NSString *filename;
-@property (nonatomic, copy) UTType *contentType;
-@property (nonatomic, assign) NSFileProviderItemCapabilities capabilities;
-@property (nonatomic, strong) NSFileProviderItemVersion *itemVersion;
-@property (nonatomic, copy, nullable) NSNumber *documentSize;
-@property (nonatomic, copy, nullable) NSDate *contentModificationDate;
-@property (nonatomic, copy, nullable) NSNumber *favoriteRank;
-@property (nonatomic, copy, nullable) NSData *tagData;
-@property (nonatomic, copy, nullable) NSDate *lastUsedDate;
-@property (nonatomic, assign) BOOL isDirectory;
-@end
-
-@implementation SeafFPSpotlightVendorItem
-@end
-
-static NSString *SeafFPProviderIdentifier(void)
-{
-    static NSString *providerID;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
-        providerID = bundleID.length > 0 ? [bundleID stringByAppendingString:@".SeafFileProvider"] : @"com.seafile.seafilePro.SeafFileProvider";
-    });
-    return providerID;
-}
-
-static NSString *SeafFPCoreSpotlightIdentifier(NSString *itemIdentifier, NSString *domainId)
-{
-    Class fpItemIDClass = NSClassFromString(@"FPItemID");
-    SEL sel = NSSelectorFromString(@"csIdentifierFromFPIdentifier:domainIdentifier:");
-    if (fpItemIDClass && [fpItemIDClass respondsToSelector:sel]) {
-        NSString *csId = ((NSString *(*)(id, SEL, NSString *, NSString *))objc_msgSend)(fpItemIDClass, sel, itemIdentifier, domainId);
-        if ([csId isKindOfClass:[NSString class]] && csId.length > 0) return csId;
-    }
-    NSString *prefix = @"__fpdefault";
-    if (domainId.length > 0 && ![domainId isEqualToString:@"NSFileProviderDomainDefaultIdentifier"]) {
-        NSString *b64 = [[domainId dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
-        prefix = [@"__fp" stringByAppendingPathComponent:b64];
-    }
-    return [prefix stringByAppendingPathComponent:itemIdentifier];
-}
-
-static UTType *SeafFPContentTypeForFilename(NSString *filename)
-{
-    static NSDictionary *extensionTypes;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSURL *url = [[NSBundle mainBundle] URLForResource:@"Seafile" withExtension:@"bundle"];
-        NSBundle *bundle = url ? [NSBundle bundleWithURL:url] : [NSBundle mainBundle];
-        NSString *plistPath = [bundle pathForResource:@"ExtensionTypes" ofType:@"plist"];
-        extensionTypes = plistPath ? [NSDictionary dictionaryWithContentsOfFile:plistPath] : @{};
-    });
-    NSString *extension = filename.pathExtension.lowercaseString;
-    if (extension.length == 0) return UTTypeData;
-    NSString *predefined = extensionTypes[extension];
-    if (predefined) {
-        UTType *type = [UTType typeWithIdentifier:predefined];
-        if (type) return type;
-    }
-    UTType *type = [UTType typeWithFilenameExtension:extension];
-    if (type && ![type.identifier hasPrefix:@"dyn."]) return type;
-    return UTTypeData;
-}
-
-static NSFileProviderItemCapabilities SeafFPCapabilitiesForDirectory(BOOL isDirectory, BOOL editable)
-{
-    NSFileProviderItemCapabilities caps = NSFileProviderItemCapabilitiesAllowsReading;
-    if (isDirectory) {
-        caps |= NSFileProviderItemCapabilitiesAllowsContentEnumerating
-              | NSFileProviderItemCapabilitiesAllowsAddingSubItems;
-    } else {
-        caps |= NSFileProviderItemCapabilitiesAllowsWriting;
-    }
-    if (editable) {
-        caps |= NSFileProviderItemCapabilitiesAllowsRenaming
-              | NSFileProviderItemCapabilitiesAllowsReparenting
-              | NSFileProviderItemCapabilitiesAllowsDeleting;
-    }
-    return caps;
-}
-
-static NSFileProviderItemVersion *SeafFPVersionWithContent(NSString * _Nullable content, NSString *metadata)
-{
-    NSData *contentData = [SeafFPIdentifier versionComponentData:(content.length > 0 ? content : @"-")];
-    NSData *metadataData = [SeafFPIdentifier versionComponentData:(metadata ?: @"")];
-    return [[NSFileProviderItemVersion alloc] initWithContentVersion:contentData metadataVersion:metadataData];
-}
-
-static CSSearchableItem * _Nullable SeafFPSearchableItemFromVendorItem(SeafFPSpotlightVendorItem *vendorItem, NSString *domainId)
-{
-    if (!vendorItem || vendorItem.itemIdentifier.length == 0 || domainId.length == 0) return nil;
-    NSString *providerID = SeafFPProviderIdentifier();
-    Class fpItemClass = NSClassFromString(@"FPItem");
-    SEL initSel = NSSelectorFromString(@"initWithVendorItem:provider:domain:spotlightDomainIdentifier:extensionCapabilities:useFPFS:");
-    SEL toCSSel = NSSelectorFromString(@"toSearchableItem");
-    if (fpItemClass && [fpItemClass instancesRespondToSelector:initSel] && [fpItemClass instancesRespondToSelector:toCSSel]) {
-        id fpItem = ((id (*)(id, SEL, id, NSString *, NSString *, NSString *, NSUInteger, BOOL))objc_msgSend)(
-            [fpItemClass alloc], initSel, vendorItem, providerID, domainId, domainId, (NSUInteger)-1, NO);
-        if (fpItem) {
-            CSSearchableItem *csItem = ((CSSearchableItem *(*)(id, SEL))objc_msgSend)(fpItem, toCSSel);
-            if ([csItem isKindOfClass:[CSSearchableItem class]]) {
-                if (!vendorItem.lastUsedDate && vendorItem.contentModificationDate) {
-                    csItem.attributeSet.lastUsedDate = vendorItem.contentModificationDate;
-                }
-                return csItem;
-            }
-        }
-    }
-    NSString *csIdentifier = SeafFPCoreSpotlightIdentifier(vendorItem.itemIdentifier, domainId);
-    CSSearchableItemAttributeSet *attr = [[CSSearchableItemAttributeSet alloc] initWithContentType:vendorItem.contentType ?: UTTypeData];
-    attr.displayName = vendorItem.filename;
-    attr.contentModificationDate = vendorItem.contentModificationDate;
-    attr.lastUsedDate = vendorItem.lastUsedDate;
-    SEL setFavoriteRankSel = NSSelectorFromString(@"setFavoriteRank:");
-    if (vendorItem.favoriteRank && [attr respondsToSelector:setFavoriteRankSel]) {
-        ((void (*)(id, SEL, id))objc_msgSend)(attr, setFavoriteRankSel, vendorItem.favoriteRank);
-    }
-    if (!vendorItem.isDirectory && vendorItem.documentSize) {
-        attr.fileSize = @((double)MAX(vendorItem.documentSize.longLongValue, 0LL) / 1000.0);
-    }
-    SEL setFileItemIDSel = NSSelectorFromString(@"setFileItemID:");
-    if ([attr respondsToSelector:setFileItemIDSel]) ((void (*)(id, SEL, id))objc_msgSend)(attr, setFileItemIDSel, csIdentifier);
-    SEL setProviderIDSel = NSSelectorFromString(@"setFileProviderID:");
-    if ([attr respondsToSelector:setProviderIDSel]) ((void (*)(id, SEL, id))objc_msgSend)(attr, setProviderIDSel, providerID);
-    SEL setDomainIDSel = NSSelectorFromString(@"setFileProviderDomainIdentifier:");
-    if ([attr respondsToSelector:setDomainIDSel]) ((void (*)(id, SEL, id))objc_msgSend)(attr, setDomainIDSel, domainId);
-    SEL setFilenameSel = NSSelectorFromString(@"setFilename:");
-    if ([attr respondsToSelector:setFilenameSel]) ((void (*)(id, SEL, id))objc_msgSend)(attr, setFilenameSel, vendorItem.filename);
-    SEL setAttrSel = NSSelectorFromString(@"setAttribute:forKey:");
-    if ([attr respondsToSelector:setAttrSel]) {
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, vendorItem.filename, @"FPFilename");
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, vendorItem.parentItemIdentifier, @"FPParentFileItemID");
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, @(vendorItem.capabilities), @"FPCapabilities");
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, @(vendorItem.isDirectory), @"FPIsContainer");
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, @NO, @"FPIsContainerPristine");
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, @YES, @"FPIsUbiquitous");
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, @NO, @"FPDownloaded");
-        ((void (*)(id, SEL, id, NSString *))objc_msgSend)(attr, setAttrSel, @YES, @"FPMostRecentVersionDownloaded");
-    }
-    CSSearchableItem *csItem = [[CSSearchableItem alloc] initWithUniqueIdentifier:csIdentifier
-                                                                  domainIdentifier:domainId
-                                                                      attributeSet:attr];
-    csItem.expirationDate = [NSDate distantFuture];
-    return csItem;
-}
-
-static CSSearchableItem * _Nullable SeafFPSearchableItemForRepoInfo(NSDictionary *repoInfo,
-                                                                    SeafFPDecoration * _Nullable decoration,
-                                                                    NSString *domainId)
-{
-    NSString *repoId = repoInfo[@"repoId"];
-    if (repoId.length == 0) return nil;
-    NSString *name = repoInfo[@"name"] ?: repoId;
-    long long mtime = [repoInfo[@"mtime"] longLongValue];
-    NSString *perm = repoInfo[@"perm"] ?: @"";
-    NSString *ooid = repoInfo[@"ooid"];
-    SeafFPSpotlightVendorItem *vendorItem = [SeafFPSpotlightVendorItem new];
-    vendorItem.itemIdentifier = [SeafFPIdentifier identifierForRepo:repoId];
-    vendorItem.parentItemIdentifier = NSFileProviderRootContainerItemIdentifier;
-    vendorItem.filename = name;
-    vendorItem.contentType = UTTypeFolder;
-    vendorItem.isDirectory = YES;
-    vendorItem.capabilities = SeafFPCapabilitiesForDirectory(YES, NO);
-    NSString *metadata = [NSString stringWithFormat:@"%lld|%@|%@", mtime, name, perm];
-    vendorItem.itemVersion = SeafFPVersionWithContent(ooid, metadata);
-    if (mtime > 0) {
-        vendorItem.contentModificationDate = [NSDate dateWithTimeIntervalSince1970:mtime];
-    }
-    if (decoration) {
-        vendorItem.favoriteRank = decoration.favoriteRank;
-        vendorItem.tagData = decoration.tagData;
-        vendorItem.lastUsedDate = decoration.lastUsedDate;
-    }
-    return SeafFPSearchableItemFromVendorItem(vendorItem, domainId);
-}
-
-static CSSearchableItem * _Nullable SeafFPSearchableItemForRecord(SeafFPRecord *record,
-                                                                  BOOL editable,
-                                                                  SeafFPDecoration * _Nullable decoration,
-                                                                  NSString *domainId)
-{
-    if (!record || record.deleted) return nil;
-    NSString *filename = record.name.length > 0 ? record.name : record.path.lastPathComponent;
-    if (filename.length == 0) return nil;
-    SeafFPSpotlightVendorItem *vendorItem = [SeafFPSpotlightVendorItem new];
-    vendorItem.itemIdentifier = record.itemIdentifier;
-    vendorItem.parentItemIdentifier = record.parentItemIdentifier;
-    vendorItem.filename = filename;
-    vendorItem.isDirectory = record.isDir;
-    vendorItem.contentType = record.isDir ? UTTypeFolder : SeafFPContentTypeForFilename(filename);
-    vendorItem.capabilities = SeafFPCapabilitiesForDirectory(record.isDir, editable);
-    NSString *metadata = [NSString stringWithFormat:@"%lld|%lld|%@", record.mtime, record.size, filename];
-    vendorItem.itemVersion = SeafFPVersionWithContent(record.oid, metadata);
-    if (!record.isDir && record.size >= 0) {
-        vendorItem.documentSize = @(record.size);
-    }
-    if (record.mtime > 0) {
-        vendorItem.contentModificationDate = [NSDate dateWithTimeIntervalSince1970:record.mtime];
-    }
-    if (decoration) {
-        vendorItem.favoriteRank = decoration.favoriteRank;
-        vendorItem.tagData = decoration.tagData;
-        vendorItem.lastUsedDate = decoration.lastUsedDate;
-    }
-    return SeafFPSearchableItemFromVendorItem(vendorItem, domainId);
-}
 
 @interface SeafDir (SeafFPIndexingPrivate)
 - (NSString *)url;
@@ -260,22 +40,28 @@ static CSSearchableItem * _Nullable SeafFPSearchableItemForRecord(SeafFPRecord *
     dispatch_queue_t _workQueue;
     // Work queue only.
     NSMutableDictionary<NSString *, SeafFPStore *> *_stores;
-    NSMutableDictionary<NSString *, CSSearchableIndex *> *_spotlightIndices;
-    NSMutableSet<NSString *> *_spotlightSyncingDomains;
-    NSMutableSet<NSString *> *_spotlightNeedsResyncDomains;
-    NSMutableDictionary<NSString *, NSMutableArray<dispatch_block_t> *> *_spotlightCompletionsByDomain;
     NSMutableArray<SeafConnection *> *_changedConnections;
     // Guarded by _lock (read from any thread, never waits on the work queue).
     os_unfair_lock _lock;
     NSMutableSet<NSString *> *_deactivatedDomains;
     NSMutableDictionary<NSString *, NSNumber *> *_domainGenerations;
-    NSMutableSet<NSString *> *_pendingRefreshes;
-    NSMutableDictionary<NSString *, NSDictionary<NSString *, NSDictionary *> *> *_repoInfosByDomain;
-    NSMutableDictionary<NSString *, NSSet<NSString *> *> *_indexedRepoIdsByDomain;
     NSMutableDictionary<NSString *, NSNumber *> *_pendingMoveCounts;
     NSMutableDictionary<NSString *, NSMutableArray<dispatch_block_t> *> *_deferredDirWork;
     // Main thread only: when each account's activity log was last indexed.
     NSMutableDictionary<NSString *, NSDate *> *_activityFetchedAt;
+    // Main thread only: accounts whose activity log is being read (last progress).
+    NSMutableDictionary<NSString *, NSDictionary *> *_activitySyncs;
+    // Main thread only: directory checks. Accounts whose due checks are being
+    // read, "domain|repo|path" of listings in flight (until applied), how many
+    // run, and the pending wake-up for deferred ones per account.
+    NSMutableSet<NSString *> *_checkQueries;
+    NSMutableSet<NSString *> *_checksInFlight;
+    NSUInteger _checksRunning;
+    NSMutableDictionary<NSString *, NSDate *> *_checkWakeups;
+    NSHashTable<SeafConnection *> *_checkWaiting;   // accounts that found every listing slot taken
+    // Main thread only: accounts whose library list was asked for again
+    // because its request seq was unknown; asked once, not in a loop.
+    NSMutableSet<NSString *> *_repoReloads;
     atomic_bool _expired;        // background time ran out: skip queued work
     atomic_bool _inBackground;   // signals must leave before suspension
     BOOL _started;
@@ -301,20 +87,19 @@ static CSSearchableItem * _Nullable SeafFPSearchableItemForRecord(SeafFPRecord *
         _workQueue = dispatch_queue_create("com.seafile.fpindexer",
                                            dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
         _stores = [NSMutableDictionary dictionary];
-        _spotlightIndices = [NSMutableDictionary dictionary];
-        _spotlightSyncingDomains = [NSMutableSet set];
-        _spotlightNeedsResyncDomains = [NSMutableSet set];
-        _spotlightCompletionsByDomain = [NSMutableDictionary dictionary];
         _changedConnections = [NSMutableArray array];
         _lock = OS_UNFAIR_LOCK_INIT;
         _deactivatedDomains = [NSMutableSet set];
         _domainGenerations = [NSMutableDictionary dictionary];
-        _pendingRefreshes = [NSMutableSet set];
-        _repoInfosByDomain = [NSMutableDictionary dictionary];
-        _indexedRepoIdsByDomain = [NSMutableDictionary dictionary];
         _pendingMoveCounts = [NSMutableDictionary dictionary];
         _deferredDirWork = [NSMutableDictionary dictionary];
         _activityFetchedAt = [NSMutableDictionary dictionary];
+        _activitySyncs = [NSMutableDictionary dictionary];
+        _checkQueries = [NSMutableSet set];
+        _checksInFlight = [NSMutableSet set];
+        _checkWakeups = [NSMutableDictionary dictionary];
+        _repoReloads = [NSMutableSet set];
+        _checkWaiting = [NSHashTable weakObjectsHashTable];
         atomic_init(&_expired, false);
         atomic_init(&_inBackground, false);
     }
@@ -346,10 +131,10 @@ static CSSearchableItem * _Nullable SeafFPSearchableItemForRecord(SeafFPRecord *
     NSString *type = note.userInfo[SeafFileProviderSignalTypeKey];
     if ([type isEqualToString:SeafFileProviderSignalTypeRoot]) {
         if ([NSThread isMainThread]) {
-            [self syncSpotlightIfNeededForConnection:conn];
+            [self publishKnownMetadataForConnection:conn];
         } else {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self syncSpotlightIfNeededForConnection:conn];
+                [self publishKnownMetadataForConnection:conn];
             });
         }
     }
@@ -379,83 +164,38 @@ static CSSearchableItem * _Nullable SeafFPSearchableItemForRecord(SeafFPRecord *
     return value == nil || [value boolValue];
 }
 
-/// Launch and every return to the foreground: fetch the first activity page
-/// of each Pro account whose log was not indexed for a while.
+/// Launch and every return to the foreground: read the activity log of each
+/// Pro account not read for a while, and go on with pending directory checks.
 - (void)appDidBecomeActive:(NSNotification *)note
 {
     atomic_store(&_inBackground, false);
     atomic_store(&_expired, false);
     for (SeafConnection *conn in [SeafGlobal.sharedObject.conns copy]) {
-        [self syncSpotlightIfNeededForConnection:conn];
+        [self publishKnownMetadataForConnection:conn];
     }
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSeafFPActivityFetchDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) return;
         for (SeafConnection *conn in [SeafGlobal.sharedObject.conns copy]) {
-            [self syncSpotlightIfNeededForConnection:conn];
-            [self fetchActivitiesIfDueForConnection:conn];
+            [self syncActivitiesForConnection:conn force:NO];
+            [self runDirectoryChecksForConnection:conn];
         }
     });
 }
 
-- (void)syncSpotlightIfNeededForConnection:(SeafConnection *)conn
+- (void)publishKnownMetadataForConnection:(SeafConnection *)conn
 {
     NSString *domainId = [self domainIdForConnection:conn repoId:nil];
     if (!domainId) return;
-    uint64_t generation = [self generationForDomainId:domainId];
-    if (conn.rootFolder && conn.rootFolder.items == nil && ![conn.rootFolder loadCache]) {
-        __weak typeof(self) weakSelf = self;
-        __weak SeafConnection *weakConn = conn;
-        [conn.rootFolder loadContentSuccess:^(SeafDir *dir) {
-            typeof(self) strongSelf = weakSelf;
-            SeafConnection *strongConn = weakConn;
-            if (!strongSelf || !strongConn || ![strongSelf isDomainActive:domainId generation:generation]) return;
-            NSString *loadedDomainId = [strongSelf domainIdForConnection:strongConn repoId:nil];
-            if (!loadedDomainId || ![loadedDomainId isEqualToString:domainId]) return;
-            [strongSelf enqueueForDomainId:loadedDomainId work:^(SeafFPStore *store) {
-                [strongSelf noteChangedConnection:strongConn];
-            }];
-        } failure:nil];
-        return;
-    }
-    [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
-        // enqueueForDomainId:work: runs syncSpotlightForDomainId:store:completion: after work(store).
-        [self noteChangedConnection:conn];
-    }];
+    if (conn.rootFolder.items == nil) [conn.rootFolder loadCache];
+    [self fp_indexRepositorySnapshot:[conn.rootFolder fp_repositorySnapshot] connection:conn fromCache:YES requestStartSeq:-1];
+    // The repository loader supplies a fresh, value-only snapshot on success.
+    [conn.rootFolder loadContentSuccess:nil failure:nil];
 }
 
 - (BOOL)canIndexActivitiesOfConnection:(SeafConnection *)conn
 {
     return self.activityIndexEnabled && conn.isActivityEnabled && conn.isNewActivitiesApiSupported
         && [self domainIdForConnection:conn repoId:nil] != nil;
-}
-
-/// Main thread.
-- (void)fetchActivitiesIfDueForConnection:(SeafConnection *)conn
-{
-    if (![self canIndexActivitiesOfConnection:conn]) return;
-    // Events of libraries that are not loaded yet would all be dropped.
-    if (conn.rootFolder.items.count == 0) return;
-    NSString *domainId = [SeafFileProviderDomainManager domainIdentifierForConnection:conn];
-    uint64_t generation = [self generationForDomainId:domainId];
-    NSDate *last = _activityFetchedAt[domainId];
-    if (last && -[last timeIntervalSinceNow] < kSeafFPActivityFetchInterval) return;
-    _activityFetchedAt[domainId] = [NSDate date];   // also while in flight: no second request
-    __weak SeafConnection *weakConn = conn;
-    [conn sendRequest:API_URL_V21"/activities/?page=1" success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        if (![self isDomainActive:domainId generation:generation]) return;
-        SeafConnection *strongConn = weakConn;
-        NSArray *events = [JSON isKindOfClass:[NSDictionary class]] ? JSON[@"events"] : nil;
-        if (strongConn && [events isKindOfClass:[NSArray class]]) {
-            [self indexActivityEvents:events connection:strongConn];
-        }
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        Debug("activity fetch for the Files index failed: %@", error);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (![self isDomainActive:domainId generation:generation]) return;
-            // Try again next time the app becomes active.
-            [self->_activityFetchedAt removeObjectForKey:domainId];
-        });
-    }];
 }
 
 #pragma mark - Admission
@@ -487,44 +227,6 @@ static CSSearchableItem * _Nullable SeafFPSearchableItemForRecord(SeafFPRecord *
     return active;
 }
 
-- (NSDictionary<NSString *, NSDictionary *> *)snapshotVisibleReposOfConnection:(SeafConnection *)conn
-                                                                   extraRepoId:(nullable NSString *)extraRepoId
-{
-    if (!conn) return @{};
-    SeafRepos *repos = conn.rootFolder;
-    if (repos && repos.items.count == 0) {
-        [repos loadCache];
-    }
-    NSMutableDictionary<NSString *, NSDictionary *> *snapshot = [NSMutableDictionary dictionary];
-    for (SeafBase *obj in [repos.items copy]) {
-        if (![obj isKindOfClass:[SeafRepo class]]) continue;
-        SeafRepo *repo = (SeafRepo *)obj;
-        if (repo.passwordRequired || repo.repoId.length == 0 || snapshot[repo.repoId]) continue;
-        snapshot[repo.repoId] = @{
-            @"repoId": repo.repoId,
-            @"name": repo.name ?: repo.repoId,
-            @"mtime": @(repo.mtime),
-            @"perm": repo.perm ?: @"",
-            @"ooid": repo.ooid ?: @"",
-            @"editable": @(repo.editable),
-        };
-    }
-    if (extraRepoId.length > 0 && !snapshot[extraRepoId]) {
-        SeafRepo *repo = [conn getRepo:extraRepoId];
-        if (repo && !repo.passwordRequired && repo.repoId.length > 0) {
-            snapshot[repo.repoId] = @{
-                @"repoId": repo.repoId,
-                @"name": repo.name ?: repo.repoId,
-                @"mtime": @(repo.mtime),
-                @"perm": repo.perm ?: @"",
-                @"ooid": repo.ooid ?: @"",
-                @"editable": @(repo.editable),
-            };
-        }
-    }
-    return snapshot;
-}
-
 /// Checked on the calling thread (main thread / network callbacks, where the
 /// account list and library list are maintained) before work is queued.
 - (nullable NSString *)domainIdForConnection:(SeafConnection *)conn repoId:(nullable NSString *)repoId
@@ -541,595 +243,23 @@ static CSSearchableItem * _Nullable SeafFPSearchableItemForRecord(SeafFPRecord *
         SeafRepo *repo = [conn getRepo:repoId];
         if (!repo || repo.passwordRequired) return nil;
     }
-    NSDictionary<NSString *, NSDictionary *> *repoInfos = [self snapshotVisibleReposOfConnection:conn extraRepoId:repoId];
-    os_unfair_lock_lock(&_lock);
-    if (repoInfos.count > 0 || conn.rootFolder.items != nil || _repoInfosByDomain[domainId] != nil) {
-        _repoInfosByDomain[domainId] = repoInfos ?: @{};
-    }
-    os_unfair_lock_unlock(&_lock);
     return domainId;
 }
 
+/// Main thread. Libraries whose directories can be listed now: loaded and
+/// not locked (the same rule as domainIdForConnection:repoId:).
+- (NSArray<NSString *> *)indexableRepoIdsOfConnection:(SeafConnection *)conn
+{
+    NSMutableArray<NSString *> *repoIds = [NSMutableArray array];
+    for (id item in [conn.rootFolder.items copy]) {
+        if (![item isKindOfClass:[SeafRepo class]]) continue;
+        SeafRepo *repo = item;
+        if (repo.repoId.length > 0 && !repo.passwordRequired) [repoIds addObject:repo.repoId];
+    }
+    return repoIds;
+}
+
 #pragma mark - Work queue
-
-/// Work queue only.
-- (CSSearchableIndex *)spotlightIndexForDomainId:(NSString *)domainId
-{
-    CSSearchableIndex *index = _spotlightIndices[domainId];
-    if (!index) {
-        NSString *indexName = [kSeafFPSpotlightIndexPrefix stringByAppendingString:domainId];
-        index = [[CSSearchableIndex alloc] initWithName:indexName
-                                        protectionClass:NSFileProtectionCompleteUntilFirstUserAuthentication];
-        _spotlightIndices[domainId] = index;
-    }
-    return index;
-}
-
-static NSUInteger SeafFPSpotlightPathDepth(NSString *path)
-{
-    NSUInteger depth = 0;
-    NSUInteger length = path.length;
-    for (NSUInteger i = 0; i < length; i++) {
-        if ([path characterAtIndex:i] == '/') depth++;
-    }
-    return depth;
-}
-
-static NSArray<SeafFPRecord *> *SeafFPSortSpotlightRecordsParentFirst(NSArray<SeafFPRecord *> *records)
-{
-    if (records.count <= 1) return records;
-    return [records sortedArrayUsingComparator:^NSComparisonResult(SeafFPRecord *a, SeafFPRecord *b) {
-        NSUInteger depthA = SeafFPSpotlightPathDepth(a.path);
-        NSUInteger depthB = SeafFPSpotlightPathDepth(b.path);
-        if (depthA != depthB) return depthA < depthB ? NSOrderedAscending : NSOrderedDescending;
-        if (a.isDir != b.isDir) return a.isDir ? NSOrderedAscending : NSOrderedDescending;
-        NSComparisonResult byRepo = [a.repoId compare:b.repoId];
-        if (byRepo != NSOrderedSame) return byRepo;
-        NSComparisonResult byPath = [a.path compare:b.path];
-        return byPath != NSOrderedSame ? byPath : [a.uuid compare:b.uuid];
-    }];
-}
-
-/// Work queue only. Mirrors store rows into CoreSpotlight
-/// so Files.app search (FPSpotlightCollector) finds items even in deep directories
-/// that were never manually opened in Files.app.
-- (void)verifySpotlightItemsForDomainId:(NSString *)domainId
-                  expectedIdentifiers:(NSSet<NSString *> *)expectedIdentifiers
-                           completion:(void (^)(NSSet<NSString *> *missingIdentifiers))completion
-{
-    if (expectedIdentifiers.count == 0) {
-        completion([NSSet set]);
-        return;
-    }
-    CSSearchQueryContext *ctx = [[CSSearchQueryContext alloc] init];
-    ctx.fetchAttributes = @[];
-    CSSearchQuery *query = [[CSSearchQuery alloc] initWithQueryString:@"kMDItemDisplayName == '*'" queryContext:ctx];
-    query.protectionClasses = @[NSFileProtectionCompleteUntilFirstUserAuthentication];
-    __block CSSearchQuery *retainedQuery = query;
-    NSMutableSet<NSString *> *missing = [expectedIdentifiers mutableCopy];
-    // CSSearchQuery serializes its foundItemsHandler calls. Compare identities,
-    // not a total count: unrelated/stale rows must not hide a missing sibling.
-    query.foundItemsHandler = ^(NSArray<CSSearchableItem *> * _Nonnull items) {
-        for (CSSearchableItem *item in items) {
-            [missing removeObject:item.uniqueIdentifier];
-        }
-    };
-    query.completionHandler = ^(NSError * _Nullable error) {
-        retainedQuery = nil;
-        if (error) {
-            // A failed query cannot prove that an item is missing. Normal
-            // incremental indexing still proceeds, and a later sync retries.
-            completion([NSSet set]);
-            return;
-        }
-        if (missing.count > 0) {
-            Info("Files app Spotlight index for %@ is missing %lu of %lu items; repairing missing identities",
-                 domainId, (unsigned long)missing.count, (unsigned long)expectedIdentifiers.count);
-        }
-        completion([missing copy]);
-    };
-    [query start];
-}
-
-static NSSet<NSString *> *SeafFPParseRepoIdsMeta(NSString * _Nullable metaValue)
-{
-    if (metaValue.length == 0) return [NSSet set];
-    NSMutableSet<NSString *> *set = [NSMutableSet set];
-    for (NSString *part in [metaValue componentsSeparatedByString:@"\n"]) {
-        if (part.length == 0) continue;
-        NSRange tab = [part rangeOfString:@"\t"];
-        NSString *repoId = (tab.location == NSNotFound) ? part : [part substringToIndex:tab.location];
-        if (repoId.length > 0) [set addObject:repoId];
-    }
-    return set;
-}
-
-static NSString *SeafFPFormatRepoIdsMeta(NSArray<NSString *> *repoIds)
-{
-    if (repoIds.count == 0) return @"";
-    NSArray<NSString *> *sorted = [repoIds sortedArrayUsingSelector:@selector(compare:)];
-    return [sorted componentsJoinedByString:@"\n"];
-}
-
-- (void)addSpotlightCompletion:(nullable dispatch_block_t)completion forDomainId:(NSString *)domainId
-{
-    if (!completion || domainId.length == 0) return;
-    NSMutableArray<dispatch_block_t> *list = _spotlightCompletionsByDomain[domainId];
-    if (!list) {
-        list = [NSMutableArray array];
-        _spotlightCompletionsByDomain[domainId] = list;
-    }
-    [list addObject:[completion copy]];
-}
-
-- (void)finishSpotlightCompletionsForDomainId:(NSString *)domainId
-{
-    if (domainId.length == 0) return;
-    NSArray<dispatch_block_t> *completions = [_spotlightCompletionsByDomain[domainId] copy];
-    [_spotlightCompletionsByDomain removeObjectForKey:domainId];
-    for (dispatch_block_t block in completions) {
-        block();
-    }
-}
-
-- (void)finishOrResyncSpotlightForDomainId:(NSString *)domainId
-                            preferredStore:(nullable SeafFPStore *)preferredStore
-                               allowResync:(BOOL)allowResync
-{
-    [_spotlightSyncingDomains removeObject:domainId];
-    if (allowResync
-        && [_spotlightNeedsResyncDomains containsObject:domainId]
-        && ![self isDomainDeactivated:domainId]) {
-        [_spotlightNeedsResyncDomains removeObject:domainId];
-        SeafFPStore *resyncStore = (preferredStore && [preferredStore isOpen]) ? preferredStore : _stores[domainId];
-        if (!resyncStore || ![resyncStore isOpen]) {
-            resyncStore = [[SeafFPStore alloc] initWithDomainIdentifier:domainId error:nil];
-            if (resyncStore) _stores[domainId] = resyncStore;
-        }
-        if ([resyncStore isOpen]) {
-            [self syncSpotlightForDomainId:domainId store:resyncStore completion:nil];
-            return;
-        }
-    }
-    [_spotlightNeedsResyncDomains removeObject:domainId];
-    [self finishSpotlightCompletionsForDomainId:domainId];
-}
-
-- (void)syncSpotlightForDomainId:(NSString *)domainId
-                           store:(SeafFPStore *)store
-                      completion:(nullable dispatch_block_t)completion
-{
-    [self addSpotlightCompletion:completion forDomainId:domainId];
-    if (![CSSearchableIndex isIndexingAvailable] || !self.enabled || [self isDomainDeactivated:domainId] || ![store isOpen]) {
-        if (![_spotlightSyncingDomains containsObject:domainId]) {
-            [self finishSpotlightCompletionsForDomainId:domainId];
-        }
-        return;
-    }
-    os_unfair_lock_lock(&_lock);
-    NSDictionary<NSString *, NSDictionary *> *repoInfos = _repoInfosByDomain[domainId];
-    NSSet<NSString *> *memIndexedRepos = _indexedRepoIdsByDomain[domainId];
-    os_unfair_lock_unlock(&_lock);
-    NSString *storedSeqStr = [store metaValueForKey:kSeafFPMetaSpotlightSeqKey];
-    NSString *storedReposStr = [store metaValueForKey:kSeafFPMetaSpotlightReposKey];
-    NSSet<NSString *> *storedIndexedRepos = SeafFPParseRepoIdsMeta(storedReposStr);
-    BOOL hasPreviouslyIndexedRepos = (storedIndexedRepos.count > 0 || memIndexedRepos.count > 0
-                                      || (storedReposStr == nil && storedSeqStr.length > 0 && storedSeqStr.longLongValue > 0));
-    if (repoInfos.count == 0 && !hasPreviouslyIndexedRepos) {
-        if (![_spotlightSyncingDomains containsObject:domainId]) {
-            [self finishSpotlightCompletionsForDomainId:domainId];
-        }
-        return;
-    }
-    if ([_spotlightSyncingDomains containsObject:domainId]) {
-        [_spotlightNeedsResyncDomains addObject:domainId];
-        return;
-    }
-    uint64_t generation = [self generationForDomainId:domainId];
-    if ((atomic_load(&_expired) && atomic_load(&_inBackground)) || ![self isDomainActive:domainId generation:generation] || ![store isOpen]) {
-        [self finishSpotlightCompletionsForDomainId:domainId];
-        return;
-    }
-
-    [_spotlightSyncingDomains addObject:domainId];
-    [_spotlightNeedsResyncDomains removeObject:domainId];
-
-    long long currentSeq = [store currentSeq];
-    long long spotlightSeq = storedSeqStr.length > 0 ? storedSeqStr.longLongValue : 0;
-    if (spotlightSeq < 0 || spotlightSeq > currentSeq) {
-        spotlightSeq = 0;
-    }
-    if (spotlightSeq == 0 || repoInfos.count == 0) {
-        [self performSpotlightSyncForDomainId:domainId store:store repairIdentifiers:nil];
-        return;
-    }
-
-    NSMutableSet<NSString *> *expectedIdentifiers = [NSMutableSet set];
-    for (NSString *repoId in repoInfos) {
-        [expectedIdentifiers addObject:SeafFPCoreSpotlightIdentifier([SeafFPIdentifier identifierForRepo:repoId], domainId)];
-    }
-    for (SeafFPRecord *rec in [store liveRecordsAfterUUID:nil limit:0]) {
-        if (repoInfos[rec.repoId]) {
-            [expectedIdentifiers addObject:SeafFPCoreSpotlightIdentifier(rec.itemIdentifier, domainId)];
-        }
-    }
-
-    __weak typeof(self) weakSelf = self;
-    [self verifySpotlightItemsForDomainId:domainId
-                     expectedIdentifiers:expectedIdentifiers
-                              completion:^(NSSet<NSString *> *missingIdentifiers) {
-        typeof(self) innerSelf = weakSelf;
-        if (!innerSelf) {
-            return;
-        }
-        dispatch_async(innerSelf->_workQueue, ^{
-            if (![innerSelf isDomainActive:domainId generation:generation]) {
-                [innerSelf finishOrResyncSpotlightForDomainId:domainId preferredStore:nil allowResync:YES];
-                return;
-            }
-            [innerSelf performSpotlightSyncForDomainId:domainId
-                                                 store:store
-                                     repairIdentifiers:missingIdentifiers];
-        });
-    }];
-}
-
-- (void)performSpotlightSyncForDomainId:(NSString *)domainId
-                                  store:(SeafFPStore *)store
-                      repairIdentifiers:(nullable NSSet<NSString *> *)repairIdentifiers
-{
-    void (^finishEarly)(void) = ^{
-        [self finishOrResyncSpotlightForDomainId:domainId preferredStore:store allowResync:YES];
-    };
-
-    uint64_t generation = [self generationForDomainId:domainId];
-    if ((atomic_load(&_expired) && atomic_load(&_inBackground)) || ![self isDomainActive:domainId generation:generation] || ![store isOpen]) {
-        finishEarly();
-        return;
-    }
-
-    os_unfair_lock_lock(&_lock);
-    NSDictionary<NSString *, NSDictionary *> *repoInfos = _repoInfosByDomain[domainId];
-    NSSet<NSString *> *memIndexedRepos = _indexedRepoIdsByDomain[domainId];
-    os_unfair_lock_unlock(&_lock);
-
-    long long currentSeq = [store currentSeq];
-    NSString *storedSeqStr = [store metaValueForKey:kSeafFPMetaSpotlightSeqKey];
-    NSString *storedReposStr = [store metaValueForKey:kSeafFPMetaSpotlightReposKey];
-    long long spotlightSeq = storedSeqStr.length > 0 ? storedSeqStr.longLongValue : 0;
-    if (spotlightSeq < 0 || spotlightSeq > currentSeq) {
-        spotlightSeq = 0;
-    }
-
-    NSMutableSet<NSString *> *previousRepoIds = [NSMutableSet set];
-    [previousRepoIds unionSet:SeafFPParseRepoIdsMeta(storedReposStr)];
-    if (memIndexedRepos.count > 0) {
-        [previousRepoIds unionSet:memIndexedRepos];
-    }
-    BOOL hasPreviouslyIndexedRepos = (previousRepoIds.count > 0
-                                      || (storedReposStr == nil && storedSeqStr.length > 0 && storedSeqStr.longLongValue > 0));
-    if (repoInfos.count == 0 && !hasPreviouslyIndexedRepos) {
-        finishEarly();
-        return;
-    }
-
-    NSMutableDictionary<NSString *, NSString *> *storedRepoMetaById = [NSMutableDictionary dictionary];
-    for (NSString *line in [storedReposStr componentsSeparatedByString:@"\n"]) {
-        if (line.length == 0) continue;
-        NSRange tab = [line rangeOfString:@"\t"];
-        if (tab.location != NSNotFound) {
-            NSString *rId = [line substringToIndex:tab.location];
-            if (rId.length > 0) storedRepoMetaById[rId] = line;
-        }
-    }
-    NSMutableDictionary<NSString *, NSString *> *currentRepoMetaById = [NSMutableDictionary dictionaryWithCapacity:repoInfos.count];
-    for (NSString *repoId in repoInfos.allKeys) {
-        NSDictionary *info = repoInfos[repoId];
-        NSString *name = [info[@"name"] isKindOfClass:[NSString class]] ? info[@"name"] : @"";
-        name = [[name stringByReplacingOccurrencesOfString:@"\n" withString:@" "] stringByReplacingOccurrencesOfString:@"\t" withString:@" "];
-        long long mtime = [info[@"mtime"] respondsToSelector:@selector(longLongValue)] ? [info[@"mtime"] longLongValue] : 0;
-        NSString *perm = [info[@"perm"] isKindOfClass:[NSString class]] ? info[@"perm"] : @"";
-        BOOL editable = [info[@"editable"] respondsToSelector:@selector(boolValue)] && [info[@"editable"] boolValue];
-        NSString *ooid = [info[@"ooid"] isKindOfClass:[NSString class]] ? info[@"ooid"] : @"";
-        currentRepoMetaById[repoId] = [NSString stringWithFormat:@"%@\t%@\t%lld\t%@\t%d\t%@", repoId, name, mtime, perm, editable ? 1 : 0, ooid];
-    }
-
-    NSMutableSet<NSString *> *removedRepoIds = [NSMutableSet set];
-    for (NSString *prevRepoId in previousRepoIds) {
-        if (!repoInfos[prevRepoId]) {
-            [removedRepoIds addObject:prevRepoId];
-        }
-    }
-    NSArray<SeafFPRecord *> *allStoreRecords = nil;
-    if (storedReposStr == nil && hasPreviouslyIndexedRepos) {
-        allStoreRecords = [store recordsChangedSinceSeq:0 limit:0];
-        for (SeafFPRecord *rec in allStoreRecords) {
-            if (rec.repoId.length > 0 && !repoInfos[rec.repoId]) {
-                [removedRepoIds addObject:rec.repoId];
-            }
-        }
-    }
-    NSMutableSet<NSString *> *addedRepoIds = [NSMutableSet set];
-    NSMutableSet<NSString *> *updatedRepoIds = [NSMutableSet set];
-    if (storedReposStr != nil || memIndexedRepos != nil) {
-        for (NSString *repoId in repoInfos.allKeys) {
-            if (![previousRepoIds containsObject:repoId]) {
-                [addedRepoIds addObject:repoId];
-            } else {
-                NSString *prevMeta = storedRepoMetaById[repoId];
-                NSString *curMeta = currentRepoMetaById[repoId];
-                if (!prevMeta || ![prevMeta isEqualToString:curMeta]) {
-                    [updatedRepoIds addObject:repoId];
-                }
-            }
-        }
-    }
-
-    BOOL reposChanged = (removedRepoIds.count > 0 || addedRepoIds.count > 0 || updatedRepoIds.count > 0 || (storedReposStr == nil && repoInfos.count > 0));
-    if (repairIdentifiers.count == 0 && !reposChanged && spotlightSeq == currentSeq && storedSeqStr.length > 0) {
-        finishEarly();
-        return;
-    }
-
-    BOOL isInitialSync = (spotlightSeq == 0);
-    CSSearchableIndex *index = [self spotlightIndexForDomainId:domainId];
-    NSMutableDictionary<NSString *, SeafFPDecoration *> *decorations = [NSMutableDictionary dictionary];
-    for (SeafFPDecoration *decoration in [store allDecorations]) {
-        decorations[decoration.itemIdentifier] = decoration;
-    }
-
-    NSMutableSet<NSString *> *repoIdsToIndex = [NSMutableSet set];
-    if (isInitialSync) {
-        [repoIdsToIndex addObjectsFromArray:repoInfos.allKeys];
-    } else {
-        if (addedRepoIds.count > 0) [repoIdsToIndex unionSet:addedRepoIds];
-        if (updatedRepoIds.count > 0) [repoIdsToIndex unionSet:updatedRepoIds];
-    }
-    NSMutableDictionary<NSString *, SeafFPRecord *> *recordsByUUID = [NSMutableDictionary dictionary];
-    NSMutableOrderedSet<NSString *> *identifiersToDelete = [NSMutableOrderedSet orderedSet];
-
-    void (^addLiveRecordAndAncestors)(SeafFPRecord *) = ^(SeafFPRecord *record) {
-        if (!record || record.deleted || !repoInfos[record.repoId]) return;
-        [repoIdsToIndex addObject:record.repoId];
-        SeafFPRecord *cur = record;
-        NSUInteger hops = 0;
-        while (cur && !cur.deleted && cur.uuid.length > 0 && hops < 64) {
-            BOOL alreadyPresent = (recordsByUUID[cur.uuid] != nil);
-            recordsByUUID[cur.uuid] = cur;
-            if (alreadyPresent || cur.parentUUID.length == 0) break;
-            hops++;
-            cur = [store recordForUUID:cur.parentUUID];
-        }
-    };
-
-    // The journal acknowledgement is not a guarantee that every row remains
-    // searchable. Repair missing identities even when the store seq has not
-    // changed, without rebuilding all of the account's healthy entries.
-    if (repairIdentifiers.count > 0) {
-        for (NSString *repoId in repoInfos) {
-            NSString *identifier = SeafFPCoreSpotlightIdentifier([SeafFPIdentifier identifierForRepo:repoId], domainId);
-            if ([repairIdentifiers containsObject:identifier]) [repoIdsToIndex addObject:repoId];
-        }
-        for (SeafFPRecord *rec in [store liveRecordsAfterUUID:nil limit:0]) {
-            if ([repairIdentifiers containsObject:SeafFPCoreSpotlightIdentifier(rec.itemIdentifier, domainId)]) {
-                addLiveRecordAndAncestors(rec);
-            }
-        }
-    }
-
-    for (NSString *removedRepoId in [removedRepoIds.allObjects sortedArrayUsingSelector:@selector(compare:)]) {
-        NSString *repoIdentifier = [SeafFPIdentifier identifierForRepo:removedRepoId];
-        [identifiersToDelete addObject:SeafFPCoreSpotlightIdentifier(repoIdentifier, domainId)];
-    }
-    if (removedRepoIds.count > 0 || (!isInitialSync && addedRepoIds.count > 0)) {
-        if (!allStoreRecords) {
-            allStoreRecords = [store recordsChangedSinceSeq:0 limit:0];
-        }
-        for (SeafFPRecord *rec in allStoreRecords) {
-            if (rec.seq > currentSeq) continue;
-            if ([removedRepoIds containsObject:rec.repoId]) {
-                [identifiersToDelete addObject:SeafFPCoreSpotlightIdentifier(rec.itemIdentifier, domainId)];
-            } else if (!isInitialSync && !rec.deleted && [addedRepoIds containsObject:rec.repoId]) {
-                addLiveRecordAndAncestors(rec);
-            }
-        }
-    }
-
-    NSArray<SeafFPRecord *> *changedRecords = [store recordsChangedSinceSeq:spotlightSeq limit:0];
-    for (SeafFPRecord *record in changedRecords) {
-        if (record.seq > currentSeq) continue;
-        if (record.deleted || !repoInfos[record.repoId]) {
-            [identifiersToDelete addObject:SeafFPCoreSpotlightIdentifier(record.itemIdentifier, domainId)];
-            continue;
-        }
-        addLiveRecordAndAncestors(record);
-    }
-
-    for (NSString *identifier in [store workingSetItemIdentifiersChangedSinceSeq:spotlightSeq]) {
-        SeafFPIdentifierKind kind = [SeafFPIdentifier kindOfIdentifier:identifier];
-        if (kind == SeafFPIdentifierKindRepo) {
-            NSString *repoId = [SeafFPIdentifier repoIdFromIdentifier:identifier];
-            if (repoId.length > 0 && repoInfos[repoId]) {
-                [repoIdsToIndex addObject:repoId];
-            }
-        } else if (kind == SeafFPIdentifierKindItem) {
-            SeafFPRecord *record = [store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:identifier]];
-            if (record && !record.deleted && repoInfos[record.repoId]) {
-                addLiveRecordAndAncestors(record);
-            }
-        }
-    }
-
-    NSMutableArray<CSSearchableItem *> *itemsToIndex = [NSMutableArray array];
-    NSArray<NSString *> *sortedRepoIds = [repoIdsToIndex.allObjects sortedArrayUsingSelector:@selector(compare:)];
-    for (NSString *repoId in sortedRepoIds) {
-        NSDictionary *repoInfo = repoInfos[repoId];
-        if (!repoInfo) continue;
-        NSString *repoIdentifier = [SeafFPIdentifier identifierForRepo:repoId];
-        CSSearchableItem *repoItem = SeafFPSearchableItemForRepoInfo(repoInfo, decorations[repoIdentifier], domainId);
-        if (repoItem) [itemsToIndex addObject:repoItem];
-    }
-
-    NSArray<SeafFPRecord *> *sortedRecords = SeafFPSortSpotlightRecordsParentFirst(recordsByUUID.allValues);
-    for (SeafFPRecord *record in sortedRecords) {
-        NSDictionary *repoInfo = repoInfos[record.repoId];
-        if (!repoInfo) continue;
-        BOOL editable = [repoInfo[@"editable"] boolValue];
-        CSSearchableItem *csItem = SeafFPSearchableItemForRecord(record, editable, decorations[record.itemIdentifier], domainId);
-        if (csItem) [itemsToIndex addObject:csItem];
-    }
-
-    NSArray<NSString *> *currentRepoIdList = repoInfos.allKeys ?: @[];
-    NSString *currentReposMeta = SeafFPFormatRepoIdsMeta(currentRepoMetaById.allValues);
-    NSSet<NSString *> *currentRepoIdSet = [NSSet setWithArray:currentRepoIdList];
-
-    Info("Files app Spotlight prepared %@ up to seq %lld (initial=%d, %lu items to index, %lu to delete)",
-         domainId, currentSeq, isInitialSync, (unsigned long)itemsToIndex.count, (unsigned long)identifiersToDelete.count);
-
-    __weak typeof(self) weakSelf = self;
-    [self indexSpotlightItems:itemsToIndex
-                       offset:0
-                     hadError:NO
-                      inIndex:index
-                     domainId:domainId
-                   generation:generation
-                   completion:^(BOOL hadError) {
-        void (^finishSync)(BOOL) = ^(BOOL syncHadError) {
-            typeof(self) innerSelf = weakSelf;
-            if (!innerSelf) {
-                return;
-            }
-            dispatch_async(innerSelf->_workQueue, ^{
-                BOOL sameGeneration = [innerSelf isDomainActive:domainId generation:generation];
-                BOOL active = sameGeneration && [store isOpen];
-                if (!syncHadError && active) {
-                    [store setMetaValue:[NSString stringWithFormat:@"%lld", currentSeq] forKey:kSeafFPMetaSpotlightSeqKey];
-                    [store setMetaValue:currentReposMeta forKey:kSeafFPMetaSpotlightReposKey];
-                    os_unfair_lock_lock(&innerSelf->_lock);
-                    if (![innerSelf->_deactivatedDomains containsObject:domainId]
-                        && [innerSelf->_domainGenerations[domainId] unsignedLongLongValue] == generation) {
-                        innerSelf->_indexedRepoIdsByDomain[domainId] = currentRepoIdSet;
-                    }
-                    os_unfair_lock_unlock(&innerSelf->_lock);
-                }
-                if (!active && [innerSelf isDomainDeactivated:domainId]) {
-                    [innerSelf->_spotlightIndices removeObjectForKey:domainId];
-                    [index deleteSearchableItemsWithDomainIdentifiers:@[domainId] completionHandler:^(NSError * _Nullable dropError) {
-                        if (dropError) Warning("Files app Spotlight drop failed for %@: %@", domainId, dropError);
-                    }];
-                }
-                [innerSelf finishOrResyncSpotlightForDomainId:domainId
-                                               preferredStore:(active ? store : nil)
-                                                  allowResync:(!syncHadError || !sameGeneration)];
-            });
-        };
-        typeof(self) innerSelf = weakSelf;
-        if (!innerSelf || !innerSelf.enabled || ![innerSelf isDomainActive:domainId generation:generation]) {
-            if (innerSelf && [innerSelf isDomainDeactivated:domainId]) {
-                [index deleteSearchableItemsWithDomainIdentifiers:@[domainId] completionHandler:^(NSError * _Nullable dropError) {
-                    if (dropError) Warning("Files app Spotlight drop failed for %@: %@", domainId, dropError);
-                    finishSync(YES);
-                }];
-            } else {
-                finishSync(YES);
-            }
-            return;
-        }
-        if (identifiersToDelete.count > 0) {
-            [index deleteSearchableItemsWithIdentifiers:identifiersToDelete.array completionHandler:^(NSError * _Nullable error) {
-                if (error) Warning("Files app Spotlight delete failed for %@: %@", domainId, error);
-                BOOL deleteFailed = (error != nil);
-                typeof(self) cbSelf = weakSelf;
-                if (!cbSelf || !cbSelf.enabled || ![cbSelf isDomainActive:domainId generation:generation]) {
-                    if (cbSelf && [cbSelf isDomainDeactivated:domainId]) {
-                        [index deleteSearchableItemsWithDomainIdentifiers:@[domainId] completionHandler:^(NSError * _Nullable dropError) {
-                            if (dropError) Warning("Files app Spotlight drop failed for %@: %@", domainId, dropError);
-                            finishSync(YES);
-                        }];
-                    } else {
-                        finishSync(YES);
-                    }
-                    return;
-                }
-                finishSync(hadError || deleteFailed);
-            }];
-        } else {
-            finishSync(hadError);
-        }
-    }];
-}
-
-- (void)indexSpotlightItems:(NSArray<CSSearchableItem *> *)itemsToIndex
-                     offset:(NSUInteger)offset
-                   hadError:(BOOL)hadError
-                    inIndex:(CSSearchableIndex *)index
-                   domainId:(NSString *)domainId
-                 completion:(void (^)(BOOL hadError))completion
-{
-    [self indexSpotlightItems:itemsToIndex
-                       offset:offset
-                     hadError:hadError
-                      inIndex:index
-                     domainId:domainId
-                   generation:[self generationForDomainId:domainId]
-                   completion:completion];
-}
-
-- (void)indexSpotlightItems:(NSArray<CSSearchableItem *> *)itemsToIndex
-                     offset:(NSUInteger)offset
-                   hadError:(BOOL)hadError
-                    inIndex:(CSSearchableIndex *)index
-                   domainId:(NSString *)domainId
-                 generation:(uint64_t)generation
-                 completion:(void (^)(BOOL hadError))completion
-{
-    if (!self.enabled || ![self isDomainActive:domainId generation:generation]) {
-        if ([self isDomainDeactivated:domainId]) {
-            [index deleteSearchableItemsWithDomainIdentifiers:@[domainId] completionHandler:^(NSError * _Nullable dropError) {
-                if (dropError) Warning("Files app Spotlight drop failed for %@: %@", domainId, dropError);
-                completion(YES);
-            }];
-        } else {
-            completion(YES);
-        }
-        return;
-    }
-    if (offset >= itemsToIndex.count) {
-        completion(hadError);
-        return;
-    }
-    NSUInteger batchLen = MIN((NSUInteger)kSeafFPSpotlightBatchSize, itemsToIndex.count - offset);
-    NSArray<CSSearchableItem *> *batch = [itemsToIndex subarrayWithRange:NSMakeRange(offset, batchLen)];
-    __weak typeof(self) weakSelf = self;
-    [index indexSearchableItems:batch completionHandler:^(NSError * _Nullable error) {
-        if (error) {
-            Warning("Files app Spotlight index batch (%lu..+%lu) failed for %@: %@",
-                    (unsigned long)offset, (unsigned long)batchLen, domainId, error);
-        } else {
-            Info("Files app Spotlight indexed batch (%lu..+%lu) for %@",
-                 (unsigned long)offset, (unsigned long)batchLen, domainId);
-        }
-        typeof(self) strongSelf = weakSelf;
-        if (!strongSelf || !strongSelf.enabled || ![strongSelf isDomainActive:domainId generation:generation]) {
-            if (strongSelf && [strongSelf isDomainDeactivated:domainId]) {
-                [index deleteSearchableItemsWithDomainIdentifiers:@[domainId] completionHandler:^(NSError * _Nullable dropError) {
-                    if (dropError) Warning("Files app Spotlight drop failed for %@: %@", domainId, dropError);
-                    completion(YES);
-                }];
-            } else {
-                completion(YES);
-            }
-            return;
-        }
-        [strongSelf indexSpotlightItems:itemsToIndex
-                                 offset:offset + batchLen
-                               hadError:hadError || (error != nil)
-                                inIndex:index
-                               domainId:domainId
-                             generation:generation
-                             completion:completion];
-    }];
-}
 
 /// Work queue only. nil once the domain was deactivated or indexing turned off.
 - (nullable SeafFPStore *)storeForDomainId:(NSString *)domainId
@@ -1161,8 +291,18 @@ static NSString *SeafFPFormatRepoIdsMeta(NSArray<NSString *> *repoIds)
 /// background task waits for one short transaction at most.
 - (void)enqueueForDomainId:(NSString *)domainId work:(void (^)(SeafFPStore *store))work
 {
+    [self enqueueForDomainId:domainId work:work skipped:nil];
+}
+
+/// skipped (optional) runs instead of `work` when the domain went away or
+/// background time ran out, so callers can release what they hold for it.
+- (void)enqueueForDomainId:(NSString *)domainId work:(void (^)(SeafFPStore *store))work skipped:(nullable dispatch_block_t)skipped
+{
     uint64_t generation = [self generationForDomainId:domainId];
-    if (![self isDomainActive:domainId generation:generation]) return;
+    if (![self isDomainActive:domainId generation:generation]) {
+        if (skipped) skipped();
+        return;
+    }
     UIApplication *app = [UIApplication sharedApplication];
     __block UIBackgroundTaskIdentifier task = UIBackgroundTaskInvalid;
     NSObject *token = [NSObject new];
@@ -1184,38 +324,49 @@ static NSString *SeafFPFormatRepoIdsMeta(NSArray<NSString *> *repoIds)
         dispatch_group_t finishGroup = dispatch_group_create();
         void (^signalChanged)(NSArray<SeafConnection *> *) = ^(NSArray<SeafConnection *> *changed) {
             if (changed.count == 0) return;
-            SeafFileProviderDomainManager *domains = [SeafFileProviderDomainManager shared];
-            for (SeafConnection *conn in changed) {
-                [domains signalWorkingSetForConnection:conn];
-            }
-            if (atomic_load(&self->_inBackground)) {
-                // The coalesced signal would fire after suspension (the flush in
-                // sceneDidEnterBackground ran before this write): send it now and
-                // keep the background task until the system answered.
-                dispatch_group_enter(finishGroup);
-                [domains flushPendingSignalsWithCompletion:^{
+            // The account list and the domain lookup behind a signal are
+            // main-thread state; the background task waits for the hop.
+            dispatch_group_enter(finishGroup);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                SeafFileProviderDomainManager *domains = [SeafFileProviderDomainManager shared];
+                for (SeafConnection *conn in changed) {
+                    [domains signalWorkingSetForConnection:conn];
+                }
+                if (atomic_load(&self->_inBackground)) {
+                    // The coalesced signal would fire after suspension (the flush in
+                    // sceneDidEnterBackground ran before this write): send it now and
+                    // keep the background task until the system answered.
+                    [domains flushPendingSignalsWithCompletion:^{
+                        dispatch_group_leave(finishGroup);
+                    }];
+                } else {
                     dispatch_group_leave(finishGroup);
-                }];
-            }
+                }
+            });
         };
+        BOOL ran = NO;
         if ((!atomic_load(&self->_expired) || !atomic_load(&self->_inBackground))
             && [self isDomainActive:domainId generation:generation]) {
             SeafFPStore *store = [self storeForDomainId:domainId];
             if (store) {
+                ran = YES;
                 work(store);
                 NSArray<SeafConnection *> *changed = [self->_changedConnections copy];
                 [self->_changedConnections removeAllObjects];
-                // The shared store is ready for the extension now. Do not hold
-                // its working set signal behind a potentially long Spotlight
-                // rebuild of the whole account: Files can index these rows
-                // independently, including after the app is suspended.
                 signalChanged(changed);
-                dispatch_group_enter(finishGroup);
-                [self syncSpotlightForDomainId:domainId store:store completion:^{
-                    dispatch_group_leave(finishGroup);
-                }];
+                if ([store hasPendingRepositoryPublications] && changed.firstObject) {
+                    SeafConnection *connection = changed.firstObject;
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+                        if (![self isDomainActive:domainId generation:generation]) return;
+                        [self enqueueForDomainId:domainId work:^(SeafFPStore *nextStore) {
+                            [nextStore publishPendingRepositoryRecordsWithLimit:500];
+                            [self noteChangedConnection:connection];
+                        }];
+                    });
+                }
             }
         }
+        if (!ran && skipped) skipped();
         if (self->_changedConnections.count > 0) {
             NSArray<SeafConnection *> *changed = [self->_changedConnections copy];
             [self->_changedConnections removeAllObjects];
@@ -1255,6 +406,37 @@ static NSDictionary<NSString *, NSMutableArray<NSDictionary *> *> *SeafFPGroupSp
 
 #pragma mark - SeafFPIndexingSink
 
+- (void)fp_indexRepositorySnapshot:(NSArray<NSDictionary *> *)snapshot
+                       connection:(SeafConnection *)conn
+                        fromCache:(BOOL)fromCache
+                  requestStartSeq:(long long)requestStartSeq
+{
+    NSString *domainId = [self domainIdForConnection:conn repoId:nil];
+    if (!domainId) return;
+    NSArray *values = [snapshot copy];
+    [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+        BOOL changed = [store applyRepositorySnapshot:values complete:!fromCache fromCache:fromCache requestStartSeq:requestStartSeq];
+        changed |= [store publishPendingRepositoryRecordsWithLimit:500];
+        if (changed || [store pendingWorkingSetSignalTicket] > 0 || [store hasPendingRepositoryPublications]) [self noteChangedConnection:conn];
+        // Libraries may have become listable (loaded, unlocked) or gone.
+        if (!fromCache) [self runDirectoryChecksForConnection:conn];
+        if (!fromCache) {
+            uint64_t generation = [self generationForDomainId:domainId];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (requestStartSeq >= 0) { [self->_repoReloads removeObject:domainId]; return; }
+                // The list was requested without a request seq (the store
+                // could not be read then), so it could not settle freshness.
+                // Ask once more, later; not again until a seq'd list arrived.
+                if ([self->_repoReloads containsObject:domainId]) return;
+                [self->_repoReloads addObject:domainId];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSeafFPRepoReloadDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    if ([self isDomainActive:domainId generation:generation]) [conn.rootFolder loadContentSuccess:nil failure:nil];
+                });
+            });
+        }
+    }];
+}
+
 - (long long)fp_requestStartSeqForConnection:(SeafConnection *)conn
 {
     NSString *domainId = [self domainIdForConnection:conn repoId:nil];
@@ -1262,6 +444,16 @@ static NSDictionary<NSString *, NSMutableArray<NSDictionary *> *> *SeafFPGroupSp
     // Own read-only handle: never queued behind this class's write
     // transactions, never creates a store that was removed.
     return [SeafFPStore currentSeqForDomainIdentifier:domainId];
+}
+
+- (long long)fp_repositoryRequestStartSeqForConnection:(SeafConnection *)conn
+{
+    NSString *domainId = [self domainIdForConnection:conn repoId:nil];
+    if (!domainId) return -1;
+    SeafFPStore *store = [SeafFPStore openExistingStoreForDomainIdentifier:domainId];
+    long long start = store ? [store beginRepositoryRequest] : -1;
+    [store close];
+    return start;
 }
 
 - (NSString *)moveKeyForDomainId:(NSString *)domainId repoId:(NSString *)repoId directoryPath:(NSString *)directoryPath
@@ -1322,13 +514,16 @@ static NSDictionary<NSString *, NSMutableArray<NSDictionary *> *> *SeafFPGroupSp
         if (!strongSelf || !strongConn || ![strongSelf isDomainActive:domainId generation:generation]) return;
         [strongSelf enqueueForDomainId:domainId work:^(SeafFPStore *store) {
             if (![strongSelf isDomainActive:domainId generation:generation]) return;
-            BOOL applied = [store applyListingOfRepo:repoId directoryPath:directoryPath entries:snapshot requestStartSeq:requestStartSeq];
-            if (applied || requestStartSeq >= 0) {
+            SeafFPWriteResult result = [store applyDirectoryListingOfRepo:repoId directoryPath:directoryPath entries:snapshot requestStartSeq:requestStartSeq];
+            if (result == SeafFPWriteChanged || requestStartSeq >= 0) {
                 [strongSelf noteChangedConnection:strongConn];
             }
-            if (!applied && requestStartSeq >= 0 && [store currentSeq] > requestStartSeq) {
-                [strongSelf fp_refreshDirectoryOfRepo:repoId path:directoryPath connection:strongConn];
+            // Not applied (busy, or the chain changed while the request was
+            // in flight): the directory checks list it again, with backoff.
+            if (result == SeafFPWriteFailed && requestStartSeq >= 0) {
+                [store requestDirectoryCheckOfRepo:repoId path:directoryPath];
             }
+            if (requestStartSeq >= 0) [strongSelf runDirectoryChecksForConnection:strongConn];
         }];
     };
     if (defer) {
@@ -1551,31 +746,23 @@ static NSDictionary<NSString *, NSMutableArray<NSDictionary *> *> *SeafFPGroupSp
     }];
 }
 
+/// A persisted directory check: it survives the process, waits while the
+/// library cannot be listed, and is listed once even when asked for often.
 - (void)fp_refreshDirectoryOfRepo:(NSString *)repoId path:(NSString *)path connection:(SeafConnection *)conn
 {
+    if (![NSThread isMainThread]) {
+        // Also reached from store work blocks; the account and library
+        // checks below read main-thread state.
+        __weak SeafConnection *weakConn = conn;
+        dispatch_async(dispatch_get_main_queue(), ^{ [self fp_refreshDirectoryOfRepo:repoId path:path connection:weakConn]; });
+        return;
+    }
     NSString *domainId = [self domainIdForConnection:conn repoId:repoId];
     if (!domainId || path.length == 0) return;
-    uint64_t generation = [self generationForDomainId:domainId];
-    NSString *key = [NSString stringWithFormat:@"%@|%@|%@", domainId, repoId, path];
-    os_unfair_lock_lock(&_lock);
-    BOOL pending = [_pendingRefreshes containsObject:key];
-    if (!pending) [_pendingRefreshes addObject:key];
-    os_unfair_lock_unlock(&_lock);
-    if (pending) return;
     __weak SeafConnection *weakConn = conn;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSeafFPRefreshCoalesceInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        os_unfair_lock_lock(&self->_lock);
-        [self->_pendingRefreshes removeObject:key];
-        os_unfair_lock_unlock(&self->_lock);
-        if (![self isDomainActive:domainId generation:generation]) return;
-        SeafConnection *connection = weakConn;
-        if (!connection || ![self domainIdForConnection:connection repoId:repoId]) return;
-        // A private directory object without delegate: its listing reaches
-        // the index through -[SeafDir loadContentSuccess:failure:] like any other.
-        NSString *name = [path isEqualToString:@"/"] ? @"" : path.lastPathComponent;
-        SeafDir *dir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:repoId perm:nil name:name path:path mtime:0];
-        [dir loadContentSuccess:nil failure:nil];
-    });
+    [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+        if ([store requestDirectoryCheckOfRepo:repoId path:path]) [self runDirectoryChecksForConnection:weakConn];
+    }];
 }
 
 - (void)fp_noteDownloadedFileOfRepo:(NSString *)repoId
@@ -1618,22 +805,65 @@ static NSDictionary<NSString *, NSMutableArray<NSDictionary *> *> *SeafFPGroupSp
 
 #pragma mark - Activity log
 
+/// Pages one sync run reads before it pauses; it goes on 2 s later while the
+/// app is active, so a long backlog never needs the user to come back.
+static const NSUInteger kSeafFPActivityPagesPerRun = 20;
+static const NSTimeInterval kSeafFPActivityContinueDelay = 2.0;
+/// Activities this much older than the last boundary are read again: the
+/// server writes the log asynchronously and can insert an event late.
+static const long long kSeafFPActivityOverlap = 10 * 60;
+/// The first sync of an account reads this far back at most.
+static const long long kSeafFPActivityFirstSyncWindow = 7 * 24 * 3600;
+/// The server's default page size, asked for explicitly: a short page ends a scan.
+static const NSUInteger kSeafFPActivityPageSize = 25;
+/// A sync that made no progress for this long is considered gone.
+static const NSTimeInterval kSeafFPActivitySyncStale = 120;
+/// Directory listings in flight at once, all accounts together.
+static const NSUInteger kSeafFPCheckConcurrency = 2;
+static const NSTimeInterval kSeafFPCheckRetryMin = 30;
+static const NSTimeInterval kSeafFPCheckRetryMax = 6 * 3600;
+/// A directory the server keeps refusing (403) is given up after this many tries.
+static const NSInteger kSeafFPCheckMaxDenied = 8;
+
 static NSString *SeafFPString(id value)
 {
     return [value isKindOfClass:[NSString class]] && [value length] > 0 ? value : nil;
 }
 
+/// A fixed-format UTC formatter. Read-only after creation, so one instance is
+/// shared across threads (NSDateFormatter is thread-safe for that use).
+static NSDateFormatter *SeafFPFixedFormatter(NSString *format)
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    formatter.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
+    formatter.dateFormat = format;
+    return formatter;
+}
+
+/// Activity times are ISO 8601 with an offset ("2024-05-01T10:00:00+08:00");
+/// 0 when the text cannot be read.
 static long long SeafFPEventTime(id value)
 {
     NSString *text = SeafFPString(value);
-    return text ? [Utils convertTimeStringToUTC:text] : 0;
+    if (!text) return 0;
+    static NSDateFormatter *plain;
+    static NSISO8601DateFormatter *fractional;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        plain = SeafFPFixedFormatter(@"yyyy-MM-dd'T'HH:mm:ssXXXXX");
+        fractional = [NSISO8601DateFormatter new];
+        fractional.formatOptions = NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
+    });
+    NSDate *date = [plain dateFromString:text] ?: [fractional dateFromString:text];
+    return (long long)date.timeIntervalSince1970;
 }
 
-/// One activity event as store entries, oldest first. Field names checked
-/// against seahub api2/endpoints/activities.py and seafevents
-/// events/handlers.py: path is the path after the operation, old_path the
-/// one before a move / rename (same library: moves across libraries are
-/// logged as delete + create), details (14.0+) the items of a batch.
+/// One activity event as store entries. Field names checked against seahub
+/// api2/endpoints/activities.py and seafevents events/handlers.py: path is the
+/// path after the operation, old_path the one before a move / rename (same
+/// library: moves across libraries are logged as delete + create), details
+/// (14.0+) the items of a batch.
 static NSArray<NSDictionary *> *SeafFPActivityEntries(NSDictionary *event)
 {
     NSString *op = SeafFPString(event[@"op_type"]);
@@ -1646,7 +876,9 @@ static NSArray<NSDictionary *> *SeafFPActivityEntries(NSDictionary *event)
     long long eventTime = SeafFPEventTime(event[@"time"]);
 
     NSString *storeOp = nil;
-    if ([@[@"create", @"edit", @"update", @"recover", @"restore", @"publish"] containsObject:op]) {
+    if ([@[@"edit", @"update"] containsObject:op]) {
+        storeOp = SeafFPActivityOpEdit;
+    } else if ([@[@"create", @"recover", @"restore", @"publish"] containsObject:op]) {
         storeOp = SeafFPActivityOpCreate;
     } else if ([op isEqualToString:@"delete"]) {
         storeOp = SeafFPActivityOpDelete;
@@ -1660,10 +892,8 @@ static NSArray<NSDictionary *> *SeafFPActivityEntries(NSDictionary *event)
             if (![detail isKindOfClass:[NSDictionary class]]) continue;
             NSString *itemPath = SeafFPString(detail[@"path"]);
             if (!itemPath || [itemPath isEqualToString:@"/"]) continue;
-            // Details carry no time of their own (the client backfills the event's).
-            long long itemTime = SeafFPEventTime(detail[@"time"]) ?: eventTime;
             [entries addObject:@{SeafFPEntryOp: itemOp, SeafFPEntryPath: itemPath,
-                                 SeafFPEntryIsDir: @(isDir), SeafFPEntryMtime: @(itemTime)}];
+                                 SeafFPEntryIsDir: @(isDir), SeafFPEntryMtime: @(eventTime)}];
         }
         if (entries.count == 0 && path && ![path isEqualToString:@"/"]) {
             [entries addObject:@{SeafFPEntryOp: itemOp, SeafFPEntryPath: path,
@@ -1687,36 +917,583 @@ static NSArray<NSDictionary *> *SeafFPActivityEntries(NSDictionary *event)
     return @[entry];
 }
 
-- (void)indexActivityEvents:(NSArray *)events connection:(SeafConnection *)conn
+/// Identifies an activity by what it says about the files. The server rewrites
+/// an aggregated activity (more items, a later time) in place: that version
+/// counts as new. Display fields (avatar, nick name) do not count.
+static NSString *SeafFPActivityHash(NSDictionary *event)
 {
-    if (![events isKindOfClass:[NSArray class]] || events.count == 0 || !conn) return;
+    NSMutableDictionary *semantic = [NSMutableDictionary dictionary];
+    for (NSString *key in @[@"repo_id", @"commit_id", @"op_type", @"obj_type", @"path", @"old_path", @"name", @"old_name", @"old_dir_name"]) {
+        id value = event[key];
+        if ([value isKindOfClass:[NSString class]] || [value isKindOfClass:[NSNumber class]]) semantic[key] = value;
+    }
+    semantic[@"time"] = @(SeafFPEventTime(event[@"time"]));
+    if ([event[@"details"] isKindOfClass:[NSArray class]]) {
+        NSMutableArray<NSDictionary *> *details = [NSMutableArray array];
+        for (id detail in event[@"details"]) {
+            if ([detail isKindOfClass:[NSDictionary class]] && [NSJSONSerialization isValidJSONObject:detail]) [details addObject:detail];
+        }
+        [details sortUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+            return [(SeafFPString(a[@"path"]) ?: @"") compare:(SeafFPString(b[@"path"]) ?: @"")];
+        }];
+        semantic[@"details"] = details;
+    }
+    NSData *data = [NSJSONSerialization dataWithJSONObject:semantic options:NSJSONWritingSortedKeys error:nil];
+    return data ? [SeafFPIdentifier sha1Hex:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]] : nil;
+}
+
+static NSArray<NSString *> *SeafFPActivityFingerprints(NSArray *events)
+{
+    NSMutableArray<NSString *> *fingerprints = [NSMutableArray arrayWithCapacity:events.count];
+    for (id event in events) {
+        [fingerprints addObject:([event isKindOfClass:[NSDictionary class]] ? SeafFPActivityHash(event) : nil) ?: @""];
+    }
+    return fingerprints;
+}
+
+/// The entries of a page, each tagged with its library and activity.
+static NSArray<NSDictionary *> *SeafFPActivityPageEntries(NSArray *events, NSArray<NSString *> *fingerprints)
+{
+    NSMutableArray<NSDictionary *> *entries = [NSMutableArray array];
+    for (NSUInteger i = 0; i < events.count; i++) {
+        NSDictionary *event = events[i];
+        if (![event isKindOfClass:[NSDictionary class]]) continue;
+        NSString *repoId = SeafFPString(event[@"repo_id"]);
+        NSString *hash = fingerprints[i];
+        if (!repoId || hash.length == 0) continue;
+        for (NSDictionary *entry in SeafFPActivityEntries(event)) {
+            NSMutableDictionary *tagged = [entry mutableCopy];
+            tagged[SeafFPEntryRepoId] = repoId;
+            tagged[SeafFPEntryActivityHash] = hash;
+            [entries addObject:tagged];
+        }
+    }
+    return entries;
+}
+
+/// Server time of a response (its Date header); 0 when it has none.
+static long long SeafFPResponseTime(NSHTTPURLResponse *response)
+{
+    NSString *date = [response isKindOfClass:[NSHTTPURLResponse class]] ? response.allHeaderFields[@"Date"] : nil;
+    if (date.length == 0) return 0;
+    static NSDateFormatter *formatter;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ formatter = SeafFPFixedFormatter(@"EEE, dd MMM yyyy HH:mm:ss zzz"); });
+    return (long long)[[formatter dateFromString:date] timeIntervalSince1970];
+}
+
+/// Everything a page contributes, computed once off the main thread: the
+/// hashes of its activities, the store entries, and the newest / oldest
+/// readable event time (0 when none of them can be read).
+static NSString *const SeafFPPageFingerprints = @"fingerprints";
+static NSString *const SeafFPPageEntries = @"entries";
+static NSString *const SeafFPPageNewest = @"newest";
+static NSString *const SeafFPPageOldest = @"oldest";
+static NSString *const SeafFPPageCount = @"count";
+
+static NSDictionary *SeafFPActivityPageDigest(NSArray *events)
+{
+    NSArray<NSString *> *fingerprints = SeafFPActivityFingerprints(events);
+    long long newest = 0, oldest = LLONG_MAX;
+    for (NSDictionary *event in events) {
+        long long time = [event isKindOfClass:[NSDictionary class]] ? SeafFPEventTime(event[@"time"]) : 0;
+        if (time <= 0) continue;
+        if (newest == 0) newest = time;
+        oldest = MIN(oldest, time);
+    }
+    if (oldest == LLONG_MAX) oldest = 0;
+    return @{SeafFPPageFingerprints: fingerprints,
+             SeafFPPageEntries: SeafFPActivityPageEntries(events, fingerprints),
+             SeafFPPageNewest: @(newest),
+             SeafFPPageOldest: @(oldest),
+             SeafFPPageCount: @(events.count)};
+}
+
+/// Work queue. The entries of a locked library the store never indexed are
+/// dropped: its plain paths have no business in the shared store. One that
+/// was indexed before keeps them, so its checks catch up once it is unlocked.
+static NSArray<NSDictionary *> *SeafFPEntriesWithoutUnindexedLockedRepos(NSArray<NSDictionary *> *entries,
+                                                                          NSSet<NSString *> *locked,
+                                                                          SeafFPStore *store)
+{
+    if (locked.count == 0) return entries;
+    NSMutableDictionary<NSString *, NSNumber *> *indexed = [NSMutableDictionary dictionary];
+    NSMutableArray<NSDictionary *> *kept = [NSMutableArray arrayWithCapacity:entries.count];
+    for (NSDictionary *entry in entries) {
+        NSString *repoId = entry[SeafFPEntryRepoId];
+        if ([locked containsObject:repoId]) {
+            NSNumber *has = indexed[repoId];
+            if (!has) {
+                has = @([store childRecordsOfRepo:repoId parentUUID:nil].count > 0);
+                indexed[repoId] = has;
+            }
+            if (!has.boolValue) continue;
+        }
+        [kept addObject:entry];
+    }
+    return kept;
+}
+
+/// Main thread. Reads the activity log back to the boundary of the last
+/// complete scan, one page per store transaction; the store keeps the
+/// position, so a scan interrupted by the app going away continues where it
+/// stopped. force: also when the log was read recently (the activity list
+/// was refreshed, or a paused scan goes on).
+- (void)syncActivitiesForConnection:(SeafConnection *)conn force:(BOOL)force
+{
     if (![NSThread isMainThread]) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [self indexActivityEvents:events connection:conn]; });
+        dispatch_async(dispatch_get_main_queue(), ^{ [self syncActivitiesForConnection:conn force:force]; });
         return;
     }
     if (![self canIndexActivitiesOfConnection:conn]) return;
-    _activityFetchedAt[[SeafFileProviderDomainManager domainIdentifierForConnection:conn]] = [NSDate date];
-
-    // The API lists the newest event first; the store replays oldest first.
-    NSMutableDictionary<NSString *, NSMutableArray<NSDictionary *> *> *byRepo = [NSMutableDictionary dictionary];
-    for (NSDictionary *event in events.reverseObjectEnumerator) {
-        if (![event isKindOfClass:[NSDictionary class]]) continue;
-        NSString *repoId = SeafFPString(event[@"repo_id"]);
-        if (!repoId) continue;
-        NSArray<NSDictionary *> *entries = SeafFPActivityEntries(event);
-        if (entries.count == 0) continue;
-        NSMutableArray *group = byRepo[repoId];
-        if (!group) byRepo[repoId] = group = [NSMutableArray array];
-        [group addObjectsFromArray:entries];
-    }
-    [byRepo enumerateKeysAndObjectsUsingBlock:^(NSString *repoId, NSMutableArray<NSDictionary *> *entries, BOOL *stop) {
-        NSString *domainId = [self domainIdForConnection:conn repoId:repoId];
-        if (!domainId) return;   // library not loaded, locked or gone
+    NSString *domainId = [SeafFileProviderDomainManager domainIdentifierForConnection:conn];
+    uint64_t generation = [self generationForDomainId:domainId];
+    if (![self isDomainActive:domainId generation:generation]) return;
+    NSDictionary *running;
+    @synchronized (_activitySyncs) { running = _activitySyncs[domainId]; }
+    if (running && -[running[@"at"] timeIntervalSinceNow] < kSeafFPActivitySyncStale) return;   // one sync per account
+    __weak SeafConnection *weakConn = conn;
+    NSDate *last = _activityFetchedAt[domainId];
+    if (!force && last && -[last timeIntervalSinceNow] < kSeafFPActivityFetchInterval) {
+        // Read recently, but a scan paused for its page budget (the app left
+        // before it went on) continues right away.
         [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
-            if ([store applyActivitiesOfRepo:repoId entries:entries]) {
-                [self noteChangedConnection:conn];
-            }
+            if (![store activityProgress][@"scanTop"]) return;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                SeafConnection *strongConn = weakConn;
+                if (strongConn) [self syncActivitiesForConnection:strongConn force:YES];
+            });
         }];
+        return;
+    }
+    // A run older than kSeafFPActivitySyncStale is replaced; its callbacks
+    // see another token and stop without writing.
+    NSString *token = [NSUUID UUID].UUIDString;
+    @synchronized (_activitySyncs) { _activitySyncs[domainId] = @{@"token": token, @"at": [NSDate date]}; }
+    _activityFetchedAt[domainId] = [NSDate date];
+    [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+        NSDictionary *progress = [store activityProgress];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            SeafConnection *strongConn = weakConn;
+            if (![self isActivityRun:token currentOfDomain:domainId]) return;
+            if (!progress || !strongConn || ![self isDomainActive:domainId generation:generation]) {
+                [self endActivityRun:token ofDomain:domainId retry:YES];
+                return;
+            }
+            NSUInteger nextPage = [progress[@"nextPage"] unsignedIntegerValue];
+            if (progress[@"scanTop"] && nextPage > 1) {
+                [self fetchVerifiedActivityPage:nextPage progress:progress run:0 token:token connection:strongConn
+                                          domain:domainId generation:generation];
+            } else {
+                [self fetchActivityPage:1 back:0 progress:progress run:0 token:token connection:strongConn
+                                  domain:domainId generation:generation];
+            }
+        });
+    } skipped:^{
+        dispatch_async(dispatch_get_main_queue(), ^{ [self endActivityRun:token ofDomain:domainId retry:YES]; });
+    }];
+}
+
+/// Any thread. YES while `token` is the account's running sync.
+- (BOOL)isActivityRun:(NSString *)token currentOfDomain:(NSString *)domainId
+{
+    @synchronized (_activitySyncs) {
+        NSDictionary *run = _activitySyncs[domainId];
+        if (![run[@"token"] isEqual:token]) return NO;
+        _activitySyncs[domainId] = @{@"token": token, @"at": [NSDate date]};   // still making progress
+        return YES;
+    }
+}
+
+/// Main thread.
+- (void)endActivityRun:(NSString *)token ofDomain:(NSString *)domainId retry:(BOOL)retry
+{
+    @synchronized (_activitySyncs) {
+        if (![_activitySyncs[domainId][@"token"] isEqual:token]) return;   // a newer run owns the account
+        [_activitySyncs removeObjectForKey:domainId];
+    }
+    if (retry) [_activityFetchedAt removeObjectForKey:domainId];   // try again next time the app is active
+}
+
+- (void)requestActivityPage:(NSUInteger)page
+                      token:(NSString *)token
+                 connection:(SeafConnection *)conn
+                     domain:(NSString *)domainId
+                 generation:(uint64_t)generation
+                 completion:(void (^)(NSArray *, NSHTTPURLResponse *, SeafConnection *))completion
+{
+    if (![self isActivityRun:token currentOfDomain:domainId]) return;
+    NSString *url = [NSString stringWithFormat:API_URL_V21"/activities/?page=%lu&per_page=%lu", (unsigned long)page, (unsigned long)kSeafFPActivityPageSize];
+    __weak SeafConnection *weakConn = conn;
+    [conn sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (![self isDomainActive:domainId generation:generation] || ![self isActivityRun:token currentOfDomain:domainId]) return;
+            SeafConnection *strongConn = weakConn;
+            NSArray *events = [JSON isKindOfClass:[NSDictionary class]] ? JSON[@"events"] : nil;
+            if (!strongConn || ![events isKindOfClass:[NSArray class]]) {
+                [self endActivityRun:token ofDomain:domainId retry:YES];
+                return;
+            }
+            completion(events, response, strongConn);
+        });
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        Debug("activity fetch for the Files index failed: %@", error);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([self isDomainActive:domainId generation:generation]) [self endActivityRun:token ofDomain:domainId retry:YES];
+        });
+    }];
+}
+
+/// Main thread. Encrypted libraries that are not unlocked right now.
+- (NSSet<NSString *> *)lockedRepoIdsOfConnection:(SeafConnection *)conn
+{
+    NSMutableSet<NSString *> *locked = [NSMutableSet set];
+    for (id item in [conn.rootFolder.items copy]) {
+        if (![item isKindOfClass:[SeafRepo class]]) continue;
+        SeafRepo *repo = item;
+        if (repo.repoId.length > 0 && repo.passwordRequired) [locked addObject:repo.repoId];
+    }
+    return locked;
+}
+
+/// Hashes a page off the main thread and continues on it with the digest,
+/// unless the run or the domain ended meanwhile.
+- (void)digestActivityPage:(NSArray *)events
+                     token:(NSString *)token
+                    domain:(NSString *)domainId
+                generation:(uint64_t)generation
+                completion:(void (^)(NSDictionary *digest))completion
+{
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        NSDictionary *digest = SeafFPActivityPageDigest(events);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (![self isDomainActive:domainId generation:generation] || ![self isActivityRun:token currentOfDomain:domainId]) return;
+            completion(digest);
+        });
+    });
+}
+
+/// Fetch the candidate before checking the preceding page. If the offset
+/// shifted before the candidate arrived, the later probe will detect it.
+- (void)fetchVerifiedActivityPage:(NSUInteger)page
+                        progress:(NSDictionary *)progress
+                             run:(NSUInteger)run
+                           token:(NSString *)token
+                      connection:(SeafConnection *)conn
+                          domain:(NSString *)domainId
+                      generation:(uint64_t)generation
+{
+    [self requestActivityPage:page token:token connection:conn domain:domainId generation:generation
+                    completion:^(NSArray *events, NSHTTPURLResponse *response, SeafConnection *connection) {
+        [self requestActivityPage:page - 1 token:token connection:connection domain:domainId generation:generation
+                        completion:^(NSArray *previous, NSHTTPURLResponse *probeResponse, SeafConnection *current) {
+            [self digestActivityPage:previous token:token domain:domainId generation:generation completion:^(NSDictionary *previousDigest) {
+                NSArray *saved = progress[@"lastPage"];
+                if (saved && [saved isEqual:previousDigest[SeafFPPageFingerprints]]) {
+                    [self digestActivityPage:events token:token domain:domainId generation:generation completion:^(NSDictionary *digest) {
+                        [self handleActivityPage:digest page:page back:0 response:response progress:progress run:run
+                                           token:token connection:current domain:domainId generation:generation];
+                    }];
+                } else {
+                    [self handleActivityPage:previousDigest page:page - 1 back:1 response:probeResponse progress:progress run:run
+                                       token:token connection:current domain:domainId generation:generation];
+                }
+            }];
+        }];
+    }];
+}
+
+/// Main thread. A nonzero `back` is a probe before a paused scan's next page.
+- (void)fetchActivityPage:(NSUInteger)page
+                     back:(NSUInteger)back
+                 progress:(NSDictionary *)progress
+                      run:(NSUInteger)run
+                    token:(NSString *)token
+               connection:(SeafConnection *)conn
+                   domain:(NSString *)domainId
+               generation:(uint64_t)generation
+{
+    [self requestActivityPage:page token:token connection:conn domain:domainId generation:generation
+                    completion:^(NSArray *events, NSHTTPURLResponse *response, SeafConnection *connection) {
+        [self digestActivityPage:events token:token domain:domainId generation:generation completion:^(NSDictionary *digest) {
+            [self handleActivityPage:digest page:page back:back response:response progress:progress run:run
+                               token:token connection:connection domain:domainId generation:generation];
+        }];
+    }];
+}
+
+/// Main thread, with the page's digest. Resume by checking the last
+/// committed page. If it shifted, replay from a page that overlaps the saved
+/// one or starts earlier in the scan order. Probe requests do not spend the
+/// forward page budget.
+- (void)handleActivityPage:(NSDictionary *)digest
+                      page:(NSUInteger)page
+                      back:(NSUInteger)back
+                  response:(NSHTTPURLResponse *)response
+                  progress:(NSDictionary *)progress
+                       run:(NSUInteger)run
+                     token:(NSString *)token
+                connection:(SeafConnection *)conn
+                    domain:(NSString *)domainId
+                generation:(uint64_t)generation
+{
+    NSArray<NSString *> *fingerprints = digest[SeafFPPageFingerprints];
+    NSUInteger count = [digest[SeafFPPageCount] unsignedIntegerValue];
+    long long newest = [digest[SeafFPPageNewest] longLongValue];
+    long long oldest = [digest[SeafFPPageOldest] longLongValue];
+    if (count >= kSeafFPActivityPageSize && newest == 0) {
+        // An unreadable full page cannot establish that the scan reached its
+        // boundary. Keep the last committed position and retry later, rather
+        // than acknowledge activities on pages we have not collected.
+        [self endActivityRun:token ofDomain:domainId retry:YES];
+        return;
+    }
+    BOOL resuming = progress[@"scanTop"] != nil;
+    if (back > 0) {
+        NSArray *saved = progress[@"lastPage"];
+        NSMutableSet *overlap = [NSMutableSet setWithArray:fingerprints];
+        [overlap removeObject:@""];
+        if (page > 1 && newest <= [progress[@"lastTime"] longLongValue]
+            && ![overlap intersectsSet:[NSSet setWithArray:saved ?: @[]]]) {
+            NSUInteger resumePage = [progress[@"nextPage"] unsignedIntegerValue];
+            NSUInteger step = back >= resumePage / 2 ? resumePage : back * 2;
+            [self fetchActivityPage:(resumePage > step ? resumePage - step : 1) back:step progress:progress run:run
+                              token:token connection:conn domain:domainId generation:generation];
+            return;
+        }
+    }
+
+    NSMutableDictionary *next = [progress mutableCopy];
+    if (!resuming) {
+        next[@"scanTop"] = @(newest > 0 ? newest : SeafFPResponseTime(response));
+    }
+    BOOL hasBoundary = progress[@"boundary"] != nil;
+    long long boundary = [progress[@"boundary"] longLongValue];
+    long long now = SeafFPResponseTime(response) ?: (long long)[NSDate date].timeIntervalSince1970;
+    BOOL done = count < kSeafFPActivityPageSize
+        || (hasBoundary && oldest > 0 && oldest < boundary - kSeafFPActivityOverlap)
+        || (!hasBoundary && oldest > 0 && oldest < now - kSeafFPActivityFirstSyncWindow);
+    if (done) {
+        long long top = [next[@"scanTop"] longLongValue];
+        // An empty log: start from the server's present (or an hour back).
+        if (top <= 0) top = SeafFPResponseTime(response) ?: (long long)[NSDate date].timeIntervalSince1970 - 3600;
+        next = [@{@"boundary": @(top)} mutableCopy];
+    } else {
+        next[@"nextPage"] = @(page + 1);
+        next[@"lastPage"] = fingerprints;
+        if (oldest > 0) next[@"lastTime"] = @(oldest);
+    }
+    NSArray<NSDictionary *> *entries = digest[SeafFPPageEntries];
+    NSSet<NSString *> *locked = [self lockedRepoIdsOfConnection:conn];
+    NSDictionary *stored = [next copy];
+    __weak SeafConnection *weakConn = conn;
+    [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+        // A replaced run must not write its older position over the new one.
+        if (![self isActivityRun:token currentOfDomain:domainId]) return;
+        SeafFPWriteResult result = [store recordActivityEntries:SeafFPEntriesWithoutUnindexedLockedRepos(entries, locked, store)
+                                                       progress:stored];
+        if (result != SeafFPWriteFailed && done) {
+            // The scan reached the boundary: every rename it found can be
+            // decided in order now (and expired verifications are dropped).
+            NSUInteger round = 0;
+            do {
+                SeafFPWriteResult decided = [store decideRenameHintsWithLimit:100];
+                if (decided == SeafFPWriteFailed) break;
+                if (decided == SeafFPWriteChanged) [self noteChangedConnection:weakConn];
+            } while (++round < 50 && [store pendingRenameHintCount] > 0);
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            SeafConnection *strongConn = weakConn;
+            if (![self isDomainActive:domainId generation:generation] || ![self isActivityRun:token currentOfDomain:domainId]) return;
+            if (result == SeafFPWriteFailed || !strongConn) {
+                [self endActivityRun:token ofDomain:domainId retry:YES];
+                return;
+            }
+            [self runDirectoryChecksForConnection:strongConn];
+            if (done) {
+                [self endActivityRun:token ofDomain:domainId retry:NO];
+            } else if (run + 1 >= kSeafFPActivityPagesPerRun) {
+                [self endActivityRun:token ofDomain:domainId retry:NO];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSeafFPActivityContinueDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    SeafConnection *later = weakConn;
+                    if (later && [UIApplication sharedApplication].applicationState == UIApplicationStateActive) {
+                        [self syncActivitiesForConnection:later force:YES];
+                    }
+                });
+            } else {
+                [self fetchVerifiedActivityPage:page + 1 progress:stored run:run + 1 token:token
+                                     connection:strongConn domain:domainId generation:generation];
+            }
+        });
+    } skipped:^{
+        dispatch_async(dispatch_get_main_queue(), ^{ [self endActivityRun:token ofDomain:domainId retry:YES]; });
+    }];
+}
+
+#pragma mark - Directory checks
+
+/// Main thread. Starts listings for the account's due directory checks
+/// (registered by the activity log, rename decisions and refresh requests).
+- (void)runDirectoryChecksForConnection:(SeafConnection *)conn
+{
+    if (!conn) return;
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self runDirectoryChecksForConnection:conn]; });
+        return;
+    }
+    NSString *domainId = [self domainIdForConnection:conn repoId:nil];
+    if (!domainId || [_checkQueries containsObject:domainId]) return;
+    if (_checksRunning >= kSeafFPCheckConcurrency) {
+        [_checkWaiting addObject:conn];   // runs when any listing finishes, whichever account
+        return;
+    }
+    uint64_t generation = [self generationForDomainId:domainId];
+    // Only libraries that can be listed now (loaded, not locked): the others
+    // keep their checks without taking the places of these.
+    NSArray<NSString *> *repoIds = [self indexableRepoIdsOfConnection:conn];
+    [_checkQueries addObject:domainId];
+    __weak SeafConnection *weakConn = conn;
+    [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+        NSArray<SeafFPDirectoryCheck *> *due = [store dueDirectoryChecksAt:[NSDate date] limit:16 repoIds:repoIds];
+        NSDate *later = due.count == 0 ? [store nextDirectoryCheckDateOfRepos:repoIds] : nil;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self->_checkQueries removeObject:domainId];
+            SeafConnection *strongConn = weakConn;
+            if (!strongConn || ![self isDomainActive:domainId generation:generation]) return;
+            [self startDirectoryChecks:due connection:strongConn domain:domainId generation:generation];
+            if (later) [self runDirectoryChecksForConnection:strongConn at:later];
+        });
+    } skipped:^{
+        dispatch_async(dispatch_get_main_queue(), ^{ [self->_checkQueries removeObject:domainId]; });
+    }];
+}
+
+/// Main thread. One wake-up per account for the earliest deferred check.
+- (void)runDirectoryChecksForConnection:(SeafConnection *)conn at:(NSDate *)date
+{
+    NSString *domainId = [SeafFileProviderDomainManager domainIdentifierForConnection:conn];
+    NSDate *scheduled = _checkWakeups[domainId];
+    if (scheduled && [scheduled compare:date] != NSOrderedDescending) return;
+    _checkWakeups[domainId] = date;
+    __weak SeafConnection *weakConn = conn;
+    NSTimeInterval delay = MAX(1.0, [date timeIntervalSinceNow]);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (self->_checkWakeups[domainId] != date) return;   // superseded by an earlier one
+        [self->_checkWakeups removeObjectForKey:domainId];
+        [self runDirectoryChecksForConnection:weakConn];
+    });
+}
+
+/// Main thread. Libraries take turns, so one big backlog does not starve the others.
+- (void)startDirectoryChecks:(NSArray<SeafFPDirectoryCheck *> *)due
+                  connection:(SeafConnection *)conn
+                      domain:(NSString *)domainId
+                  generation:(uint64_t)generation
+{
+    NSMutableArray<NSString *> *repoOrder = [NSMutableArray array];
+    NSMutableDictionary<NSString *, NSMutableArray<SeafFPDirectoryCheck *> *> *byRepo = [NSMutableDictionary dictionary];
+    for (SeafFPDirectoryCheck *check in due) {
+        if (!byRepo[check.repoId]) { byRepo[check.repoId] = [NSMutableArray array]; [repoOrder addObject:check.repoId]; }
+        [byRepo[check.repoId] addObject:check];
+    }
+    BOOL progress = YES;
+    while (_checksRunning < kSeafFPCheckConcurrency && progress) {
+        progress = NO;
+        for (NSString *repoId in repoOrder) {
+            if (_checksRunning >= kSeafFPCheckConcurrency) break;
+            NSMutableArray<SeafFPDirectoryCheck *> *queue = byRepo[repoId];
+            // Locked or not loaded yet: it stays pending until the library can be listed.
+            if (queue.count == 0 || ![self domainIdForConnection:conn repoId:repoId]) continue;
+            SeafFPDirectoryCheck *check = queue.firstObject;
+            [queue removeObjectAtIndex:0];
+            progress = YES;
+            NSString *key = [NSString stringWithFormat:@"%@|%@|%@", domainId, check.repoId, check.path];
+            if ([_checksInFlight containsObject:key]) continue;
+            [self performDirectoryCheck:check key:key connection:conn domain:domainId generation:generation];
+        }
+    }
+}
+
+static NSDate *SeafFPCheckRetryDate(NSInteger attempts)
+{
+    return [NSDate dateWithTimeIntervalSinceNow:MIN(kSeafFPCheckRetryMax, kSeafFPCheckRetryMin * pow(2, MIN(attempts, 20)))];
+}
+
+/// Main thread. Lists the directory, keeping it marked as in flight until
+/// the listing is applied, so it is never requested twice at once; a check
+/// asked for again meanwhile has a newer version and runs once more after.
+- (void)performDirectoryCheck:(SeafFPDirectoryCheck *)check
+                          key:(NSString *)key
+                   connection:(SeafConnection *)conn
+                       domain:(NSString *)domainId
+                   generation:(uint64_t)generation
+{
+    [_checksInFlight addObject:key];
+    _checksRunning++;
+    __weak SeafConnection *weakConn = conn;
+    void (^finish)(void) = ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self->_checksInFlight removeObject:key];
+            if (self->_checksRunning > 0) self->_checksRunning--;
+            // Accounts that found every slot taken go first, then this one.
+            NSArray<SeafConnection *> *waiting = self->_checkWaiting.allObjects;
+            [self->_checkWaiting removeAllObjects];
+            for (SeafConnection *other in waiting) {
+                if (other != weakConn) [self runDirectoryChecksForConnection:other];
+            }
+            [self runDirectoryChecksForConnection:weakConn];
+        });
+    };
+    long long requestStartSeq = [self fp_requestStartSeqForConnection:conn];
+    if (requestStartSeq < 0) {
+        // The store could not say where we are. A listing applied without a
+        // request seq confirms nothing, and the check would run again at
+        // once: back off instead.
+        [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+            [store deferDirectoryCheck:check until:SeafFPCheckRetryDate(check.attempts) status:0];
+            finish();
+        } skipped:finish];
+        return;
+    }
+    NSString *name = [check.path isEqualToString:@"/"] ? @"" : check.path.lastPathComponent;
+    SeafDir *dir = [[SeafDir alloc] initWithConnection:conn oid:nil repoId:check.repoId perm:nil name:name path:check.path mtime:0];
+    [conn sendRequest:dir.url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        if (![self isDomainActive:domainId generation:generation]) { finish(); return; }
+        [dir handleResponse:response json:JSON];
+        NSArray<NSDictionary *> *entries = [dir fp_listingSnapshotForResponse:JSON];
+        [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+            SeafFPWriteResult result = entries ? [store applyDirectoryListingOfRepo:check.repoId directoryPath:check.path
+                                                                            entries:entries requestStartSeq:requestStartSeq]
+                                               : SeafFPWriteFailed;
+            if (result == SeafFPWriteChanged) [self noteChangedConnection:weakConn];
+            // Not applied (busy, a write raced the request, unreadable
+            // response): back off. A check asked for again meanwhile keeps
+            // its newer version and is simply listed again.
+            if (result == SeafFPWriteFailed) [store deferDirectoryCheck:check until:SeafFPCheckRetryDate(check.attempts) status:0];
+            finish();
+        } skipped:finish];
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]] ? response.statusCode : 0;
+        NSString *message = [JSON isKindOfClass:[NSDictionary class]] ? SeafFPString(JSON[@"error_msg"]) : nil;
+        if (![self isDomainActive:domainId generation:generation]) { finish(); return; }
+        // Only seahub's own 404 ("Library … not found.", "Folder … not found.")
+        // says the path is gone; a proxy's or an HTML page's 404 says nothing,
+        // and must not walk the check up to the root and drop the library.
+        BOOL libraryGone = status == 404 && ([message hasPrefix:@"Library"] || ([message hasPrefix:@"Folder"] && [check.path isEqualToString:@"/"]));
+        BOOL folderGone = status == 404 && !libraryGone && [message hasPrefix:@"Folder"];
+        [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+            if (libraryGone) {
+                [store dropDirectoryChecksOfRepo:check.repoId];
+            } else if (folderGone) {
+                // Gone (or renamed): the parent's listing tells, and tombstones it.
+                [store moveDirectoryCheckToParent:check];
+            } else if (status == 403 && check.denials + 1 >= kSeafFPCheckMaxDenied) {
+                [store dropDirectoryCheck:check];
+            } else {
+                [store deferDirectoryCheck:check until:SeafFPCheckRetryDate(check.attempts) status:status];
+            }
+            finish();
+        } skipped:finish];
     }];
 }
 
@@ -1732,6 +1509,13 @@ static NSArray<NSDictionary *> *SeafFPActivityEntries(NSDictionary *event)
         _domainGenerations[domainIdentifier] = @(nextGen);
     }
     os_unfair_lock_unlock(&_lock);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (SeafConnection *conn in [SeafGlobal.sharedObject.conns copy]) {
+            if ([[SeafFileProviderDomainManager domainIdentifierForConnection:conn] isEqualToString:domainIdentifier]) {
+                [self runDirectoryChecksForConnection:conn];
+            }
+        }
+    });
 }
 
 - (void)fileProviderDomainWillDeactivate:(NSString *)domainIdentifier
@@ -1756,8 +1540,6 @@ static NSArray<NSDictionary *> *SeafFPActivityEntries(NSDictionary *event)
 {
     os_unfair_lock_lock(&_lock);
     [_deactivatedDomains addObject:domainIdentifier];
-    [_repoInfosByDomain removeObjectForKey:domainIdentifier];
-    [_indexedRepoIdsByDomain removeObjectForKey:domainIdentifier];
     uint64_t nextGen = [_domainGenerations[domainIdentifier] unsignedLongLongValue] + 1;
     _domainGenerations[domainIdentifier] = @(nextGen);
     NSString *movePrefix = [domainIdentifier stringByAppendingString:@"|"];
@@ -1768,20 +1550,16 @@ static NSArray<NSDictionary *> *SeafFPActivityEntries(NSDictionary *event)
         }
     }
     os_unfair_lock_unlock(&_lock);
+    // Requests of the old generation still finish and release what they hold.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @synchronized (self->_activitySyncs) { [self->_activitySyncs removeObjectForKey:domainIdentifier]; }
+        [self->_checkQueries removeObject:domainIdentifier];
+        [self->_checkWakeups removeObjectForKey:domainIdentifier];
+    });
     dispatch_async(_workQueue, ^{
-        [self->_spotlightNeedsResyncDomains removeObject:domainIdentifier];
         SeafFPStore *store = self->_stores[domainIdentifier];
-        if ([store isOpen]) {
-            [store setMetaValue:nil forKey:kSeafFPMetaSpotlightSeqKey];
-            [store setMetaValue:nil forKey:kSeafFPMetaSpotlightReposKey];
-        }
         [store close];
         [self->_stores removeObjectForKey:domainIdentifier];
-        CSSearchableIndex *index = [self spotlightIndexForDomainId:domainIdentifier];
-        [self->_spotlightIndices removeObjectForKey:domainIdentifier];
-        [index deleteSearchableItemsWithDomainIdentifiers:@[domainIdentifier] completionHandler:^(NSError * _Nullable error) {
-            if (error) Warning("Files app Spotlight drop failed for %@: %@", domainIdentifier, error);
-        }];
         if (then) then();
     });
 }

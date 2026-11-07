@@ -599,6 +599,8 @@ FOUNDATION_EXPORT NSDictionary * _Nullable SeafFPIndexEntryForBase(SeafBase *obj
 @protocol SeafFPIndexingSink <NSObject>
 /// The store's seq right before a listing request is sent; -1 when unknown.
 - (long long)fp_requestStartSeqForConnection:(SeafConnection *)conn;
+/// A unique boundary for a repository-list request, shared with the extension.
+- (long long)fp_repositoryRequestStartSeqForConnection:(SeafConnection *)conn;
 /// A complete server listing of one directory.
 - (void)fp_indexListing:(NSArray<NSDictionary *> *)entries
                  ofRepo:(NSString *)repoId
@@ -641,6 +643,13 @@ FOUNDATION_EXPORT NSDictionary * _Nullable SeafFPIndexEntryForBase(SeafBase *obj
                                 oid:(NSString *)oid
                                size:(long long)size
                          connection:(SeafConnection *)conn;
+@optional
+/// Complete repository value snapshot, before model callbacks can race another
+/// response. Cached data never confirms absence or overwrites newer permissions.
+- (void)fp_indexRepositorySnapshot:(NSArray<NSDictionary *> *)snapshot
+                       connection:(SeafConnection *)connection
+                        fromCache:(BOOL)fromCache
+                  requestStartSeq:(long long)requestStartSeq;
 @end
 
 @interface SeafConnection (FileProviderIndexing)

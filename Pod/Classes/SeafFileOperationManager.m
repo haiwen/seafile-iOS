@@ -159,12 +159,23 @@
               inDir:(SeafDir *)directory
          completion:(void(^)(BOOL success, SeafBase *renamedFile, NSError *error))completion
 {
+    [self renameEntry:oldName newName:newName inDir:directory
+    responseCompletion:^(BOOL success, SeafBase *renamedFile, NSError *error, NSHTTPURLResponse *response) {
+        if (completion) completion(success, renamedFile, error);
+    }];
+}
+
+- (void)renameEntry:(NSString *)oldName
+            newName:(NSString *)newName
+              inDir:(SeafDir *)directory
+ responseCompletion:(void (^)(BOOL, SeafBase *, NSError *, NSHTTPURLResponse *))completion
+{
     if (!oldName || oldName.length == 0 || !newName || newName.length == 0) {
         if (completion) {
             NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
                                              code:-4
                                          userInfo:@{NSLocalizedDescriptionKey:@"Invalid rename parameters"}];
-            completion(NO, nil, err);
+            completion(NO, nil, err, nil);
         }
         return;
     }
@@ -206,19 +217,19 @@
         [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) {
             if (renamedFile) {
-                completion(YES, renamedFile, nil);
+                completion(YES, renamedFile, nil, response);
             } else {
                 NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
                                                  code:-5
                                              userInfo:@{NSLocalizedDescriptionKey:@"Renamed file not found"}];
-                completion(NO, nil, err);
+                completion(NO, nil, err, response);
             }
         }
     }
                          failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
     {
         Warning("Rename failed, code=%ld", (long)response.statusCode);
-        if (completion) completion(NO, nil, error);
+        if (completion) completion(NO, nil, error, response);
     }];
 }
 
@@ -318,12 +329,23 @@
                toDir:(SeafDir *)dstDir
           completion:(SeafOperationCompletion)completion
 {
+    [self moveEntries:entries fromDir:srcDir toDir:dstDir
+     responseCompletion:^(BOOL success, NSError *error, NSHTTPURLResponse *response) {
+        if (completion) completion(success, error);
+    }];
+}
+
+- (void)moveEntries:(NSArray<NSString *> *)entries
+             fromDir:(SeafDir *)srcDir
+               toDir:(SeafDir *)dstDir
+  responseCompletion:(void (^)(BOOL, NSError *, NSHTTPURLResponse *))completion
+{
     if (!entries || entries.count == 0 || !srcDir || !dstDir) {
         if (completion) {
             NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
                                                code:-6
                                            userInfo:@{NSLocalizedDescriptionKey:@"Invalid move parameters"}];
-            completion(NO, err);
+            completion(NO, err, nil);
         }
         return;
     }
@@ -359,12 +381,12 @@
         } else {
             [srcDir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:nil];
         }
-        if (completion) completion(YES, nil);
+        if (completion) completion(YES, nil, response);
     }
                         failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
     {
         Warning("Move failed, code=%ld", (long)response.statusCode);
-        if (completion) completion(NO, error);
+        if (completion) completion(NO, error, response);
     }];
 }
 

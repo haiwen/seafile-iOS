@@ -301,6 +301,8 @@
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
             Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.uploadFileName, self.uploadFile.uploadFileAutoSync, oid, responseObject);
+            self.uploadFile.serverDateHeader = [response isKindOfClass:NSHTTPURLResponse.class]
+                ? [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Date"] : nil;
             [self finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -395,6 +397,8 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
+            strongSelf.uploadFile.serverDateHeader = [response isKindOfClass:NSHTTPURLResponse.class]
+                ? [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Date"] : nil;
             [strongSelf finishUpload:YES oid:oid error:nil];
         }
     }];

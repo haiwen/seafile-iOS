@@ -235,9 +235,10 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     NSString *url = [NSString stringWithFormat:API_URL_V21"/activities/?page=%d", page];
     SeafConnection *requestConnection = _connection;
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        if (page == 1 && [JSON isKindOfClass:[NSDictionary class]]) {
-            // Files app search: recent changes from other devices.
-            [[SeafFPIndexer shared] indexActivityEvents:JSON[@"events"] connection:requestConnection];
+        if (page == 1) {
+            // Files app search: recent changes from other devices. The indexer
+            // reads the log itself, from where its last read ended.
+            [[SeafFPIndexer shared] syncActivitiesForConnection:requestConnection force:YES];
         }
         // Process data in background thread
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{

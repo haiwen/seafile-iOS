@@ -36,10 +36,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// Seafile Pro servers with the new activities API).
 @property (nonatomic, readonly, getter=isActivityIndexEnabled) BOOL activityIndexEnabled;
 
-/// The "events" array of a fresh first page of /api/v2.1/activities/ (newest
-/// first): recent creations, edits, renames, moves and deletions made on
-/// other devices reach the index without the user browsing there.
-- (void)indexActivityEvents:(NSArray *)events connection:(SeafConnection *)conn;
+/// Reads the account's activity log back to where the last read ended, so
+/// creations, edits, renames, moves and deletions made on other devices reach
+/// the index without the user browsing there: they become directory checks
+/// (listed by this class) and rename hints. Runs automatically when the app
+/// becomes active (at most every 15 minutes); force: now, e.g. after the
+/// activity list was refreshed. One read per account at a time.
+- (void)syncActivitiesForConnection:(SeafConnection *)conn force:(BOOL)force;
 
 @end
 

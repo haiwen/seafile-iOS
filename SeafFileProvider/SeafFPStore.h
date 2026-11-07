@@ -11,12 +11,23 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Matches the numbered alternatives the server can assign to an occupied name.
+FOUNDATION_EXPORT BOOL SeafFPIsConflictSiblingName(NSString *candidate, NSString *expected);
+
 /// Working set membership reasons (bit flags).
 typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
     SeafFPWorkingSetReasonMaterialized = 1 << 0,
     SeafFPWorkingSetReasonFavorite     = 1 << 1,
     SeafFPWorkingSetReasonTag          = 1 << 2,
     SeafFPWorkingSetReasonMigrated     = 1 << 3,
+};
+
+/// Why a row is a tombstone (0 while it is live).
+typedef NS_ENUM(NSInteger, SeafFPTombReason) {
+    SeafFPTombReasonNone = 0,
+    SeafFPTombReasonAbsent = 1,     // a fresh listing no longer showed it: a later rename may bring it back
+    SeafFPTombReasonLocal = 2,      // deleted or retired on this device
+    SeafFPTombReasonReplaced = 3,   // another row took its path (or its identity was merged away)
 };
 
 @interface SeafFPRecord : NSObject
@@ -31,6 +42,9 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
 @property (nonatomic, assign) long long mtime;
 @property (nonatomic, assign) long long size;
 @property (nonatomic, assign) long long seq;
+@property (nonatomic, assign) long long createdSeq;           // seq the row was inserted with; 0 for rows from before schema 2
+@property (nonatomic, assign) SeafFPTombReason tombReason;    // deleted rows only
+@property (nonatomic, assign) long long tombTxn;              // deleted rows: store seq when the tombstoning transaction began
 
 - (NSString *)itemIdentifier;        // i:<uuid>
 - (NSString *)parentItemIdentifier;  // i:<parentUUID> or r:<repoId>
@@ -44,6 +58,48 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
 @property (nonatomic, strong, nullable) NSDate *lastUsedDate;
 - (BOOL)isEmpty;
 @end
+
+/// One page of the full working set scan, read in one transaction. The scan
+/// orders rows by path depth, directories before files, then seq and uuid, so
+/// a parent always comes before its children.
+@interface SeafFPWorkingSetPage : NSObject
+/// Live rows after the cursor, in scan order.
+@property (nonatomic, copy) NSArray<SeafFPRecord *> *records;
+/// Every ancestor row of `records` by uuid, live or not; a uuid without a row is missing.
+@property (nonatomic, copy) NSDictionary<NSString *, SeafFPRecord *> *ancestors;
+@property (nonatomic, copy) NSDictionary<NSString *, NSDictionary *> *repositories;
+@property (nonatomic, copy) NSDictionary<NSString *, SeafFPDecoration *> *decorations;
+/// The store seq when the page was read.
+@property (nonatomic, assign) long long sequence;
+@property (nonatomic, assign) BOOL moreComing;
+@end
+
+/// One consistent, bounded change batch from all public File Provider streams.
+@interface SeafFPPublicationBatch : NSObject
+@property (nonatomic, copy) NSArray<SeafFPRecord *> *records;
+@property (nonatomic, copy) NSArray<NSString *> *decorationIdentifiers;
+@property (nonatomic, copy) NSArray<NSDictionary *> *repositoryEvents;
+@property (nonatomic, copy) NSDictionary<NSString *, NSDictionary *> *repositories;
+@property (nonatomic, copy) NSDictionary<NSString *, SeafFPDecoration *> *decorations;
+@property (nonatomic, assign) long long sequence;
+@property (nonatomic, assign) BOOL moreComing;
+@end
+
+/// A directory the main app still has to list.
+@interface SeafFPDirectoryCheck : NSObject
+@property (nonatomic, copy) NSString *repoId;
+@property (nonatomic, copy) NSString *path;
+@property (nonatomic, assign) long long version;   // a listing whose request started at or after it confirms the check
+@property (nonatomic, assign) NSInteger attempts;  // failed listings since the check was last asked for
+@property (nonatomic, assign) NSInteger denials;   // of those, answered with 403
+@end
+
+/// Outcome of an index write.
+typedef NS_ENUM(NSInteger, SeafFPWriteResult) {
+    SeafFPWriteFailed = -1,     // nothing written: store busy, a statement failed, rolled back
+    SeafFPWriteUnchanged = 0,   // committed, no row changed
+    SeafFPWriteChanged = 1,     // committed with changes
+};
 
 @interface SeafFPStore : NSObject
 
@@ -62,7 +118,9 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
 /// Runs the block on the store queue inside one transaction. Store calls made
 /// from inside the block run inline (the queue is re-entrant) and share the
 /// transaction, so a directory listing costs one queue hop and one commit.
-- (void)performBatch:(void (NS_NOESCAPE ^)(void))block;
+/// NO when a statement failed (then nothing of the block is committed) or
+/// COMMIT failed.
+- (BOOL)performBatch:(void (NS_NOESCAPE ^)(void))block;
 
 #pragma mark meta / sequence
 
@@ -71,9 +129,54 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
 - (nullable NSString *)metaValueForKey:(NSString *)key;
 - (void)setMetaValue:(nullable NSString *)value forKey:(NSString *)key;
 
+#pragma mark public File Provider publication
+
+/// Reserve a distinct, persistent request boundary before fetching libraries.
+/// Unlike currentSeq, two overlapping requests never share this value.
+- (long long)beginRepositoryRequest;
+/// Snapshots contain repoId/name/perm/editable/mtime/ooid/locked. Only a
+/// complete, fresh list may confirm absence. Cached/unknown-time data cannot
+/// replace a newer accepted state. No identity or decoration is deleted.
+/// Network requests use beginRepositoryRequest, not a currentSeq read, so
+/// unchanged and overlapping responses have a reliable ordering boundary.
+- (BOOL)applyRepositorySnapshot:(NSArray<NSDictionary *> *)repositories
+                      complete:(BOOL)complete
+                     fromCache:(BOOL)fromCache
+               requestStartSeq:(long long)requestStartSeq;
+/// Distinguishes a failed transaction from an accepted or superseded snapshot.
+- (SeafFPWriteResult)applyRepositorySnapshotResult:(NSArray<NSDictionary *> *)repositories
+                                         complete:(BOOL)complete fromCache:(BOOL)fromCache
+                                   requestStartSeq:(long long)requestStartSeq;
+/// nil if the publication state cannot be read; an empty dictionary is valid.
+- (nullable NSDictionary<NSString *, NSDictionary *> *)repositoryStates;
+- (BOOL)hasAuthoritativeRepositoryList;
+/// Advances at most limit child records and commits the resumable cursor.
+- (BOOL)publishPendingRepositoryRecordsWithLimit:(NSUInteger)limit;
+- (BOOL)hasPendingRepositoryPublications;
+- (nullable SeafFPPublicationBatch *)publicationBatchAfterSequence:(long long)sequence limit:(NSUInteger)limit;
+/// Up to `limit` rows of the full working set scan after the position of the
+/// last row of the previous page (uuid nil: the first page). Each page stands
+/// on its own: the system asks for the next one on a new enumerator, possibly
+/// in a new process, so the position is all a page has to go on.
+- (nullable SeafFPWorkingSetPage *)workingSetPageAfterDepth:(NSUInteger)depth
+                                                      isDir:(BOOL)isDir
+                                                        seq:(long long)seq
+                                                       uuid:(nullable NSString *)uuid
+                                                      limit:(NSUInteger)limit;
+
+/// Persisted notification request, separate from item change sequence numbers.
+- (BOOL)requestWorkingSetSignal;
+- (long long)pendingWorkingSetSignalTicket;
+- (BOOL)completeWorkingSetSignalTicket:(long long)ticket;
+/// Opens an existing store only. Used by delayed notification callbacks so a
+/// removed domain's store is never created by a retry.
++ (nullable instancetype)openExistingStoreForDomainIdentifier:(NSString *)identifier;
+
 #pragma mark identity
 
 - (nullable SeafFPRecord *)recordForUUID:(NSString *)uuid;
+/// failed (optional): set when the row could not be read, as opposed to not being there.
+- (nullable SeafFPRecord *)recordForUUID:(NSString *)uuid failed:(nullable BOOL *)failed;
 - (nullable SeafFPRecord *)recordForRepo:(NSString *)repoId path:(NSString *)path includeDeleted:(BOOL)includeDeleted;
 
 /// Finds or creates the record for (repoId, path). A tombstoned record is
@@ -85,6 +188,17 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
                                   oid:(nullable NSString *)oid
                                 mtime:(long long)mtime
                                  size:(long long)size;
+/// Retires an indexed occupant after a fresh preflight found its name free.
+- (long long)prepareFileCreationInRepo:(NSString *)repoId path:(NSString *)path requestStartSeq:(long long)start;
+/// Records a successful creation at a name the server listing showed free.
+- (nullable SeafFPRecord *)recordCreatedFileInRepo:(NSString *)repoId
+                                            path:(NSString *)path
+                                      parentUUID:(nullable NSString *)parentUUID
+                                             oid:(NSString *)oid
+                                           mtime:(long long)mtime
+                                            size:(long long)size
+                                 requestStartSeq:(long long)requestStartSeq
+                                      serverTime:(long long)serverTime;
 
 /// Finds or creates the record for (repoId, path) together with all of its
 /// ancestor directories. Used when a path is known but has never been
@@ -108,8 +222,8 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
 - (NSArray<SeafFPRecord *> *)recordsChangedSinceSeq:(long long)seq limit:(NSInteger)limit;
 
 /// Live records in uuid order, starting after `uuid` (nil: from the first);
-/// at most `limit` rows, 0 means no limit. Pages the working set enumeration.
-- (NSArray<SeafFPRecord *> *)liveRecordsAfterUUID:(nullable NSString *)uuid limit:(NSInteger)limit;
+/// at most `limit` rows, 0 means no limit. nil when the read failed.
+- (nullable NSArray<SeafFPRecord *> *)liveRecordsAfterUUID:(nullable NSString *)uuid limit:(NSInteger)limit;
 
 /// Renames / moves a record; directory subtrees follow. uuid stays the same.
 /// The directory it leaves gets a stamp (see directoryStampForRepo:) so a
@@ -118,6 +232,72 @@ typedef NS_OPTIONS(NSInteger, SeafFPWorkingSetReason) {
                                    toRepo:(NSString *)repoId
                                      path:(NSString *)path
                                parentUUID:(nullable NSString *)parentUUID;
+/// Files confirmed the server move. Reconciles only an occupant discovered
+/// after the operation began, and only at the confirmed destination.
+- (nullable SeafFPRecord *)confirmMoveOfRecord:(SeafFPRecord *)source
+                                       toRepo:(NSString *)repoId
+                                         path:(NSString *)path
+                                   parentUUID:(nullable NSString *)parentUUID
+                              requestStartSeq:(long long)requestStartSeq;
+- (nullable SeafFPRecord *)confirmMoveOfRecord:(SeafFPRecord *)source
+                                       toRepo:(NSString *)repoId
+                                         path:(NSString *)path
+                                   parentUUID:(nullable NSString *)parentUUID
+                              requestStartSeq:(long long)requestStartSeq
+                                   serverTime:(long long)serverTime;
+- (nullable SeafFPRecord *)finishPendingMoveOfRecord:(SeafFPRecord *)source toRepo:(NSString *)repoId path:(NSString *)path
+                                          parentUUID:(nullable NSString *)parentUUID requestStartSeq:(long long)start
+                                          serverTime:(long long)serverTime;
+/// Reserves the source UUID and expected target before sending a server mutation.
+/// requestedName is the Files filename change, if any, before conflict resolution.
+- (long long)beginMoveOfRecord:(SeafFPRecord *)record toRepo:(NSString *)repoId directory:(NSString *)directoryPath
+                   parentUUID:(nullable NSString *)parentUUID expectedName:(NSString *)name
+                requestedName:(nullable NSString *)requestedName
+       existingDestinationNames:(NSArray<NSString *> *)existingDestinationNames;
+/// Also retains the pre-dispatch occupants, keyed by canonical filename, so
+/// a reused conflict name can be distinguished by its original content id.
+- (long long)beginMoveOfRecord:(SeafFPRecord *)record toRepo:(NSString *)repoId directory:(NSString *)directoryPath
+                   parentUUID:(nullable NSString *)parentUUID expectedName:(NSString *)name
+                requestedName:(nullable NSString *)requestedName
+       existingDestinationNames:(NSArray<NSString *> *)existingDestinationNames
+     existingDestinationEntries:(nullable NSDictionary<NSString *, NSDictionary *> *)existingDestinationEntries;
+- (BOOL)noteMoveReceiptForUUID:(NSString *)uuid requestStartSeq:(long long)start serverTime:(long long)serverTime;
+- (BOOL)discardUnconfirmedMoveForUUID:(NSString *)uuid requestStartSeq:(long long)start;
+/// Drops the item's move journal and the destination it reserved, whatever
+/// its state, after explicit deletion or other definitive cancellation.
+- (BOOL)discardMoveJournalForUUID:(NSString *)uuid;
+/// YES when the journal's destination reservation has expired: 7 days for a
+/// move the server acknowledged, one hour for one it never answered.
+/// The recovery evidence itself must survive until the move is resolved.
++ (BOOL)moveJournalExpired:(NSDictionary *)recovery now:(long long)now;
+/// YES after the one-hour settle window. Journals without a start time count as elapsed.
++ (BOOL)moveSettleGraceElapsed:(NSDictionary *)recovery now:(long long)now;
+/// Stops waiting for a move past its settle grace: drops the journal and the
+/// reservation it holds, acknowledged or not. The caller lists the source
+/// directory into the store first. NO when the journal is no longer
+/// `expected` (replaced, settled or receipted meanwhile) or on failure.
+- (BOOL)expireMoveForUUID:(NSString *)uuid matchingRecovery:(NSDictionary *)expected;
+/// Adopts the content id a fresh listing shows for the record at its current
+/// path (same name and type); the identity is unchanged. nil when the record
+/// moved, its sequence changed since the preflight began, or a write failed.
+- (nullable SeafFPRecord *)refreshContentOfRecord:(SeafFPRecord *)record oid:(nullable NSString *)oid mtime:(long long)mtime size:(long long)size;
+/// A pending move whose local identity still needs resolution.
+/// Empty when absent, nil on read failure. needsResolution=YES indicates an
+/// isolated damaged journal; preserve local edits and require manual handling.
+- (nullable NSDictionary *)moveRecoveryForUUID:(NSString *)uuid;
+- (BOOL)rememberMoveOfRecord:(SeafFPRecord *)record
+                       toRepo:(NSString *)repoId
+                    directory:(NSString *)directoryPath
+                   parentUUID:(nullable NSString *)parentUUID
+                 expectedName:(NSString *)name
+              requestStartSeq:(long long)requestStartSeq
+                   serverTime:(long long)serverTime;
+- (nullable NSString *)confirmedNameForRecord:(SeafFPRecord *)record
+                                     expected:(NSString *)expected
+                                       inRepo:(NSString *)repoId
+                                    directory:(NSString *)directoryPath
+                                      entries:(NSArray<NSDictionary *> *)entries
+                              requestStartSeq:(long long)requestStartSeq;
 
 #pragma mark container
 
@@ -183,12 +363,22 @@ extern NSString * const SeafFPEntryMtime;
 /// seq read before the request was sent; -1 means unknown, then only rows for
 /// unknown paths are inserted (nothing is updated, revived or tombstoned).
 /// Gives up when an ancestor was tombstoned after (or, with -1, at all before)
-/// the request, when a direct child changed after it, or when a directory
-/// stamp along the chain moved past it (an entry was renamed or moved away).
+/// the request, or when a directory stamp along the chain moved past it (an
+/// entry was renamed or moved away). Children written after the request are
+/// left as they are; the others are updated, revived or tombstoned (reason
+/// Absent). A fresh listing confirms the directory checks registered before
+/// its request started, in the same transaction.
+/// Unknown-time cached listings cannot recreate paths vacated by a move or
+/// rename; a fresh server listing is required to reuse those paths.
 - (BOOL)applyListingOfRepo:(NSString *)repoId
              directoryPath:(NSString *)directoryPath
                    entries:(NSArray<NSDictionary *> *)entries
            requestStartSeq:(long long)requestStartSeq;
+/// The same, telling a failed (or rejected) listing from one that changed nothing.
+- (SeafFPWriteResult)applyDirectoryListingOfRepo:(NSString *)repoId
+                                   directoryPath:(NSString *)directoryPath
+                                         entries:(NSArray<NSDictionary *> *)entries
+                                 requestStartSeq:(long long)requestStartSeq;
 
 /// Writes entries that are not a complete listing (starred items, search
 /// results, an upload): missing ancestors are created, siblings are never
@@ -225,24 +415,68 @@ extern NSString * const SeafFPEntryMtime;
                    listing:(NSArray<NSDictionary *> *)entries
            requestStartSeq:(long long)requestStartSeq;
 
-/// Activity log operations for applyActivitiesOfRepo:entries:.
+/// Activity log entries for recordActivityEntries:progress:.
 extern NSString * const SeafFPEntryOp;        // NSString, one of the values below
 extern NSString * const SeafFPEntryOldPath;   // NSString, full path before a move / rename
-extern NSString * const SeafFPActivityOpCreate;   // create, edit, recover, publish
+extern NSString * const SeafFPEntryRepoId;    // NSString, the entry's library
+extern NSString * const SeafFPEntryActivityHash;   // NSString, identifies the activity the entry came from
+extern NSString * const SeafFPActivityOpCreate;   // create, recover, restore, publish
+extern NSString * const SeafFPActivityOpEdit;
 extern NSString * const SeafFPActivityOpDelete;
 extern NSString * const SeafFPActivityOpMove;     // move and rename (same library)
 
-/// Replays server activity log entries of one library, oldest first. Entries
-/// carry op, path, isDir, mtime (the event time) and, for moves, oldPath.
-/// The log may lag behind or overlap what the store already knows, so it is
-/// applied cautiously:
-/// - create: only unknown paths get a row (no update, never a revive);
-/// - delete: only when the stored row (and, for a directory, every live row
-///   below it) is not newer than the event;
-/// - move: the row at oldPath keeps its uuid and moves to path, unless that
-///   row is newer than the event (a later file at the old path) or path is
-///   taken by another live row; without a row at oldPath it is a create.
+/// Records one page of the activity log in one transaction. The log is only
+/// a hint of where something changed: no identity is created, moved or
+/// deleted here. Entries of an activity (same hash) seen before are skipped;
+/// the others ask for a fresh listing of the affected directories (a delete
+/// only when the path has a live row) and same-library moves become rename
+/// hints, decided later. `progress` (the collector's position, a JSON object)
+/// is stored in the same transaction; its `boundary` prunes seen activities.
+/// Changed when at least one entry was recorded.
+- (SeafFPWriteResult)recordActivityEntries:(NSArray<NSDictionary *> *)entries progress:(nullable NSDictionary *)progress;
+/// The progress last stored by recordActivityEntries:progress:; empty when
+/// none, nil when it cannot be read.
+- (nullable NSDictionary *)activityProgress;
+/// Entries of one library without activity hashes (each entry is its own
+/// activity). YES when something was recorded.
 - (BOOL)applyActivitiesOfRepo:(NSString *)repoId entries:(NSArray<NSDictionary *> *)entries;
+
+/// Directories with a pending check (a fresh listing is needed).
+- (NSArray<NSString *> *)activityRecheckDirectoryPathsOfRepo:(NSString *)repoId;
+
+/// Asks for a fresh listing of a directory (a new version: a listing already
+/// in flight does not confirm it).
+- (BOOL)requestDirectoryCheckOfRepo:(NSString *)repoId path:(NSString *)path;
+/// Checks whose retry time has come, least tried first; nil when unreadable.
+/// repoIds: only these libraries (nil: all).
+- (nullable NSArray<SeafFPDirectoryCheck *> *)dueDirectoryChecksAt:(NSDate *)date limit:(NSUInteger)limit;
+- (nullable NSArray<SeafFPDirectoryCheck *> *)dueDirectoryChecksAt:(NSDate *)date limit:(NSUInteger)limit repoIds:(nullable NSArray<NSString *> *)repoIds;
+/// When the next deferred check becomes due; nil when none is waiting.
+- (nullable NSDate *)nextDirectoryCheckDate;
+- (nullable NSDate *)nextDirectoryCheckDateOfRepos:(nullable NSArray<NSString *> *)repoIds;
+/// The calls below leave a check alone that was asked for again since `check`
+/// was read (its version moved): the newer request still needs its listing.
+/// A failed listing: try again at `date`.
+- (BOOL)deferDirectoryCheck:(SeafFPDirectoryCheck *)check until:(NSDate *)date status:(NSInteger)status;
+/// The directory is gone on the server: its parent's listing answers the check.
+- (BOOL)moveDirectoryCheckToParent:(SeafFPDirectoryCheck *)check;
+- (BOOL)dropDirectoryCheck:(SeafFPDirectoryCheck *)check;
+/// The library is gone: its checks and rename hints with it.
+- (BOOL)dropDirectoryChecksOfRepo:(NSString *)repoId;
+
+/// Decides collected rename hints, oldest first per library; call it when no
+/// activity scan is in progress (an unfinished scan may still bring older
+/// hints). The record at the old path -- live, or tombstoned because a
+/// listing no longer showed it -- keeps its identity at the new path together
+/// with its subtree; a row a listing already created at the new path for the
+/// same item gives up its identity (its favorite and tags move over). The
+/// hint is dropped when the old row is a later entry, the target is taken by
+/// an older row, or the target directory is gone. For a day afterwards a
+/// listing that shows a carried row back at the old path with the same
+/// content id restores it there.
+- (SeafFPWriteResult)decideRenameHintsWithLimit:(NSUInteger)limit;
+/// Collected hints not decided yet.
+- (NSUInteger)pendingRenameHintCount;
 
 /// Records that the main app opened a file and fills in content information
 /// the record lacks. The oid / size are only written when the record has no

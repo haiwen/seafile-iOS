@@ -11,10 +11,21 @@ NSString * const SeafFPErrorReasonNotAuthenticated = @"notAuthenticated";
 NSString * const SeafFPErrorReasonNoAccount = @"noAccount";
 NSString * const SeafFPErrorReasonTouchIdEnabled = @"touchIdEnabled";
 
-// Same key AFNetworking uses; spelled out so this file does not import AFNetworking.
+// Same keys AFNetworking uses; spelled out so this file does not import AFNetworking.
 static NSString * const kAFFailingResponseKey = @"com.alamofire.serialization.response.error.response";
+static NSString * const kAFFailingResponseDataKey = @"com.alamofire.serialization.response.error.data";
 
 @implementation SeafFPErrors
+
+/// The `error_msg` of a seahub error body, when the failure carried one.
++ (NSString *)seafErrorMessage:(NSError *)error
+{
+    NSData *data = error.userInfo[kAFFailingResponseDataKey];
+    if (![data isKindOfClass:[NSData class]] || data.length == 0 || data.length > 4096) return nil;
+    id body = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    NSString *message = [body isKindOfClass:[NSDictionary class]] ? body[@"error_msg"] : nil;
+    return [message isKindOfClass:[NSString class]] && message.length > 0 ? message : nil;
+}
 
 + (NSError *)errorWithCode:(NSFileProviderErrorCode)code userInfo:(NSDictionary *)userInfo
 {
@@ -59,6 +70,11 @@ static NSString * const kAFFailingResponseKey = @"com.alamofire.serialization.re
     return [self errorWithCode:NSFileProviderErrorSyncAnchorExpired userInfo:nil];
 }
 
++ (NSError *)pageExpired
+{
+    return [self errorWithCode:NSFileProviderErrorPageExpired userInfo:nil];
+}
+
 + (NSError *)cannotSynchronize
 {
     return [self errorWithCode:NSFileProviderErrorCannotSynchronize userInfo:nil];
@@ -94,10 +110,17 @@ static NSString * const kAFFailingResponseKey = @"com.alamofire.serialization.re
         case 404:
             return [self noSuchItem];
         case 409:
-        case 443: // Seafile: name already exists
             return [self filenameCollision];
+        case 443: // seahub HTTP_443_ABOVE_QUOTA / fileserver "Out of quota."
         case 507:
             return [self insufficientQuota];
+        case 520: { // seahub HTTP_520_OPERATION_FAILED; "Above quota" when it is
+            NSString *message = [self seafErrorMessage:error];
+            if (message && [message rangeOfString:@"quota" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                return [self insufficientQuota];
+            }
+            return [self cannotSynchronize];
+        }
         default:
             break;
     }
@@ -105,6 +128,18 @@ static NSString * const kAFFailingResponseKey = @"com.alamofire.serialization.re
         return [self cannotSynchronize];
     }
     return [self serverUnreachable];
+}
+
++ (NSError *)directoryListingErrorForSeafError:(NSError *)error
+{
+    NSError *mapped = [self errorForSeafError:error];
+    if (mapped.code != NSFileProviderErrorNoSuchItem) return mapped;
+    NSString *message = [self seafErrorMessage:error];
+    if (!([message hasPrefix:@"Folder "] || [message hasPrefix:@"Library "]) || ![message hasSuffix:@" not found."]) {
+        return [self serverUnreachable];
+    }
+    // The missing directory is not necessarily the item being modified.
+    return [self errorWithCode:NSFileProviderErrorCannotSynchronize userInfo:@{SeafFPErrorReasonKey: @"directoryMissing"}];
 }
 
 @end

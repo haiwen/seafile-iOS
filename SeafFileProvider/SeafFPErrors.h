@@ -26,6 +26,7 @@ FOUNDATION_EXPORT NSString * const SeafFPErrorReasonTouchIdEnabled;
 + (NSError *)deletionRejected;
 + (NSError *)noSuchItem;
 + (NSError *)syncAnchorExpired;
++ (NSError *)pageExpired;
 + (NSError *)cannotSynchronize;
 + (NSError *)filenameCollision;
 + (NSError *)insufficientQuota;
@@ -34,6 +35,8 @@ FOUNDATION_EXPORT NSString * const SeafFPErrorReasonTouchIdEnabled;
 /// to the closest NSFileProviderError. Errors already in the File Provider
 /// domain are returned unchanged.
 + (NSError *)errorForSeafError:(nullable NSError *)error;
+/// A directory listing 404 is conclusive only with Seahub's missing-path error.
++ (NSError *)directoryListingErrorForSeafError:(nullable NSError *)error;
 
 @end
 

@@ -4,9 +4,18 @@
 set -e
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${TMPDIR:-/tmp}/seaf-fp-store-test"
+LOG="$(mktemp "${TMPDIR:-/tmp}/seaf-fp-store-test.XXXXXX")"
+trap 'rm -f "$LOG"' EXIT
 clang -fobjc-arc -DDEBUG=1 -Wno-objc-protocol-method-implementation \
   -I "$ROOT/SeafFileProvider/StoreTest" -I "$ROOT/SeafFileProvider" -I "$ROOT/Pod/Classes" \
   -framework Foundation -framework FileProvider -lsqlite3 \
   "$ROOT/SeafFileProvider/SeafFPStore.m" "$ROOT/SeafFileProvider/SeafFPIdentifier.m" \
   "$ROOT/SeafFileProvider/StoreTest/SeafFPStoreTest.m" -o "$OUT"
-"$OUT" 2>&1 | grep -E "FAIL|RESULT"
+if "$OUT" > "$LOG" 2>&1; then
+  grep -E "FAIL|RESULT" "$LOG"
+else
+  cat "$LOG"
+  exit 1
+fi
+python3 "$ROOT/SeafFileProvider/StoreTest/SeafFPIndexingTest.py"
+python3 "$ROOT/SeafFileProvider/StoreTest/SeafFPDirectoryTest.py"
