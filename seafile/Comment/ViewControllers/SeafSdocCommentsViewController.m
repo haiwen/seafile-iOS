@@ -24,6 +24,7 @@
 #import "SeafMentionSheetViewController.h"
 #import "SeafSdocUserMapper.h"
 #import "SeafTheme.h"
+#import "SeafAppDelegate.h"
 
 static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
 static NSTimeInterval const kRelatedUsersCacheTTL = 300.0; // 5 minutes
@@ -154,6 +155,15 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     // Init mention change tracking
     _lastPlainTextLength = _inputViewBar.textView.text.length;
     _lastSelectedRange = _inputViewBar.textView.selectedRange;
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    // Comment cells build their content for a fixed width, so rebuild them at the new one.
+    [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [self->_tableView reloadData];
+    }];
 }
 
 - (void)viewDidLayoutSubviews
@@ -861,7 +871,7 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     // Set contentView bounds so width is computed correctly
     CGFloat cellWidth = tableView.bounds.size.width;
     if (cellWidth <= 0) {
-        cellWidth = UIScreen.mainScreen.bounds.size.width;
+        cellWidth = (self.view.window ?: [SeafAppDelegate activeWindow]).bounds.size.width;
     }
     sizing.contentView.bounds = CGRectMake(0, 0, cellWidth, 0);
     

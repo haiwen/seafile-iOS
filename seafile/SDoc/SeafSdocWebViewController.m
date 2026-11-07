@@ -32,6 +32,15 @@
 
 typedef void (^SeafJSCallback)(NSString * _Nullable data);
 
+/// Space kept in front of the Edit button, the same gap the file list keeps
+/// in front of its trailing icons.
+static const CGFloat kSdocNavTrailingGap = 20.0;
+/// Estimated gap between the name's glass and Edit's glass. Also the step
+/// taken when Edit is still in the overflow button after a shrink.
+static const CGFloat kSdocNavPlateGap = 8.0;
+/// Upper bound on shrink-and-measure rounds per width / safe-area change.
+static const NSInteger kSdocNavMaxCorrectionPasses = 6;
+
 @interface SeafSdocWebViewController () <SeafSdocStylePopupDelegate, SeafSdocEditorToolbarDelegate,
     UINavigationControllerDelegate, UIImagePickerControllerDelegate,
     UIDocumentPickerDelegate, SeafImagePickerHelperDelegate>
@@ -67,8 +76,11 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
 @property (nonatomic, assign) BOOL isEditing;
 @property (nonatomic, assign) CGFloat keyboardVisibleHeight;
 
-@property (nonatomic, strong) UILabel *titleLabel;
-@property (nonatomic, strong) UILabel *statusLabel;
+@property (nonatomic, strong) SeafNavLeftItem *navLeftItem;
+@property (nonatomic, assign) CGFloat lastNavContainerWidth;
+@property (nonatomic, assign) UIEdgeInsets lastNavSafeInsets;
+@property (nonatomic, assign) BOOL navOverflowScheduled;
+@property (nonatomic, assign) NSInteger navOverflowPasses;
 
 @property (nonatomic, copy) NSString *currentStyleType; // Current paragraph style type
 
@@ -143,63 +155,14 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     self.navigationItem.title = nil;
     self.navigationItem.titleView = nil; // Clear any center title view
 
-    // Back button matching SeafNavLeftItem style
-    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [backButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
-    backButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
-    backButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    [backButton addTarget:self action:@selector(onTapBack) forControlEvents:UIControlEventTouchUpInside];
-    // Frame is not strictly needed for stack view but width constraint might be good if it's too small
-    [backButton.widthAnchor constraintEqualToConstant:30].active = YES;
-    [backButton.heightAnchor constraintEqualToConstant:44].active = YES;
+    // The file list's capsule: chevron and name are one back button, and the
+    // save status sits after the name. updateNavLeftItemWidth sizes it.
+    self.navLeftItem = [SeafNavLeftItem navLeftItemWithDirectory:nil
+                                                           title:self.fileName ?: self.file.name ?: @""
+                                                          target:self
+                                                          action:@selector(onTapBack)];
+    [self reinstallNavLeftItem];
 
-    // Title Label
-    self.titleLabel = [[UILabel alloc] init];
-    self.titleLabel.text = self.fileName ?: self.file.name;
-    self.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold]; // Matches SeafNavLeftItem
-    self.titleLabel.textColor = [SeafTheme primaryText];
-
-    // Status Label
-    self.statusLabel = [[UILabel alloc] init];
-    self.statusLabel.font = [UIFont systemFontOfSize:12];
-    self.statusLabel.textColor = [SeafTheme secondaryText];
-    self.statusLabel.text = @"";
-
-    // Title and Status aligned by baseline
-    UIStackView *textStack = [[UIStackView alloc] initWithArrangedSubviews:@[self.titleLabel, self.statusLabel]];
-    textStack.axis = UILayoutConstraintAxisHorizontal;
-    textStack.alignment = UIStackViewAlignmentFirstBaseline;
-    textStack.spacing = 6;
-    textStack.translatesAutoresizingMaskIntoConstraints = NO;
-
-    // Main stack: Back Button + Text Stack
-    UIStackView *stackView = [[UIStackView alloc] initWithArrangedSubviews:@[backButton, textStack]];
-    stackView.axis = UILayoutConstraintAxisHorizontal;
-    stackView.alignment = UIStackViewAlignmentCenter;
-    stackView.spacing = 6;
-    stackView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    // Allow title to shrink if needed, but keep priority high enough to be visible
-    [self.titleLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisHorizontal];
-    [self.statusLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-
-    // Wrap in a UIView because UIBarButtonItem customView behavior can be quirky with direct StackView on some iOS versions
-    UIView *containerView = [[UIView alloc] init];
-    containerView.translatesAutoresizingMaskIntoConstraints = NO;
-    [containerView addSubview:stackView];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [stackView.leadingAnchor constraintEqualToAnchor:containerView.leadingAnchor],
-        [stackView.trailingAnchor constraintEqualToAnchor:containerView.trailingAnchor],
-        [stackView.topAnchor constraintEqualToAnchor:containerView.topAnchor],
-        [stackView.bottomAnchor constraintEqualToAnchor:containerView.bottomAnchor],
-        // Max width constraint to avoid overlapping right items
-        [containerView.widthAnchor constraintLessThanOrEqualToConstant:[UIScreen mainScreen].bounds.size.width * 0.75]
-    ]];
-
-    UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
-    self.navigationItem.leftBarButtonItem = leftItem;
-    
     // Tint color
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
@@ -276,6 +239,12 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     }
     self.webViewBottomConstraint = [self.webView.bottomAnchor constraintEqualToAnchor:anchor constant:constant];
     self.webViewBottomConstraint.active = YES;
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [self scheduleNavOverflowCorrection];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -366,7 +335,7 @@ typedef void (^SeafJSCallback)(NSString * _Nullable data);
     [bar addSubview:stack];
     self.bottomStack = stack;
 
-    CGFloat dividerHeight = 1.0 / [UIScreen mainScreen].scale;
+    CGFloat dividerHeight = SEAF_SEPARATOR_HEIGHT_IN(self);
     NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
     [constraints addObjectsFromArray:@[
         [bar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
@@ -1259,7 +1228,7 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
         if (ok) {
             SeafSdocCommentsViewController *vc = [SeafSdocCommentsViewController new];
             vc.pageOptions = sself.pageOptions;
-            vc.docDisplayName = sself.titleLabel.text ?: sself.fileName ?: sself.file.name;
+            vc.docDisplayName = sself.fileName ?: sself.file.name;
             vc.connection = sself.file.connection;
             vc.repoId = sself.file.repoId;
             vc.latestContributor = sself.pageOptions.latestContributor ?: @"";
@@ -1272,9 +1241,111 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
     }];
 }
 
+/// The capsule is created before this view has a size, and fold / unfold
+/// changes the width later. Size it again whenever the width or safe area moves.
+- (void)updateNavLeftItemWidth
+{
+    if (!self.navLeftItem || !self.isViewLoaded) return;
+    CGFloat width = CGRectGetWidth(self.view.bounds);
+    if (width < 1.0) return;
+    // Only the horizontal insets matter here. The top inset changes during the
+    // push, and re-applying then would undo the correction below.
+    UIEdgeInsets safeInsets = UIEdgeInsetsMake(0, self.view.safeAreaInsets.left, 0, self.view.safeAreaInsets.right);
+    if (fabs(width - self.lastNavContainerWidth) >= 0.5
+        || !UIEdgeInsetsEqualToEdgeInsets(safeInsets, self.lastNavSafeInsets)) {
+        self.lastNavContainerWidth = width;
+        self.lastNavSafeInsets = safeInsets;
+        // Fold / unfold can leave the previous correction short. Measure again.
+        self.navOverflowPasses = 0;
+        // Keep Edit inside the safe area. Without this the name filled the bar on
+        // iPhone Duo's outer display and Edit ended up behind the status column.
+        CGFloat reserved = self.editButtonFixedWidth + kSdocNavTrailingGap;
+        if ([self.navLeftItem applyContainerWidth:width safeInsets:safeInsets reservedTrailingWidth:reserved]) {
+            [self reinstallNavLeftItem];
+        }
+    }
+    [self scheduleNavOverflowCorrection];
+}
+
+- (void)reinstallNavLeftItem
+{
+    // A new item makes the navigation bar read the resized custom view.
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.navLeftItem];
+}
+
+/// The reserved width is an estimate: the bar adds its own glass and spacing.
+/// After the bar lays out, shrink the name until Edit really fits.
+- (void)scheduleNavOverflowCorrection
+{
+    // During the push the bar keeps the item's old size and the glass is
+    // scaled. viewDidAppear: schedules the first real pass.
+    if (self.transitionCoordinator) return;
+    if (self.navOverflowScheduled || self.navOverflowPasses >= kSdocNavMaxCorrectionPasses) return;
+    self.navOverflowScheduled = YES;
+    __weak typeof(self) wself = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong typeof(wself) sself = wself;
+        if (!sself) return;
+        sself.navOverflowScheduled = NO;
+        [sself applyNavOverflowCorrection];
+    });
+}
+
+- (void)applyNavOverflowCorrection
+{
+    CGFloat shortfall = [self navEditButtonShortfall];
+    if (shortfall < 0.5) return;
+    self.navOverflowPasses += 1;
+    CGFloat width = CGRectGetWidth(self.navLeftItem.bounds) - ceil(shortfall);
+    if (![self.navLeftItem applyMaximumWidth:width]) return;
+    [self reinstallNavLeftItem];
+    [self.navigationController.navigationBar layoutIfNeeded];
+    [self scheduleNavOverflowCorrection];
+}
+
+/// How much narrower the name has to get for Edit to sit inside the bar's
+/// horizontal safe area. 0 when it already does.
+- (CGFloat)navEditButtonShortfall
+{
+    UINavigationBar *bar = self.navigationController.navigationBar;
+    if (!bar.window || !self.navLeftItem.window || !self.editButton) return 0;
+    CGFloat safeMaxX = CGRectGetWidth(bar.bounds) - bar.safeAreaInsets.right;
+    if (self.editButton.window) {
+        // No plate means the bar is still swapping the button (e.g. Edit ->
+        // Done); its raw frame is not where it ends up, so do not judge yet.
+        CGRect editPlate = [self navPlateFrameForItemView:self.editButton inBar:bar];
+        if (CGRectIsNull(editPlate)) return 0;
+        return MAX(0.0, CGRectGetMaxX(editPlate) - safeMaxX);
+    }
+    // Edit did not fit, so the bar moved it into its "…" overflow button,
+    // which Duo draws in the status column where taps never reach it. Edit
+    // needs its own width, the glass around it, and the gap between plates.
+    CGRect leftItem = [self.navLeftItem convertRect:self.navLeftItem.bounds toView:bar];
+    CGRect leftPlate = [self navPlateFrameForItemView:self.navLeftItem inBar:bar];
+    if (CGRectIsNull(leftPlate)) leftPlate = leftItem;
+    CGFloat glass = CGRectGetWidth(leftPlate) - CGRectGetWidth(leftItem);
+    CGFloat needed = CGRectGetMaxX(leftPlate) + kSdocNavPlateGap + self.editButtonFixedWidth + glass - safeMaxX;
+    return MAX(kSdocNavPlateGap, needed);
+}
+
+/// Glass plate the bar draws around a custom view: the nearest ancestor that
+/// is a little wider. CGRectNull when there is none.
+- (CGRect)navPlateFrameForItemView:(UIView *)view inBar:(UINavigationBar *)bar
+{
+    CGRect itemRect = [view convertRect:view.bounds toView:bar];
+    for (UIView *cursor = view.superview; cursor && cursor != bar; cursor = cursor.superview) {
+        CGRect rect = [cursor convertRect:cursor.bounds toView:bar];
+        CGFloat extra = CGRectGetWidth(rect) - CGRectGetWidth(itemRect);
+        if (extra > 32.0) break;
+        if (extra > 0.5) return rect;
+    }
+    return CGRectNull;
+}
+
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
+    [self updateNavLeftItemWidth];
     if (!self.webView) return;
     UIEdgeInsets contentInset = UIEdgeInsetsZero;
     [self refreshBottomBarHeight];
@@ -1286,6 +1357,7 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
 {
     [super viewSafeAreaInsetsDidChange];
     [self refreshBottomBarHeight];
+    [self updateNavLeftItemWidth];
 }
 
 - (void)setupUserAgentAndLoad
@@ -1597,15 +1669,22 @@ static dispatch_semaphore_t SeafSdocImageProcessingLimiter(void)
 
 - (void)updateNavigationTitleWithStatus:(NSString *)status isTemporary:(BOOL)temp
 {
-    if (self.statusLabel) {
-        self.statusLabel.text = status;
+    if (self.navLeftItem) {
+        [self applyNavStatusText:status];
         if (temp) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                if ([self.statusLabel.text isEqualToString:status]) {
-                    self.statusLabel.text = @"";
+                if ([self.navLeftItem.statusText isEqualToString:status]) {
+                    [self applyNavStatusText:nil];
                 }
             });
         }
+    }
+}
+
+- (void)applyNavStatusText:(NSString *)status
+{
+    if ([self.navLeftItem applyStatusText:status]) {
+        [self reinstallNavLeftItem];
     }
 }
 

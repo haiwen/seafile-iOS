@@ -49,6 +49,7 @@
 @property BOOL autoBackToDefaultAccount;
 @property (nonatomic, assign) BOOL needReset;
 @property (nonatomic, strong) NSMutableArray *backgroundTaskIDs;
+@property (nonatomic, strong) NSDictionary *launchRemoteNotification;
 @end
 
 @implementation SeafAppDelegate
@@ -281,25 +282,11 @@
     return false;
 }
 
-- (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
+- (BOOL)handleOpenURL:(NSURL *)url
 {
     Debug("handleOpenURL: %@", url);
     if ([url.host isEqualToString:@"platformId=wechat"]) {
-        return [WXApi handleOpenURL:url delegate:self];
-    } else {
-        return [self openURL:url];
-    }
-}
-
-
-- (BOOL)application:(UIApplication *)application
-            openURL:(NSURL *)url
-  sourceApplication:(NSString *)sourceApplication
-         annotation:(id)annotation
-{
-    Debug("Calling Application Bundle ID: %@, url: %@", sourceApplication, url);
-    if ([url.host isEqualToString:@"platformId=wechat"]) {
-        return [WXApi handleOpenURL:url delegate:self];
+        return [SeafWechatHelper handleOpenURL:url delegate:self];
     } else {
         return [self openURL:url];
     }
@@ -401,18 +388,12 @@
     // Run the theme preference one-time migration *after* SeafGlobal has migrated
     // accounts into App Group storage, so SeafTheme can reliably distinguish
     // upgrade-from-legacy users (existing accounts) from fresh installs and
-    // pick a sensible default. Must run *before* applyPreferenceToWindow:.
+    // pick a sensible default. Must run *before* applyPreferenceToWindow:,
+    // which happens once the scene connects.
     [SeafTheme migrateLegacyPreferenceIfNeeded];
 
-    self.window.backgroundColor = [SeafTheme primarySurface];
     self.autoBackToDefaultAccount = false;
     _monitors = [[NSMutableArray alloc] init];
-    _startNav = (UINavigationController *)self.window.rootViewController;
-    _startNav.view.backgroundColor = [SeafTheme primarySurface];
-
-    _startVC = (StartViewController *)_startNav.topViewController;
-
-    [SeafTheme applyPreferenceToWindow:self.window];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(themePreferenceDidChange:)
                                                  name:SeafThemeDidChangeNotification
@@ -435,12 +416,8 @@
     if (locationOptions) {
         Debug("Location: %@", locationOptions);
     }
-    NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
-    if (dict) {
-        [self handleRemoteNotification:dict];
-    } else {
-        [self.startVC performSelector:@selector(selectDefaultAccount:) withObject:^(bool success) {} afterDelay:0.5f];
-    }
+    // Handled once the scene connects and the start screen exists.
+    self.launchRemoteNotification = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
 
     self.bgTask = UIBackgroundTaskInvalid;
     self.needReset = NO;
@@ -469,9 +446,44 @@
 
     [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
 
-    [UIApplication sharedApplication].delegate.window.backgroundColor = [SeafTheme primarySurface];
-
     return YES;
+}
+
+- (void)sceneDidConnectWithWindow:(UIWindow *)window options:(UISceneConnectionOptions *)options
+{
+    // A scene the system disconnected in the background reconnects with a
+    // fresh storyboard window; keep the UI the user already had.
+    UIViewController *previousRoot = self.window.rootViewController;
+    self.window = window;
+    self.window.backgroundColor = [SeafTheme primarySurface];
+    if (previousRoot) {
+        self.window.rootViewController = previousRoot;
+    } else {
+        _startNav = (UINavigationController *)self.window.rootViewController;
+        _startNav.view.backgroundColor = [SeafTheme primarySurface];
+        _startVC = (StartViewController *)_startNav.topViewController;
+    }
+    [SeafTheme applyPreferenceToWindow:self.window];
+
+    if (!previousRoot) {
+        NSDictionary *notification = self.launchRemoteNotification ?: options.notificationResponse.notification.request.content.userInfo;
+        self.launchRemoteNotification = nil;
+        if (notification.count > 0) {
+            [self handleRemoteNotification:notification];
+        } else {
+            [self.startVC performSelector:@selector(selectDefaultAccount:) withObject:^(bool success) {} afterDelay:0.5f];
+        }
+    }
+
+    NSSet<UIOpenURLContext *> *urlContexts = options.URLContexts;
+    if (urlContexts.count > 0) {
+        // The window only becomes visible after this connection callback returns.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            for (UIOpenURLContext *context in urlContexts) {
+                [self handleOpenURL:context.URL];
+            }
+        });
+    }
 }
 
 - (void)enterBackground
@@ -536,6 +548,12 @@
 
 - (void)handleRemoteNotification:(NSDictionary *)userInfo
 {
+    if (!self.window) {
+        // Background launch: the scene is not connected and there is no UI to
+        // switch. Keep the payload for sceneDidConnectWithWindow:options:.
+        self.launchRemoteNotification = userInfo;
+        return;
+    }
     NSString *status __attribute__((unused)) = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
     NSString *badgeStr = [[userInfo objectForKey:@"aps"] objectForKey:@"badge"];
     NSDictionary *alert = [[userInfo objectForKey:@"aps"] objectForKey:@"alert"];
@@ -555,13 +573,7 @@
     }
 }
 
-- (void)applicationWillResignActive:(UIApplication *)application
-{
-    // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-    // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
-}
-
-- (void)applicationDidEnterBackground:(UIApplication *)application
+- (void)sceneDidEnterBackground
 {
     // Coalesced Files signals would die with the process otherwise.
     [[SeafFileProviderDomainManager shared] flushPendingSignals];
@@ -581,13 +593,18 @@
         self.autoBackToDefaultAccount = false;
 }
 
-- (void)applicationWillEnterForeground:(UIApplication *)application
+- (void)sceneWillEnterForeground
 {
+    // Unlike applicationWillEnterForeground:, the scene callback also fires at
+    // launch, where domain reconciliation must wait for the legacy migration
+    // started in didFinishLaunching.
+    if (!self.background)
+        return;
     Debug("Seafile will enter foreground");
     [[SeafFileProviderDomainManager shared] reconcileDomainsWithConnections:SeafGlobal.sharedObject.conns completion:^{
         [[SeafFileProviderDomainManager shared] signalWorkingSetForConnections:SeafGlobal.sharedObject.conns];
     }];
-    [application endBackgroundTask:self.bgTask];
+    [[UIApplication sharedApplication] endBackgroundTask:self.bgTask];
     self.bgTaskNum = 0;
     [self.bgTaskTimer invalidate];
     self.bgTaskTimer = nil;
@@ -616,7 +633,7 @@
     }
 }
 
-- (void)applicationDidBecomeActive:(UIApplication *)application
+- (void)sceneDidBecomeActive
 {
     if (!self.background)
         return;
@@ -955,6 +972,7 @@ new identifier is "'mtime' + 'repoId' + 'path'"
 }
 
 # pragma mark- wechat callback
+#if !TARGET_OS_SIMULATOR
 // Facilitates response handling for WeChat-specific actions within the app.
 - (void)onResp:(BaseResp *)resp {
     if([resp isKindOfClass:[SendMessageToWXResp class]]) {
@@ -974,6 +992,7 @@ new identifier is "'mtime' + 'repoId' + 'path'"
         }
     }
 }
+#endif
 
 #pragma mark topViewController
 + (UIViewController *)topViewController {
@@ -1002,11 +1021,6 @@ new identifier is "'mtime' + 'repoId' + 'path'"
 
 + (CGFloat)statusBarHeight {
     return [self activeWindow].windowScene.statusBarManager.statusBarFrame.size.height;
-}
-
-+ (UIInterfaceOrientation)activeInterfaceOrientation {
-    UIWindowScene *scene = [self activeWindow].windowScene;
-    return scene ? scene.interfaceOrientation : UIInterfaceOrientationPortrait;
 }
 
 // Finds the topmost view controller in the navigation stack to handle certain UI actions.

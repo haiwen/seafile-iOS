@@ -422,7 +422,8 @@
         if (IsIpad()) {
             y = self.navigationController.navigationBar.frame.size.height;
         }
-        _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, y, [UIScreen mainScreen].bounds.size.width, 2)];
+        _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, y, self.view.bounds.size.width, 2)];
+        _progressView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _progressView.tintColor = SEAF_COLOR_LIGHT;
         _progressView.trackTintColor = [SeafTheme primarySurface];
     }
