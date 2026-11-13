@@ -13,6 +13,7 @@
 #import "SeafBase.h"
 #import "SeafDir.h"
 #import "Debug.h"
+#import "AFNetworkReachabilityManager.h"
 #import "SeafRetryBackoff.h"
 #import "SeafPhotoBackupTool.h"
 
@@ -659,15 +660,25 @@
     
     [self cancelAutoSyncTasksWithoutSuspend];
     
-    [self.uploadQueue setSuspended:NO];
+    // A global pause (no network, auth error, background expiry) suspended the
+    // queue on purpose and resumeAllTasks lifts it. Un-suspending here would
+    // start queued manual uploads that then fail and drop out of the list.
+    // Same lock as pauseAllTasks / resumeAllTasks so neither can slip in between.
+    @synchronized (self) {
+        if (!self.isPaused) {
+            [self.uploadQueue setSuspended:NO];
+        }
+    }
 }
 
 - (void)cancelAutoSyncTasksWithoutSuspend {
     NSMutableArray<SeafUploadFile *> *tasksToCancel = [NSMutableArray array];
     
-    // Collect tasks that need to be canceled
-    NSArray *taskArrays = @[self.ongoingTasks, self.waitingTasks];
-    for (NSMutableArray<SeafUploadFile *> *taskArray in taskArrays) {
+    // Collect tasks that need to be canceled. Snapshot both arrays under their
+    // locks: the KVO handlers mutate them from the operations' threads, and a
+    // pause while uploads are finishing would otherwise enumerate a mutating array.
+    NSArray *taskArrays = @[[self getOngoingTasks], [self getWaitingTasks]];
+    for (NSArray<SeafUploadFile *> *taskArray in taskArrays) {
         for (SeafUploadFile *ufile in taskArray) {
             if (ufile.uploadFileAutoSync && ufile.udir.connection == self.conn) {
                 [tasksToCancel addObject:ufile];
@@ -783,7 +794,11 @@
         [self pauseAllUploadingTasks];
         [self pauseAllDownloadingTasks];
         [self pauseAllThumbOngoingTasks];
-        [self pauseCleanupTimer];
+        // The periodic check keeps running: every handler already bails out while the
+        // queue is suspended or the network is down, and checkBackupNeedToUpload is
+        // what lifts a global pause whose resume was missed (resumeAllTasks skipped
+        // because the network check still failed). Stopping the timer here left that
+        // pause stuck until the next reachability callback.
     }
 }
 
@@ -799,6 +814,8 @@
     @synchronized(self) {
         if (self.isPaused) { // Only resume globally if it was previously in a global paused state
             self.isPaused = NO;
+            self.pausedForBackground = NO;
+            self.pausedForAuth = NO;
             stateChangedToResumed = YES;
             
             // Unsuspend the queues
@@ -985,7 +1002,7 @@
         [self.pausedUploadTasks removeAllObjects];
     }
     for (SeafUploadFile *ufile in paused) {
-        [self addUploadTask:ufile];
+        [self requeuePausedUploadTask:ufile];
         shouldResumeQueue = YES;
     }
 
@@ -1003,6 +1020,17 @@
 }
 
 #pragma mark - Resume Helpers
+/// Backups of an account whose photo backup is paused are dropped instead of
+/// re-queued: start would cancel them again anyway, and resuming the backup
+/// rescans the library.
+- (void)requeuePausedUploadTask:(SeafUploadFile *)ufile {
+    if (ufile.uploadFileAutoSync && ufile.udir.connection.photoBackupPaused) {
+        Debug(@"Photo backup paused, drop paused backup task %@", ufile.name);
+        return;
+    }
+    [self addUploadTask:ufile];
+}
+
 /// Resumes all paused upload tasks.
 - (void)resumePausedUploadTasks {
     // Specific check for Wi-Fi only uploads before resuming paused upload tasks
@@ -1023,7 +1051,7 @@
         [self.pausedUploadTasks removeAllObjects];
     }
     for (SeafUploadFile *ufile in paused) {
-        [self addUploadTask:ufile];
+        [self requeuePausedUploadTask:ufile];
     }
 }
 
@@ -1075,11 +1103,29 @@
 }
 
 - (void)checkBackupNeedToUpload {
+    BOOL globallyPaused = NO;
     @synchronized(self) {
         if (self.uploadQueue.isSuspended) {
-            Debug(@"Upload queue is suspended. Skip checkBackupNeedToUpload.");
-            return;
+            // A pause for background expiry must wait for the foreground and one
+            // for an auth error for the next login; only a network pause is
+            // retried here.
+            globallyPaused = self.isPaused && !self.pausedForBackground && !self.pausedForAuth;
+            if (!globallyPaused) {
+                Debug(@"Upload queue is suspended. Skip checkBackupNeedToUpload.");
+                return;
+            }
         }
+    }
+    if (globallyPaused) {
+        // A network pause is normally lifted by the reachability callback. When that
+        // ran while the network check still failed, the flag sticks and nothing
+        // retries; resumeAllTasks checks the network itself and rescans the library
+        // once the queue runs again.
+        Debug(@"Upload queue is globally paused. Try to resume.");
+        [self resumeAllTasks];
+        return;
+    }
+    @synchronized(self) {
         
         // Only when a queued photo may be tried now. Photos whose upload
         // failed wait (SeafPhotoBackupTool); with nothing else queued a check
@@ -1183,12 +1229,20 @@
     NSHTTPURLResponse *response = error.userInfo[AFNetworkingOperationFailingURLResponseErrorKey];
     if (response && (response.statusCode == HTTP_ERR_UNAUTHORIZED || response.statusCode == HTTP_ERR_FORBIDDEN)) {
         Debug(@"[Download Error] Authentication error detected (status code: %ld). Pausing all tasks.", (long)response.statusCode);
+        // Keeps the periodic check from lifting this pause before the next login.
+        self.pausedForAuth = YES;
         [self pauseAllTasks];
     }
 }
 
 - (void)handleUploadErrorIfNeeded:(NSError *)error {
     if (!error) return;
+    // A cancelled request is not a server error: pausing the backup or removing a
+    // task cancels uploads on purpose, and counting them would suspend the queue
+    // after five of them.
+    if ([error.domain isEqualToString:NSURLErrorDomain] && error.code == NSURLErrorCancelled) {
+        return;
+    }
     
     // Retrieve NSHTTPURLResponse from error.userInfo
     NSHTTPURLResponse *response = error.userInfo[AFNetworkingOperationFailingURLResponseErrorKey];
@@ -1279,6 +1333,18 @@
     }
 }
 
+- (void)resetUploadErrorCount
+{
+    @synchronized (self) {
+        [self.errorCodeCountDict removeAllObjects];
+        self.errorPauseCount = 0;
+        self.errorPauseUntil = nil;
+    }
+    self.lastPausedErrorCode = nil;
+    // A pause still waiting out its backoff would hold the restarted uploads.
+    [self endErrorPauseIfDue:NO];
+}
+
 - (void)pauseUploadTasksWithCode:(NSInteger)statusCode
 {
     [self pauseUploadTasksWithCode:statusCode quota:NO];
@@ -1307,6 +1373,14 @@
 
 - (BOOL)canResumeTasks
 {
+    // The shared manager tracks the default route and is what paused the queue in
+    // the first place; trust it when it says reachable. The by-name lookup below
+    // resolves DNS synchronously and can still fail right after the network returns,
+    // which left the global pause stuck.
+    if ([AFNetworkReachabilityManager sharedManager].isReachable) {
+        return YES;
+    }
+
     // Retrieve the current network status
     NSDictionary *networkStatus = [Utils checkNetworkReachability];
     BOOL isReachable = [networkStatus[@"isReachable"] boolValue];

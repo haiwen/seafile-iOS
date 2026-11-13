@@ -39,7 +39,22 @@
 - (void)start
 {
     [super start];
-    if (self.isCancelled || self.isFinished) {
+    if (self.isFinished) {
+        return;
+    }
+    if (self.isCancelled) {
+        // Cancelled between the check in -[SeafBaseOperation start] and the switch to
+        // executing: -cancel saw a non-executing operation and left the finish to us.
+        // Returning here would leave it executing forever, holding a queue slot and
+        // blocking a later task with the same path from being added.
+        [self completeOperation];
+        return;
+    }
+    // Backups queued just before a pause, or re-added after a network outage,
+    // must not start while the account's photo backup is paused.
+    if (self.uploadFile.uploadFileAutoSync && self.uploadFile.udir.connection.photoBackupPaused) {
+        Debug("Photo backup paused, cancel %@", self.uploadFile.name);
+        [self cancel];
         return;
     }
 
@@ -187,6 +202,8 @@
     __weak typeof(self) weakSelf = self;
     NSURLSessionDataTask *connectUploadLinkTask = [connection sendRequest:uploadURL success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
+        // Cancellation already reported the outcome; do not start the upload request.
+        if (!strongSelf || strongSelf.isCancelled) return;
         NSString *url = [JSON stringByAppendingString:@"?ret-json=true"];
         [strongSelf uploadByFile:connection url:url path:uploadpath update:strongSelf.uploadFile.overwrite];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {

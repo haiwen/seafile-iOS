@@ -36,6 +36,14 @@
 @property (nonatomic, strong) NSMutableArray<SeafThumb *> * _Nullable pausedThumbTasks;
 
 @property (nonatomic, assign) BOOL isPaused;
+/// Set by the app before pauseAllTasks when the background task expired: that
+/// pause must last until the app is back in the foreground, so the periodic check
+/// does not lift it. Cleared by resumeAllTasks.
+@property (nonatomic, assign) BOOL pausedForBackground;
+/// Set when a download failed with 401 / 403 and paused everything: retrying
+/// cannot succeed until the account logs in again, so the periodic check does not
+/// lift it. Cleared by resumeAllTasks.
+@property (nonatomic, assign) BOOL pausedForAuth;
 
 @property (nonatomic, strong) SeafConnection * _Nonnull conn;
 
@@ -82,6 +90,9 @@
 
 - (void)pauseAllTasks;
 - (void)resumeAllTasks;
+/// Forgets the consecutive-error count that suspends the upload queue after five
+/// identical errors. Call it when the user explicitly restarts uploads.
+- (void)resetUploadErrorCount;
 
 // Timer control methods
 - (void)startCleanupTimer;   // Start the timer for cleanup tasks

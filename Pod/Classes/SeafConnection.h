@@ -135,6 +135,9 @@ extern NSNotificationName const SeafServerInfoUpdatedNotification;
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;///< Indicates whether syncing should occur over WiFi only.
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync; ///< Indicates whether automatic syncing is enabled.
+/// Whether the user paused automatic photo backup for this account. Manual uploads are not affected.
+/// Setting it re-runs checkAutoSync in the background; disabling autoSync clears it.
+@property (nonatomic) BOOL photoBackupPaused;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;///< Indicates whether video syncing is enabled.
 @property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;///< Indicates whether background syncing is enabled.
 @property (readwrite, nonatomic, getter=isFirstTimeSync) BOOL firstTimeSync;///< Indicates whether this is the first time syncing.
@@ -440,6 +443,9 @@ extern NSNotificationName const SeafServerInfoUpdatedNotification;
 Checks the auto synchronization settings and updates the connection’s synchronization actions accordingly.
 */
 - (void)checkAutoSync;
+/// Runs checkAutoSync on the serial queue the pause switch uses, so settings
+/// changes and a pause / resume cannot run it concurrently.
+- (void)scheduleCheckAutoSync;
 
 /**
  * Returns the number of photos currently being synced.
