@@ -490,6 +490,78 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     if (self.isAutoSync == autoSync) return;
     [self setAttribute:[NSNumber numberWithBool:autoSync] forKey:@"autoSync"];
     [self setFirstTimeSync:true];
+    if (!autoSync) {
+        // Turning auto upload off while paused is no state change for checkAutoSync
+        // (the stop path already ran for the pause and skipped the cache cleanup),
+        // so clear the staged backup files here.
+        BOOL wasPaused = self.photoBackupPaused;
+        [SeafStorage.sharedObject removeObjectForKey:[self photoBackupPausedKey]];
+        if (wasPaused && !_inAutoSync) {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                [self clearUploadCache];
+            });
+        }
+    }
+}
+
+// Kept outside the settings dictionary: extensions save their own stale copy of
+// that dictionary, which would silently undo a pause made in the main app.
+- (NSString *)photoBackupPausedKey
+{
+    return [self.accountIdentifier stringByAppendingString:@"/photoBackupPaused"];
+}
+
+- (BOOL)photoBackupPaused
+{
+    return [[SeafStorage.sharedObject objectForKey:[self photoBackupPausedKey]] boolValue];
+}
+
+- (void)setPhotoBackupPaused:(BOOL)photoBackupPaused
+{
+    if (self.photoBackupPaused == photoBackupPaused) return;
+    [SeafStorage.sharedObject setObject:@(photoBackupPaused) forKey:[self photoBackupPausedKey]];
+    // Pausing reuses the stop path of checkAutoSync, resuming reuses its start path.
+    [self scheduleCheckAutoSync:^{
+        if (!photoBackupPaused) {
+            // A global pause (no network, auth error, background expiry) outlives its
+            // trigger when resumeAllTasks found the network unreachable: the queue stays
+            // suspended and the rescanned backups below would wait forever. Resuming the
+            // backup is an explicit user action, so recover the queue first when the
+            // network is back. Errors counted before the pause must not stop the new run.
+            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self];
+            [accountQueue resetUploadErrorCount];
+            if (accountQueue.isPaused) {
+                [accountQueue resumeAllTasks];
+            }
+        }
+    }];
+}
+
+// One serial queue for every account: a quick pause / resume pair finishes in
+// order, and a settings change cannot run checkAutoSync concurrently with them.
++ (dispatch_queue_t)autoSyncQueue
+{
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.seafile.photoBackupPause", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
+- (void)scheduleCheckAutoSync
+{
+    [self scheduleCheckAutoSync:nil];
+}
+
+- (void)scheduleCheckAutoSync:(void (^)(void))prepare
+{
+    dispatch_async([SeafConnection autoSyncQueue], ^{
+        if (prepare) {
+            prepare();
+        }
+        [self checkAutoSync];
+    });
 }
 
 - (void)setVideoSync:(BOOL)videoSync
@@ -903,6 +975,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
 - (void)clearAccount
 {
     [SeafDataTaskManager.sharedObject removeAccountQueue:self];
+    [SeafStorage.sharedObject removeObjectForKey:[self photoBackupPausedKey]];
     [SeafStorage.sharedObject removeObjectForKey:_address];
     [SeafStorage.sharedObject removeObjectForKey:self.accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/settings", self.accountIdentifier]];
@@ -1537,7 +1610,11 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 
 - (void)updateUploadDir:(SeafDir *)dir
 {
-    BOOL changed = !_syncDir || ![_syncDir.repoId isEqualToString:dir.repoId] || ![_syncDir.path isEqualToString:dir.path];
+    // Stopping the backup (pause, or auto sync turned off) resets the backup tool's
+    // syncDir but not ours, so comparing only against _syncDir would skip the
+    // assignment on resume and pickPhotosForUpload would bail out on a nil dir.
+    BOOL changed = !_syncDir || !_photoBackup.syncDir
+        || ![_syncDir.repoId isEqualToString:dir.repoId] || ![_syncDir.path isEqualToString:dir.path];
     if (changed) {
         _syncDir = dir;
         _photoBackup.syncDir = dir;
@@ -1630,16 +1707,20 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
         return;
     }
 
-    BOOL value = self.isAutoSync && (self.autoSyncRepo != nil);
-    
+    BOOL paused = self.photoBackupPaused;
+    BOOL value = self.isAutoSync && (self.autoSyncRepo != nil) && !paused;
+
     if (_inAutoSync != value) {
         if (value) {
             Debug("Start auto sync for server %@", _address);
             [self.photoBackup prepareForBackup];
         } else {
-            Debug("Stop auto Sync for server %@", _address);
+            Debug("Stop auto Sync for server %@, paused: %d", _address, paused);
             [self.photoBackup resetAll];
-            [self clearUploadCache];
+            // Manual uploads stage their files under the same directory; a pause must not touch them.
+            if (!paused) {
+                [self clearUploadCache];
+            }
         }
     }
     

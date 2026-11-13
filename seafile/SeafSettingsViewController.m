@@ -59,6 +59,8 @@ enum CAMERA_CELL{
     CELL_CAMERA_DESTINATION,
     /// Programmatic row; visible only when photo access is Limited.
     CELL_CAMERA_MANAGE_PHOTOS,
+    // The programmatic "Pause Auto Upload" switch row follows the manage-photos
+    // row when that row is shown; see -backupControlRow.
 };
 
 enum UPDOWNLOAD_CELL{
@@ -110,6 +112,15 @@ enum {
 /// The data source reads this, never the live connection flag, so section row
 /// counts cannot change between two data-source queries without a reloadData.
 @property (nonatomic) BOOL wikiSectionVisible;
+/// Snapshot of whether the "Pause Auto Upload" row is shown. Refreshed only
+/// when the Camera section or the whole table reloads, like wikiSectionVisible.
+@property (nonatomic) BOOL backupControlRowVisible;
+/// Built once and reused, like the storyboard switch cells: upload progress
+/// reloads the Camera section often, and a new cell would swap the switch out
+/// from under the user's finger.
+@property (strong, nonatomic) UITableViewCell *backupPauseCell;
+@property (strong, nonatomic) UISwitch *backupPauseSwitch;
+@property (strong, nonatomic) UILabel *backupPausedLabel;
 
 
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -181,6 +192,8 @@ enum {
     _connection.autoSync = autoSync;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];
+    // Shows or hides the pause / resume backup row.
+    [self reloadSectionIfConsistent:SECTION_CAMERA];
 }
 
 - (void)setVideoSync:(BOOL)videoSync
@@ -271,7 +284,7 @@ enum {
         self.autoSync = _autoSyncSwitch.on;
         _syncRepoCell.detailTextLabel.text = @"";
         _connection.autoSyncRepo = nil;
-        [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
+        [_connection scheduleCheckAutoSync];
     }
 }
 
@@ -388,6 +401,7 @@ enum {
 {
     [super viewDidLoad];
     self.wikiSectionVisible = _connection.isServerWikiSupported;
+    self.backupControlRowVisible = [self shouldShowBackupControlRow];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _nameCell.detailTextLabel.textColor = BAR_COLOR_ORANGE;
     _nameCell.detailTextLabel.text = NSLocalizedString(@"Switch Account", @"Seafile");
@@ -612,6 +626,9 @@ enum {
 /// "Invalid batch updates detected" because the Wiki row count went 1 -> 0.
 - (void)reloadSectionIfConsistent:(NSInteger)section
 {
+    if (section == SECTION_CAMERA) {
+        self.backupControlRowVisible = [self shouldShowBackupControlRow];
+    }
     if (!self.isViewLoaded) {
         return;
     }
@@ -638,6 +655,7 @@ enum {
 - (void)reloadTableData
 {
     self.wikiSectionVisible = _connection.isServerWikiSupported;
+    self.backupControlRowVisible = [self shouldShowBackupControlRow];
     [self.tableView reloadData];
 }
 
@@ -671,6 +689,25 @@ enum {
     return indexPath.section == SECTION_CAMERA
         && indexPath.row == CELL_CAMERA_MANAGE_PHOTOS
         && [self shouldShowManageSelectedPhotosRow];
+}
+
+/// The pause / resume row needs a backup target, otherwise there is nothing to pause.
+- (BOOL)shouldShowBackupControlRow
+{
+    return _connection.isAutoSync && _connection.autoSyncRepo.length > 0;
+}
+
+/// Last row of the Camera section, after the optional manage-photos row.
+- (NSInteger)backupControlRow
+{
+    return CELL_CAMERA_MANAGE_PHOTOS + ([self shouldShowManageSelectedPhotosRow] ? 1 : 0);
+}
+
+- (BOOL)isBackupControlIndexPath:(NSIndexPath *)indexPath
+{
+    return indexPath.section == SECTION_CAMERA
+        && self.backupControlRowVisible
+        && indexPath.row == [self backupControlRow];
 }
 
 /// Maps a logical section index to the corresponding storyboard section index.
@@ -711,6 +748,9 @@ enum {
         if ([self shouldShowManageSelectedPhotosRow]) {
             count += 1;
         }
+        if (self.backupControlRowVisible) {
+            count += 1;
+        }
     }
     return count;
 }
@@ -723,6 +763,9 @@ enum {
     if ([self isManageSelectedPhotosIndexPath:indexPath]) {
         return [self manageSelectedPhotosCell];
     }
+    if ([self isBackupControlIndexPath:indexPath]) {
+        return [self backupControlCell];
+    }
     return [super tableView:tableView cellForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
 }
 
@@ -734,12 +777,17 @@ enum {
     if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
         return 50;
     }
+    if ([self isBackupControlIndexPath:indexPath]) {
+        // Same height as the storyboard switch rows above it.
+        return 44;
+    }
     return [super tableView:tableView heightForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
+    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]
+        || [self isBackupControlIndexPath:indexPath]) {
         return 1;
     }
     return [super tableView:tableView indentationLevelForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
@@ -769,6 +817,81 @@ enum {
     cell.textLabel.font = [UIFont systemFontOfSize:17.0];
     cell.textLabel.textColor = [SeafTheme primaryText];
     return cell;
+}
+
+/// "Pause Auto Upload" switch row, laid out like the storyboard switch rows:
+/// title at x = 30, switch 6 pt (iPad 5 pt) from the right edge, both vertically centred.
+/// While paused a grey "Paused" sits left of the switch, as on Android.
+/// The title and switch hang off the content view's layout margins rather than
+/// its edges, so page code that re-pins the storyboard switch rows through
+/// those margins moves this row with them.
+- (UITableViewCell *)backupControlCell
+{
+    if (!self.backupPauseCell) {
+        UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+        UIView *content = cell.contentView;
+        content.preservesSuperviewLayoutMargins = NO;
+        content.insetsLayoutMarginsFromSafeArea = NO;
+        // Storyboard switches sit 5 pt from the edge on iPad, 6 pt on iPhone.
+        content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 30, 0, IsIpad() ? 5 : 6);
+        UILayoutGuide *margins = content.layoutMarginsGuide;
+
+        UILabel *titleLabel = [[UILabel alloc] init];
+        titleLabel.text = NSLocalizedString(@"Pause Auto Upload", @"Seafile");
+        titleLabel.font = [UIFont systemFontOfSize:17.0];
+        titleLabel.textColor = [SeafTheme primaryText];
+        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        // A long translation truncates the title, never the switch or "Paused".
+        [titleLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
+        [content addSubview:titleLabel];
+
+        UILabel *pausedLabel = [[UILabel alloc] init];
+        pausedLabel.text = NSLocalizedString(@"Paused", @"Seafile");
+        pausedLabel.font = [UIFont systemFontOfSize:14.0];
+        pausedLabel.textColor = [SeafTheme secondaryText];
+        pausedLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [pausedLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [content addSubview:pausedLabel];
+
+        UISwitch *pauseSwitch = [[UISwitch alloc] init];
+        pauseSwitch.accessibilityIdentifier = @"backup_pause_switch";
+        pauseSwitch.accessibilityLabel = titleLabel.text;
+        pauseSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+        [pauseSwitch addTarget:self action:@selector(backupPauseSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+        [content addSubview:pauseSwitch];
+
+        [NSLayoutConstraint activateConstraints:@[
+            [titleLabel.leadingAnchor constraintEqualToAnchor:margins.leadingAnchor],
+            [titleLabel.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
+            [pausedLabel.leadingAnchor constraintGreaterThanOrEqualToAnchor:titleLabel.trailingAnchor constant:8],
+            [pausedLabel.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
+            [pausedLabel.trailingAnchor constraintEqualToAnchor:pauseSwitch.leadingAnchor constant:-8],
+            [pauseSwitch.trailingAnchor constraintEqualToAnchor:margins.trailingAnchor],
+            [pauseSwitch.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
+        ]];
+
+        self.backupPauseCell = cell;
+        self.backupPauseSwitch = pauseSwitch;
+        self.backupPausedLabel = pausedLabel;
+    }
+    BOOL paused = _connection.photoBackupPaused;
+    if (self.backupPauseSwitch.on != paused) {
+        [self.backupPauseSwitch setOn:paused animated:NO];
+    }
+    self.backupPausedLabel.hidden = !paused;
+    return self.backupPauseCell;
+}
+
+/// On = paused. Only the switch toggles it; tapping the row does nothing,
+/// like the other switch rows on this page.
+- (void)backupPauseSwitchFlip:(UISwitch *)sender
+{
+    _connection.photoBackupPaused = sender.on;
+    self.backupPausedLabel.hidden = !sender.on;
+    // Drops the "N photos remain" header status while paused.
+    [self reloadSectionIfConsistent:SECTION_CAMERA];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkBackgroundUploadStatus];
 }
 
 - (void)appearanceSegmentedChanged:(UISegmentedControl *)sender
@@ -1052,7 +1175,9 @@ enum {
     };
     if (section < SECTION_ACCOUNT || section > SECTION_LOGOUT)
         return nil;
-    if (section == SECTION_CAMERA && _connection.inAutoSync) {
+    // While paused the switch row shows the state (as on Android); a leftover
+    // "N photos remain" from before the pause would be misleading.
+    if (section == SECTION_CAMERA && _connection.inAutoSync && !_connection.photoBackupPaused) {
         NSString *remainStr = @"";
         if (_connection.isCheckingPhotoLibrary) {
             remainStr = NSLocalizedString(@"Prepare for backup", @"Seafile");
@@ -1147,9 +1272,11 @@ enum {
 {
     _connection.autoSyncRepo = repo.repoId;
     _syncRepoCell.detailTextLabel.text = repo.name;
-    [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
+    [_connection scheduleCheckAutoSync];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];
+    // Shows the pause / resume backup row once a backup target exists.
+    [self reloadSectionIfConsistent:SECTION_CAMERA];
 }
 
 - (void)setAutoSyncRepo:(SeafRepo *)repo

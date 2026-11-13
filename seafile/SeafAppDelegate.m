@@ -463,6 +463,8 @@
         for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
             if (conn.accountIdentifier) {
                 SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+                // Keeps the periodic check from lifting this pause before the foreground resume.
+                accountQueue.pausedForBackground = YES;
                 [accountQueue pauseAllTasks];
             }
         }
@@ -888,7 +890,7 @@ new identifier is "'mtime' + 'repoId' + 'path'"
 {
     BOOL needLocationService = false;
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        if (conn.autoSync && conn.backgroundSync && conn.autoSyncRepo.length > 0) {
+        if (conn.autoSync && !conn.photoBackupPaused && conn.backgroundSync && conn.autoSyncRepo.length > 0) {
             Debug("account %@ %@ (%d %d %@) need location service", conn.address, conn.username, conn.autoSync, conn.backgroundSync, conn.autoSyncRepo);
             needLocationService = true;
         }
