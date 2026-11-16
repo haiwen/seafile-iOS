@@ -90,9 +90,6 @@
 
 - (void)pauseAllTasks;
 - (void)resumeAllTasks;
-/// Forgets the consecutive-error count that suspends the upload queue after five
-/// identical errors. Call it when the user explicitly restarts uploads.
-- (void)resetUploadErrorCount;
 
 // Timer control methods
 - (void)startCleanupTimer;   // Start the timer for cleanup tasks
@@ -104,5 +101,9 @@
 
 - (void)addUploadTasksInBatch:(NSArray<SeafUploadFile *> *_Nullable)tasks;
 - (void)startNextBatchOfUploadTasks;
+
+/// Lets newly queued photos try uploading early when other backup photos caused
+/// the error pause. Account-wide pauses, quota and manual upload backoff stay in effect.
+- (void)endErrorPauseForFreshBackupUploads;
 
 @end

@@ -36,6 +36,7 @@ typedef void(^MoreButtonTouchBlock)(NSIndexPath *indexPath);
 @property (strong, nonatomic) IBOutlet UIImageView *checkboxImageView;
 @property (strong, nonatomic) IBOutlet NSLayoutConstraint *checkboxWidthConstraint;
 @property (nonatomic, assign) BOOL isUserEditing;
+@property (nonatomic, getter=isPreviewSelected) BOOL previewSelected;
 @property (nonatomic, assign) BOOL isLastCell;
 
 @property (weak, nonatomic) IBOutlet UIView *cellBackgroundView;

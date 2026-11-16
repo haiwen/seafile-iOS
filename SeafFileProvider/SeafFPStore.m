@@ -77,6 +77,7 @@ static long long SeafFPEntryNumber(NSDictionary *entry, NSString *key, long long
 }
 
 static const char *kRecordColumns = "uuid, repo_id, path, is_dir, name, parent_uuid, oid, mtime, size, deleted, seq, created_seq, tomb_reason, tomb_txn, confirmed_placement, hint_revived_from, hint_revived_at, placement_time";
+static NSString * const kSeafFPWorkingSetPosition = @"fp_path_depth, fp_is_file, seq, uuid";
 
 static void SeafFPBindText(sqlite3_stmt *stmt, int idx, NSString *value)
 {
@@ -672,6 +673,18 @@ static BOOL SeafFPResultIsCorruption(int rc)
         if (!seeded) { [self rollbackLocked]; return NO; }
         if (![self commitLocked]) return NO;
     }
+    // Additive schema: older builds still read and write the same identity
+    // fields. Named generated columns let SQLite seek on the entire page
+    // cursor. An expression index alone can sort the rows but cannot seek
+    // on the tuple, so later pages still walk the skipped prefix.
+    if (![self ensureColumnsLocked:@[@"fp_path_depth"] ofTable:@"identity"
+                              type:@"INTEGER GENERATED ALWAYS AS (length(path) - length(replace(path, '/', ''))) VIRTUAL"]
+        || ![self ensureColumnsLocked:@[@"fp_is_file"] ofTable:@"identity"
+                                  type:@"INTEGER GENERATED ALWAYS AS (is_dir = 0) VIRTUAL"]
+        || ![self execLocked:[NSString stringWithFormat:@"CREATE INDEX IF NOT EXISTS idx_identity_working_set ON identity(%@) WHERE deleted = 0", kSeafFPWorkingSetPosition]]) {
+        if (corrupt) *corrupt = SeafFPResultIsCorruption(_lastResultCode);
+        return NO;
+    }
     return YES;
 }
 
@@ -688,7 +701,7 @@ static BOOL SeafFPResultIsCorruption(int rc)
 
 - (nullable NSSet<NSString *> *)columnNamesLockedOfTable:(NSString *)table
 {
-    sqlite3_stmt *stmt = [self prepareLocked:[NSString stringWithFormat:@"PRAGMA table_info(%@)", table]];
+    sqlite3_stmt *stmt = [self prepareLocked:[NSString stringWithFormat:@"PRAGMA table_xinfo(%@)", table]];
     if (!stmt) return nil;
     NSMutableSet<NSString *> *columns = [NSMutableSet set];
     int rc;
@@ -1131,7 +1144,31 @@ static BOOL SeafFPResultIsCorruption(int rc)
         for (NSString *repoId in [ids.allObjects sortedArrayUsingSelector:@selector(compare:)]) {
             NSDictionary *old = previous[repoId], *info = incoming[repoId];
             if (!old && [catalog[@"known"] boolValue] && (fromCache || start < [catalog[@"observedSeq"] longLongValue])) continue;
-            if (old && (fromCache || (start < 0 && [old[@"authoritative"] boolValue])
+            if (old && fromCache && [info[@"locked"] boolValue] && [old[@"availability"] isEqual:@"visible"]) {
+                // Whether a library is locked is this device's own knowledge
+                // (its password was cleared), not the server's: it takes
+                // effect without a fresh list, also offline. Nothing else of
+                // a cached snapshot replaces an accepted state, and it never
+                // unlocks: the snapshot of a process that has not read the
+                // new password record yet must not reopen the library.
+                NSMutableDictionary *lockedState = [old mutableCopy];
+                long long seq = [self nextSeqLocked];
+                if (seq <= 0) { *rollback = YES; return NO; }
+                lockedState[@"availability"] = @"locked";
+                lockedState[@"eventSeq"] = @(seq);
+                lockedState[@"revision"] = @(seq);
+                lockedState[@"eventKind"] = @"update";
+                lockedState[@"localLockSeq"] = @(seq);
+                [lockedState removeObjectForKey:@"pendingRevision"]; [lockedState removeObjectForKey:@"afterUUID"];
+                if (![self writeJSONMetaLocked:lockedState key:[kMetaRepoPublicationPrefix stringByAppendingString:repoId]]) { *rollback = YES; return NO; }
+                changed = YES;
+                continue;
+            }
+            // A request already in flight when the password was cleared can
+            // still carry the former unlocked state. Keep the local boundary
+            // separate from the server catalog's observation sequence.
+            if (old && (fromCache || (old[@"localLockSeq"] && start <= [old[@"localLockSeq"] longLongValue])
+                || (start < 0 && [old[@"authoritative"] boolValue])
                 || ([old[@"authoritative"] boolValue] && start < [old[@"observedSeq"] longLongValue]))) continue;
             NSString *availability = info ? ([info[@"locked"] boolValue] ? @"locked" : @"visible") : @"removed";
             // A removed library has nothing left to list, also when it was
@@ -1153,12 +1190,14 @@ static BOOL SeafFPResultIsCorruption(int rc)
             }
             state[@"authoritative"] = @(!fromCache && start >= 0);
             state[@"observedSeq"] = @(start);
+            [state removeObjectForKey:@"localLockSeq"];
             if (different) {
                 long long seq = [self nextSeqLocked];
                 if (seq <= 0) { *rollback = YES; return NO; }
                 state[@"eventSeq"] = @(seq);
                 state[@"revision"] = @(seq);
                 state[@"eventKind"] = [availability isEqual:@"removed"] ? @"delete" : @"update";
+                if (fromCache && [availability isEqual:@"locked"]) state[@"localLockSeq"] = @(seq);
                 BOOL republish = [availability isEqual:@"visible"] && (!old || ![old[@"availability"] isEqual:@"visible"]
                     || ![old[@"perm"] isEqual:state[@"perm"]] || ![old[@"editable"] isEqual:state[@"editable"]]);
                 if (republish) { state[@"pendingRevision"] = @(seq); state[@"afterUUID"] = @""; }
@@ -1249,6 +1288,23 @@ static BOOL SeafFPResultIsCorruption(int rc)
     return rc == SQLITE_DONE ? decorations : nil;
 }
 
+- (nullable NSDictionary<NSString *, SeafFPDecoration *> *)workingSetDecorationsLockedForIdentifiers:(NSSet<NSString *> *)identifiers
+{
+    if (identifiers.count == 0) return @{};
+    sqlite3_stmt *stmt = [self prepareLocked:@"SELECT item_id, favorite_rank, tag_data, last_used FROM decoration WHERE item_id = ?"];
+    if (!stmt) return nil;
+    NSMutableDictionary *decorations = [NSMutableDictionary dictionary];
+    for (NSString *identifier in identifiers) {
+        SeafFPBindText(stmt, 1, identifier);
+        int rc = [self stepLocked:stmt];
+        if (rc == SQLITE_ROW) decorations[identifier] = [self decorationFromStatement:stmt];
+        else if (rc != SQLITE_DONE) { sqlite3_finalize(stmt); return nil; }
+        sqlite3_reset(stmt);
+    }
+    sqlite3_finalize(stmt);
+    return decorations;
+}
+
 - (SeafFPWorkingSetPage *)workingSetPageAfterDepth:(NSUInteger)depth
                                              isDir:(BOOL)isDir
                                                seq:(long long)seq
@@ -1256,12 +1312,8 @@ static BOOL SeafFPResultIsCorruption(int rc)
                                              limit:(NSUInteger)limit
 {
     if (limit == 0) return nil;
-    // Keyset paging in the scan order: no index serves it, but with the LIMIT
-    // sqlite keeps only the best `limit + 1` rows while scanning, so a page
-    // costs one pass over the table and little memory.
-    static NSString * const position = @"length(path) - length(replace(path, '/', '')), is_dir = 0, seq, uuid";
     NSString *sql = [NSString stringWithFormat:@"SELECT %s FROM identity WHERE deleted = 0 AND (%@) > (?, ?, ?, ?) ORDER BY %@ LIMIT ?",
-                     kRecordColumns, position, position];
+                     kRecordColumns, kSeafFPWorkingSetPosition, kSeafFPWorkingSetPosition];
     __block SeafFPWorkingSetPage *page = nil;
     [self perform:^{
         if (![self execLocked:@"BEGIN DEFERRED"]) return;
@@ -1291,7 +1343,18 @@ static BOOL SeafFPResultIsCorruption(int rc)
             NSString *byUUID = [NSString stringWithFormat:@"SELECT %s FROM identity WHERE uuid = ?", kRecordColumns];
             NSMutableDictionary<NSString *, SeafFPRecord *> *ancestors = [NSMutableDictionary dictionary];
             NSMutableSet<NSString *> *missing = [NSMutableSet set];
+            NSMutableSet<NSString *> *decorationIdentifiers = [NSMutableSet set];
+            if (!uuid) {
+                for (NSString *repoId in states) {
+                    if ([states[repoId][@"availability"] isEqual:@"visible"]) {
+                        [decorationIdentifiers addObject:[SeafFPIdentifier identifierForRepo:repoId]];
+                    }
+                }
+            }
             for (SeafFPRecord *record in records) {
+                if (![states[record.repoId][@"availability"] isEqual:@"visible"]) continue;
+                [decorationIdentifiers addObject:record.itemIdentifier];
+                [decorationIdentifiers addObject:[SeafFPIdentifier identifierForRepo:record.repoId]];
                 NSString *parentUUID = record.parentUUID;
                 // Stops at a uuid already looked up, which also ends a cycle.
                 while (parentUUID.length > 0 && !ancestors[parentUUID] && ![missing containsObject:parentUUID]) {
@@ -1305,7 +1368,12 @@ static BOOL SeafFPResultIsCorruption(int rc)
                     parentUUID = parent.parentUUID;
                 }
             }
-            NSDictionary *decorations = [self publicationDecorationsLocked];
+            for (SeafFPRecord *parent in ancestors.objectEnumerator) {
+                if (!parent.deleted && parent.isDir && [states[parent.repoId][@"availability"] isEqual:@"visible"]) {
+                    [decorationIdentifiers addObject:parent.itemIdentifier];
+                }
+            }
+            NSDictionary *decorations = [self workingSetDecorationsLockedForIdentifiers:decorationIdentifiers];
             if (!decorations) return;
             page = [SeafFPWorkingSetPage new];
             page.sequence = sequence.longLongValue;
@@ -1734,15 +1802,25 @@ static BOOL SeafFPStringsEqual(NSString *a, NSString *b)
     return result ?: @[];
 }
 
+/// The paths below a directory are those that start with its path and "/".
+/// Asked as a range, the UNIQUE(repo_id, path) index answers it; a
+/// substr(path, ...) = prefix test reads every row of the library, inside
+/// the write transaction, once per directory. The column compares bytewise
+/// (BINARY), so everything with the prefix "…/" sorts before the same string
+/// with its last character replaced by "0", the character after "/".
+static NSString *SeafFPSubtreeUpperBound(NSString *prefixWithSlash)
+{
+    return [[prefixWithSlash substringToIndex:prefixWithSlash.length - 1] stringByAppendingString:@"0"];
+}
+
 - (NSArray<SeafFPRecord *> *)subtreeRecordsLockedOf:(SeafFPRecord *)record
 {
-    // length() and substr() both count characters, unlike NSString.length
-    // (UTF-16 units), so the prefix is bound twice instead of passing a length.
-    NSString *sql = [NSString stringWithFormat:@"SELECT %s FROM identity WHERE repo_id = ?1 AND substr(path, 1, length(?2)) = ?2", kRecordColumns];
+    NSString *sql = [NSString stringWithFormat:@"SELECT %s FROM identity WHERE repo_id = ?1 AND path >= ?2 AND path < ?3", kRecordColumns];
     NSString *prefix = [record.path isEqualToString:@"/"] ? @"/" : [record.path stringByAppendingString:@"/"];
     return [self recordsLockedWithSQL:sql binder:^(sqlite3_stmt *stmt) {
         SeafFPBindText(stmt, 1, record.repoId);
         SeafFPBindText(stmt, 2, prefix);
+        SeafFPBindText(stmt, 3, SeafFPSubtreeUpperBound(prefix));
     }] ?: @[];
 }
 
@@ -2485,14 +2563,16 @@ static BOOL SeafFPRecordDetachedFromPath(SeafFPRecord *record, NSString *path)
     return found;
 }
 
-/// YES when a row below the directory record was written after `seq`. Uses
-/// substr like subtreeRecordsLockedOf: (LIKE would treat % and _ in names as wildcards).
+/// YES when a row below the directory record was written after `seq`. A path
+/// range like subtreeRecordsLockedOf: (LIKE would treat % and _ in names as wildcards).
 - (BOOL)hasSubtreeRecordLockedOf:(SeafFPRecord *)record changedAfter:(long long)seq
 {
-    sqlite3_stmt *stmt = [self prepareLocked:@"SELECT 1 FROM identity WHERE repo_id = ?1 AND substr(path, 1, length(?2)) = ?2 AND seq > ?3 LIMIT 1"];
+    sqlite3_stmt *stmt = [self prepareLocked:@"SELECT 1 FROM identity WHERE repo_id = ?1 AND path >= ?2 AND path < ?4 AND seq > ?3 LIMIT 1"];
     if (!stmt) return YES;
+    NSString *prefix = [record.path isEqualToString:@"/"] ? @"/" : [record.path stringByAppendingString:@"/"];
     SeafFPBindText(stmt, 1, record.repoId);
-    SeafFPBindText(stmt, 2, [record.path stringByAppendingString:@"/"]);
+    SeafFPBindText(stmt, 2, prefix);
+    SeafFPBindText(stmt, 4, SeafFPSubtreeUpperBound(prefix));
     sqlite3_bind_int64(stmt, 3, seq);
     BOOL found = [self stepLocked:stmt] == SQLITE_ROW;
     sqlite3_finalize(stmt);
@@ -4179,15 +4259,16 @@ static NSString * const kRenameHintSelect =
     return rc == SQLITE_DONE;
 }
 
-- (BOOL)saveRenameHintLocked:(NSDictionary *)hint state:(SeafFPHintState)state record:(SeafFPRecord *)record
+/// `source`: the record (uuid and content) a later listing judges the hint by.
+- (BOOL)saveRenameHintLocked:(NSDictionary *)hint state:(SeafFPHintState)state source:(nullable SeafFPRecord *)source
 {
     sqlite3_stmt *stmt = [self prepareLocked:@"UPDATE fp_hint SET state = ?, decided_seq = ?, close_after = ?, source_uuid = ?, source_oid = ?, first_event_time = ? WHERE id = ?"];
     if (!stmt) return NO;
     sqlite3_bind_int(stmt, 1, (int)state);
     sqlite3_bind_int64(stmt, 2, [self currentSeqLocked]);
     sqlite3_bind_double(stmt, 3, [NSDate date].timeIntervalSince1970 + kHintVerificationWindow);
-    SeafFPBindText(stmt, 4, state == SeafFPHintAwaitingListing ? record.uuid : nil);
-    SeafFPBindText(stmt, 5, state == SeafFPHintAwaitingListing ? record.oid : nil);
+    SeafFPBindText(stmt, 4, source.uuid);
+    SeafFPBindText(stmt, 5, source.oid);
     sqlite3_bind_int64(stmt, 6, [hint[@"time"] longLongValue]);
     sqlite3_bind_int64(stmt, 7, [hint[@"id"] longLongValue]);
     int rc = [self stepLocked:stmt];
@@ -4258,7 +4339,7 @@ static NSString * const kRenameHintSelect =
     BOOL absentWithEditedTarget = record.deleted && !occupant.deleted && occupant.oid.length
         && ![record.oid isEqual:occupant.oid] && record.tombTxn >= version;
     if (!record.isDir && record.confirmedPlacement && (!record.deleted || absentWithEditedTarget)) {
-        return [self saveRenameHintLocked:hint state:SeafFPHintAwaitingListing record:record]
+        return [self saveRenameHintLocked:hint state:SeafFPHintAwaitingListing source:record]
             && [self requestDirectoryCheckLockedForRepo:repoId path:record.directoryPath]
             && [self requestDirectoryCheckLockedForRepo:repoId path:newPath.stringByDeletingLastPathComponent];
     }
@@ -4293,6 +4374,11 @@ static NSString * const kRenameHintSelect =
         revived.hintRevivedAt = _transactionStartSeq;
         if (![self writeRecordLocked:revived insert:NO]) return NO;
     }
+    // A live file at the old path may be a later one there (the renamed file
+    // was never indexed and the name was used again): only listings can
+    // tell, so the hint remembers what it moved (see
+    // revertMisattributedRenameLocked:).
+    BOOL liveFile = !record.deleted && !record.isDir && record.oid.length > 0;
     if (record.deleted && !carriedRecovery) record.hintRevivedAt = _transactionStartSeq;
     record.hintRevivedFrom = tombTxn;
     record.confirmedPlacement = NO;
@@ -4307,7 +4393,7 @@ static NSString * const kRenameHintSelect =
         if (![self requestDirectoryCheckLockedForRepo:repoId path:dir]) return NO;
     }
     if (changed) *changed = YES;
-    return [self saveRenameHintLocked:hint state:SeafFPHintVerifying record:moved];
+    return [self saveRenameHintLocked:hint state:SeafFPHintVerifying source:(liveFile ? moved : nil)];
 }
 
 - (SeafFPWriteResult)decideRenameHintsWithLimit:(NSUInteger)limit
@@ -4409,6 +4495,43 @@ static NSString * const kRenameHintSelect =
     return [self closeRenameHintLocked:hint];
 }
 
+/// A decided rename moved a file that was live at the old path. Fresh
+/// listings may show it was not the renamed file but a later one of the same
+/// name: its content is at the old path again, under a row a listing made
+/// after the decision, while the target holds other content. The record then
+/// goes back to the old path (favorites and tags with it) and the target's
+/// content gets an identity of its own.
+- (BOOL)revertMisattributedRenameLocked:(NSDictionary *)hint directory:(NSString *)dir requestStartSeq:(long long)start
+                                changed:(BOOL *)changed reverted:(BOOL *)reverted
+{
+    NSString *repoId = hint[@"repo"], *oldPath = hint[@"old"], *newPath = hint[@"new"], *uuid = hint[@"uuid"], *oid = hint[@"oid"];
+    long long decided = [hint[@"decided"] longLongValue];
+    if (uuid.length == 0 || oid.length == 0 || start < decided) return YES;
+    if (![dir isEqual:oldPath.stringByDeletingLastPathComponent] && ![dir isEqual:newPath.stringByDeletingLastPathComponent]) return YES;
+    SeafFPRecord *carried = [self recordLockedForUUID:uuid];
+    // Moved again or placed by an operation of this device since: not ours to judge.
+    if (!carried || carried.deleted || carried.isDir || carried.confirmedPlacement
+        || ![carried.repoId isEqual:repoId] || ![carried.path isEqual:newPath]) return YES;
+    // Unchanged content: the target was not listed yet, or the rename was real.
+    if (carried.oid.length == 0 || [carried.oid isEqual:oid]) return YES;
+    SeafFPRecord *fresh = [self recordLockedForRepo:repoId path:oldPath];
+    if (!fresh || fresh.deleted || fresh.isDir || fresh.createdSeq <= decided || ![oid isEqual:fresh.oid]) return YES;
+    if ([self destinationReservedLockedForRepo:repoId path:oldPath exceptUUID:carried.uuid]) return YES;
+    NSString *targetOid = carried.oid, *targetParent = carried.parentUUID;
+    long long targetMtime = carried.mtime, targetSize = carried.size;
+    carried.oid = oid;
+    carried.mtime = fresh.mtime;
+    carried.size = fresh.size;
+    carried.hintRevivedFrom = 0;
+    if (![self moveRecordLocked:carried toRepo:repoId path:oldPath parentUUID:fresh.parentUUID
+               mergeDestination:YES detachedFromPath:nil]) return NO;
+    if (![self upsertRecordLockedForRepo:repoId path:newPath isDir:NO parentUUID:targetParent
+                                    oid:targetOid mtime:targetMtime size:targetSize changed:NULL]) return NO;
+    *changed = YES;
+    *reverted = YES;
+    return [self closeRenameHintLocked:hint];
+}
+
 - (BOOL)correctRenameHintsLockedForRepo:(NSString *)repoId
                               directory:(NSString *)dir
                         requestStartSeq:(long long)start
@@ -4417,8 +4540,9 @@ static NSString * const kRenameHintSelect =
                                  absent:(NSArray<SeafFPRecord *> *)absent
                                 changed:(BOOL *)changed
 {
-    NSString *states = inserted.count || absent.count ? @"state IN (1, 2)" : @"state = 2";
-    NSString *sql = [NSString stringWithFormat:@"%@ WHERE %@ AND repo_id = ? AND close_after >= ? ORDER BY event_time, id", kRenameHintSelect, states];
+    // Also without new or absent rows: a listing that only changed a moved
+    // file's content can show the move was wrong.
+    NSString *sql = [kRenameHintSelect stringByAppendingString:@" WHERE state IN (1, 2) AND repo_id = ? AND close_after >= ? ORDER BY event_time, id"];
     NSArray<NSDictionary *> *hints = [self renameHintsLockedWithSQL:sql binder:^(sqlite3_stmt *stmt) {
         SeafFPBindText(stmt, 1, repoId);
         sqlite3_bind_double(stmt, 2, [NSDate date].timeIntervalSince1970);
@@ -4446,6 +4570,9 @@ static NSString * const kRenameHintSelect =
             if (![self verifyPlacedFileRenameLocked:hint directory:dir requestStartSeq:start entries:entries changed:changed]) return NO;
             continue;
         }
+        BOOL reverted = NO;
+        if (![self revertMisattributedRenameLocked:hint directory:dir requestStartSeq:start changed:changed reverted:&reverted]) return NO;
+        if (reverted) continue;
         long long decided = [hint[@"decided"] longLongValue];
         for (SeafFPRecord *fresh in inserted) {
             NSString *path = counterpart(fresh.path, hint[@"old"], hint[@"new"]);

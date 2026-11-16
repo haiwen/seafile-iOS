@@ -47,6 +47,14 @@ typedef NS_ENUM(NSInteger, SeafFPListingFailure) {
 + (NSError *)errorForSeafError:(nullable NSError *)error;
 /// A directory listing 404 is conclusive only with Seahub's missing-path error.
 + (NSError *)directoryListingErrorForSeafError:(nullable NSError *)error;
+/// For an enumeration. NoSuchItem makes the system drop the folder and all
+/// below it from its replica, so only Seahub's missing-path error may say
+/// it; any other 404 (a proxy, an HTML error page) is the server not
+/// answering. Every other error maps as errorForSeafError:.
++ (NSError *)enumerationErrorForSeafError:(nullable NSError *)error;
+/// YES for a 404 that carries no Seahub error message: it did not come from
+/// Seahub and says nothing about the item the request was for.
++ (BOOL)isForeignNotFoundError:(nullable NSError *)error;
 /// The same judgement for the working set checks. A proxy's or an HTML page's
 /// 404 says nothing about the path and counts as the server not answering.
 + (SeafFPListingFailure)listingFailureForSeafError:(nullable NSError *)error;

@@ -120,16 +120,18 @@
     
 }
 
-+ (void)directoryAction:(SeafDir*)directory photos:(NSArray *)photos inTargetVC:(UIViewController *)targetVC fromItem:(UIBarButtonItem *)item actionBlock:(ActionType)block {
-    NSMutableArray *titles = nil;
++ (NSArray<NSString *> *)directoryActionTitles:(SeafDir *)directory {
     if ([directory isKindOfClass:[SeafRepos class]]) {
-        titles = [NSMutableArray arrayWithObjects:S_MKLIB,S_SORT_NAME, S_SORT_MTIME, nil];
+        return @[S_MKLIB, S_SORT_NAME, S_SORT_MTIME];
     } else if (directory.editable) {
-        titles = [NSMutableArray arrayWithObjects:S_UPLOAD, S_UPLOAD_FILE, S_EDIT,S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
-    } else {
-        titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
+        return @[S_UPLOAD, S_UPLOAD_FILE, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME];
     }
-    
+    return @[S_SORT_NAME, S_SORT_MTIME];
+}
+
++ (void)directoryAction:(SeafDir*)directory photos:(NSArray *)photos inTargetVC:(UIViewController *)targetVC fromItem:(UIBarButtonItem *)item actionBlock:(ActionType)block {
+    NSArray<NSString *> *titles = [self directoryActionTitles:directory];
+
     SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithTitles:titles];
     actionSheet.targetVC = targetVC;
     

@@ -333,6 +333,7 @@ static BOOL disableCustomEasing = NO;
     UIColor *_realBGColor;
 
     BOOL _anchoredAtPoint;
+    BOOL _anchoredToBarButton;
     CGPoint _anchorPoint;// The point at which the action sheet is anchored
     SFActionSheetArrowDirection _anchoredArrowDirection;// The direction of the arrow when the action sheet is anchored
     CGSize _laidOutSize;
@@ -342,6 +343,7 @@ static BOOL disableCustomEasing = NO;
 }
 
 @property (nonatomic, strong) NSArray *sections;// Array of sections within the action sheet
+@property (nonatomic, weak) UIAlertController *systemAlert;
 
 @end
 
@@ -485,10 +487,15 @@ static BOOL disableCustomEasing = NO;
     if (!resized || !self.superview) {
         return;
     }
+    if (_anchoredToBarButton) {
+        // The bar can move to a different edge on rotation or folding.
+        [self dismissAnimated:NO];
+        return;
+    }
     if (_anchoredAtPoint) {
         [self moveToPoint:_anchorPoint arrowDirection:_anchoredArrowDirection animated:NO];
     } else {
-        [self layoutSheetInitial:NO];
+        [self layoutSheetInitial];
     }
 }
 
@@ -527,13 +534,19 @@ static BOOL disableCustomEasing = NO;
 }
 
 #pragma mark Layout
-// Lays out the sections within the action sheet based on the given frame.
-- (void)layoutSheetForFrame:(CGRect)frame fitToRect:(BOOL)fitToRect initialSetUp:(BOOL)initial {
-    // Force fixed width
-    frame.size.width = kFixedWidth;
-    
-    // Calculate content height
-    CGFloat width = CGRectGetWidth(frame);
+- (void)layoutSheetForFrame:(CGRect)frame {
+    CGRect available = CGRectNull;
+    if (_anchoredToBarButton) {
+        UIView *content = self.targetVC.viewIfLoaded;
+        UIWindow *window = content.window;
+        if (window) {
+            CGRect safeContent = [content convertRect:content.safeAreaLayoutGuide.layoutFrame toView:window];
+            available = CGRectInset(CGRectIntersection(safeContent, window.safeAreaLayoutGuide.layoutFrame), kSpacing, kSpacing);
+        }
+    }
+
+    BOOL fitsToContent = !CGRectIsEmpty(available);
+    CGFloat width = fitsToContent ? MIN(kFixedWidth, CGRectGetWidth(available)) : kFixedWidth;
     CGFloat height = 0;
 
     for (SeafActionSheetSection *section in self.sections) {
@@ -544,12 +557,13 @@ static BOOL disableCustomEasing = NO;
         height += CGRectGetHeight(f);
     }
 
-    // Set content size
-    _scrollView.contentSize = (CGSize){width, height};
-    
-    // Directly use content height as popup height
-    CGFloat finalY = frame.origin.y;
-    _scrollViewHost.frame = (CGRect){{frame.origin.x, finalY}, {width, height}};
+    frame.size = CGSizeMake(width, height);
+    if (fitsToContent) {
+        frame.size.height = MIN(height, CGRectGetHeight(available));
+        frame.origin.x = MAX(CGRectGetMinX(available), MIN(frame.origin.x, CGRectGetMaxX(available) - width));
+        frame.origin.y = MAX(CGRectGetMinY(available), MIN(frame.origin.y, CGRectGetMaxY(available) - frame.size.height));
+    }
+    _scrollViewHost.frame = frame;
 
     // Apply consistent styling
     _scrollViewHost.layer.cornerRadius = kHostsCornerRadius;
@@ -563,6 +577,8 @@ static BOOL disableCustomEasing = NO;
     
     _finalContentFrame = _scrollViewHost.frame;
     _scrollView.frame = _scrollViewHost.bounds;
+    _scrollView.contentSize = CGSizeMake(width, height);
+    _scrollView.showsVerticalScrollIndicator = height > frame.size.height;
 }
 
 - (void)layoutForVisible:(BOOL)visible {
@@ -584,7 +600,7 @@ static BOOL disableCustomEasing = NO;
 
     [self suspendInteraction];
 
-    [self layoutSheetInitial:YES];
+    [self layoutSheetInitial];
 
     void (^completion)(void) = ^{
         [self resumeInteraction];
@@ -606,7 +622,7 @@ static BOOL disableCustomEasing = NO;
     }
 }
 
-- (void)layoutSheetInitial:(BOOL)initial {
+- (void)layoutSheetInitial {
     self.frame = [self topWindow].bounds;
     
     _scrollViewHost.backgroundColor = [SeafTheme elevatedSurface];
@@ -618,7 +634,7 @@ static BOOL disableCustomEasing = NO;
 
     // Use 5px spacing
     frame = UIEdgeInsetsInsetRect(frame, UIEdgeInsetsMake(kSpacing, kSpacing, kSpacing, kSpacing));
-    [self layoutSheetForFrame:frame fitToRect:YES initialSetUp:initial];
+    [self layoutSheetForFrame:frame];
 }
 
 #pragma mark Showing From Point
@@ -628,38 +644,36 @@ static BOOL disableCustomEasing = NO;
     [self showFromPoint:point sourceRect:sourceRect arrowDirection:arrowDirection animated:animated];
 }
 
-// ShowFromView method - For displaying the action sheet from a specific view
+// ShowFromView method - For displaying the action sheet from a specific view.
+// The sheet lives in topWindow, so every anchor is converted to window coordinates.
+// (The navigation controller's view is not at the window origin in an iPad sidebar.)
 - (void)showFromView:(id)view {
+    if (self.targetVC.traitCollection.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        [self showSystemActionSheetFromView:view];
+        return;
+    }
     CGPoint point = CGPointZero;
     CGRect sourceRect = CGRectZero; // Record animation starting position
-    
+    _anchoredToBarButton = [view isKindOfClass:UIBarButtonItem.class];
+    UIView *window = [self topWindow];
+
     if ([view isKindOfClass:[SeafCell class]]) {
         SeafCell *cell = (SeafCell*)view;
-        point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame) - cell.moreButton.frame.size.height/2};
-        sourceRect = cell.moreButton.frame;
-        point = [_targetVC.navigationController.view convertPoint:point fromView:cell];
-        sourceRect = [_targetVC.navigationController.view convertRect:sourceRect fromView:cell];
-    } else if ([view isKindOfClass:[UIBarButtonItem class]]) {
+        UIView *button = cell.moreButton;
+        sourceRect = [(button.superview ?: cell) convertRect:button.frame toView:window];
+        point = (CGPoint){CGRectGetMidX(sourceRect), CGRectGetMidY(sourceRect)};
+    } else if (_anchoredToBarButton) {
         UIBarButtonItem *item = (UIBarButtonItem*)view;
         UIView *itemView = [item valueForKey:@"view"];
-        
-        if (itemView) {
-            // Get the button position in navigation bar
-            CGRect frameInNaviView = [_targetVC.navigationController.view convertRect:itemView.frame fromView:itemView.superview];
-            
+
+        if (itemView.superview) {
             // Use the bottom right corner of the button as anchor point
-            point = (CGPoint){CGRectGetMaxX(frameInNaviView), CGRectGetMaxY(frameInNaviView)};
-            sourceRect = frameInNaviView;
-            
-            // Log anchor position for debugging
-            NSLog(@"Anchor position: x=%f, y=%f", point.x, point.y);
+            sourceRect = [itemView.superview convertRect:itemView.frame toView:window];
+            point = (CGPoint){CGRectGetMaxX(sourceRect), CGRectGetMaxY(sourceRect)};
         } else {
             // If unable to get specific view, use top right corner of navigation bar
-            CGRect navBarFrame = _targetVC.navigationController.navigationBar.frame;
-            point = CGPointMake(CGRectGetMaxX(navBarFrame) - 10, CGRectGetMaxY(navBarFrame));
-            sourceRect = CGRectMake(point.x - 20, point.y - 20, 40, 40);
-            
-            NSLog(@"Using default top right corner position: x=%f, y=%f", point.x, point.y);
+            sourceRect = [self navigationBarAnchorRectInView:window];
+            point = (CGPoint){CGRectGetMidX(sourceRect), CGRectGetMaxY(sourceRect) - 20};
         }
     } else if ([view isKindOfClass:[UIButton class]]) {
         // Anchor to a button: align popup's top-right corner to button's bottom-right corner
@@ -685,50 +699,63 @@ static BOOL disableCustomEasing = NO;
         return;
     } else {
         // For other types of views, ensure using top right corner of navigation bar
-        CGRect navBarFrame = _targetVC.navigationController.navigationBar.frame;
-        point = CGPointMake(CGRectGetMaxX(navBarFrame) - 10, CGRectGetMaxY(navBarFrame));
-        sourceRect = CGRectMake(point.x - 20, point.y - 20, 40, 40);
+        sourceRect = [self navigationBarAnchorRectInView:window];
+        point = (CGPoint){CGRectGetMidX(sourceRect), CGRectGetMaxY(sourceRect) - 20};
     }
-    
+
     [self showFromPoint:point sourceRect:sourceRect arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
+}
+
+// UIKit keeps popovers attached to their source as the window and sidebar resize,
+// adapts them to compact sheets, and scrolls actions at large accessibility sizes.
+- (void)showSystemActionSheetFromView:(id)source {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    self.systemAlert = alert;
+    for (NSUInteger sectionIndex = 0; sectionIndex < self.sections.count; sectionIndex++) {
+        SeafActionSheetSection *section = self.sections[sectionIndex];
+        for (NSUInteger row = 0; row < section.buttons.count; row++) {
+            UIButton *button = section.buttons[row];
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:sectionIndex];
+            // The presented alert retains the facade until the action completes.
+            UIAlertAction *action = [UIAlertAction actionWithTitle:button.currentTitle style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                [self buttonPressed:indexPath];
+            }];
+            action.enabled = button.enabled;
+            [alert addAction:action];
+        }
+    }
+    [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:nil]];
+    UIPopoverPresentationController *popover = alert.popoverPresentationController;
+    if ([source isKindOfClass:UIBarButtonItem.class]) {
+        popover.barButtonItem = source;
+    } else {
+        UIView *anchor = [source isKindOfClass:UIView.class] ? source : self.targetVC.view;
+        popover.sourceView = anchor;
+        popover.sourceRect = anchor.bounds;
+    }
+    alert.view.accessibilityIdentifier = @"seafile_action_sheet";
+    [self.targetVC presentViewController:alert animated:YES completion:nil];
+}
+
+/// A 40pt square whose center sits 10pt in from the navigation bar's bottom-right
+/// corner, in the given view's coordinates. Fallback anchor when no source view exists.
+- (CGRect)navigationBarAnchorRectInView:(UIView *)view {
+    UINavigationBar *bar = _targetVC.navigationController.navigationBar;
+    CGRect barRect = bar ? [bar convertRect:bar.bounds toView:view] : CGRectZero;
+    CGPoint corner = CGPointMake(CGRectGetMaxX(barRect) - 10, CGRectGetMaxY(barRect));
+    return CGRectMake(corner.x - 20, corner.y - 20, 40, 40);
 }
 
 // Show from specific point with source rectangle and animation
 - (void)showFromPoint:(CGPoint)point sourceRect:(CGRect)sourceRect arrowDirection:(SFActionSheetArrowDirection)arrowDirection animated:(BOOL)animated {
     [self suspendInteraction];
 
-    // Automatically adjust arrow direction based on window space
-    if (point.y > CGRectGetHeight([self topWindow].bounds) - 320 - 50) {
+    // Bar-button menus use the measured content height and the safe area below.
+    if (!_anchoredToBarButton && point.y > CGRectGetHeight([self topWindow].bounds) - 320 - 50) {
         arrowDirection = SFActionSheetArrowDirectionBottom;
     }
 
     [self moveToPoint:point arrowDirection:arrowDirection animated:NO];
-    
-    // Get current calculated dimensions
-    CGRect finalFrame = _scrollViewHost.frame;
-    CGFloat contentHeight = 0;
-    
-    // Recalculate content height to ensure precision
-    for (SeafActionSheetSection *section in self.sections) {
-        contentHeight += CGRectGetHeight(section.frame);
-    }
-    
-    // Ensure height exactly matches content
-    finalFrame.size.height = contentHeight;
-    
-    // If popping from top button, adjust popup position
-    if (arrowDirection == SFActionSheetArrowDirectionTop) {
-        // Align the top right corner of popup to anchor point
-        CGFloat newX = point.x - finalFrame.size.width;
-        // Ensure not exceeding left screen edge
-        if (newX < kSpacing) {
-            newX = kSpacing;
-        }
-        _scrollViewHost.frame = CGRectMake(newX, finalFrame.origin.y, 
-                                         finalFrame.size.width, finalFrame.size.height);
-    } else {
-        _scrollViewHost.frame = finalFrame;
-    }
 
     void (^completion)(void) = ^{
         [self resumeInteraction];
@@ -856,7 +883,7 @@ static BOOL disableCustomEasing = NO;
         _scrollViewHost.backgroundColor = [SeafTheme elevatedSurface];
         
         // Let layoutSheetForFrame calculate exact content height
-        [self layoutSheetForFrame:finalFrame fitToRect:NO initialSetUp:YES];
+        [self layoutSheetForFrame:finalFrame];
         
         // If height is 0, recalculate height (fallback plan)
         if (CGRectGetHeight(_scrollViewHost.frame) == 0) {
@@ -963,6 +990,10 @@ static BOOL disableCustomEasing = NO;
 #pragma mark Dismissal
 
 - (void)dismissAnimated:(BOOL)animated {
+    if (self.systemAlert) {
+        [self.systemAlert dismissViewControllerAnimated:animated completion:nil];
+        return;
+    }
     [self suspendInteraction];
 
     void (^completion)(void) = ^{
@@ -974,6 +1005,7 @@ static BOOL disableCustomEasing = NO;
         [self removeFromSuperview];
 
         _anchoredAtPoint = NO;
+        _anchoredToBarButton = NO;
         _anchoredArrowDirection = 0;
         _anchorPoint = CGPointZero;
         _laidOutSize = CGSizeZero;
@@ -1000,7 +1032,8 @@ static BOOL disableCustomEasing = NO;
 }
 
 - (UIView *)topWindow {
-    return [SeafAppDelegate topViewController].view.window;
+    UIWindow *window = _anchoredToBarButton ? self.targetVC.viewIfLoaded.window : nil;
+    return window ?: [SeafAppDelegate topViewController].view.window;
 }
 
 // Show/move/dismiss nest their calls, and -layoutSubviews re-enters via -moveToPoint:,

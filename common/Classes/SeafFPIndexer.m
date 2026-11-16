@@ -411,18 +411,37 @@ static NSDictionary<NSString *, NSMutableArray<NSDictionary *> *> *SeafFPGroupSp
                         fromCache:(BOOL)fromCache
                   requestStartSeq:(long long)requestStartSeq
 {
+    if (![NSThread isMainThread]) {
+        NSArray *values = [snapshot copy];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self fp_indexRepositorySnapshot:values connection:conn fromCache:fromCache requestStartSeq:requestStartSeq];
+        });
+        return;
+    }
     NSString *domainId = [self domainIdForConnection:conn repoId:nil];
     if (!domainId) return;
+    [self enqueueRepositorySnapshot:snapshot connection:conn domain:domainId generation:[self generationForDomainId:domainId]
+                           fromCache:fromCache requestStartSeq:requestStartSeq];
+}
+
+- (void)enqueueRepositorySnapshot:(NSArray<NSDictionary *> *)snapshot
+                       connection:(SeafConnection *)conn
+                           domain:(NSString *)domainId
+                       generation:(uint64_t)generation
+                        fromCache:(BOOL)fromCache
+                  requestStartSeq:(long long)requestStartSeq
+{
     NSArray *values = [snapshot copy];
     [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+        if (![self isDomainActive:domainId generation:generation]) return;
         BOOL changed = [store applyRepositorySnapshot:values complete:!fromCache fromCache:fromCache requestStartSeq:requestStartSeq];
         changed |= [store publishPendingRepositoryRecordsWithLimit:500];
         if (changed || [store pendingWorkingSetSignalTicket] > 0 || [store hasPendingRepositoryPublications]) [self noteChangedConnection:conn];
         // Libraries may have become listable (loaded, unlocked) or gone.
         if (!fromCache) [self runDirectoryChecksForConnection:conn];
         if (!fromCache) {
-            uint64_t generation = [self generationForDomainId:domainId];
             dispatch_async(dispatch_get_main_queue(), ^{
+                if (![self isDomainActive:domainId generation:generation]) return;
                 if (requestStartSeq >= 0) { [self->_repoReloads removeObject:domainId]; return; }
                 // The list was requested without a request seq (the store
                 // could not be read then), so it could not settle freshness.
@@ -446,14 +465,43 @@ static NSDictionary<NSString *, NSMutableArray<NSDictionary *> *> *SeafFPGroupSp
     return [SeafFPStore currentSeqForDomainIdentifier:domainId];
 }
 
-- (long long)fp_repositoryRequestStartSeqForConnection:(SeafConnection *)conn
+- (void)fp_prepareRepositoryRequestForConnection:(nullable SeafConnection *)conn
+                                      completion:(void (^)(SeafFPRepositorySnapshotHandler _Nullable))completion
 {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self fp_prepareRepositoryRequestForConnection:conn completion:completion];
+        });
+        return;
+    }
     NSString *domainId = [self domainIdForConnection:conn repoId:nil];
-    if (!domainId) return -1;
-    SeafFPStore *store = [SeafFPStore openExistingStoreForDomainIdentifier:domainId];
-    long long start = store ? [store beginRepositoryRequest] : -1;
-    [store close];
-    return start;
+    if (!domainId) { completion(nil); return; }
+    uint64_t generation = [self generationForDomainId:domainId];
+    NSString *token = [conn.token copy];
+    BOOL (^canIndex)(void) = ^BOOL{
+        return [self isDomainActive:domainId generation:generation] && [conn.token isEqualToString:token]
+            && [[self domainIdForConnection:conn repoId:nil] isEqualToString:domainId];
+    };
+    // The index queue may wait on the extension's SQLite transaction. Its
+    // completions dispatch the HTTP requests on main in sequence order.
+    void (^ready)(long long) = ^(long long startSeq) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (!canIndex()) { completion(nil); return; }
+            completion(^(NSArray<NSDictionary *> *snapshot) {
+                dispatch_block_t submit = ^{
+                    if (!canIndex()) return;
+                    [self enqueueRepositorySnapshot:snapshot connection:conn domain:domainId generation:generation
+                                           fromCache:NO requestStartSeq:startSeq];
+                };
+                if ([NSThread isMainThread]) submit();
+                else dispatch_async(dispatch_get_main_queue(), submit);
+            });
+        });
+    };
+    [self enqueueForDomainId:domainId work:^(SeafFPStore *store) {
+        long long startSeq = [self isDomainActive:domainId generation:generation] ? [store beginRepositoryRequest] : -1;
+        ready(startSeq);
+    } skipped:^{ ready(-1); }];
 }
 
 - (NSString *)moveKeyForDomainId:(NSString *)domainId repoId:(NSString *)repoId directoryPath:(NSString *)directoryPath

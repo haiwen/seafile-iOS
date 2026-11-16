@@ -465,6 +465,11 @@ Checks the auto synchronization settings and updates the connection’s synchron
  * Handles changes in the photo library and initiates a photo sync if auto sync is enabled.
  * @param note The notification object containing the change details.
  */
+/// The backup is on but its upload folder is not resolved: the check at
+/// start failed (server error, offline with no cached library list). Nothing
+/// is queued in that state, so the account queue's periodic check asks here
+/// and has -photosDidChange: try again.
+- (BOOL)photoBackupNeedsUploadDir;
 - (void)photosDidChange:(NSNotification *_Nullable)note;
 
 /**
@@ -598,6 +603,8 @@ extern NSString * const SeafFPIndexKeyRepoId;   // @"repoId"
 /// Value snapshot of a SeafFile / SeafDir; nil for anything else (pending uploads).
 FOUNDATION_EXPORT NSDictionary * _Nullable SeafFPIndexEntryForBase(SeafBase *obj);
 
+typedef void (^SeafFPRepositorySnapshotHandler)(NSArray<NSDictionary *> *snapshot);
+
 /// Implemented by the main app (SeafFPIndexer) to copy what the SDK learns
 /// into the Files app's index. Never registered in the extensions. Every
 /// argument is a value snapshot taken synchronously by the caller; the
@@ -605,8 +612,10 @@ FOUNDATION_EXPORT NSDictionary * _Nullable SeafFPIndexEntryForBase(SeafBase *obj
 @protocol SeafFPIndexingSink <NSObject>
 /// The store's seq right before a listing request is sent; -1 when unknown.
 - (long long)fp_requestStartSeqForConnection:(SeafConnection *)conn;
-/// A unique boundary for a repository-list request, shared with the extension.
-- (long long)fp_repositoryRequestStartSeqForConnection:(SeafConnection *)conn;
+/// Calls completion on main after allocating a repository-request sequence in
+/// the shared store. The handler accepts the response while the domain is current.
+- (void)fp_prepareRepositoryRequestForConnection:(nullable SeafConnection *)conn
+                                      completion:(void (^)(SeafFPRepositorySnapshotHandler _Nullable handler))completion;
 /// A complete server listing of one directory.
 - (void)fp_indexListing:(NSArray<NSDictionary *> *)entries
                  ofRepo:(NSString *)repoId

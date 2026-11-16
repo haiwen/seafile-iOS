@@ -253,6 +253,7 @@
     BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
     NSDate *now = [NSDate date];
     NSUInteger waiting = 0;
+    BOOL hasFreshPhoto = NO;
     
     for (PHAsset *asset in result) {
         // Failed a moment ago: stays queued, and gets its turn when its wait is over.
@@ -261,6 +262,11 @@
             continue;
         }
         if (asset) {
+            if (!hasFreshPhoto) {
+                @synchronized (self.photoFailures) {
+                    hasFreshPhoto = SeafRetryBackoffFailures(self.photoFailures, asset.localIdentifier) == 0;
+                }
+            }
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
             NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             NSString *expectedFilename = filename;
@@ -297,6 +303,11 @@
         Debug("%lu photos left alone after a failed upload, %lu queued", (unsigned long)waiting, (unsigned long)uploadFilesArray.count);
     }
     [SeafDataTaskManager.sharedObject addUploadTasksInBatch:uploadFilesArray forConnection:self.connection];
+    if (hasFreshPhoto) {
+        // The account queue may be waiting out a pause that photos the server
+        // keeps refusing caused. These have not been tried yet.
+        [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection] endErrorPauseForFreshBackupUploads];
+    }
 }
 
 - (void)uploadPhotoByIdentifier:(NSString *)localIdentifier {

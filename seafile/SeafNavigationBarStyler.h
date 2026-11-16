@@ -64,6 +64,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// host view, so rows remain visible in the bottom safe area (home indicator).
 + (void)pinViewToSafeAreaExtendingToHostBottom:(UIView *)subview inHostView:(UIView *)hostView;
 
+/// Horizontal edges stay in the safe area. The requested vertical edges extend under the bars.
++ (void)pinView:(UIView *)subview inHostView:(UIView *)hostView
+    extendPastTopSafeArea:(BOOL)extendPastTopSafeArea
+ extendPastBottomSafeArea:(BOOL)extendPastBottomSafeArea;
+
+/// Whether to use the iPad navigation layout and system controls introduced in iPadOS 26.
++ (BOOL)usesSystemBarsOnIpad;
+
+/// Use the page's background in every navigation bar state, with no divider.
++ (void)applyOpaqueAppearanceToNavigationItem:(UINavigationItem *)navigationItem
+                              backgroundColor:(UIColor *)backgroundColor;
+
 + (void)updateTableViewBackgroundViewFrame:(UITableView *)tableView;
 
 @end

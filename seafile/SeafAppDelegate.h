@@ -85,6 +85,10 @@ enum {
 
 + (UIViewController *)topViewController;
 + (void)checkOpenLink:(SeafFileViewController *)c;
+/// Library of the file link still being opened, nil when there is none.
+- (NSString *)pendingLinkRepo;
+/// Drops the pending file link if it still targets `repoId`.
+- (void)endGotoForRepo:(NSString *)repoId;
 
 /// The window currently presenting UI. Use instead of -[UIApplication keyWindow].
 + (UIWindow *)activeWindow;

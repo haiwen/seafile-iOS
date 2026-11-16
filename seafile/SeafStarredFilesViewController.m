@@ -9,6 +9,7 @@
 #import "UIScrollView+SVPullToRefresh.h"
 
 #import "SeafAppDelegate.h"
+#import "IntelligentSplitViewController.h"
 #import "SeafStarredFilesViewController.h"
 #import "SeafDetailViewController.h"
 #import "SeafSdocWebViewController.h"
@@ -99,6 +100,14 @@
         _cellDataArray = [[NSMutableArray alloc]init];
     }
     self.title = NSLocalizedString(@"Starred", @"Seafile");
+    if (@available(iOS 26.0, *)) {
+        if (IsIpad()) {
+            // Folders opened from here turn on large titles in the iPad sidebar (see
+            // SeafFileViewController -usesLargeSidebarTitle); this list keeps its inline
+            // title when they are popped.
+            self.navigationItem.largeTitleDisplayMode = UINavigationItemLargeTitleDisplayModeNever;
+        }
+    }
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
     self.tableView.estimatedRowHeight = 55.0;
@@ -118,6 +127,11 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+    if ([SeafNavigationBarStyler usesSystemBarsOnIpad]) {
+        [SeafNavigationBarStyler applyOpaqueAppearanceToNavigationItem:self.navigationItem
+                                                      backgroundColor:[SeafTheme primaryBackgroundColor]];
+        self.extendedLayoutIncludesOpaqueBars = YES;
+    }
     self.tableView.sectionHeaderTopPadding = 0;
     // Same 10pt gap under the navigation bar as a directory file list.
     self.tableView.sectionHeaderHeight = 0;
@@ -838,8 +852,8 @@
     // Get the UINavigationController of the first tab
     UINavigationController *navController;
     if (IsIpad()){
-        UISplitViewController *fileController = self.tabBarController.viewControllers[0];
-        navController = [fileController.viewControllers firstObject];
+        IntelligentSplitViewController *fileController = self.tabBarController.viewControllers[0];
+        navController = fileController.primaryNavigationController;
     } else {
         navController = self.tabBarController.viewControllers[0];
     }

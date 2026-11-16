@@ -64,7 +64,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     [super viewDidLoad];
 
     // Do any additional setup after loading the view from its nib.
-    self.title = NSLocalizedString(@"Activities", @"Seafile");
+    self.navigationItem.title = NSLocalizedString(@"Activity", @"Seafile");
     if (self.tableView && self.tableView != self.view) {
         NSMutableArray<NSLayoutConstraint *> *oldConstraints = [NSMutableArray array];
         for (NSLayoutConstraint *constraint in self.view.constraints) {

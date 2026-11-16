@@ -108,6 +108,9 @@ static BOOL SeafFPRequestNeverReachedServer(NSError *error)
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableArray *> *thumbWaiters;
 // A working set re-check timer is armed (design §8.2).
 @property (nonatomic, assign) BOOL workingSetRecheckPending;
+// Signals the system refused in a row (domain disabled or being removed):
+// each one doubles the wait before the next attempt.
+@property (nonatomic, assign) NSUInteger workingSetSignalFailures;
 @end
 
 /// Collects the identifiers handed out by the system's materialized-items enumerator.
@@ -819,9 +822,21 @@ static BOOL SeafFPIsDirectoryMissing(NSError *error)
     long long ticket = [self.store pendingWorkingSetSignalTicket];
     [self.manager signalEnumeratorForContainerItemIdentifier:NSFileProviderWorkingSetContainerItemIdentifier completionHandler:^(NSError * _Nullable error) {
         if (error) {
-            Info("signal working set (for %@) failed: %@", containerIdentifier, error);
-            [self scheduleWorkingSetRecheckAt:[NSDate dateWithTimeIntervalSinceNow:5]];
-        } else if (ticket > 0) [self.store completeWorkingSetSignalTicket:ticket];
+            // 5 s, doubling up to 10 min: a signal that keeps failing would
+            // otherwise be repeated, with a store write each, every 5 s for
+            // as long as the process lives.
+            NSTimeInterval delay = 5;
+            @synchronized (self) {
+                NSUInteger failures = self.workingSetSignalFailures;
+                if (failures < 16) self.workingSetSignalFailures = failures + 1;
+                delay = MIN(600.0, 5.0 * (NSTimeInterval)(1UL << MIN(failures, (NSUInteger)8)));
+            }
+            Info("signal working set (for %@) failed, next attempt in %.0fs: %@", containerIdentifier, delay, error);
+            [self scheduleWorkingSetRecheckAt:[NSDate dateWithTimeIntervalSinceNow:delay]];
+        } else {
+            @synchronized (self) { self.workingSetSignalFailures = 0; }
+            if (ticket > 0) [self.store completeWorkingSetSignalTicket:ticket];
+        }
     }];
 }
 
@@ -1241,8 +1256,12 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             Info("Directory %@ unreachable, serving cache: %@", failed.path, error);
             completion(YES, YES, nil, failure);
         } else {
-            NSError *mapped = [SeafFPErrors errorForSeafError:error];
-            [weakSelf noteError:mapped aboutOneItem:[SeafFPErrors seafErrorConcernsOneItem:error]];
+            // A 404 that is not Seahub's own must not reach the system as
+            // NoSuchItem: it would drop the folder from its replica while
+            // the store keeps the rows (failure is "Server" for it already).
+            NSError *mapped = [SeafFPErrors enumerationErrorForSeafError:error];
+            BOOL oneItem = [SeafFPErrors seafErrorConcernsOneItem:error] && failure != SeafFPListingFailureServer;
+            [weakSelf noteError:mapped aboutOneItem:oneItem];
             completion(NO, NO, mapped, failure);
         }
     }];
@@ -1913,6 +1932,13 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
                 typeof(self) strongSelf = weakSelf;
                 if (!strongSelf) { finish([SeafFPErrors cannotSynchronize]); return; }
                 NSError *mapped = success ? nil : [SeafFPErrors errorForSeafError:error];
+                if (mapped && [SeafFPErrors isForeignNotFoundError:error]) {
+                    // Not Seahub's answer (a proxy's 404): the item may well
+                    // still exist, so it is not recorded as deleted.
+                    [strongSelf noteError:[SeafFPErrors serverUnreachable]];
+                    finish([SeafFPErrors serverUnreachable]);
+                    return;
+                }
                 if (mapped && mapped.code != NSFileProviderErrorNoSuchItem) {
                     [strongSelf noteError:mapped aboutOneItem:[SeafFPErrors seafErrorConcernsOneItem:error]];
                     finish(mapped);

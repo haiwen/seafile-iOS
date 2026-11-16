@@ -429,23 +429,37 @@
 - (void)loadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
     id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
-    long long startSeq = indexer ? [indexer fp_repositoryRequestStartSeqForConnection:self.connection] : -1;
+    if (!indexer) {
+        [self loadContentWithIndexHandler:nil success:success failure:failure];
+        return;
+    }
+    [indexer fp_prepareRepositoryRequestForConnection:self.connection completion:^(SeafFPRepositorySnapshotHandler handler) {
+        [self loadContentWithIndexHandler:handler success:success failure:failure];
+    }];
+}
+
+- (void)loadContentWithIndexHandler:(SeafFPRepositorySnapshotHandler)indexHandler
+                            success:(void (^)(SeafDir *dir))success
+                            failure:(void (^)(SeafDir *dir, NSError *error))failure
+{
     [self.connection sendRequest:self.url
                     success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
              self.state = SEAF_DENTRY_UPTODATE;
              if ([self handleData:JSON]) {
-                 if ([indexer respondsToSelector:@selector(fp_indexRepositorySnapshot:connection:fromCache:requestStartSeq:)]) {
-                     [indexer fp_indexRepositorySnapshot:[self fp_repositorySnapshot] connection:self.connection fromCache:NO requestStartSeq:startSeq];
-                 }
+                 if (indexHandler) indexHandler([self fp_repositorySnapshot]);
                  NSData *data = [Utils JSONEncode:JSON];
                  [self.connection setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_REPOS entityName:ENTITY_OBJECT];
                  if (success)
                      success(self);
-             } else if (failure) {
-                 // Malformed answer: callers must not hang waiting for either block.
-                 failure(self, [Utils defaultError]);
+             } else {
+                 // Malformed answer: neither callers nor the delegate may hang
+                 // waiting for an outcome.
+                 NSError *error = [Utils defaultError];
+                 if (failure)
+                     failure(self, error);
+                 [self.delegate download:self failed:error];
              }
          }
      }

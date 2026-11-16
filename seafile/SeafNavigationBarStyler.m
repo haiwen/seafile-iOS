@@ -34,6 +34,25 @@
     navigationController.view.backgroundColor = [SeafTheme primaryBackgroundColor];
 }
 
++ (BOOL)usesSystemBarsOnIpad {
+    if (@available(iOS 26.0, *)) {
+        return UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad;
+    }
+    return NO;
+}
+
++ (void)applyOpaqueAppearanceToNavigationItem:(UINavigationItem *)navigationItem
+                              backgroundColor:(UIColor *)backgroundColor {
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = backgroundColor;
+    appearance.shadowColor = UIColor.clearColor;
+    navigationItem.standardAppearance = appearance;
+    navigationItem.scrollEdgeAppearance = appearance;
+    navigationItem.compactAppearance = appearance;
+    navigationItem.compactScrollEdgeAppearance = appearance;
+}
+
 #pragma mark - Back arrow
 
 + (UIImage *)backArrowImage
@@ -55,14 +74,22 @@
 
 + (void)pinView:(UIView *)subview inHostView:(UIView *)hostView extendPastBottomSafeArea:(BOOL)extendPastBottomSafeArea
 {
+    [self pinView:subview inHostView:hostView extendPastTopSafeArea:NO extendPastBottomSafeArea:extendPastBottomSafeArea];
+}
+
++ (void)pinView:(UIView *)subview inHostView:(UIView *)hostView
+    extendPastTopSafeArea:(BOOL)extendPastTopSafeArea
+ extendPastBottomSafeArea:(BOOL)extendPastBottomSafeArea
+{
     subview.translatesAutoresizingMaskIntoConstraints = NO;
     if (subview.superview != hostView) {
         [hostView addSubview:subview];
     }
     UILayoutGuide *guide = hostView.safeAreaLayoutGuide;
+    NSLayoutYAxisAnchor *topAnchor = extendPastTopSafeArea ? hostView.topAnchor : guide.topAnchor;
     NSLayoutYAxisAnchor *bottomAnchor = extendPastBottomSafeArea ? hostView.bottomAnchor : guide.bottomAnchor;
     [NSLayoutConstraint activateConstraints:@[
-        [subview.topAnchor constraintEqualToAnchor:guide.topAnchor],
+        [subview.topAnchor constraintEqualToAnchor:topAnchor],
         [subview.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor],
         [subview.trailingAnchor constraintEqualToAnchor:guide.trailingAnchor],
         [subview.bottomAnchor constraintEqualToAnchor:bottomAnchor],

@@ -5,7 +5,14 @@
 
 #import "SeafTabBarStyler.h"
 #import "SeafTheme.h"
-#import "Constants.h"
+
+static BOOL SeafUsesSystemTabBarAppearance(void) {
+    if (@available(iOS 26.0, *)) {
+        // Use the same device idiom before and after the bar enters a window.
+        return UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone;
+    }
+    return NO;
+}
 
 @implementation SeafTabBarStyler
 
@@ -13,6 +20,10 @@
     tabBar.tintColor = [SeafTheme accentOrange];
     tabBar.unselectedItemTintColor = [SeafTheme secondaryText];
     tabBar.translucent = [self tabBarNeedsTranslucency:tabBar];
+    if (SeafUsesSystemTabBarAppearance()) {
+        // UIKit supplies the glass background and scroll edge effect.
+        return;
+    }
 
     UITabBarAppearance *appearance = [UITabBarAppearance new];
     [appearance configureWithOpaqueBackground];
@@ -31,6 +42,9 @@
 }
 
 + (BOOL)tabBarNeedsTranslucency:(UITabBar *)tabBar {
+    if (SeafUsesSystemTabBarAppearance()) {
+        return YES;
+    }
     CGSize size = tabBar.bounds.size;
     return size.height > size.width;
 }

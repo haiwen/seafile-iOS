@@ -10,6 +10,10 @@
 #import "Utils.h"
 #import "SeafTheme.h"
 
+@interface SeafCell ()
+@property (nonatomic, strong) UIView *previewSelectionView;
+@end
+
 @implementation SeafCell
 @synthesize imageView;
 @synthesize textLabel;
@@ -74,6 +78,10 @@
 
     // Add rounded corners to the imageView
     self.imageView.layer.cornerRadius = 5.0f;
+
+    // Keep the fixed fonts from the nib and allow text to wrap on narrow layouts.
+    self.textLabel.numberOfLines = 0;
+    self.detailTextLabel.numberOfLines = 0;
 }
 
 /// How far this cell still overlaps the table's horizontal unsafe area.
@@ -185,6 +193,48 @@
     }
 }
 
+- (void)setIsUserEditing:(BOOL)isUserEditing {
+    _isUserEditing = isUserEditing;
+    [self updatePreviewSelectionAppearance];
+}
+
+- (void)setPreviewSelected:(BOOL)previewSelected {
+    if (_previewSelected == previewSelected) return;
+    _previewSelected = previewSelected;
+    [self updatePreviewSelectionAppearance];
+}
+
+- (void)updatePreviewSelectionAppearance {
+    BOOL visible = self.isPreviewSelected && !self.isUserEditing;
+    if (visible && !self.previewSelectionView) {
+        UIView *background = self.cellBackgroundView ?: self.contentView;
+        UIView *selection = [[UIView alloc] init];
+        selection.translatesAutoresizingMaskIntoConstraints = NO;
+        selection.userInteractionEnabled = NO;
+        selection.backgroundColor = [UIColor.systemBlueColor colorWithAlphaComponent:0.16];
+        selection.layer.cornerRadius = SEAF_CELL_CORNER;
+        selection.layer.cornerCurve = kCACornerCurveContinuous;
+        [background insertSubview:selection atIndex:0];
+        CGFloat horizontalInset = self.cellBackgroundView ? 4.0 : 14.0;
+        [NSLayoutConstraint activateConstraints:@[
+            [selection.leadingAnchor constraintEqualToAnchor:background.leadingAnchor constant:horizontalInset],
+            [selection.trailingAnchor constraintEqualToAnchor:background.trailingAnchor constant:-horizontalInset],
+            [selection.topAnchor constraintEqualToAnchor:background.topAnchor constant:3.0],
+            [selection.bottomAnchor constraintEqualToAnchor:background.bottomAnchor constant:-3.0],
+        ]];
+        self.previewSelectionView = selection;
+    }
+    self.previewSelectionView.hidden = !visible;
+}
+
+- (UIAccessibilityTraits)accessibilityTraits {
+    UIAccessibilityTraits traits = [super accessibilityTraits];
+    if (self.isUserEditing ? self.isSelected : self.isPreviewSelected) {
+        traits |= UIAccessibilityTraitSelected;
+    }
+    return traits;
+}
+
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
     // Don't call super method, completely override default behavior
      [super setSelected:selected animated:animated];
@@ -204,8 +254,14 @@
     }
 }
 
+- (void)prepareForReuse {
+    [super prepareForReuse];
+    self.previewSelected = NO;
+}
+
 - (void)reset
 {
+    self.previewSelected = NO;
     self.detailTextLabel.text = nil;
     self.detailTextLabel.textColor = Utils.cellDetailTextTextColor;
     self.badgeImage.hidden = true;

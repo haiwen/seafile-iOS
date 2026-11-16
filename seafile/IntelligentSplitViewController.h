@@ -11,8 +11,11 @@
 #import <UIKit/UIKit.h>
 
 
-@interface IntelligentSplitViewController : UISplitViewController {
+@interface IntelligentSplitViewController : UISplitViewController <UISplitViewControllerDelegate>
 
-}
+- (instancetype)initWithPrimaryNavigationController:(UINavigationController *)primary
+                     secondaryNavigationController:(UINavigationController *)secondary;
+@property (nonatomic, readonly) UINavigationController *primaryNavigationController;
+@property (nonatomic, readonly) UINavigationController *secondaryNavigationController;
 
 @end

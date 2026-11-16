@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// since an index path can be reassigned to a different upload before they land.
 @property (nonatomic, strong, nullable) SeafUploadFile *cellUploadFile;
 @property (nonatomic, assign) BOOL isUserEditing;
+@property (nonatomic, getter=isPreviewSelected) BOOL previewSelected;
 
 /// Preview aspect ratio (width / height). Currently 1:1 for a Files-like grid.
 + (CGFloat)thumbnailAspectRatio;

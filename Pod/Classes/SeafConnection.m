@@ -520,21 +520,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
 {
     if (self.photoBackupPaused == photoBackupPaused) return;
     [SeafStorage.sharedObject setObject:@(photoBackupPaused) forKey:[self photoBackupPausedKey]];
-    // Pausing reuses the stop path of checkAutoSync, resuming reuses its start path.
-    [self scheduleCheckAutoSync:^{
-        if (!photoBackupPaused) {
-            // A global pause (no network, auth error, background expiry) outlives its
-            // trigger when resumeAllTasks found the network unreachable: the queue stays
-            // suspended and the rescanned backups below would wait forever. Resuming the
-            // backup is an explicit user action, so recover the queue first when the
-            // network is back. Errors counted before the pause must not stop the new run.
-            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self];
-            [accountQueue resetUploadErrorCount];
-            if (accountQueue.isPaused) {
-                [accountQueue resumeAllTasks];
-            }
-        }
-    }];
+    [self scheduleCheckAutoSync];
 }
 
 // One serial queue for every account: a quick pause / resume pair finishes in
@@ -551,15 +537,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
 
 - (void)scheduleCheckAutoSync
 {
-    [self scheduleCheckAutoSync:nil];
-}
-
-- (void)scheduleCheckAutoSync:(void (^)(void))prepare
-{
     dispatch_async([SeafConnection autoSyncQueue], ^{
-        if (prepare) {
-            prepare();
-        }
         [self checkAutoSync];
     });
 }
@@ -1627,7 +1605,15 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 
 - (void)checkPhotosUploadDir:(CompletionBlock)handler
 {
-    
+    // In flight: the periodic check (-photosDidChange:) does not start a
+    // second one until this one has reported back or a tick has passed.
+    @synchronized (self) {
+        NSDate *tick = [NSDate dateWithTimeIntervalSinceNow:SeafRetryBackoffBase];
+        if (!self.syncDirCheckNotBefore || [self.syncDirCheckNotBefore compare:tick] == NSOrderedAscending) {
+            self.syncDirCheckNotBefore = tick;
+        }
+    }
+
     CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
         if (!success) {
             self.syncDir = nil;
@@ -1670,6 +1656,11 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     }];
 }
 
+- (BOOL)photoBackupNeedsUploadDir
+{
+    return _inAutoSync && !_syncDir;
+}
+
 - (void)photosDidChange:(NSNotification *)note
 {
     if (!_inAutoSync)
@@ -1702,12 +1693,13 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 - (void)checkAutoSync
 {
     if (!self.authorized) return;
-    if (self.isAutoSync && ![Utils isPhotoLibraryAccessible:[Utils photoLibraryAuthorizationStatus]]) {
+
+    BOOL paused = self.photoBackupPaused;
+    if (!paused && self.isAutoSync && ![Utils isPhotoLibraryAccessible:[Utils photoLibraryAuthorizationStatus]]) {
         self.autoSync = false;
         return;
     }
 
-    BOOL paused = self.photoBackupPaused;
     BOOL value = self.isAutoSync && (self.autoSyncRepo != nil) && !paused;
 
     if (_inAutoSync != value) {
@@ -1904,6 +1896,9 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     [Utils dict:_info setObject:[[NSDictionary alloc] init] forKey:@"repopassword"];
     [Utils dict:_info setObject:[[NSDictionary alloc] init] forKey:@"repoInfo"];
     [self saveAccountInfo];
+    // The encrypted libraries are locked again: the Files app must stop
+    // serving them now, not after the next library list from the server.
+    [self notifyFileProviderChange:SeafFileProviderSignalTypeRoot repoId:nil];
 }
 
 #pragma - Cache managerment

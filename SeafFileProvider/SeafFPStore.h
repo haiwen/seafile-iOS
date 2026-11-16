@@ -135,8 +135,8 @@ typedef NS_ENUM(NSInteger, SeafFPWriteResult) {
 /// Unlike currentSeq, two overlapping requests never share this value.
 - (long long)beginRepositoryRequest;
 /// Snapshots contain repoId/name/perm/editable/mtime/ooid/locked. Only a
-/// complete, fresh list may confirm absence. Cached/unknown-time data cannot
-/// replace a newer accepted state. No identity or decoration is deleted.
+/// complete, fresh list may confirm absence. A cached lock takes precedence
+/// over requests started before it. No identity or decoration is deleted.
 /// Network requests use beginRepositoryRequest, not a currentSeq read, so
 /// unchanged and overlapping responses have a reliable ordering boundary.
 - (BOOL)applyRepositorySnapshot:(NSArray<NSDictionary *> *)repositories

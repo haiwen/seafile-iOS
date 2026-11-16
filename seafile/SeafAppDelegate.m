@@ -12,6 +12,7 @@
 #import "AFNetworking.h"
 
 #import "SeafAppDelegate.h"
+#import "IntelligentSplitViewController.h"
 #import <WebKit/WebKit.h>
 #import "SeafDataTaskManager.h"
 #import "SeafStorage.h"
@@ -26,6 +27,8 @@
 #import "SeafFileProviderDomainManager.h"
 #import "SeafFileProviderLegacyMigrator.h"
 #import "SeafFPIndexer.h"
+#import "SeafPhotoGalleryViewController.h"
+#import "SeafVideoPlayerViewController.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -47,6 +50,9 @@
 
 @property (retain) NSString *gotoRepo;
 @property (retain) NSString *gotoPath;
+// A file link is waiting for a viewer covering the file list to close before
+// it navigates.
+@property (nonatomic, assign) BOOL linkAwaitsCoverDismissal;
 @property BOOL autoBackToDefaultAccount;
 @property (nonatomic, assign) BOOL needReset;
 @property (nonatomic, strong) NSMutableArray *backgroundTaskIDs;
@@ -673,6 +679,22 @@
     UITabBarController *tabs;
     if (IsIpad()) {
         tabs = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"TABVC"];
+        NSMutableArray<UIViewController *> *controllers = [tabs.viewControllers mutableCopy];
+        for (NSUInteger index = 0; index < controllers.count; index++) {
+            UIViewController *controller = controllers[index];
+            if (![controller isKindOfClass:UISplitViewController.class]) continue;
+            UISplitViewController *legacySplit = (UISplitViewController *)controller;
+            NSArray *columns = legacySplit.viewControllers;
+            // Storyboard split containers use the legacy unspecified style. Reuse
+            // their content in a double-column container with native compact navigation.
+            legacySplit.viewControllers = @[];
+            IntelligentSplitViewController *split = [[IntelligentSplitViewController alloc]
+                initWithPrimaryNavigationController:columns.firstObject
+                secondaryNavigationController:columns.lastObject];
+            split.tabBarItem = controller.tabBarItem;
+            controllers[index] = split;
+        }
+        tabs.viewControllers = controllers;
     } else {
         tabs = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"TABVC"];
     }
@@ -696,7 +718,7 @@
             // SplitViewControllers so that displayModeButtonItem shows
             // localized text instead of the storyboard-hardcoded English title.
             if (IsIpad() && [vc isKindOfClass:[UISplitViewController class]]) {
-                UINavigationController *masterNav = [[(UISplitViewController *)vc viewControllers] firstObject];
+                UINavigationController *masterNav = [(IntelligentSplitViewController *)vc primaryNavigationController];
                 if ([masterNav isKindOfClass:[UINavigationController class]]) {
                     masterNav.title = titles[idx];
                 }
@@ -708,7 +730,6 @@
         for (UIViewController *vc in tabs.viewControllers) {
             if ([vc isKindOfClass:[UISplitViewController class]]) {
                 UISplitViewController *split = (UISplitViewController *)vc;
-                split.delegate = (id)[[split.viewControllers lastObject] topViewController];
                 split.view.backgroundColor = [SeafTheme primaryBackgroundColor];
             }
         }
@@ -720,15 +741,6 @@
     _tabbarController.navigationController.navigationBar.backgroundColor = [SeafTheme primarySurface];
     _tabbarController.delegate = self;
     _tabbarController.view.backgroundColor = [SeafTheme primaryBackgroundColor];
-
-    // On iPadOS 18+, UITabBarController shows tabs at the top (compact tab bar).
-    // The bottom UITabBar still exists and occupies layout space, causing blank
-    // space at the bottom of the screen. Hide it on iPad since tabs are at the top.
-    if (IsIpad()) {
-        if (@available(iOS 18.0, *)) {
-            _tabbarController.tabBar.hidden = YES;
-        }
-    }
 
 }
 
@@ -752,7 +764,7 @@
         return [self.viewControllers objectAtIndex:index];
     else {
         // Wiki and Activity tabs use plain UINavigationController (not UISplitViewController)
-        return (index == TABBED_ACTIVITY || index == TABBED_WIKI) ? [self.viewControllers objectAtIndex:index] : [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
+        return (index == TABBED_ACTIVITY || index == TABBED_WIKI) ? [self.viewControllers objectAtIndex:index] : [(IntelligentSplitViewController *)self.viewControllers[index] primaryNavigationController];
     }
 }
 
@@ -761,10 +773,19 @@
     return (SeafFileViewController *)[[self masterNavController:TABBED_SEAFILE] topViewController];
 }
 
+// The library list at the bottom of the Files stack, which holds the file link
+// bookkeeping. Unlike -fileVC, safe to message while any page is on top (an
+// SDOC document is pushed onto this stack on iPhone).
+- (SeafFileViewController *)fileRootVC
+{
+    UIViewController *root = [self masterNavController:TABBED_SEAFILE].viewControllers.firstObject;
+    return [root isKindOfClass:[SeafFileViewController class]] ? (SeafFileViewController *)root : nil;
+}
+
 - (UIViewController *)detailViewControllerAtIndex:(int)index
 {
     if (IsIpad()) {
-        return [[[[self.viewControllers objectAtIndex:index] viewControllers] lastObject] topViewController];
+        return [(IntelligentSplitViewController *)self.viewControllers[index] secondaryNavigationController].topViewController;
     } else {
         if (!_detailVC) {
             _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
@@ -922,11 +943,85 @@ new identifier is "'mtime' + 'repoId' + 'path'"
     Debug("open file %@ %@", repo, path);
     self.gotoRepo = repo;
     self.gotoPath = path;
-    if (self.tabbarController.selectedIndex != TABBED_SEAFILE)
-        [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
-    NSArray *arr = [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-    if (arr.count == 0)
-        [SeafAppDelegate checkOpenLink:self.fileVC];
+    // Bookkeeping left by an earlier link must not decide this one.
+    [self.fileRootVC resetLinkState];
+    __block BOOL resumed = NO;
+    void (^resume)(void) = ^{
+        if (resumed) return;
+        resumed = YES;
+        self.linkAwaitsCoverDismissal = NO;
+        if (self.tabbarController.selectedIndex != TABBED_SEAFILE)
+            [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
+        [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+        // Resume from the root list every time. When pages had to be popped, the
+        // link used to wait for the root's next refresh to report a change, so a
+        // warm start with an unchanged library list dropped it without a word.
+        [SeafAppDelegate checkOpenLink:self.fileRootVC];
+    };
+    // A viewer left open covers the file list: the link would land under it,
+    // and opening the target could not present a second one. Close it and wait
+    // until it is really gone before navigating. Anything else that covers the
+    // list is left alone; the list picks the link up when it shows again.
+    SeafPhotoGalleryViewController *gallery = [self presentedPhotoGallery];
+    UIViewController *viewers = gallery ? nil : [self disposableViewerStack];
+    if (!gallery && !viewers) {
+        resume();
+        return;
+    }
+    // Until then the page under the viewer may still count as on screen and on
+    // top: a link check it queued earlier would take this link for its own and
+    // drop it as belonging to another library. `resume` checks instead.
+    self.linkAwaitsCoverDismissal = YES;
+    if (gallery) {
+        [gallery dismissGalleryAnimated:NO completion:resume];
+    } else {
+        // Stop playback the way the player's close button does; a player above
+        // another viewer is not told it is being dismissed.
+        for (UIViewController *vc = viewers; vc; vc = vc.presentedViewController) {
+            if ([vc isKindOfClass:[SeafVideoPlayerViewController class]])
+                [SeafVideoPlayerViewController closeActiveVideoPlayer];
+        }
+        [viewers.presentingViewController dismissViewControllerAnimated:NO completion:resume];
+    }
+    // UIKit drops a dismissal it cannot perform, completion and all; the link
+    // must not stay blocked on it.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), resume);
+}
+
+// Full-screen viewers a file link may close to reach the file list: they hold
+// nothing the user could lose. Quick Look is not one (a PDF can be under markup),
+// nor is the text editor, an SDOC page, an alert or a share sheet.
+- (BOOL)isDisposableViewer:(UIViewController *)vc
+{
+    if ([vc isKindOfClass:[SeafVideoPlayerViewController class]])
+        return YES;
+    if (![vc isKindOfClass:[UINavigationController class]])
+        return NO;
+    NSArray *pages = ((UINavigationController *)vc).viewControllers;
+    return pages.count == 1 && [pages.firstObject isKindOfClass:[SeafDetailViewController class]];
+}
+
+// The first presentation over the window when the whole stack is made of
+// viewers a link may close and none is in a transition, nil otherwise.
+- (UIViewController *)disposableViewerStack
+{
+    UIViewController *first = self.window.rootViewController.presentedViewController;
+    for (UIViewController *vc = first; vc; vc = vc.presentedViewController) {
+        if (![self isDisposableViewer:vc] || vc.isBeingPresented || vc.isBeingDismissed)
+            return nil;
+    }
+    return first;
+}
+
+- (SeafPhotoGalleryViewController *)presentedPhotoGallery
+{
+    for (UIViewController *vc = self.window.rootViewController.presentedViewController; vc; vc = vc.presentedViewController) {
+        UIViewController *content = [vc isKindOfClass:[UINavigationController class]]
+            ? ((UINavigationController *)vc).viewControllers.firstObject : vc;
+        if ([content isKindOfClass:[SeafPhotoGalleryViewController class]])
+            return (SeafPhotoGalleryViewController *)content;
+    }
+    return nil;
 }
 
 // Ensures navigation ends if a file link cannot be opened.
@@ -934,12 +1029,27 @@ new identifier is "'mtime' + 'repoId' + 'path'"
 {
     self.gotoRepo = nil;
     self.gotoPath = nil;
+    [self.fileRootVC resetLinkState];
+}
+
+- (NSString *)pendingLinkRepo
+{
+    return (self.gotoRepo && self.gotoPath) ? self.gotoRepo : nil;
+}
+
+- (void)endGotoForRepo:(NSString *)repoId
+{
+    if (repoId && [self.gotoRepo isEqualToString:repoId])
+        [self endGoto];
 }
 
 // Checks if a direct link to a file can be opened and navigates accordingly.
 - (void)checkOpenLink:(SeafFileViewController *)c
 {
-    if (!self.gotoRepo || !self.gotoPath)
+    if (!self.gotoRepo || !self.gotoPath || !c)
+        return;
+    // -openFile:path: resumes the link itself once the viewer is gone.
+    if (self.linkAwaitsCoverDismissal)
         return;
     Debug("open file %@ %@", self.gotoRepo, self.gotoPath);
     if (![c goTo:self.gotoRepo path:self.gotoPath]) {

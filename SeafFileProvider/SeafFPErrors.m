@@ -166,6 +166,22 @@ static NSString * const kAFFailingResponseDataKey = @"com.alamofire.serializatio
     return [self errorWithCode:NSFileProviderErrorCannotSynchronize userInfo:@{SeafFPErrorReasonKey: @"directoryMissing"}];
 }
 
++ (NSError *)enumerationErrorForSeafError:(NSError *)error
+{
+    NSError *mapped = [self errorForSeafError:error];
+    if (!error || [error.domain isEqualToString:NSFileProviderErrorDomain]) return mapped;
+    if ([self statusOfSeafError:error] == 404 && ![self isSeahubMissingPathError:error]) {
+        return [self serverUnreachable];
+    }
+    return mapped;
+}
+
++ (BOOL)isForeignNotFoundError:(NSError *)error
+{
+    if (!error || [error.domain isEqualToString:NSFileProviderErrorDomain]) return NO;
+    return [self statusOfSeafError:error] == 404 && [self seafErrorMessage:error] == nil;
+}
+
 + (SeafFPListingFailure)listingFailureForSeafError:(NSError *)error
 {
     NSInteger status = 0;

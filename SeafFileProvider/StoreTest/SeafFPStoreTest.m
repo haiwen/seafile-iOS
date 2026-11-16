@@ -961,6 +961,49 @@ static void runPublicationTests(void) {
     CHECK([SeafFPStore openExistingStoreForDomainIdentifier:@"never-created"]==nil && ![[NSFileManager defaultManager] fileExistsAtPath:[SeafFPIdentifier storeURLForDomainIdentifier:@"never-created"].path], @"retry cannot create a missing store");
 }
 
+static void runWorkingSetPageIndexTests(void)
+{
+    NSString *domain = @"indexed-working-set-page";
+    SeafFPStore *store = [[SeafFPStore alloc] initWithDomainIdentifier:domain error:nil];
+    NSMutableDictionary *otherLibrary = [RP(@"Another library", YES) mutableCopy];
+    otherLibrary[@"repoId"] = @"other";
+    [store applyRepositorySnapshot:@[RP(@"Library", YES), otherLibrary] complete:YES fromCache:NO requestStartSeq:[store beginRepositoryRequest]];
+    SeafFPRecord *file = reviewRow(store, @"publication", @"/file.txt", NO, nil, @"f");
+    SeafFPRecord *folder = reviewRow(store, @"publication", @"/资料", YES, nil, @"d");
+    SeafFPRecord *child = reviewRow(store, @"publication", @"/资料/child.txt", NO, folder.uuid, @"c");
+    for (NSString *identifier in @[file.itemIdentifier, folder.itemIdentifier, child.itemIdentifier, @"r:publication", @"r:other"]) {
+        SeafFPDecoration *decoration = [SeafFPDecoration new];
+        decoration.itemIdentifier = identifier;
+        decoration.favoriteRank = @42;
+        [store setDecoration:decoration];
+    }
+    long long seq = store.currentSeq;
+    [store close];
+
+    // A schema 4 store installed before the page index has no generated columns.
+    sqlite3 *raw = NULL;
+    NSString *path = [SeafFPIdentifier storeURLForDomainIdentifier:domain].path;
+    CHECK(sqlite3_open(path.fileSystemRepresentation, &raw) == SQLITE_OK, @"open pre-index fixture");
+    const char *drop = "DROP INDEX idx_identity_working_set; ALTER TABLE identity DROP COLUMN fp_path_depth; ALTER TABLE identity DROP COLUMN fp_is_file;";
+    CHECK(sqlite3_exec(raw, drop, NULL, NULL, NULL) == SQLITE_OK, @"remove additive index and columns");
+    sqlite3_close(raw);
+
+    store = [SeafFPStore openExistingStoreForDomainIdentifier:domain];
+    CHECK(store.currentSeq == seq && [[store metaValueForKey:@"schema_version"] isEqual:@"4"], @"upgrade preserves sequence and schema compatibility");
+    SeafFPWorkingSetPage *first = [store workingSetPageAfterDepth:0 isDir:NO seq:0 uuid:nil limit:2];
+    CHECK(first.moreComing && [first.records.firstObject.uuid isEqual:folder.uuid] && [first.records.lastObject.uuid isEqual:file.uuid], @"page keeps directories before files at each depth");
+    NSSet *firstIDs = [NSSet setWithArray:@[folder.itemIdentifier, file.itemIdentifier, @"r:publication", @"r:other"]];
+    CHECK([[NSSet setWithArray:first.decorations.allKeys] isEqual:firstIDs], @"first page includes its records and all visible library decorations");
+    [store close];
+
+    store = [SeafFPStore openExistingStoreForDomainIdentifier:domain];
+    SeafFPWorkingSetPage *next = [store workingSetPageAfterDepth:1 isDir:NO seq:file.seq uuid:file.uuid limit:2];
+    CHECK(next && !next.moreComing && next.records.count == 1 && [next.records.firstObject.uuid isEqual:child.uuid], @"existing keyset cursor resumes on reopen");
+    NSSet *nextIDs = [NSSet setWithArray:@[folder.itemIdentifier, child.itemIdentifier, @"r:publication"]];
+    CHECK([[NSSet setWithArray:next.decorations.allKeys] isEqual:nextIDs], @"later page includes ancestors and relevant decorations only");
+    [store close];
+}
+
 static void runReviewRegressionTests(SeafFPStore *ix)
 {
     // A destination browse learnt children (and favorites) while a directory
@@ -1559,6 +1602,94 @@ static void runLegacyOrphanMigrationTests(void)
     [s close];
 }
 
+/// A rename hint that met a later file of the old name (the renamed file was
+/// never indexed) is undone by the listings; a real rename is kept.
+static void runReusedNameRenameTests(void)
+{
+    for (int variant = 0; variant < 3; variant++) {
+        SeafFPStore *s = [[SeafFPStore alloc] initWithDomainIdentifier:[NSString stringWithFormat:@"hint-reused-%d", variant] error:nil];
+        BOOL sameDir = variant == 0;
+        NSString *oldPath = sameDir ? @"/draft.doc" : @"/a/draft.doc", *newPath = sameDir ? @"/final.doc" : @"/b/final.doc";
+        [s applySparseEntriesOfRepo:@"r" entries:@[SE(oldPath, NO, @"new", 5, 2000)] allowRevive:NO];
+        SeafFPRecord *draft = [s recordForRepo:@"r" path:oldPath includeDeleted:NO];
+        reviewFavorite(s, draft);
+        [s applyActivitiesOfRepo:@"r" entries:@[AE(SeafFPActivityOpMove, newPath, oldPath, NO, 1000)]];
+        [s decideRenameHintsWithLimit:50];
+        NSArray *sourceListing = @[LE(@"draft.doc", NO, @"new", 5, 2000)], *targetListing = @[LE(@"final.doc", NO, @"old", 7, 500)];
+        if (sameDir) {
+            [s applyListingOfRepo:@"r" directoryPath:@"/" entries:[sourceListing arrayByAddingObjectsFromArray:targetListing] requestStartSeq:s.currentSeq];
+        } else if (variant == 1) {
+            [s applyListingOfRepo:@"r" directoryPath:@"/a" entries:sourceListing requestStartSeq:s.currentSeq];
+            CHECK(eq([s recordForRepo:@"r" path:newPath includeDeleted:NO].uuid, draft.uuid), @"same content at both paths decides nothing yet");
+            [s applyListingOfRepo:@"r" directoryPath:@"/b" entries:targetListing requestStartSeq:s.currentSeq];
+        } else {
+            [s applyListingOfRepo:@"r" directoryPath:@"/b" entries:targetListing requestStartSeq:s.currentSeq];
+            [s applyListingOfRepo:@"r" directoryPath:@"/a" entries:sourceListing requestStartSeq:s.currentSeq];
+        }
+        SeafFPRecord *source = [s recordForRepo:@"r" path:oldPath includeDeleted:NO], *target = [s recordForRepo:@"r" path:newPath includeDeleted:NO];
+        CHECK(eq(source.uuid, draft.uuid) && eq(source.oid, @"new") && source.size == 5, @"variant %d: the later file keeps its identity at the old path: %@", variant, source);
+        CHECK(target && !eq(target.uuid, draft.uuid) && eq(target.oid, @"old") && target.size == 7, @"variant %d: the renamed file gets its own identity: %@", variant, target);
+        CHECK([[s decorationForItem:draft.itemIdentifier].favoriteRank isEqual:@42] && ![s decorationForItem:target.itemIdentifier].favoriteRank,
+              @"variant %d: the favorite stays with the file it was set on", variant);
+        CHECK([s pendingRenameHintCount] == 0, @"variant %d: hint closed", variant);
+        [s close];
+    }
+    // A real rename, the old name used again by another file: nothing is undone.
+    SeafFPStore *s = [[SeafFPStore alloc] initWithDomainIdentifier:@"hint-reused-real" error:nil];
+    [s applySparseEntriesOfRepo:@"r" entries:@[SE(@"/draft.doc", NO, @"old", 7, 500)] allowRevive:NO];
+    SeafFPRecord *draft = [s recordForRepo:@"r" path:@"/draft.doc" includeDeleted:NO];
+    reviewFavorite(s, draft);
+    [s applyActivitiesOfRepo:@"r" entries:@[AE(SeafFPActivityOpMove, @"/final.doc", @"/draft.doc", NO, 1000)]];
+    [s decideRenameHintsWithLimit:50];
+    [s applyListingOfRepo:@"r" directoryPath:@"/" entries:@[LE(@"draft.doc", NO, @"new", 5, 2000), LE(@"final.doc", NO, @"old", 7, 500)] requestStartSeq:s.currentSeq];
+    CHECK(eq([s recordForRepo:@"r" path:@"/final.doc" includeDeleted:NO].uuid, draft.uuid)
+          && !eq([s recordForRepo:@"r" path:@"/draft.doc" includeDeleted:NO].uuid, draft.uuid), @"a real rename keeps the identity at the new name");
+    // Renamed, then edited: the old path is empty, the edit is not a reason to undo.
+    [s applySparseEntriesOfRepo:@"r" entries:@[SE(@"/note.txt", NO, @"n1", 5, 500)] allowRevive:NO];
+    SeafFPRecord *note = [s recordForRepo:@"r" path:@"/note.txt" includeDeleted:NO];
+    [s applyActivitiesOfRepo:@"r" entries:@[AE(SeafFPActivityOpMove, @"/memo.txt", @"/note.txt", NO, 3000)]];
+    [s decideRenameHintsWithLimit:50];
+    [s applyListingOfRepo:@"r" directoryPath:@"/" entries:@[LE(@"draft.doc", NO, @"new", 5, 2000), LE(@"final.doc", NO, @"old", 7, 500), LE(@"memo.txt", NO, @"n2", 6, 3100)] requestStartSeq:s.currentSeq];
+    SeafFPRecord *memo = [s recordForRepo:@"r" path:@"/memo.txt" includeDeleted:NO];
+    CHECK(eq(memo.uuid, note.uuid) && eq(memo.oid, @"n2") && ![s recordForRepo:@"r" path:@"/note.txt" includeDeleted:NO], @"rename plus edit keeps the identity: %@", memo);
+    [s close];
+}
+
+/// Clearing a library password locks the library in the shared state at once,
+/// from this device's own (cached) snapshot; nothing else of it is taken.
+static void runLocalLockTests(void)
+{
+    NSDictionary *(^repo)(NSString *, BOOL) = ^NSDictionary *(NSString *name, BOOL locked) {
+        return @{@"repoId":@"enc", @"name":name, @"perm":@"rw", @"editable":@YES, @"mtime":@1, @"ooid":@"", @"locked":@(locked)};
+    };
+    SeafFPStore *s = [[SeafFPStore alloc] initWithDomainIdentifier:@"local-lock" error:nil];
+    [s upsertRecordForRepo:@"enc" path:@"/secret.txt" isDir:NO parentUUID:nil oid:@"c" mtime:10 size:5];
+    CHECK([s applyRepositorySnapshot:@[repo(@"Vault", NO)] complete:YES fromCache:NO requestStartSeq:[s beginRepositoryRequest]], @"unlocked library listed");
+    while (s.hasPendingRepositoryPublications) [s publishPendingRepositoryRecordsWithLimit:500];
+    SeafFPStore *extensionStore = [[SeafFPStore alloc] initWithDomainIdentifier:@"local-lock" error:nil];
+    long long inFlight = [extensionStore beginRepositoryRequest];
+    long long before = s.currentSeq;
+    CHECK(![s applyRepositorySnapshot:@[repo(@"Stale name", NO)] complete:NO fromCache:YES requestStartSeq:-1], @"a cached snapshot of a visible library changes nothing");
+    CHECK([s applyRepositorySnapshot:@[repo(@"Stale name", YES)] complete:NO fromCache:YES requestStartSeq:-1], @"password cleared offline: locked from the cached snapshot");
+    NSDictionary *state = s.repositoryStates[@"enc"];
+    CHECK([state[@"availability"] isEqual:@"locked"] && [state[@"name"] isEqual:@"Vault"] && [state[@"authoritative"] boolValue]
+          && [state[@"eventSeq"] longLongValue] > before && !s.hasPendingRepositoryPublications, @"only the availability changed: %@", state);
+    CHECK([s publicationBatchAfterSequence:before limit:10].repositoryEvents.count == 1, @"the lock is an event of its own");
+    CHECK(![s applyRepositorySnapshot:@[repo(@"Vault", YES)] complete:NO fromCache:YES requestStartSeq:-1], @"locking twice is no change");
+    CHECK(![s applyRepositorySnapshot:@[repo(@"Vault", NO)] complete:NO fromCache:YES requestStartSeq:-1]
+          && [s.repositoryStates[@"enc"][@"availability"] isEqual:@"locked"], @"a cached snapshot never unlocks");
+    CHECK(inFlight > 0 && [extensionStore applyRepositorySnapshotResult:@[repo(@"Vault", NO)] complete:YES fromCache:NO requestStartSeq:inFlight] == SeafFPWriteUnchanged
+          && [extensionStore.repositoryStates[@"enc"][@"availability"] isEqual:@"locked"] && !extensionStore.hasPendingRepositoryPublications,
+          @"a response from before the local lock cannot reopen the library or republish its children");
+    [extensionStore close];
+    CHECK([s applyRepositorySnapshot:@[repo(@"Vault", NO)] complete:YES fromCache:NO requestStartSeq:[s beginRepositoryRequest]]
+          && [s.repositoryStates[@"enc"][@"availability"] isEqual:@"visible"] && s.hasPendingRepositoryPublications, @"a fresh list unlocks and republishes");
+    CHECK([s applyRepositorySnapshot:@[] complete:YES fromCache:NO requestStartSeq:[s beginRepositoryRequest]], @"library removed on the server");
+    CHECK(![s applyRepositorySnapshot:@[repo(@"Vault", YES)] complete:NO fromCache:YES requestStartSeq:-1]
+          && [s.repositoryStates[@"enc"][@"availability"] isEqual:@"removed"], @"a removed library is not brought back as locked");
+    [s close];
+}
+
 int main(void) {
     @autoreleasepool {
         gTestDir = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"seaf-fp-store-test-%@", [NSUUID UUID].UUIDString]];
@@ -1835,9 +1966,12 @@ int main(void) {
 
         runIndexingTests();
         runPublicationTests();
+        runWorkingSetPageIndexTests();
         runStatementFailureTests();
         runDirectoryCheckTests();
         runRenameHintTests();
+        runReusedNameRenameTests();
+        runLocalLockTests();
         runLateRenameAndBatchTests();
         runConfirmedPlacementTests();
         runPendingMoveRecoveryTests();

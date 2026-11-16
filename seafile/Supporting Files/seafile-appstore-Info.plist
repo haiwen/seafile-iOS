@@ -147,8 +147,6 @@
 	<array>
 		<string>arm64</string>
 	</array>
-	<key>UIRequiresFullScreen~ipad</key>
-	<true/>
 	<key>UIStatusBarHidden</key>
 	<false/>
 	<key>UIStatusBarHidden~ipad</key>

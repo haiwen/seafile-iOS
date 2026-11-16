@@ -26,6 +26,10 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.title = NSLocalizedString(@"Privacy Policy", @"Seafile");
+    if ([SeafNavigationBarStyler usesSystemBarsOnIpad]) {
+        [SeafNavigationBarStyler applyOpaqueAppearanceToNavigationItem:self.navigationItem
+                                                      backgroundColor:[SeafTheme primarySurface]];
+    }
     
     _webView = [[WKWebView alloc]initWithFrame:self.view.bounds];
     _webView.navigationDelegate  = self;

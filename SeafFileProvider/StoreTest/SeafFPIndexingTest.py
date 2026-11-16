@@ -523,7 +523,7 @@ static NSHTTPURLResponse *TestResponse(NSInteger status) {
         [self noteFailureLocked:SQLITE_IOERR];
         return SQLITE_IOERR;
     }
-    if (self.rowsBeforeError >= 0 && strstr(sqlite3_sql(stmt), "FROM identity WHERE deleted = 0 AND (length(path)")) {
+    if (self.rowsBeforeError >= 0 && strstr(sqlite3_sql(stmt), "FROM identity WHERE deleted = 0 AND (fp_path_depth")) {
         if (self.rowsBeforeError == 0) { [self noteFailureLocked:SQLITE_IOERR]; return SQLITE_IOERR; }
         self.rowsBeforeError--;
     }
@@ -636,6 +636,31 @@ static void sharedLibraryRoot(void) {
     [s close];
 }
 
+/// A library whose password was cleared leaves the system like a removed one
+/// (so nothing below it stays in the search index) and comes back, with its
+/// rows and the same identities, once it is unlocked.
+static void lockedLibraryIsRetracted(void) {
+    SeafFPStore *s=[[SeafFPStore alloc] initWithDomainIdentifier:@"locked-retracted" error:nil];
+    [s applyRepositorySnapshot:@[repoInfo(@"v",@"Vault",YES)] complete:YES fromCache:NO requestStartSeq:s.currentSeq];
+    SeafFPRecord *secret=[s upsertRecordForRepo:@"v" path:@"/secret.txt" isDir:NO parentUUID:nil oid:@"c" mtime:10 size:1];
+    while(s.hasPendingRepositoryPublications) [s publishPendingRepositoryRecordsWithLimit:500];
+    TestObserver *o=changes(enumerator(s,@"v"),0);
+    CHECK(o.updates[@"r:v"] && o.updates[secret.itemIdentifier] && o.deleted.count==0);
+    long long before=s.currentSeq;
+    NSMutableDictionary *locked=[repoInfo(@"v",@"Vault",YES) mutableCopy]; locked[@"locked"]=@YES;
+    CHECK([s applyRepositorySnapshot:@[locked] complete:NO fromCache:YES requestStartSeq:-1]);   // cleared offline
+    o=changes(enumerator(s,@"v"),before);
+    CHECK([o.deleted containsObject:@"r:v"] && !o.updates[@"r:v"] && !o.updates[secret.itemIdentifier]);
+    TestObserver *full=[TestObserver new];
+    [enumerator(s,@"v") enumerateWorkingSetPage:[NSData data] observer:full];
+    CHECK(!full.error && ![full.identifiers containsObject:@"r:v"] && ![full.identifiers containsObject:secret.itemIdentifier]);
+    before=s.currentSeq;
+    [s applyRepositorySnapshot:@[repoInfo(@"v",@"Vault",YES)] complete:YES fromCache:NO requestStartSeq:[s beginRepositoryRequest]];
+    o=changes(enumerator(s,@"v"),before);
+    CHECK(o.updates[@"r:v"] && o.updates[secret.itemIdentifier] && o.deleted.count==0);
+    CHECK([[s recordForRepo:@"v" path:@"/secret.txt" includeDeleted:NO].uuid isEqual:secret.uuid]);
+    [s close];
+}
 static void failedWorkingSetSnapshot(void) {
     SnapshotFailingStore *s = [[SnapshotFailingStore alloc] initWithDomainIdentifier:@"failed-snapshot" error:nil];
     SeafFPRecord *a = [s upsertRecordForRepo:@"r" path:@"/a" isDir:NO parentUUID:nil oid:@"a" mtime:10 size:1];
@@ -2280,6 +2305,23 @@ static void finalRepositoryRegressions(void) {
         [other close]; [store close];
     }
 }
+static void rootReplyFromReplacedSession(void) {
+    SeafFPStore *store = [[SeafFPStore alloc] initWithDomainIdentifier:@"replaced-root-session" error:nil];
+    SeafFPEnumerator *e = enumerator(store, @"stale");
+    SeafRepos *oldRoot = e.extension.connection.rootFolder;
+    __block BOOL answered = NO;
+    [e loadRoot:NSFileProviderRootContainerItemIdentifier completion:^(SeafFPContainerLoad *load, NSError *error) {
+        answered = YES;
+        CHECK(!load && error.code == NSFileProviderErrorCannotSynchronize);
+    }];
+    e.extension.connection = enumerator(store, @"current").extension.connection;
+    void (^reply)(SeafDir *) = oldRoot.callbacks.firstObject;
+    CHECK(reply);
+    [oldRoot.callbacks removeAllObjects];
+    if (reply) reply((SeafDir *)oldRoot);
+    CHECK(answered && store.repositoryStates.count == 0);
+    [store close];
+}
 static void finalParentJournalRegressions(void) {
     for(int renamed=0;renamed<2;renamed++) {
         resetMoveTransport();
@@ -2769,6 +2811,95 @@ static SeafFPCheckPass *runChecks(SeafFPCheckingEnumerator *e, NSArray **selecte
 }
 static BOOL retired(SeafFPStore *s, NSString *path) { return [s recordForRepo:@"r" path:path includeDeleted:YES].deleted; }
 
+@interface RepositoryRestoringExtension : TestExtension
+@property (nonatomic, copy) dispatch_block_t beforeDirectoryReply;
+@end
+@implementation RepositoryRestoringExtension
+- (void)loadDirectory:(SeafDir *)dir listing:(void (^)(BOOL, BOOL, NSError *, SeafFPListingFailure))completion {
+    dispatch_block_t restore = self.beforeDirectoryReply;
+    self.beforeDirectoryReply = nil;
+    if (restore) restore();
+    [super loadDirectory:dir listing:completion];
+}
+@end
+
+static void repositoryRestoredDuringWorkingSetChecks(void) {
+    for (NSUInteger variant = 0; variant < 3; variant++) {
+        BOOL lockFirst = variant == 1;
+        BOOL restoreInNextBatch = variant == 2;
+        NSString *domain = [NSString stringWithFormat:@"same-pass-repo-restore-%lu", (unsigned long)variant];
+        SeafFPStore *store = [[SeafFPStore alloc] initWithDomainIdentifier:domain error:nil];
+        SeafFPStore *other = [[SeafFPStore alloc] initWithDomainIdentifier:domain error:nil];
+        NSMutableArray<SeafRepo *> *libraries = [NSMutableArray array];
+        for (NSString *repoId in @[@"returning", @"checked", @"busy", @"gone"]) {
+            SeafRepo *repo = [SeafRepo new];
+            repo.repoId = repo.name = repoId;
+            repo.path = @"/";
+            repo.editable = YES;
+            repo.perm = @"rw";
+            [libraries addObject:repo];
+        }
+        SeafRepo *returning = libraries[0];
+        SeafRepo *checked = libraries[1];
+        SeafRepos *repos = [SeafRepos new];
+        repos.items = libraries;
+        SeafConnection *connection = [SeafConnection new];
+        connection.rootFolder = repos;
+        RepositoryRestoringExtension *extension = [RepositoryRestoringExtension new];
+        extension.store = store;
+        extension.connection = connection;
+        extension.liveListings = @{@"checked:/": @[]};
+        SeafFPCheckingEnumerator *e = [SeafFPCheckingEnumerator new];
+        e.extension = extension;
+
+        [e deliverRoot:repos fromCache:NO requestStartSeq:[store beginRepositoryRequest]
+             container:NSFileProviderRootContainerItemIdentifier completion:^(SeafFPContainerLoad *load, NSError *error) {
+            CHECK(load.items.count == 4 && !error);
+        }];
+        NSArray *restored = [[repos fp_repositorySnapshot] subarrayWithRange:NSMakeRange(0, 3)];
+        SeafFPRecord *child = [store upsertRecordForRepo:returning.repoId path:@"/child.txt" isDir:NO
+                                             parentUUID:nil oid:@"child" mtime:1 size:1];
+        while (store.hasPendingRepositoryPublications) [store publishPendingRepositoryRecordsWithLimit:500];
+        [store replaceMaterializedItemIdentifiers:@[[SeafFPIdentifier identifierForRepo:checked.repoId]]];
+        long long known = store.currentSeq;
+
+        extension.beforeDirectoryReply = ^{
+            CHECK([store.repositoryStates[returning.repoId][@"availability"] isEqual:(lockFirst ? @"locked" : @"removed")]);
+            if (restoreInNextBatch) {
+                [other performBatch:^{
+                    for (NSUInteger i = 0; i < kSeafFPWorkingSetChangesPerPass; i++) {
+                        NSString *path = [NSString stringWithFormat:@"/new-%lu", (unsigned long)i];
+                        [other upsertRecordForRepo:@"busy" path:path isDir:NO parentUUID:nil oid:@"new" mtime:1 size:1];
+                    }
+                }];
+            }
+            CHECK([other applyRepositorySnapshot:restored complete:YES fromCache:NO requestStartSeq:[other beginRepositoryRequest]]);
+        };
+        TestObserver *observer = changes(e, known);
+        void (^reply)(SeafDir *) = repos.callbacks.firstObject;
+        CHECK(reply && !observer.anchor);
+        returning.passwordRequired = lockFirst;
+        repos.items = lockFirst ? [libraries subarrayWithRange:NSMakeRange(0, 3)] : @[checked, libraries[2]];
+        [repos.callbacks removeAllObjects];
+        if (reply) reply((SeafDir *)repos);
+
+        NSString *parent = child.parentItemIdentifier;
+        CHECK(!observer.error && observer.anchor && ![observer.deleted containsObject:parent]);
+        CHECK([observer.deleted containsObject:@"r:gone"]);  // Only the stale deletion was discarded.
+        if (restoreInNextBatch) {
+            CHECK(observer.moreComing && !observer.updates[parent] && !observer.updates[child.itemIdentifier]);
+            long long cut = SeafFPWorkingSetSeqFromAnchor(SeafFPAnchorString(observer.anchor));
+            CHECK(cut < [store.repositoryStates[returning.repoId][@"eventSeq"] longLongValue]);
+            observer = changes(e, cut);
+        }
+        CHECK(!observer.error && !observer.moreComing && ![observer.deleted containsObject:parent]);
+        CHECK(observer.updates[parent] && observer.updates[child.itemIdentifier]);
+        CHECK([observer.order indexOfObject:parent] < [observer.order indexOfObject:child.itemIdentifier]);
+        [other close];
+        [store close];
+    }
+}
+
 static void missingDirectoryChecks(void) {
     // 1: five children deleted on the server. One 404, then the parent's
     // listing retires all five; the rest of the pass asks for none of them.
@@ -2929,17 +3060,17 @@ static void missingDirectoryChecks(void) {
 main = r'''
 int main(void) { @autoreleasepool {
     gTestDir=[NSTemporaryDirectory() stringByAppendingPathComponent:[@"seaf-fp-public-" stringByAppendingString:NSUUID.UUID.UUIDString]];
-    finalRepositoryRegressions(); finalParentJournalRegressions(); detachedParentJournalRegression();
+    finalRepositoryRegressions(); rootReplyFromReplacedSession(); finalParentJournalRegressions(); detachedParentJournalRegression();
     finalMoveResolutionRegressions(); finalJournalEndpointRegressions();
     publicPermissions(); repositoryResponseOrdering(); sharedLibraryRoot(); failedWorkingSetSnapshot(); directMoveWithProvisionalDestination();
     moveAfterFailedListing(); workingSetPermissionsBetweenPages(); activityOffsetShiftsAtResume();
-    deepHierarchy(); legacyOrphansAfterUpgrade(); workingSetScanAcrossEnumerators(); boundedTokensAndResume(); issue7(); activitySyncPaging(); activitySameSecondResume(); directoryCheckScheduling(); reviewFollowups(); signalRecovery();
+    deepHierarchy(); legacyOrphansAfterUpgrade(); workingSetScanAcrossEnumerators(); lockedLibraryIsRetracted(); boundedTokensAndResume(); issue7(); activitySyncPaging(); activitySameSecondResume(); directoryCheckScheduling(); reviewFollowups(); signalRecovery();
     uploadListingWins(); editedRenameOrderAndReplacement(); retombstoneAfterRevival(); shiftAfterResumeAlreadyValidated();
     pendingMoveWithSourceReuse(); independentTargetStillAwaitingConfirmation(); newRepoVisibleWhileResumingAfterRestart();
     moveRequestDefinitivelyRejected(); lostMoveResponse(); modifyAfterRecoveringRename();
     lostConflictRenameResponse(); acknowledgedMoveWithExistingDuplicate(); unacknowledgedMoveDoesNotReplay(); pendingMoveRecoveryRegressions();
     unsettledMoveAbandonedAfterGrace(); unsettledMovePreservesUnverifiedFiles(); expiredMoveDecidesByVersion();
-    moveAdoptsFreshContents(); activityPageEdgeCases(); missingDirectoryChecks();
+    moveAdoptsFreshContents(); activityPageEdgeCases(); repositoryRestoredDuringWorkingSetChecks(); missingDirectoryChecks();
     [[NSFileManager defaultManager] removeItemAtPath:gTestDir error:nil];
     NSLog(@"RESULT: public indexing regressions %d passed, %d failed",passes,failures);
     return failures?1:0;

@@ -392,7 +392,7 @@ static SeafFPListingFailure SeafFPListingFailureOf(SeafFPContainerLoad *load, NS
             Info("Library list unreachable, serving cache: %@", error);
             [strongSelf deliverRoot:r fromCache:YES requestStartSeq:-1 container:containerIdentifier completion:completion];
         } else {
-            NSError *mapped = [SeafFPErrors errorForSeafError:error];
+            NSError *mapped = [SeafFPErrors enumerationErrorForSeafError:error];
             [strongSelf.extension noteError:mapped];
             completion(nil, mapped);
         }
@@ -405,6 +405,14 @@ static SeafFPListingFailure SeafFPListingFailureOf(SeafFPContainerLoad *load, NS
           container:(NSFileProviderItemIdentifier)containerIdentifier
          completion:(SeafFPContainerCompletion)completion
 {
+    // The library password snapshot is local. Refresh it before applying
+    // the list, and discard any response from a connection replaced since
+    // the request started.
+    NSError *access = [self.extension accessError];
+    if (access || repos != self.extension.connection.rootFolder) {
+        completion(nil, access ?: [SeafFPErrors cannotSynchronize]);
+        return;
+    }
     SeafFPStore *store = self.extension.store;
     SeafFPWriteResult result = [store applyRepositorySnapshotResult:[repos fp_repositorySnapshot]
         complete:!fromCache fromCache:fromCache requestStartSeq:(fromCache ? -1 : requestStartSeq)];
@@ -452,9 +460,11 @@ static SeafFPListingFailure SeafFPListingFailureOf(SeafFPContainerLoad *load, NS
         load.updatedItems = items;
         NSSet<NSString *> *current = [NSSet setWithArray:snapshot];
         NSMutableArray<NSString *> *gone = [NSMutableArray array];
+        // A library that got locked leaves like one that is gone: the system
+        // drops it with everything below it, file names in the search index
+        // included. The store keeps the identities; unlocking publishes them again.
         for (NSString *identifier in previous) {
-            NSString *repoId = [SeafFPIdentifier repoIdFromIdentifier:identifier];
-            if (![current containsObject:identifier] && ![repositoryStates[repoId][@"availability"] isEqual:@"locked"]) [gone addObject:identifier];
+            if (![current containsObject:identifier]) [gone addObject:identifier];
         }
         load.deletedIdentifiers = gone;
     }
@@ -981,6 +991,15 @@ static BOOL SeafFPFailureStopsPass(SeafFPListingFailure failure, NSError *error)
         NSDictionary *states = batch.repositories;
         NSMutableSet *repoIds = [NSMutableSet set];
         for (NSString *repoId in states) if ([states[repoId][@"availability"] isEqual:@"visible"]) [repoIds addObject:repoId];
+        // The root check may have reported a library gone before another
+        // process restored it. Drop that stale deletion even if the restore
+        // event falls in a later batch.
+        for (NSString *identifier in [changes.deleted copy]) {
+            if ([SeafFPIdentifier kindOfIdentifier:identifier] == SeafFPIdentifierKindRepo
+                && [repoIds containsObject:[SeafFPIdentifier repoIdFromIdentifier:identifier]]) {
+                [changes.deleted removeObject:identifier];
+            }
+        }
         NSMutableDictionary<NSString *, SeafFPRecord *> *liveRecordsByUUID = [NSMutableDictionary dictionary];
         __block BOOL readFailed = NO;
         __block NSUInteger unplaced = 0;
@@ -1009,7 +1028,10 @@ static BOOL SeafFPFailureStopsPass(SeafFPListingFailure failure, NSError *error)
             return YES;
         };
         for (NSString *identifier in [changes.updated.allKeys copy]) {
-            if ([SeafFPIdentifier kindOfIdentifier:identifier] == SeafFPIdentifierKindItem) {
+            SeafFPIdentifierKind kind = [SeafFPIdentifier kindOfIdentifier:identifier];
+            if (kind == SeafFPIdentifierKindRepo && ![repoIds containsObject:[SeafFPIdentifier repoIdFromIdentifier:identifier]]) {
+                [changes.updated removeObjectForKey:identifier];
+            } else if (kind == SeafFPIdentifierKindItem) {
                 SeafFPRecord *rec = [store recordForUUID:[SeafFPIdentifier uuidFromIdentifier:identifier]];
                 if (!rec || rec.deleted || ![repoIds containsObject:rec.repoId] || !includeRecordAndAncestors(rec)) {
                     [changes.updated removeObjectForKey:identifier];
@@ -1018,7 +1040,9 @@ static BOOL SeafFPFailureStopsPass(SeafFPListingFailure failure, NSError *error)
         }
         for (NSDictionary *event in batch.repositoryEvents) {
             NSString *identifier = [SeafFPIdentifier identifierForRepo:event[@"repoId"]];
-            if ([event[@"eventKind"] isEqual:@"delete"]) [changes addDeletedIdentifiers:@[identifier]];
+            // Locked (its password was cleared) is reported like removed: what
+            // the system indexed below the library must not stay searchable.
+            if ([event[@"eventKind"] isEqual:@"delete"] || [event[@"availability"] isEqual:@"locked"]) [changes addDeletedIdentifiers:@[identifier]];
             else if ([event[@"availability"] isEqual:@"visible"]) [changes addUpdatedItems:@[[strongSelf.extension itemForRepositoryState:event]]];
         }
         for (SeafFPRecord *record in batch.records) {

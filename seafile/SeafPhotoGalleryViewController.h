@@ -35,6 +35,14 @@
                                                         master:(UIViewController<SeafDentryDelegate> *)masterVC
                                                   heroProvider:(nullable id<SeafGalleryHeroProvider>)heroProvider;
 
+/// Closes the gallery the way its close button does: cancels pending
+/// downloads, releases decoded images, then dismisses.
+- (void)dismissGalleryAnimated:(BOOL)animated;
+
+/// Same, and also closes anything the gallery presents itself (share sheet,
+/// alert). `completion` runs once the gallery is off screen.
+- (void)dismissGalleryAnimated:(BOOL)animated completion:(nullable void (^)(void))completion;
+
 // Track the range of loaded images
 @property (nonatomic, readonly) NSRange loadedImagesRange;
 

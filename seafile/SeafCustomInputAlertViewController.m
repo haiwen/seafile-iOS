@@ -26,6 +26,9 @@
 
 // Define a constant for the initial off-screen position to make it clear
 static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert can be very tall
+// iPad: centered card width, and the minimum gap to the window edges and keyboard.
+static CGFloat const kIpadAlertWidth = 450.0;
+static CGFloat const kIpadAlertMargin = 20.0;
 
 @implementation SeafCustomInputAlertViewController
 
@@ -140,8 +143,11 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
         _cancelHandler = [cancelHandler copy];
         
         if (IsIpad()) {
-            self.modalPresentationStyle = UIModalPresentationFormSheet;
-            // FormSheet has its own transition, no need for UIModalTransitionStyleCrossDissolve
+            // Not a form sheet: on iOS 26 a form sheet draws its own material
+            // background, which showed as a large gray panel around the card.
+            // Present over the full screen and draw the dimming view here instead.
+            self.modalPresentationStyle = UIModalPresentationOverFullScreen;
+            self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
         } else {
             self.modalPresentationStyle = UIModalPresentationOverCurrentContext;
             self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve; // Actual slide is manual
@@ -154,13 +160,16 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
     [super viewDidLoad];
     
     if (IsIpad()) {
-        self.view.backgroundColor = [UIColor clearColor]; // The form sheet content is alertView
-        self.preferredContentSize = CGSizeMake(450, 800); // Increase default height to avoid clipping
+        self.view.backgroundColor = [UIColor clearColor]; // Dimming view + centered card
 
         [self setupViews]; // alertView needs to be created
         [self setupConstraints]; // alertView needs to be constrained
-        self.alertView.alpha = 1.0; // Visible by default for form sheet
-        // Estimate height: title(20) + space(20) + field(40) + space(25) + button(44) + padding(30+30) = 209. Let's use 240.
+        // The cross-dissolve transition fades the dimming view and card in together.
+        self.alertView.alpha = 1.0;
+        self.backgroundDimmingView.alpha = 1.0;
+
+        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleBackgroundTap:)];
+        [self.backgroundDimmingView addGestureRecognizer:tapGesture];
 
         // Register for keyboard notifications so we can move the alert if it would be covered.
         [self registerForKeyboardNotifications];
@@ -208,11 +217,9 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 }
 
 - (void)setupViews {
-    if (!IsIpad()) {
-        // Accessing self.backgroundDimmingView will trigger its lazy initializer.
-        // The frame is set within the getter using self.view.bounds, which is available here.
-        [self.view addSubview:self.backgroundDimmingView];
-    }
+    // Accessing self.backgroundDimmingView will trigger its lazy initializer.
+    // The frame is set within the getter using self.view.bounds, which is available here.
+    [self.view addSubview:self.backgroundDimmingView];
 
     // Accessing self.alertView will trigger its lazy initializer.
     // Properties like backgroundColor, cornerRadius are set in the getter.
@@ -231,10 +238,13 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
     if (IsIpad()) {
         // Keep a reference to the center-Y constraint so we can move the alert when the keyboard shows up.
         self.alertViewCenterYConstraint = [self.alertView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor];
+        NSLayoutConstraint *preferredWidth = [self.alertView.widthAnchor constraintEqualToConstant:kIpadAlertWidth];
+        preferredWidth.priority = UILayoutPriorityDefaultHigh; // Narrow windows win over the preferred width
         [NSLayoutConstraint activateConstraints:@[
             [self.alertView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
             self.alertViewCenterYConstraint,
-            [self.alertView.widthAnchor constraintEqualToConstant:self.preferredContentSize.width]
+            preferredWidth,
+            [self.alertView.widthAnchor constraintLessThanOrEqualToAnchor:self.view.widthAnchor constant:-2 * kIpadAlertMargin],
         ]]; // Do not fix height so it can expand with content
     } else {
         self.alertViewBottomConstraint = [self.alertView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:kInitialOffScreenBottomConstant];
@@ -306,9 +316,22 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
     UIViewAnimationOptions options = (([userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue]) << 16) | UIViewAnimationOptionBeginFromCurrentState;
 
     if (IsIpad()) {
-        // Move the alert view up by 30% of the keyboard height so it stays visible
-        CGFloat keyboardHeight = keyboardFrame.size.height;
-        self.alertViewCenterYConstraint.constant = -keyboardHeight * 0.3; // leave smaller gap
+        // Lift the centered card only as far as needed to clear the keyboard,
+        // without pushing it above the top safe area.
+        id<UICoordinateSpace> screenSpace = self.view.window.windowScene.screen.coordinateSpace;
+        CGRect keyboardInView = screenSpace
+            ? [self.view convertRect:keyboardFrameInScreen fromCoordinateSpace:screenSpace]
+            : keyboardFrame;
+        [self.view layoutIfNeeded];
+        CGFloat cardHeight = CGRectGetHeight(self.alertView.bounds);
+        if (cardHeight <= 0) {
+            cardHeight = [self.alertView systemLayoutSizeFittingSize:UILayoutFittingCompressedSize].height;
+        }
+        CGFloat midY = CGRectGetMidY(self.view.bounds);
+        CGFloat overlap = (midY + cardHeight / 2.0) - (CGRectGetMinY(keyboardInView) - kIpadAlertMargin);
+        CGFloat room = (midY - cardHeight / 2.0) - (self.view.safeAreaInsets.top + kIpadAlertMargin);
+        CGFloat lift = MAX(0, MIN(overlap, room));
+        self.alertViewCenterYConstraint.constant = -lift;
 
         [UIView animateWithDuration:animationDuration delay:0.0 options:options animations:^{
             [self.view layoutIfNeeded];
@@ -374,9 +397,7 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
     // If tap is on background, treat as cancel
     if (sender.state == UIGestureRecognizerStateEnded) {
         if (IsIpad()) {
-            // For FormSheet, system might handle this, or we might not want this behavior.
-            // If explicit cancel on tap outside is needed for iPad, it would be configured differently.
-            // For now, this action is iPhone-specific due to custom presentation.
+            [self cancelButtonTapped:nil];
             return;
         }
         self.isBeingDismissedProgrammatically = YES;

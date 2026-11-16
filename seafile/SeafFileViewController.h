@@ -42,6 +42,12 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 - (void)photoSelectedChanged:(id<SeafPreView>)preViewItem to:(id<SeafPreView>)to;
 
 - (BOOL)goTo:(NSString *)repo path:(NSString *)path;
+/// Forgets what goTo:path: recorded for a link (refresh requested, password
+/// prompt shown). Called when a link starts and when it ends.
+- (void)resetLinkState;
+
+/// Opens a folder picked from the search results: closes the search, then pushes the folder.
+- (void)openSearchResultDirectory:(SeafDir *)dir;
 
 - (void)pullToRefresh;
 

@@ -118,9 +118,33 @@
 
 @implementation SeafTabBarController
 
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    if (@available(iOS 26.0, *)) {
+        if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
+            // The tab bar can receive its color traits after the controller lays out.
+            [self.tabBar registerForTraitChanges:UITraitCollection.systemTraitsAffectingColorAppearance
+                                      withTarget:self
+                                          action:@selector(updateTabImages)];
+        }
+    }
+}
+
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
+    if (@available(iOS 18.0, *)) {
+        if (self.traitCollection.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+            // The top tab bar is only used at regular width. A narrow iPad
+            // window needs UIKit's bottom bar to keep all destinations reachable.
+            BOOL hidden = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassRegular;
+            if (self.tabBar.hidden != hidden) {
+                self.tabBar.hidden = hidden;
+                [self.view setNeedsLayout];
+            }
+        }
+    }
     BOOL translucent = [SeafTabBarStyler tabBarNeedsTranslucency:self.tabBar];
     [self updateTabImages];
     if (self.tabBar.translucent == translucent)
@@ -169,6 +193,9 @@
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
 {
     [super traitCollectionDidChange:previousTraitCollection];
+    if (self.traitCollection.horizontalSizeClass != previousTraitCollection.horizontalSizeClass) {
+        [self.view setNeedsLayout];
+    }
     if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
         [self.view setNeedsLayout];
         [self.tabBar setNeedsLayout];

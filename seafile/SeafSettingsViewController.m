@@ -37,6 +37,10 @@
 #define CELL_PADDING_HORIZONTAL 10.0
 #define CELL_CORNER_RADIUS 10.0
 
+static const CGFloat kSettingsCellContentInset = 16.0;
+static const CGFloat kSettingsCellHorizontalSpacing = 12.0;
+static const CGFloat kSettingsHeaderFontSize = 14.0;
+
 enum {
     SECTION_ACCOUNT = 0,
     SECTION_CAMERA,
@@ -133,6 +137,7 @@ enum {
 @property (strong, nonatomic) UITableViewCell *backupPauseCell;
 @property (strong, nonatomic) UISwitch *backupPauseSwitch;
 @property (strong, nonatomic) UILabel *backupPausedLabel;
+@property (nonatomic) CGFloat lastLayoutWidth;
 
 
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -481,6 +486,11 @@ enum {
     };
     
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+    if ([SeafNavigationBarStyler usesSystemBarsOnIpad]) {
+        [SeafNavigationBarStyler applyOpaqueAppearanceToNavigationItem:self.navigationItem
+                                                      backgroundColor:[SeafTheme primaryBackgroundColor]];
+        self.extendedLayoutIncludesOpaqueBars = YES;
+    }
     self.tableView.sectionHeaderTopPadding = 0;
     
     self.tableView.backgroundColor = kPrimaryBackgroundColor;
@@ -501,6 +511,15 @@ enum {
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
+    CGFloat width = CGRectGetWidth(self.tableView.bounds);
+    if (fabs(width - self.lastLayoutWidth) > 0.5) {
+        self.lastLayoutWidth = width;
+        // Row heights depend on wrapping, including when the sidebar is resized.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView beginUpdates];
+            [self.tableView endUpdates];
+        });
+    }
     for (UITableViewCell *cell in self.tableView.visibleCells) {
         [self layoutSettingsChromeForCell:cell];
     }
@@ -787,31 +806,142 @@ enum {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    UITableViewCell *cell;
     if ([self isAppearanceIndexPath:indexPath]) {
-        return [self appearanceCell];
+        cell = [self appearanceCell];
+    } else if ([self isManageSelectedPhotosIndexPath:indexPath]) {
+        cell = [self manageSelectedPhotosCell];
+    } else if ([self isBackupControlIndexPath:indexPath]) {
+        cell = [self backupControlCell];
+    } else {
+        cell = [super tableView:tableView cellForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
     }
-    if ([self isManageSelectedPhotosIndexPath:indexPath]) {
-        return [self manageSelectedPhotosCell];
+    [self configureSettingsAccessoryForCell:cell atIndexPath:indexPath];
+    [self configureFontsForCell:cell];
+    return cell;
+}
+
+// Configure content before measuring, including storyboard rows whose title is empty.
+- (void)configureSettingsAccessoryForCell:(UITableViewCell *)cell atIndexPath:(NSIndexPath *)indexPath
+{
+    // Appearance cell keeps its segmented-control accessoryView untouched.
+    if ([self isAppearanceIndexPath:indexPath] || [self isBackupControlIndexPath:indexPath]) {
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    } else
+    // Check if this is the logout cell, privacy policy, or manage-selected-photos cell
+    if (indexPath.section == SECTION_LOGOUT ||
+        (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY) ||
+        [self isManageSelectedPhotosIndexPath:indexPath]) {
+        // Create a custom accessory view with the chevron shifted 5px to the left
+        // Instead of using the standard accessory type
+        cell.accessoryType = UITableViewCellAccessoryNone;
+
+        // Create a custom view for the accessory
+        UIView *customAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 20)];
+
+        // Create a chevron image view
+        UIImage *chevronImage = nil;
+        chevronImage = [UIImage systemImageNamed:@"chevron.right"];
+        if (!chevronImage) {
+            chevronImage = [UIImage imageNamed:@"arrowright2"];
+        }
+        UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:chevronImage];
+
+        // Keep the chevron within its accessory bounds.
+        chevronImageView.frame = CGRectMake(0, 2, 12, 16); // Reduced size from 15x20 to 12x16
+        chevronImageView.contentMode = UIViewContentModeScaleAspectFit;
+        chevronImageView.tintColor = [SeafTheme tertiaryText];
+
+        [customAccessoryView addSubview:chevronImageView];
+        cell.accessoryView = customAccessoryView;
+
+        // Only set the specific logout styling for the logout cell
+        if (indexPath.section == SECTION_LOGOUT) {
+            // Ensure the logout text is set properly
+            cell.textLabel.text = NSLocalizedString(@"Log out", @"Seafile");
+            cell.textLabel.textAlignment = NSTextAlignmentLeft;
+            cell.textLabel.textColor = BAR_COLOR_ORANGE;
+        }
+    } else {
+        // Card padding supplies the trailing spacing.
+        cell.accessoryView = nil;
+        cell.accessoryType = UITableViewCellAccessoryNone;
     }
-    if ([self isBackupControlIndexPath:indexPath]) {
-        return [self backupControlCell];
+
+}
+
+static void ConfigureSettingsLabel(UILabel *label, UIFont *font)
+{
+    label.font = font;
+    label.adjustsFontForContentSizeCategory = NO;
+    label.numberOfLines = 0;
+    label.lineBreakMode = NSLineBreakByWordWrapping;
+}
+
+- (void)configureFontsForCell:(UITableViewCell *)cell
+{
+    UIFont *font = [UIFont systemFontOfSize:17.0];
+    UILabel *title = cell.textLabel;
+    UILabel *detail = cell.detailTextLabel;
+    ConfigureSettingsLabel(title, font);
+    ConfigureSettingsLabel(detail, cell == self.backupPauseCell ? [UIFont systemFontOfSize:14.0] : font);
+    for (UIView *view in cell.contentView.subviews) {
+        if (view != title && view != detail && [view isKindOfClass:UILabel.class]) {
+            ConfigureSettingsLabel((UILabel *)view, font);
+        }
     }
-    return [super tableView:tableView cellForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
+}
+
+// Measure and position the labels using the same wrapping rule.
+static CGFloat SettingsLabelFrames(UILabel *title, UILabel *detail, CGFloat width, CGRect *titleFrame, CGRect *detailFrame)
+{
+    CGSize fittingSize = CGSizeMake(width, CGFLOAT_MAX);
+    CGSize titleSize = title.text.length ? [title sizeThatFits:fittingSize] : CGSizeZero;
+    *titleFrame = CGRectMake(0, 0, width, titleSize.height);
+    *detailFrame = CGRectZero;
+    if (!detail.text.length || detail.hidden) return titleSize.height;
+
+    CGSize detailSize = [detail sizeThatFits:fittingSize];
+    CGFloat detailWidth = ceil(detailSize.width);
+    if (ceil(titleSize.width) + kSettingsCellHorizontalSpacing + detailWidth > width) {
+        *detailFrame = CGRectMake(0, titleSize.height + 4.0, width, detailSize.height);
+        return CGRectGetMaxY(*detailFrame);
+    }
+
+    CGFloat height = MAX(titleSize.height, detailSize.height);
+    *titleFrame = CGRectMake(0, (height - titleSize.height) / 2,
+                             width - detailWidth - kSettingsCellHorizontalSpacing, titleSize.height);
+    *detailFrame = CGRectMake(width - detailWidth, (height - detailSize.height) / 2, detailWidth, detailSize.height);
+    return height;
+}
+
+- (CGFloat)heightForSettingsCell:(UITableViewCell *)cell width:(CGFloat)width
+{
+    CGFloat available = MAX(1, width - 2 * (CELL_PADDING_HORIZONTAL + kSettingsCellContentInset));
+    CGFloat accessoryWidth = cell.accessoryView.bounds.size.width;
+    if (accessoryWidth > 0) available = MAX(1, available - accessoryWidth - kSettingsCellHorizontalSpacing);
+    for (UIView *view in cell.contentView.subviews) {
+        if ([view isKindOfClass:UISwitch.class]) {
+            available = MAX(1, available - view.bounds.size.width - kSettingsCellHorizontalSpacing);
+        }
+    }
+    UILabel *title = cell.textLabel;
+    UILabel *detail = cell.detailTextLabel;
+    CGRect titleFrame, detailFrame;
+    CGFloat height = SettingsLabelFrames(title, detail, available, &titleFrame, &detailFrame);
+    for (UIView *view in cell.contentView.subviews) {
+        if (![view isKindOfClass:UILabel.class] || view == title || view == detail || view.hidden) continue;
+        height = MAX(height, [view sizeThatFits:CGSizeMake(available, CGFLOAT_MAX)].height);
+    }
+    return MAX(50, ceil(height) + 20);
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == SECTION_WIKI && ![self shouldShowWikiSection]) {
-        return 0;
-    }
-    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
-        return 50;
-    }
-    if ([self isBackupControlIndexPath:indexPath]) {
-        // Same height as the storyboard switch rows above it.
-        return 44;
-    }
-    return [super tableView:tableView heightForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
+    if (indexPath.section == SECTION_WIKI && ![self shouldShowWikiSection]) return 0;
+    UITableViewCell *cell = [self tableView:tableView cellForRowAtIndexPath:indexPath];
+    CGFloat width = CGRectGetWidth(tableView.bounds) - tableView.safeAreaInsets.left - tableView.safeAreaInsets.right;
+    return [self heightForSettingsCell:cell width:width];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -827,7 +957,6 @@ enum {
 {
     UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Appearance", @"Seafile");
-    cell.textLabel.font = [UIFont systemFontOfSize:17.0];
 
     NSArray *items = @[NSLocalizedString(@"System", @"Seafile"),
                        NSLocalizedString(@"Light", @"Seafile"),
@@ -844,76 +973,32 @@ enum {
 {
     UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Manage Selected Photos", @"Seafile");
-    cell.textLabel.font = [UIFont systemFontOfSize:17.0];
     cell.textLabel.textColor = [SeafTheme primaryText];
     return cell;
 }
 
-/// "Pause Auto Upload" switch row, laid out like the storyboard switch rows:
-/// title at x = 30, switch 6 pt (iPad 5 pt) from the right edge, both vertically centred.
-/// While paused a grey "Paused" sits left of the switch, as on Android.
-/// The title and switch hang off the content view's layout margins rather than
-/// its edges, so page code that re-pins the storyboard switch rows through
-/// those margins moves this row with them.
+/// Keep the switch aligned with the title and paused status in narrow windows.
 - (UITableViewCell *)backupControlCell
 {
     if (!self.backupPauseCell) {
-        UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
-        UIView *content = cell.contentView;
-        content.preservesSuperviewLayoutMargins = NO;
-        content.insetsLayoutMarginsFromSafeArea = NO;
-        // Storyboard switches sit 5 pt from the edge on iPad, 6 pt on iPhone.
-        content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 30, 0, IsIpad() ? 5 : 6);
-        UILayoutGuide *margins = content.layoutMarginsGuide;
-
-        UILabel *titleLabel = [[UILabel alloc] init];
-        titleLabel.text = NSLocalizedString(@"Pause Auto Upload", @"Seafile");
-        titleLabel.font = [UIFont systemFontOfSize:17.0];
-        titleLabel.textColor = [SeafTheme primaryText];
-        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        // A long translation truncates the title, never the switch or "Paused".
-        [titleLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
-        [content addSubview:titleLabel];
-
-        UILabel *pausedLabel = [[UILabel alloc] init];
-        pausedLabel.text = NSLocalizedString(@"Paused", @"Seafile");
-        pausedLabel.font = [UIFont systemFontOfSize:14.0];
-        pausedLabel.textColor = [SeafTheme secondaryText];
-        pausedLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        [pausedLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-        [content addSubview:pausedLabel];
-
+        UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+        cell.textLabel.text = NSLocalizedString(@"Pause Auto Upload", @"Seafile");
+        cell.detailTextLabel.text = NSLocalizedString(@"Paused", @"Seafile");
         UISwitch *pauseSwitch = [[UISwitch alloc] init];
         pauseSwitch.accessibilityIdentifier = @"backup_pause_switch";
-        pauseSwitch.accessibilityLabel = titleLabel.text;
-        pauseSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+        pauseSwitch.accessibilityLabel = cell.textLabel.text;
         [pauseSwitch addTarget:self action:@selector(backupPauseSwitchFlip:) forControlEvents:UIControlEventValueChanged];
-        [content addSubview:pauseSwitch];
-
-        [NSLayoutConstraint activateConstraints:@[
-            [titleLabel.leadingAnchor constraintEqualToAnchor:margins.leadingAnchor],
-            [titleLabel.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
-            [pausedLabel.leadingAnchor constraintGreaterThanOrEqualToAnchor:titleLabel.trailingAnchor constant:8],
-            [pausedLabel.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
-            [pausedLabel.trailingAnchor constraintEqualToAnchor:pauseSwitch.leadingAnchor constant:-8],
-            [pauseSwitch.trailingAnchor constraintEqualToAnchor:margins.trailingAnchor],
-            [pauseSwitch.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
-        ]];
-
+        cell.accessoryView = pauseSwitch;
         self.backupPauseCell = cell;
         self.backupPauseSwitch = pauseSwitch;
-        self.backupPausedLabel = pausedLabel;
+        self.backupPausedLabel = cell.detailTextLabel;
     }
     BOOL paused = _connection.photoBackupPaused;
-    if (self.backupPauseSwitch.on != paused) {
-        [self.backupPauseSwitch setOn:paused animated:NO];
-    }
+    [self.backupPauseSwitch setOn:paused animated:NO];
     self.backupPausedLabel.hidden = !paused;
     return self.backupPauseCell;
 }
 
-/// On = paused. Only the switch toggles it; tapping the row does nothing,
-/// like the other switch rows on this page.
 - (void)backupPauseSwitchFlip:(UISwitch *)sender
 {
     _connection.photoBackupPaused = sender.on;
@@ -970,7 +1055,7 @@ enum {
                                  CGRectGetHeight(cell.bounds));
     }
     if (card) {
-        CGRect inner = CGRectInset(card.frame, 16.0, 0);
+        CGRect inner = CGRectInset(card.frame, kSettingsCellContentInset, 0);
         CGRect contentRect = [cell.contentView convertRect:inner fromView:cell];
         cell.contentView.insetsLayoutMarginsFromSafeArea = NO;
         cell.contentView.preservesSuperviewLayoutMargins = NO;
@@ -986,25 +1071,33 @@ enum {
             CGRect accessory = cell.accessoryView.frame;
             accessory.origin.x = CGRectGetMaxX(inner) - accessory.size.width;
             cell.accessoryView.frame = accessory;
-            trailing = MIN(trailing, [cell.contentView convertPoint:CGPointMake(accessory.origin.x - 12, 0) fromView:cell].x);
+            CGFloat accessoryLeading = accessory.origin.x - kSettingsCellHorizontalSpacing;
+            trailing = MIN(trailing, [cell.contentView convertPoint:CGPointMake(accessoryLeading, 0) fromView:cell].x);
         }
         UILabel *detail = cell.detailTextLabel;
-        if (detail.text.length) {
-            CGFloat width = MIN([detail sizeThatFits:contentRect.size].width, MAX(0, contentRect.size.width * 0.55));
-            CGRect frame = detail.frame;
-            frame.origin.x = trailing - width;
-            frame.size.width = width;
-            detail.frame = frame;
-            detail.lineBreakMode = NSLineBreakByTruncatingTail;
-            trailing = CGRectGetMinX(frame) - 12;
-        }
         UILabel *label = cell.textLabel;
+        CGFloat leading = CGRectGetMinX(contentRect);
+        CGFloat width = MAX(1, trailing - leading);
+        CGRect titleFrame, detailFrame;
+        CGFloat height = SettingsLabelFrames(label, detail, width, &titleFrame, &detailFrame);
+        CGFloat top = (contentRect.size.height - height) / 2;
         if (label.text.length) {
-            CGRect frame = label.frame;
-            frame.origin.x = CGRectGetMinX(contentRect);
-            frame.size.width = MAX(0, trailing - frame.origin.x);
-            label.frame = frame;
-            label.lineBreakMode = NSLineBreakByTruncatingTail;
+            label.frame = CGRectOffset(titleFrame, leading, top);
+        }
+        if (detail.text.length && !detail.hidden) {
+            detail.frame = CGRectOffset(detailFrame, leading, top);
+        }
+        BOOL hasSwitch = NO;
+        for (UIView *view in cell.contentView.subviews) {
+            if ([view isKindOfClass:UISwitch.class]) hasSwitch = YES;
+        }
+        if (!hasSwitch) {
+            // Storyboard-only labels, such as Privacy Policy, use frame layout.
+            for (UIView *view in cell.contentView.subviews) {
+                if (![view isKindOfClass:UILabel.class] || view == label || view == detail) continue;
+                CGFloat height = [view sizeThatFits:CGSizeMake(width, CGFLOAT_MAX)].height;
+                view.frame = CGRectMake(leading, (contentRect.size.height - height) / 2, width, height);
+            }
         }
     }
     UIView *separator = [cell viewWithTag:888];
@@ -1036,12 +1129,13 @@ enum {
 
     if (label && label.superview == content) {
         label.translatesAutoresizingMaskIntoConstraints = NO;
-        label.lineBreakMode = NSLineBreakByTruncatingTail;
+        label.numberOfLines = 0;
+        label.lineBreakMode = NSLineBreakByWordWrapping;
         [label setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
         [constraints addObject:[label.leadingAnchor constraintEqualToAnchor:content.layoutMarginsGuide.leadingAnchor]];
         [constraints addObject:[label.centerYAnchor constraintEqualToAnchor:content.centerYAnchor]];
-        // Long labels truncate instead of running under the switch.
-        [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:toggle.leadingAnchor constant:-12]];
+        // Multiline labels grow with the measured row height.
+        [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:toggle.leadingAnchor constant:-kSettingsCellHorizontalSpacing]];
     }
     [NSLayoutConstraint activateConstraints:constraints];
 }
@@ -1071,7 +1165,7 @@ enum {
     CGFloat leading = 30.0 + safe.left;
     CGFloat trailing = 16.0 + safe.right;
     CGFloat width = MAX(0, CGRectGetWidth(header.bounds) - leading - trailing);
-    titleLabel.frame = CGRectMake(leading, 5, width, 30);
+    titleLabel.frame = CGRectMake(leading, 5, width, [titleLabel sizeThatFits:CGSizeMake(width, CGFLOAT_MAX)].height);
 }
 
 #pragma mark - Table view delegate
@@ -1092,51 +1186,6 @@ enum {
     // For all cells, apply indentation
     cell.indentationLevel = 1;  // Each indentation level is typically 10 points
     cell.indentationWidth = 30; // Override the default width
-
-    // Appearance cell keeps its segmented-control accessoryView untouched.
-    if ([self isAppearanceIndexPath:indexPath]) {
-        cell.accessoryType = UITableViewCellAccessoryNone;
-    } else
-    // Check if this is the logout cell, privacy policy, or manage-selected-photos cell
-    if (indexPath.section == SECTION_LOGOUT ||
-        (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY) ||
-        [self isManageSelectedPhotosIndexPath:indexPath]) {
-        // Create a custom accessory view with the chevron shifted 5px to the left
-        // Instead of using the standard accessory type
-        cell.accessoryType = UITableViewCellAccessoryNone;
-        
-        // Create a custom view for the accessory
-        UIView *customAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 20)];
-        
-        // Create a chevron image view
-        UIImage *chevronImage = nil;
-        chevronImage = [UIImage systemImageNamed:@"chevron.right"];
-        if (!chevronImage) {
-            chevronImage = [UIImage imageNamed:@"arrowright2"];
-        }
-        UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:chevronImage];
-        
-        // Keep the chevron within its accessory bounds.
-        chevronImageView.frame = CGRectMake(0, 2, 12, 16); // Reduced size from 15x20 to 12x16
-        chevronImageView.contentMode = UIViewContentModeScaleAspectFit;
-        chevronImageView.tintColor = [SeafTheme tertiaryText];
-        
-        [customAccessoryView addSubview:chevronImageView];
-        cell.accessoryView = customAccessoryView;
-        
-        // Only set the specific logout styling for the logout cell
-        if (indexPath.section == SECTION_LOGOUT) {
-            // Ensure the logout text is set properly
-            cell.textLabel.text = NSLocalizedString(@"Log out", @"Seafile");
-            cell.textLabel.textAlignment = NSTextAlignmentLeft;
-            cell.textLabel.textColor = BAR_COLOR_ORANGE;
-            cell.textLabel.font = [UIFont systemFontOfSize:17.0];
-        }
-    } else {
-        // Card padding supplies the trailing spacing.
-        cell.accessoryView = nil;
-        cell.accessoryType = UITableViewCellAccessoryNone;
-    }
 
     // Define vertical padding (minimal, just for visual separation if needed)
     CGFloat verticalPadding = 0; // Remove extra vertical padding
@@ -1375,10 +1424,11 @@ enum {
 
     UILabel *titleLabel = [[UILabel alloc] init];
     titleLabel.tag = 770;
-    titleLabel.font = [UIFont systemFontOfSize:14];
+    titleLabel.font = [UIFont systemFontOfSize:kSettingsHeaderFontSize];
+    titleLabel.numberOfLines = 0;
     titleLabel.textColor = [SeafTheme secondaryText];
     titleLabel.text = title;
-    titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+    titleLabel.lineBreakMode = NSLineBreakByWordWrapping;
     [headerView addSubview:titleLabel];
     [self layoutSettingsHeader:headerView];
 
@@ -1394,7 +1444,10 @@ enum {
     if (!title || [title isEqualToString:@""]) {
         return 12; // Small height for empty header
     }
-    return 35; // Standard height for headers with titles
+    UIFont *font = [UIFont systemFontOfSize:kSettingsHeaderFontSize];
+    CGFloat width = MAX(1, tableView.bounds.size.width - tableView.safeAreaInsets.left - tableView.safeAreaInsets.right - 46);
+    CGRect bounds = [title boundingRectWithSize:CGSizeMake(width, CGFLOAT_MAX) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:font} context:nil];
+    return MAX(35, ceil(bounds.size.height) + 10);
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section

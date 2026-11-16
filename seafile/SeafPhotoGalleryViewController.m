@@ -504,7 +504,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
 // Private method declarations
 - (void)showDownloadError:(NSString *)fileName;
-- (void)dismissGalleryAnimated:(BOOL)animated;
 - (UIWindow *)heroReferenceWindow;
 
 @end
@@ -1964,6 +1963,37 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 }
 
 - (void)dismissGalleryAnimated:(BOOL)animated {
+    [self dismissGalleryAnimated:animated completion:nil];
+}
+
+- (void)dismissGalleryAnimated:(BOOL)animated completion:(void (^)(void))completion {
+    // UIKit drops a dismiss (and its completion) issued while the gallery is
+    // still being presented or is already being dismissed, e.g. during the
+    // drag-to-dismiss. Wait for that transition, then close whatever is left.
+    UIViewController *transitioning = self.navigationController ?: self;
+    if (transitioning.isBeingPresented || transitioning.isBeingDismissed) {
+        __weak typeof(self) weakSelf = self;
+        void (^afterTransition)(void) = ^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            UIViewController *current = strongSelf.navigationController ?: strongSelf;
+            if (current.presentingViewController) {
+                // Presentation finished, or the dismiss drag was cancelled.
+                [strongSelf dismissGalleryAnimated:animated completion:completion];
+            } else if (completion) {
+                completion();
+            }
+        };
+        id<UIViewControllerTransitionCoordinator> coordinator = transitioning.transitionCoordinator;
+        if (coordinator) {
+            [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+                dispatch_async(dispatch_get_main_queue(), afterTransition);
+            }];
+        } else {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), afterTransition);
+        }
+        return;
+    }
+
     // 1. Cancel all pending network operations and clear callbacks
     [self cancelAllPendingFileOperations];
 
@@ -1979,11 +2009,15 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // 3. Clear active controllers set
     [self.activeControllers removeAllObjects];
 
-    // 4. Dismiss the view controller
-    if (self.navigationController) {
-        [self.navigationController dismissViewControllerAnimated:animated completion:nil];
-    } else if (self.presentingViewController) {
-        [self dismissViewControllerAnimated:animated completion:nil];
+    // 4. Dismiss the view controller. Ask the presenter: sent to the gallery's
+    // own container, the call only closes whatever the gallery presents itself
+    // (share sheet, alert) and leaves the emptied gallery on screen.
+    UIViewController *container = self.navigationController ?: self;
+    UIViewController *presenter = container.presentingViewController;
+    if (presenter) {
+        [presenter dismissViewControllerAnimated:animated completion:completion];
+    } else if (completion) {
+        completion();
     }
 }
 

@@ -44,6 +44,8 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
+static const CGFloat kPreviewToolbarHeight = 44.0;
+
 /// Quick Look controller bound to the item it was created for, so the data source
 /// never has to read a mutable property that a newer tap may already have changed.
 @interface SeafQLPreviewController : QLPreviewController
@@ -72,6 +74,7 @@ enum SHARE_STATUS {
 @property (nonatomic, strong) NSDate *mobileLoginRerouteWindowStart;
 @property (nonatomic, strong) MWPhotoBrowser *mwPhotoBrowser;
 @property (nonatomic, strong) UITextView *textView;
+@property (nonatomic, weak) IBOutlet UIView *filePreviewPlaceholder;
 
 @property BOOL performingLayout;
 @property (retain) NSArray *photos;
@@ -105,6 +108,8 @@ enum SHARE_STATUS {
 
 @implementation SeafDetailViewController
 
+@synthesize preViewItem = _preViewItem;
+
 - (id)initWithCoder:(NSCoder *)decoder
 {
     self = [super initWithCoder:decoder];
@@ -123,15 +128,31 @@ enum SHARE_STATUS {
     return self.presentingViewController != nil;
 }
 
+// Leading item for the root of an iPad split's detail column.
+// Column-style splits manage their own sidebar/back buttons on every supported
+// OS. Their displayModeButtonItem is an empty, disconnected placeholder.
+- (nullable UIBarButtonItem *)splitDetailLeadingItem
+{
+    if (self.splitViewController.style != UISplitViewControllerStyleUnspecified) {
+        return nil;
+    }
+    return self.splitViewController.isCollapsed ? nil : self.splitViewController.displayModeButtonItem;
+}
+
 // Update navigation items depending on the current state and item properties.
 - (void)updateNavigation
 {
+    UIBarButtonItem *leadingItem = nil;
     if ([self isModal]) {
-        [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
-    } else if (!(IsIpad() && [self isPortrait])) {
-        self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
-                                                                                          action:@selector(goBack:) color:nil];
+        leadingItem = self.backItem;
+    } else if (self.navigationController && self.navigationController.viewControllers.firstObject != self) {
+        // Only when there is something to pop back to; at the root goBack: does nothing.
+        leadingItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                   action:@selector(goBack:) color:nil];
+    } else if (IsIpad() && self.splitViewController) {
+        leadingItem = [self splitDetailLeadingItem];
     }
+    [self.navigationItem setLeftBarButtonItem:leadingItem animated:NO];
     self.navigationItem.titleView = nil;
     self.navigationItem.title = self.preViewItem.previewItemTitle;
 
@@ -238,6 +259,12 @@ enum SHARE_STATUS {
     [self updatePreviewState]; // Update the state based on the current item
     if (!self.isViewLoaded) return;
 
+    // A downloaded video plays separately and leaves the detail without a preview.
+    BOOL hasPreview = self.state != PREVIEW_NONE;
+    if (self.filePreviewPlaceholder && self.filePreviewPlaceholder.hidden != hasPreview) {
+        self.filePreviewPlaceholder.hidden = hasPreview;
+        [self.view setNeedsLayout];
+    }
     [self updateNavigation]; // Update the navigation items
 
     // --- Toolbar Visibility Control (iPad only) ---
@@ -359,12 +386,6 @@ enum SHARE_STATUS {
         default:
             break;
     }
-    if ([self isPortrait]) {
-        self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeSecondaryOnly; // Adjust split view controller display mode for portrait
-    } else {
-        self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeOneBesideSecondary; // Adjust split view controller display mode for landscape
-    }
-
     
     // Ensure toolbar always stays on top layer
     if (self.toolbarView) {
@@ -372,10 +393,24 @@ enum SHARE_STATUS {
     }
 }
 
+- (void)setPreViewItem:(id<SeafPreView>)preViewItem
+{
+    _preViewItem = preViewItem;
+    self.filePreviewPlaceholder.hidden = preViewItem != nil;
+    if (!preViewItem && self.filePreviewPlaceholder) {
+        [self.view setNeedsLayout];
+    }
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.view.backgroundColor = [SeafTheme primarySurface];
+    self.filePreviewPlaceholder.hidden = self.preViewItem != nil;
+    if ([SeafNavigationBarStyler usesSystemBarsOnIpad]) {
+        [SeafNavigationBarStyler applyOpaqueAppearanceToNavigationItem:self.navigationItem
+                                                      backgroundColor:[SeafTheme primarySurface]];
+    }
     // Do any additional setup after loading the view, typically from a nib.
 
     self.backItem = [SeafNavigationBarStyler createCloseButtonWithTarget:self action:@selector(goBack:)];
@@ -420,11 +455,7 @@ enum SHARE_STATUS {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    
-    if (IsIpad() && self.navigationItem.leftBarButtonItem == nil && [self isPortrait]) {
-        [self.navigationItem setLeftBarButtonItem:self.splitViewController.displayModeButtonItem animated:NO];
-    }
-    
+
     // Setup bottom toolbar
     [self setupToolbar];
     // Ensure toolbar starts hidden on iPad, will be shown by refreshView if needed
@@ -445,6 +476,15 @@ enum SHARE_STATUS {
     }
 
     [self updateNavigation];
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    // The split's leading item depends on whether its columns are collapsed.
+    [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [self updateNavigation];
+    }];
 }
 
 - (void)viewDidUnload
@@ -498,7 +538,7 @@ enum SHARE_STATUS {
     
     // Position the toolbar at the bottom of the screen
     if (self.toolbarView) {
-        CGFloat toolbarHeight = 36; // Reduced height from 44 to 36
+        CGFloat toolbarHeight = kPreviewToolbarHeight;
         CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
         
         
@@ -520,6 +560,35 @@ enum SHARE_STATUS {
         [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
         self.navigationController.navigationBar.tintColor = BAR_COLOR;
     }
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    UIView *placeholder = self.filePreviewPlaceholder;
+    if (!placeholder || placeholder.hidden) return;
+
+    CGRect visible = self.view.safeAreaLayoutGuide.layoutFrame;
+    UISplitViewController *split = self.splitViewController;
+    if (split.style == UISplitViewControllerStyleDoubleColumn && !split.isCollapsed &&
+        split.displayMode != UISplitViewControllerDisplayModeSecondaryOnly) {
+        UIView *sidebar = [split viewControllerForColumn:UISplitViewControllerColumnPrimary].viewIfLoaded;
+        if (sidebar.window && sidebar.window == self.view.window) {
+            // A floating sidebar can cover part of the secondary safe area.
+            CGRect covered = CGRectIntersection(visible, [sidebar convertRect:sidebar.bounds toView:self.view]);
+            if (!CGRectIsEmpty(covered)) {
+                CGFloat widthOnLeft = CGRectGetMinX(covered) - CGRectGetMinX(visible);
+                CGFloat widthOnRight = CGRectGetMaxX(visible) - CGRectGetMaxX(covered);
+                if (widthOnRight > widthOnLeft) {
+                    visible.origin.x = CGRectGetMaxX(covered);
+                    visible.size.width = widthOnRight;
+                } else {
+                    visible.size.width = widthOnLeft;
+                }
+            }
+        }
+    }
+    placeholder.frame = visible;
 }
 
 #pragma mark - Split view
@@ -951,7 +1020,10 @@ enum SHARE_STATUS {
         return;
     }
     self.qlViewController = nil;
-    if (self.preViewItem == item) self.preViewItem = nil;
+    if (self.preViewItem == item) {
+        self.preViewItem = nil;
+        if (self.filePreviewPlaceholder) [self refreshView];
+    }
 }
 
 - (MWPhotoBrowser *)mwPhotoBrowser
@@ -1043,16 +1115,10 @@ enum SHARE_STATUS {
     }
 }
 
-// Window shape rather than interface orientation: in resizable environments
-// (iPhone Duo, iPhone Mirroring) the orientation no longer describes the window.
-- (BOOL)isPortrait {
-    UIWindow *window = self.view.window ?: [SeafAppDelegate activeWindow];
-    return window.bounds.size.height >= window.bounds.size.width;
-}
-
 - (CGFloat)contentTopInset {
-    // The iPad detail view already starts below its navigation bar.
-    return IsIpad() ? 0 : self.view.safeAreaInsets.top;
+    // Column-style splits may extend the detail behind the top tabs/navigation.
+    // UIKit reports zero here when the view already begins below those bars.
+    return self.view.safeAreaInsets.top;
 }
 
 // Area between the navigation bar and the bottom toolbar. Side insets keep
@@ -1062,7 +1128,7 @@ enum SHARE_STATUS {
     CGFloat top = [self contentTopInset];
     CGFloat bottom = 0;
     if (self.toolbarView && !self.toolbarView.hidden) {
-        CGFloat toolbarHeight = 36; // Must be in sync with setupToolbar
+        CGFloat toolbarHeight = kPreviewToolbarHeight;
         bottom = toolbarHeight + self.view.safeAreaInsets.bottom;
     }
     CGFloat left = insetSides ? self.view.safeAreaInsets.left : 0;
@@ -1262,7 +1328,7 @@ enum SHARE_STATUS {
 // New method to setup the toolbar
 - (void)setupToolbar {
     // Bottom action bar - including bottom safe area
-    CGFloat toolbarH = 36; // Reduced height from 44 to 36
+    CGFloat toolbarH = kPreviewToolbarHeight;
     CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
     
     
@@ -1349,6 +1415,10 @@ enum SHARE_STATUS {
         
         // Set button label and event
         btn.tag = i;
+        btn.accessibilityIdentifier = @[@"preview_delete", @"preview_star", @"preview_share"][i];
+        btn.accessibilityLabel = @[NSLocalizedString(@"Delete", @"Seafile"),
+                                   NSLocalizedString(@"Star", @"Seafile"),
+                                   NSLocalizedString(@"Share", @"Seafile")][i];
         [btn addTarget:self action:@selector(toolbarButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         [self.toolbarView addSubview:btn];
     }
@@ -1415,6 +1485,8 @@ enum SHARE_STATUS {
         if ([subview isKindOfClass:[UIButton class]]) {
             UIButton *btn = (UIButton *)subview;
             if (btn.tag == 1) { // Star button is now index 1
+                btn.accessibilityLabel = isStarred ? NSLocalizedString(@"Unstar", @"Seafile") : NSLocalizedString(@"Star", @"Seafile");
+                btn.accessibilityTraits = UIAccessibilityTraitButton | (isStarred ? UIAccessibilityTraitSelected : 0);
                 NSString *iconName = isStarred ? @"detail_starred_selected" : @"detail_starred";
                 UIImage *image = [UIImage imageNamed:iconName];
                 
@@ -1448,7 +1520,7 @@ enum SHARE_STATUS {
                     // Set gray color (#666666) for all states (selected states differ by icon style, not color)
                     btn.tintColor = [SeafTheme secondaryText];
                     // Vertically center icon again in case of state change
-                    CGFloat toolbarH = 36.0f;
+                    CGFloat toolbarH = kPreviewToolbarHeight;
                     CGFloat verticalOffset = (toolbarH - iconSize)/2.0f;
                     btn.imageEdgeInsets = UIEdgeInsetsMake(verticalOffset, 0, verticalOffset, 0);
                 }
@@ -1461,7 +1533,7 @@ enum SHARE_STATUS {
 - (void)layoutToolbarButtons {
     if (!self.toolbarView) return;
     // Determine the design height we used when creating buttons
-    CGFloat toolbarHeight = 36.0f; // Must be in sync with setupToolbar
+    CGFloat toolbarHeight = kPreviewToolbarHeight;
 
     // Safe-area bottom is already included in toolbarView height, but the buttons themselves
     // should stay in the top part (outside the safe-area region).
@@ -1503,6 +1575,10 @@ enum SHARE_STATUS {
     [item load:(self.masterVc ? self.masterVc:self) force:NO];
     [self refreshView];
     [self updateToolbarButtons]; // Update toolbar buttons when setting a new preview item
+    UISplitViewController *split = c.splitViewController ?: self.splitViewController;
+    if (item && self.state != PREVIEW_QL_MODAL && split.style == UISplitViewControllerStyleDoubleColumn) {
+        [split showColumn:UISplitViewControllerColumnSecondary];
+    }
     
     // Ensure toolbar always stays on top layer
     if (self.toolbarView) {
@@ -1532,6 +1608,10 @@ enum SHARE_STATUS {
     [self.mwPhotoBrowser viewDidAppear:false];
     [self updateNavigation];
     [self.view setNeedsLayout];
+    UISplitViewController *split = c.splitViewController ?: self.splitViewController;
+    if (split.style == UISplitViewControllerStyleDoubleColumn) {
+        [split showColumn:UISplitViewControllerColumnSecondary];
+    }
     
     // Ensure toolbar always stays on top layer
     if (self.toolbarView) {

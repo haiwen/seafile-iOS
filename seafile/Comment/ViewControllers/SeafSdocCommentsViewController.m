@@ -24,6 +24,7 @@
 #import "SeafMentionSheetViewController.h"
 #import "SeafSdocUserMapper.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 #import "SeafAppDelegate.h"
 
 static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
@@ -73,6 +74,10 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
     [super viewDidLoad];
     // Match the list so side insets (such as the iPhone Duo rail) share its backdrop.
     self.view.backgroundColor = [SeafTheme groupedSurface];
+    if ([SeafNavigationBarStyler usesSystemBarsOnIpad]) {
+        [SeafNavigationBarStyler applyOpaqueAppearanceToNavigationItem:self.navigationItem
+                                                      backgroundColor:self.view.backgroundColor];
+    }
     _attachmentDeleteButtons = [NSMapTable strongToWeakObjectsMapTable];
 
     self.navigationItem.title = self.docDisplayName.length > 0 ? self.docDisplayName : NSLocalizedString(@"Comments", nil);

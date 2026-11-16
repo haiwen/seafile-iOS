@@ -75,6 +75,7 @@
     self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createCloseButtonWithTarget:self action:@selector(cancel)];
     self.saveItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"checkmark"]
                                                   style:UIBarButtonItemStyleDone target:self action:@selector(save)];
+    self.saveItem.tintColor = [UIColor systemBlueColor];
     self.saveItem.title = NSLocalizedString(@"Save", @"Seafile");
     self.saveItem.accessibilityLabel = self.saveItem.title;
     self.navigationItem.rightBarButtonItem = self.saveItem;
