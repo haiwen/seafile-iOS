@@ -15,5 +15,11 @@
 @property (strong, nonatomic) IBOutlet UILabel *timeLabel;
 @property (strong, nonatomic) IBOutlet UILabel *repoNameLabel;
 
+@property (strong, nonatomic) UIView *cellBackgroundView;
+
+@property (nonatomic, assign) BOOL isLastCell;
+
+- (void)updateCellStyle:(BOOL)isFirstCell isLastCell:(BOOL)isLastCell;
+- (void)updateSeparatorInset:(BOOL)isLastCell;
 
 @end

@@ -170,16 +170,9 @@ static NSString *normalizeType(NSString *rawType, NSString *key) {
     // Apply standard navigation bar appearance (align file list page)
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     
-    // Back button matching SeafNavLeftItem (file list): System + arrowLeft_black + galleryOperationText
-    UIButton *backBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    [backBtn setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
-    backBtn.tintColor = [SeafTheme galleryOperationText];
-    backBtn.frame = CGRectMake(0, 0, 30, 44);
-    backBtn.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
-    backBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    [backBtn addTarget:self action:@selector(onCancelTapped) forControlEvents:UIControlEventTouchUpInside];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:backBtn];
-    
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(onCancelTapped) color:nil];
+
     // Navigation bar save button (align Android: blue text)
     UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Save", @"save button")
                                                                 style:UIBarButtonItemStyleDone

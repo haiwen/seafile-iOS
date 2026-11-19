@@ -45,6 +45,10 @@ extern NSString * const kSeafThemePreferenceMigratedKey;
 + (UIColor *)primaryBackgroundColor;
 + (UIColor *)barColor;
 + (UIColor *)barColorOrange;
+/// Icon color for buttons on the iOS 26+ glass navigation bar (and the iPhone
+/// Duo side rail). The glass lightens bar button content, so this is set darker
+/// than #666666 for the rendered icon to read as #666666 in light mode.
++ (UIColor *)glassBarIconColor;
 + (UIColor *)headerColor;
 + (UIColor *)accentOrange;
 + (UIColor *)accentOrangeLight;

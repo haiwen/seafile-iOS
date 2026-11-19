@@ -9,96 +9,88 @@
 #import "SeafHeaderView.h"
 #import "SeafTheme.h"
 
-#define kHeaderHeight 45.0
-#define kLeftPadding 24.0
-#define kRightPadding 17.0
-#define kToggleButtonWidth 16.0
-
 @implementation SeafHeaderView {
-    UILabel *_titleLabel;
+    NSInteger _section;
     UIButton *_toggleButton;
+    UIImageView *_chevronView;
+}
+
++ (CGFloat)headerHeight {
+    return 45.0;
 }
 
 - (instancetype)initWithSection:(NSInteger)section
                           title:(NSString *)title
                       expanded:(BOOL)isExpanded {
-    self = [super initWithFrame:CGRectZero];
+    self = [super initWithReuseIdentifier:nil];
     if (self) {
-        self.section = section;
-        self.backgroundColor = kPrimaryBackgroundColor;
-        self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        
-        // Create title label
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-        _titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
-        _titleLabel.text = title;
-        _titleLabel.textColor = [SeafTheme secondaryText];
-        _titleLabel.backgroundColor = [UIColor clearColor];
-        _titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        [self addSubview:_titleLabel];
-        
-        // Create right toggle button
-        _toggleButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        _toggleButton.frame = CGRectZero;
-        UIImage *arrowImage = [[UIImage imageNamed:@"arrowDown_black"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        [_toggleButton setImage:arrowImage forState:UIControlStateNormal];
-        _toggleButton.tintColor = [SeafTheme secondaryText];
-        _toggleButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-        _toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
-        _toggleButton.tag = section;
-        [_toggleButton addTarget:self action:@selector(toggleButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        [self addSubview:_toggleButton];
-        
-        // Add tap gesture recognizer to the entire header
-        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(headerTapped)];
-        [self addGestureRecognizer:tapGesture];
-        self.tag = section;
-        
-        // Set expanded state (used to set initial rotation)
+        _section = section;
+        UIBackgroundConfiguration *background = [UIBackgroundConfiguration clearConfiguration];
+        background.backgroundColor = [SeafTheme primaryBackgroundColor];
+        self.backgroundConfiguration = background;
+
+        _toggleButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        _toggleButton.translatesAutoresizingMaskIntoConstraints = NO;
+        _toggleButton.isAccessibilityElement = YES;
+        _toggleButton.accessibilityLabel = title;
+        _toggleButton.accessibilityTraits |= UIAccessibilityTraitHeader;
+        [_toggleButton addTarget:self action:@selector(toggleButtonTapped:) forControlEvents:UIControlEventPrimaryActionTriggered];
+        [self.contentView addSubview:_toggleButton];
+        self.isAccessibilityElement = NO;
+        self.accessibilityElements = @[_toggleButton];
+
+        UILabel *titleLabel = [UILabel new];
+        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        titleLabel.isAccessibilityElement = NO;
+        titleLabel.userInteractionEnabled = NO;
+        titleLabel.font = [UIFont systemFontOfSize:15.0 weight:UIFontWeightRegular];
+        titleLabel.textColor = [SeafTheme secondaryText];
+        titleLabel.text = title;
+        [_toggleButton addSubview:titleLabel];
+
+        _chevronView = [UIImageView new];
+        _chevronView.translatesAutoresizingMaskIntoConstraints = NO;
+        _chevronView.isAccessibilityElement = NO;
+        _chevronView.tintColor = [SeafTheme secondaryText];
+        _chevronView.preferredSymbolConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:13.0
+                                                                                                  weight:UIImageSymbolWeightRegular
+                                                                                                   scale:UIImageSymbolScaleSmall];
+        [_chevronView setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [_toggleButton addSubview:_chevronView];
+
+        [NSLayoutConstraint activateConstraints:@[
+            [_toggleButton.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
+            [_toggleButton.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
+            [_toggleButton.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+            [_toggleButton.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
+            [titleLabel.leadingAnchor constraintEqualToAnchor:_toggleButton.leadingAnchor constant:24.0],
+            [titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:_chevronView.leadingAnchor constant:-8.0],
+            [titleLabel.centerYAnchor constraintEqualToAnchor:_toggleButton.centerYAnchor],
+            [_chevronView.trailingAnchor constraintEqualToAnchor:_toggleButton.trailingAnchor constant:-17.0],
+            [_chevronView.centerYAnchor constraintEqualToAnchor:_toggleButton.centerYAnchor]
+        ]];
         [self setExpanded:isExpanded animated:NO];
     }
     return self;
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    
-    // Fix header height
-    self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y, self.superview.bounds.size.width, kHeaderHeight);
-    
-    // Layout title label
-    _titleLabel.frame = CGRectMake(kLeftPadding, 12, self.bounds.size.width - kLeftPadding - kRightPadding, 22);
-    
-    // Layout toggle button
-    _toggleButton.frame = CGRectMake(self.bounds.size.width - kRightPadding - kToggleButtonWidth, 16, kToggleButtonWidth, kToggleButtonWidth);
-    _toggleButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-}
-
-#pragma mark - Actions
-
 - (void)toggleButtonTapped:(UIButton *)sender {
     if (self.toggleAction) {
-        self.toggleAction(self.section);
+        self.toggleAction(_section);
     }
 }
-
-- (void)headerTapped {
-    if (self.tapAction) {
-        self.tapAction(self.section);
-    }
-}
-
-#pragma mark - Public Methods
 
 - (void)setExpanded:(BOOL)isExpanded animated:(BOOL)animated {
-    // Arrow-up icon: expanded shows up (∧), collapsed shows down (∨) by rotating 180°
-    CGFloat targetRotation = isExpanded ? 0 : M_PI;
-    if (animated) {
-        [UIView animateWithDuration:0.25 animations:^{
-            _toggleButton.transform = CGAffineTransformMakeRotation(targetRotation);
-        }];
+    UIImage *chevron = [UIImage systemImageNamed:isExpanded ? @"chevron.up" : @"chevron.down"];
+    _toggleButton.accessibilityValue = isExpanded
+        ? NSLocalizedString(@"Expanded", @"Accessibility value of an expanded library section")
+        : NSLocalizedString(@"Collapsed", @"Accessibility value of a collapsed library section");
+    if (animated && !UIAccessibilityIsReduceMotionEnabled()) {
+        [UIView transitionWithView:_chevronView duration:0.2 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+            self->_chevronView.image = chevron;
+        } completion:nil];
     } else {
-        _toggleButton.transform = CGAffineTransformMakeRotation(targetRotation);
+        _chevronView.image = chevron;
     }
 }
 

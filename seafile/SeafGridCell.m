@@ -85,7 +85,6 @@ static const NSInteger kTitleMaxLines = 2;
 
     _selectionOverlay = [[UIView alloc] init];
     _selectionOverlay.translatesAutoresizingMaskIntoConstraints = NO;
-    _selectionOverlay.backgroundColor = [[SeafTheme accentOrange] colorWithAlphaComponent:0.12];
     _selectionOverlay.hidden = YES;
     _selectionOverlay.userInteractionEnabled = NO;
     [_thumbnailContainer addSubview:_selectionOverlay];
@@ -284,10 +283,27 @@ static const NSInteger kTitleMaxLines = 2;
     } else {
         self.checkboxImageView.image = nil;
         self.checkboxImageView.tintColor = nil;
-        self.selectionOverlay.hidden = YES;
-        self.thumbnailContainer.layer.borderWidth = 0.0;
+        [self updatePreviewSelectionAppearance];
     }
     [self refreshAccessibilityTraits];
+}
+
+- (void)setPreviewSelected:(BOOL)previewSelected {
+    if (_previewSelected == previewSelected) return;
+    _previewSelected = previewSelected;
+    [self updatePreviewSelectionAppearance];
+    [self refreshAccessibilityTraits];
+}
+
+- (void)updatePreviewSelectionAppearance {
+    if (self.isUserEditing) return;
+    self.selectionOverlay.hidden = !self.isPreviewSelected;
+    self.thumbnailContainer.layer.borderWidth = self.isPreviewSelected ? 2.0 : 0.0;
+    if (self.isPreviewSelected) {
+        UIColor *blue = UIColor.systemBlueColor;
+        self.selectionOverlay.backgroundColor = [blue colorWithAlphaComponent:0.16];
+        self.thumbnailContainer.layer.borderColor = [blue resolvedColorWithTraitCollection:self.traitCollection].CGColor;
+    }
 }
 
 - (void)updateCheckboxForSelected:(BOOL)selected {
@@ -305,8 +321,11 @@ static const NSInteger kTitleMaxLines = 2;
     }
     self.checkboxImageView.image = image;
     // Soft brand-colored veil instead of a systemBlue border.
-    self.selectionOverlay.hidden = !(self.isUserEditing && selected);
-    self.thumbnailContainer.layer.borderWidth = 0.0;
+    if (self.isUserEditing) {
+        self.selectionOverlay.backgroundColor = [[SeafTheme accentOrange] colorWithAlphaComponent:0.12];
+        self.selectionOverlay.hidden = !selected;
+        self.thumbnailContainer.layer.borderWidth = 0.0;
+    }
     [self refreshAccessibilityTraits];
 }
 
@@ -319,9 +338,12 @@ static const NSInteger kTitleMaxLines = 2;
 
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
     [super traitCollectionDidChange:previousTraitCollection];
-    if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]
-        && self.isUserEditing) {
-        [self updateCheckboxForSelected:self.isSelected];
+    if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
+        if (self.isUserEditing) {
+            [self updateCheckboxForSelected:self.isSelected];
+        } else {
+            [self updatePreviewSelectionAppearance];
+        }
     }
     if (previousTraitCollection
         && self.traitCollection.preferredContentSizeCategory != previousTraitCollection.preferredContentSizeCategory) {
@@ -341,14 +363,13 @@ static const NSInteger kTitleMaxLines = 2;
     self.progressView.hidden = YES;
     [self.progressView setProgress:0 animated:NO];
     self.checkboxHitArea.hidden = YES;
+    self.previewSelected = NO;
     self.isUserEditing = NO;
     self.cellIndexPath = nil;
     self.accessibilityStatusText = nil;
     self.highlightOverlay.hidden = YES;
     self.highlightOverlay.alpha = 0;
-    self.selectionOverlay.hidden = YES;
     self.thumbnailContainer.transform = CGAffineTransformIdentity;
-    self.thumbnailContainer.layer.borderWidth = 0.0;
     self.accessibilityLabel = nil;
     self.accessibilityValue = nil;
 }
@@ -523,7 +544,7 @@ static const NSInteger kTitleMaxLines = 2;
 
 - (void)refreshAccessibilityTraits {
     UIAccessibilityTraits traits = UIAccessibilityTraitButton;
-    if (self.isUserEditing && self.isSelected) {
+    if (self.isUserEditing ? self.isSelected : self.isPreviewSelected) {
         traits |= UIAccessibilityTraitSelected;
     }
     self.accessibilityTraits = traits;

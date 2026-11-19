@@ -64,6 +64,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)directoryAction:(SeafDir*)directory photos:(NSArray *)photos inTargetVC:(UIViewController *)targetVC fromItem:(UIBarButtonItem *)item actionBlock:(ActionType)block;
 
+/// The titles the directory "…" menu offers for this directory, in display order.
++ (NSArray<NSString *> *)directoryActionTitles:(SeafDir *)directory;
+
 + (void)entryAction:(SeafBase *)entry inEncryptedRepo:(BOOL)encrypted inTargetVC:(UIViewController *)targetVC fromView:(UIView *)view actionBlock:(ActionType)block;
 
 + (void)exportByActivityView:(NSArray <NSURL *> *)urls item:(id _Nullable)item targerVC:(UIViewController *)targetVC;

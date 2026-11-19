@@ -5,20 +5,48 @@
 
 #import "SeafTabBarStyler.h"
 #import "SeafTheme.h"
-#import "Constants.h"
+
+static BOOL SeafUsesSystemTabBarAppearance(void) {
+    if (@available(iOS 26.0, *)) {
+        // Use the same device idiom before and after the bar enters a window.
+        return UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone;
+    }
+    return NO;
+}
 
 @implementation SeafTabBarStyler
 
 + (void)applyStandardAppearanceToTabBar:(UITabBar *)tabBar {
-    tabBar.tintColor = BAR_COLOR_ORANGE;
-    tabBar.translucent = NO;
+    tabBar.tintColor = [SeafTheme accentOrange];
+    tabBar.unselectedItemTintColor = [SeafTheme secondaryText];
+    tabBar.translucent = [self tabBarNeedsTranslucency:tabBar];
+    if (SeafUsesSystemTabBarAppearance()) {
+        // UIKit supplies the glass background and scroll edge effect.
+        return;
+    }
 
     UITabBarAppearance *appearance = [UITabBarAppearance new];
     [appearance configureWithOpaqueBackground];
     appearance.backgroundColor = [SeafTheme primaryBackgroundColor];
     appearance.shadowColor = [UIColor opaqueSeparatorColor];
+    for (UITabBarItemAppearance *item in @[appearance.stackedLayoutAppearance,
+                                          appearance.inlineLayoutAppearance,
+                                          appearance.compactInlineLayoutAppearance]) {
+        item.normal.iconColor = [SeafTheme secondaryText];
+        item.normal.titleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme secondaryText]};
+        item.selected.iconColor = [SeafTheme accentOrange];
+        item.selected.titleTextAttributes = @{NSForegroundColorAttributeName: [SeafTheme accentOrange]};
+    }
     tabBar.standardAppearance = appearance;
     tabBar.scrollEdgeAppearance = appearance;
+}
+
++ (BOOL)tabBarNeedsTranslucency:(UITabBar *)tabBar {
+    if (SeafUsesSystemTabBarAppearance()) {
+        return YES;
+    }
+    CGSize size = tabBar.bounds.size;
+    return size.height > size.width;
 }
 
 @end

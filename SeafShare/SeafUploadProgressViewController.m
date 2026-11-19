@@ -9,6 +9,7 @@
 
 #import "SeafUploadProgressViewController.h"
 #import "SeafTheme.h"
+#import "Constants.h"
 
 static CGFloat const kAlertWidth       = 270.0;
 static CGFloat const kCornerRadius     = 14.0;
@@ -164,7 +165,7 @@ static CGFloat const kHorizontalInset  = 20.0;
         [separator.topAnchor constraintEqualToAnchor:self.countLabel.bottomAnchor constant:16],
         [separator.leadingAnchor constraintEqualToAnchor:self.alertContainer.leadingAnchor],
         [separator.trailingAnchor constraintEqualToAnchor:self.alertContainer.trailingAnchor],
-        [separator.heightAnchor constraintEqualToConstant:1.0 / [UIScreen mainScreen].scale],
+        [separator.heightAnchor constraintEqualToConstant:SEAF_SEPARATOR_HEIGHT_IN(self)],
 
         // Cancel button
         [cancelButton.topAnchor constraintEqualToAnchor:separator.bottomAnchor],

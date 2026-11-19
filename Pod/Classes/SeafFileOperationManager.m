@@ -46,6 +46,7 @@
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true",
                             directory.repoId, [fullPath escapedUrl]];
 
+    long long indexStartSeq = [directory fp_indexStartSeq];
     [directory.connection sendPost:requestUrl
                               form:@"operation=create"
                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
@@ -53,6 +54,7 @@
         Debug("Create file success, statusCode=%ld", (long)response.statusCode);
         // Parse JSON and refresh directory data:
         [directory handleResponse:response json:JSON]; // optional, if you want dir->items updated
+        [directory fp_indexListingForResponse:JSON startSeq:indexStartSeq];
         [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) completion(YES, nil);
     }
@@ -83,14 +85,16 @@
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@&reloaddir=true",
                             directory.repoId, [fullPath escapedUrl]];
 
+    long long indexStartSeq = [directory fp_indexStartSeq];
     [directory.connection sendPost:requestUrl
                               form:@"operation=mkdir"
                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
     {
         Debug("Mkdir success, code=%ld", (long)response.statusCode);
-        if ([JSON isKindOfClass:[NSDictionary class]]) {
-            // Server returned dir metadata dictionary; we can process directly.
+        if ([JSON isKindOfClass:[NSDictionary class]] || [JSON isKindOfClass:[NSArray class]]) {
+            // Server returned directory listing (v2.1 dictionary or v2.0 array); process directly.
             [directory handleResponse:response json:JSON];
+            [directory fp_indexListingForResponse:JSON startSeq:indexStartSeq];
         } else {
             // Response format unexpected (e.g. array or simple string). Fall back to reloading directory content.
             [directory loadContent:YES];
@@ -130,12 +134,14 @@
         [form appendFormat:@":%@", [entries[i] escapedPostForm]];
     }
 
+    long long indexStartSeq = [directory fp_indexStartSeq];
     [directory.connection sendPost:requestUrl
                               form:form
                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
     {
         Debug("Delete success, code=%ld", (long)response.statusCode);
         [directory handleResponse:response json:JSON]; // optional
+        [directory fp_indexListingForResponse:JSON startSeq:indexStartSeq];
         [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) completion(YES, nil);
     }
@@ -153,12 +159,23 @@
               inDir:(SeafDir *)directory
          completion:(void(^)(BOOL success, SeafBase *renamedFile, NSError *error))completion
 {
+    [self renameEntry:oldName newName:newName inDir:directory
+    responseCompletion:^(BOOL success, SeafBase *renamedFile, NSError *error, NSHTTPURLResponse *response) {
+        if (completion) completion(success, renamedFile, error);
+    }];
+}
+
+- (void)renameEntry:(NSString *)oldName
+            newName:(NSString *)newName
+              inDir:(SeafDir *)directory
+ responseCompletion:(void (^)(BOOL, SeafBase *, NSError *, NSHTTPURLResponse *))completion
+{
     if (!oldName || oldName.length == 0 || !newName || newName.length == 0) {
         if (completion) {
             NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
                                              code:-4
                                          userInfo:@{NSLocalizedDescriptionKey:@"Invalid rename parameters"}];
-            completion(NO, nil, err);
+            completion(NO, nil, err, nil);
         }
         return;
     }
@@ -168,12 +185,24 @@
                             directory.repoId, [oldPath escapedUrl]];
     NSString *form = [NSString stringWithFormat:@"operation=rename&newname=%@", [newName escapedUrl]];
 
+    long long indexStartSeq = [directory fp_indexStartSeq];
     [directory.connection sendPost:requestUrl
                             form:form
                          success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
     {
         Debug("Rename success, code=%ld", (long)response.statusCode);
         [directory handleResponse:response json:JSON];
+        // Files app index: the record keeps its uuid (favorites, downloads).
+        id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+        if (indexer && directory.connection && directory.repoId.length > 0) {
+            [indexer fp_indexRenameOf:oldName
+                                   to:newName
+                               ofRepo:directory.repoId
+                            directory:directory.path
+                              listing:[directory fp_listingSnapshotForResponse:JSON]
+                           connection:directory.connection
+                      requestStartSeq:indexStartSeq];
+        }
         
         // Find the renamed file in directory items
         SeafBase *renamedFile = nil;
@@ -188,19 +217,19 @@
         [directory.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:directory.repoId];
         if (completion) {
             if (renamedFile) {
-                completion(YES, renamedFile, nil);
+                completion(YES, renamedFile, nil, response);
             } else {
                 NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
                                                  code:-5
                                              userInfo:@{NSLocalizedDescriptionKey:@"Renamed file not found"}];
-                completion(NO, nil, err);
+                completion(NO, nil, err, response);
             }
         }
     }
                          failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
     {
         Warning("Rename failed, code=%ld", (long)response.statusCode);
-        if (completion) completion(NO, nil, error);
+        if (completion) completion(NO, nil, error, response);
     }];
 }
 
@@ -277,6 +306,11 @@
         Debug("Copy success, code=%ld", (long)response.statusCode);
         // Optionally refresh srcDir or dstDir:
         [srcDir handleResponse:response json:JSON];
+        // Files app index: the copies are new entries under names only the
+        // server knows (it renames on conflicts), so list the destination.
+        if (dstDir.connection && dstDir.repoId.length > 0) {
+            [[SeafConnection activeFileProviderIndexer] fp_refreshDirectoryOfRepo:dstDir.repoId path:dstDir.path connection:dstDir.connection];
+        }
         [srcDir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:nil];
         if (completion) completion(YES, nil);
     }
@@ -295,12 +329,23 @@
                toDir:(SeafDir *)dstDir
           completion:(SeafOperationCompletion)completion
 {
+    [self moveEntries:entries fromDir:srcDir toDir:dstDir
+     responseCompletion:^(BOOL success, NSError *error, NSHTTPURLResponse *response) {
+        if (completion) completion(success, error);
+    }];
+}
+
+- (void)moveEntries:(NSArray<NSString *> *)entries
+             fromDir:(SeafDir *)srcDir
+               toDir:(SeafDir *)dstDir
+  responseCompletion:(void (^)(BOOL, NSError *, NSHTTPURLResponse *))completion
+{
     if (!entries || entries.count == 0 || !srcDir || !dstDir) {
         if (completion) {
             NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
                                                code:-6
                                            userInfo:@{NSLocalizedDescriptionKey:@"Invalid move parameters"}];
-            completion(NO, err);
+            completion(NO, err, nil);
         }
         return;
     }
@@ -314,6 +359,7 @@
         [form appendFormat:@":%@", [entries[i] escapedPostForm]];
     }
 
+    long long indexStartSeq = [srcDir fp_indexStartSeq];
     [srcDir.connection sendPost:requestUrl
                            form:form
                         success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
@@ -321,13 +367,26 @@
         Debug("Move success, code=%ld", (long)response.statusCode);
         // Optionally refresh
         [srcDir handleResponse:response json:JSON];
-        [srcDir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:nil];
-        if (completion) completion(YES, nil);
+        // Files app index: the records keep their uuid (favorites, downloads).
+        id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+        if (indexer && srcDir.connection && srcDir.repoId.length > 0 && dstDir.repoId.length > 0) {
+            [indexer fp_indexMoveOf:entries
+                           fromRepo:srcDir.repoId
+                      fromDirectory:srcDir.path
+                             toRepo:dstDir.repoId
+                        toDirectory:dstDir.path
+                      sourceListing:[srcDir fp_listingSnapshotForResponse:JSON]
+                         connection:srcDir.connection
+                    requestStartSeq:indexStartSeq];
+        } else {
+            [srcDir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:nil];
+        }
+        if (completion) completion(YES, nil, response);
     }
                         failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
     {
         Warning("Move failed, code=%ld", (long)response.statusCode);
-        if (completion) completion(NO, error);
+        if (completion) completion(NO, error, response);
     }];
 }
 

@@ -128,7 +128,7 @@
     
     // Resize image using UIGraphicsImageRenderer for better quality
     UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
-    format.scale = [UIScreen mainScreen].scale;
+    format.scale = SeafDisplayScale(self);
     UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(size, size) format:format];
     UIImage *resizedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
         [img drawInRect:CGRectMake(0, 0, size, size)];
@@ -182,6 +182,11 @@
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)(void))handler
 {
+    [self popupSetRepoPassword:repo handler:handler cancelHandler:nil];
+}
+
+- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)(void))handler cancelHandler:(void (^)(void))cancelHandler
+{
     NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
 
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
@@ -212,7 +217,9 @@
 
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button title")
                                                            style:UIAlertActionStyleCancel
-                                                         handler:nil];
+                                                         handler:^(UIAlertAction * _Nonnull action) {
+        if (cancelHandler) cancelHandler();
+    }];
 
     UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"OK button title")
                                                        style:UIAlertActionStyleDefault
@@ -223,14 +230,14 @@
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
                 // Retry by calling the method again
-                [self popupSetRepoPassword:repo handler:handler];
+                [self popupSetRepoPassword:repo handler:handler cancelHandler:cancelHandler];
             }];
             return;
         }
         // Using existing length validation from the original method
         if (input.length < 3 || input.length  > 100) {
             [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
-                [self popupSetRepoPassword:repo handler:handler];
+                [self popupSetRepoPassword:repo handler:handler cancelHandler:cancelHandler];
             }];
             return;
         }
@@ -250,13 +257,13 @@
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
                 // Add a slight delay before retrying to allow SVProgressHUD to be seen
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [self popupSetRepoPassword:repo handler:handler];
+                    [self popupSetRepoPassword:repo handler:handler cancelHandler:cancelHandler];
                 });
 #else
                 // The share extension can't link SVProgressHUD, so surface the failure with
                 // an alert and re-prompt only after the user dismisses it.
                 [self alertWithTitle:NSLocalizedString(@"Wrong library password", @"Seafile") handler:^{
-                    [self popupSetRepoPassword:repo handler:handler];
+                    [self popupSetRepoPassword:repo handler:handler cancelHandler:cancelHandler];
                 }];
 #endif
             }

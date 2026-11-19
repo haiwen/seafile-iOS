@@ -103,6 +103,9 @@
  * @param failure A block called on failure to load the directory.
  */
 - (void)loadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure;
+/// Require a directory listing or a server confirmation of already loaded items.
+- (void)loadContentSuccess:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
+           requireListing:(BOOL)requireListing;
 
 /**
  * Checks if a given name already exists in the directory's items.
@@ -149,5 +152,16 @@
 /// @param baseName The base name to check (without extension)
 /// @return YES if any file with this base name exists
 - (BOOL)baseNameExist:(NSString *)baseName;
+
+#pragma mark - Files app index (main app only; no-ops in the extensions)
+
+/// The index store's seq to capture right before a listing request is sent;
+/// -1 when there is no indexer or the directory is not indexed.
+- (long long)fp_indexStartSeq;
+/// Value snapshots of the current server items (no pending uploads) when
+/// `JSON` is a directory listing response; nil otherwise.
+- (NSArray<NSDictionary *> * _Nullable)fp_listingSnapshotForResponse:(nullable id)JSON;
+/// Hands the current items to the indexer when `JSON` is a listing response.
+- (void)fp_indexListingForResponse:(nullable id)JSON startSeq:(long long)startSeq;
 
 @end

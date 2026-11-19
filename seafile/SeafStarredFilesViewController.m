@@ -9,6 +9,7 @@
 #import "UIScrollView+SVPullToRefresh.h"
 
 #import "SeafAppDelegate.h"
+#import "IntelligentSplitViewController.h"
 #import "SeafStarredFilesViewController.h"
 #import "SeafDetailViewController.h"
 #import "SeafSdocWebViewController.h"
@@ -99,12 +100,20 @@
         _cellDataArray = [[NSMutableArray alloc]init];
     }
     self.title = NSLocalizedString(@"Starred", @"Seafile");
+    if (@available(iOS 26.0, *)) {
+        if (IsIpad()) {
+            // Folders opened from here turn on large titles in the iPad sidebar (see
+            // SeafFileViewController -usesLargeSidebarTitle); this list keeps its inline
+            // title when they are popped.
+            self.navigationItem.largeTitleDisplayMode = UINavigationItemLargeTitleDisplayModeNever;
+        }
+    }
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
     self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
+    [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
     self.tableView.backgroundColor = [SeafTheme primaryBackgroundColor];
-    self.view.backgroundColor = [SeafTheme primaryBackgroundColor];
     
     UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
     bView.backgroundColor = kPrimaryBackgroundColor;
@@ -118,7 +127,20 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+    if ([SeafNavigationBarStyler usesSystemBarsOnIpad]) {
+        [SeafNavigationBarStyler applyOpaqueAppearanceToNavigationItem:self.navigationItem
+                                                      backgroundColor:[SeafTheme primaryBackgroundColor]];
+        self.extendedLayoutIncludesOpaqueBars = YES;
+    }
     self.tableView.sectionHeaderTopPadding = 0;
+    // Same 10pt gap under the navigation bar as a directory file list.
+    self.tableView.sectionHeaderHeight = 0;
+    self.tableView.estimatedSectionHeaderHeight = 0;
+    CGFloat headerWidth = CGRectGetWidth(self.tableView.bounds);
+    if (headerWidth < 1.0) {
+        headerWidth = CGRectGetWidth(self.view.bounds);
+    }
+    self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, headerWidth, 10.0)];
     
     // Initialize loading view
     self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
@@ -277,6 +299,13 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     return 1;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    // Storyboard plain style defaults to a 22pt header. The 10pt table
+    // header is the gap under the navigation bar; don't add another one.
+    return 0.01;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -823,8 +852,8 @@
     // Get the UINavigationController of the first tab
     UINavigationController *navController;
     if (IsIpad()){
-        UISplitViewController *fileController = self.tabBarController.viewControllers[0];
-        navController = [fileController.viewControllers firstObject];
+        IntelligentSplitViewController *fileController = self.tabBarController.viewControllers[0];
+        navController = fileController.primaryNavigationController;
     } else {
         navController = self.tabBarController.viewControllers[0];
     }

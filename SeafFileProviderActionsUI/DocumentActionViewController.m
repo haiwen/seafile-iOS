@@ -14,6 +14,7 @@
 static NSString * const kSeafFPErrorReasonKey = @"reason";
 static NSString * const kSeafFPErrorReasonNoAccount = @"noAccount";
 static NSString * const kSeafFPErrorReasonTouchIdEnabled = @"touchIdEnabled";
+static NSString * const kSeafFPErrorReasonMoveNeedsResolution = @"moveNeedsResolution";
 
 @interface DocumentActionViewController()
 @property (weak) IBOutlet UILabel *identifierLabel;
@@ -33,7 +34,11 @@ static NSString * const kSeafFPErrorReasonTouchIdEnabled = @"touchIdEnabled";
 - (void)prepareForError:(NSError *)error {
     NSString *reason = error.userInfo[kSeafFPErrorReasonKey];
     BOOL providerError = [error.domain isEqualToString:NSFileProviderErrorDomain];
-    if ([reason isEqualToString:kSeafFPErrorReasonNoAccount]) {
+    if ([reason isEqualToString:kSeafFPErrorReasonMoveNeedsResolution]) {
+        self.identifierLabel.text = error.localizedDescription;
+        self.identifierLabel.numberOfLines = 0;
+        self.actionTypeLabel.text = error.localizedRecoverySuggestion;
+    } else if ([reason isEqualToString:kSeafFPErrorReasonNoAccount]) {
         self.identifierLabel.text = NSLocalizedString(@"There is no account available", @"Seafile");
         self.actionTypeLabel.text = NSLocalizedString(@"Please open Seafile and add an account to start", @"Seafile");
     } else if ([reason isEqualToString:kSeafFPErrorReasonTouchIdEnabled]) {

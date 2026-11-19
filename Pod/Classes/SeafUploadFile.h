@@ -69,6 +69,8 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (nonatomic, readonly) BOOL shouldShowUploadFailure;
 
 @property (nonatomic, strong) NSDate * _Nullable lastModified;
+/// Date header of the successful upload response, separate from file mtime.
+@property (nonatomic, copy, nullable) NSString *serverDateHeader;
 
 // SeafTask Protocol Properties
 @property (nonatomic) NSTimeInterval lastFinishTimestamp;

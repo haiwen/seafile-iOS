@@ -15,6 +15,7 @@
 
 #import "Debug.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 @interface SeafShibbolethViewController ()<WKNavigationDelegate, NSURLConnectionDelegate,UINavigationControllerDelegate>
 
@@ -76,7 +77,13 @@
     // Do any additional setup after loading the view from its nib.
     self.view.backgroundColor = [SeafTheme primarySurface];
     self.navigationController.delegate = self;
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(onTapBack) color:nil];
     [self start];
+}
+
+- (void)onTapBack {
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 //navigation back button clicked
@@ -422,7 +429,8 @@
         if (IsIpad()) {
             y = self.navigationController.navigationBar.frame.size.height;
         }
-        _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, y, [UIScreen mainScreen].bounds.size.width, 2)];
+        _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, y, self.view.bounds.size.width, 2)];
+        _progressView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _progressView.tintColor = SEAF_COLOR_LIGHT;
         _progressView.trackTintColor = [SeafTheme primarySurface];
     }
@@ -432,17 +440,18 @@
 //Open url in safari
 - (void)openURLInSafari:(NSString *)urlString {
     NSURL *url = [NSURL URLWithString:urlString];
-    if ([[UIApplication sharedApplication] canOpenURL:url]) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:^(BOOL success) {
-            if (success) {
-                Debug(@"URL was opened successfully");
-            } else {
-                Debug(@"Failed to open URL");
-            }
-        }];
-    } else {
-        Debug(@"URL is not valid or cannot be opened");
+    if (!url) {
+        Debug(@"URL is not valid: %@", urlString);
+        return;
     }
+    // canOpenURL: is deprecated in iOS 27; attempt the open and handle failure.
+    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:^(BOOL success) {
+        if (success) {
+            Debug(@"URL was opened successfully");
+        } else {
+            Debug(@"Failed to open URL");
+        }
+    }];
 }
 
 - (NSString *)getSSOTokenFromURLString:(NSString *)urlString {

@@ -23,6 +23,7 @@
 #import "SeafRepos.h"
 #import "SeafConnection.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 #import "UIViewController+Extend.h"
 #import "Debug.h"
 #import "Constants.h"
@@ -130,10 +131,8 @@ typedef NS_ENUM(NSInteger, SeafShareTab) {
     self.title = @"Seafile";
 
     // Left: back button (iOS 26 auto-applies Liquid Glass pill to standard UIBarButtonItem)
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"chevron.left"]
-                                                                             style:UIBarButtonItemStylePlain
-                                                                            target:self
-                                                                            action:@selector(onBack:)];
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(onBack:) color:nil];
 
     // Right: circular new-folder button + blue pill "确定" button
     // Smaller SF Symbol so the Liquid Glass chrome stays circular (wide icons stretch into a pill).

@@ -16,6 +16,7 @@
 #import <FileProvider/NSFileProviderError.h>
 #import "SeafUploadFileModel.h"
 #import "SeafFileOperationManager.h"
+#import "SeafRetryBackoff.h"
 
 #define DEFAULT_UPLOADINGARRAY_INTERVAL 10*60 // 10 min
 
@@ -30,6 +31,23 @@
 @property (nonatomic, strong) dispatch_queue_t photoPickupQueue;
 
 @property (nonatomic, strong) PHFetchResult *fetchResult;
+/// Bumped by resetAll and the library reset paths. A scan compares it with the
+/// value it started with and stops once it is superseded.
+@property (nonatomic, assign) NSUInteger scanGeneration;
+/// Generation of the scan that set inCheckPhotos; a newer generation may start
+/// even while an older one is still winding down.
+@property (nonatomic, assign) NSUInteger inCheckGeneration;
+/// Held while a scan checks its generation and then resets the candidates and
+/// cancels the queued backups, and while the generation is bumped. Without it a
+/// superseded scan could pass the check, stall, and then wipe the candidates and
+/// tasks of the scan that replaced it. Taken before @synchronized(self), never
+/// under it; cancelling takes the account queue's locks, so not self here.
+@property (nonatomic, strong) NSObject *scanStartLock;
+
+// Photos whose upload failed, by local identifier, and when each may be tried
+// again (SeafRetryBackoff). Without it a photo that keeps failing is queued
+// again on every 30 s tick of the account queue.
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSArray *> *photoFailures;
 
 @end
 
@@ -42,6 +60,8 @@
         self.connection = connection;
         self.accountIdentifier = connection.accountIdentifier;
         self.localUploadDir = localUploadDir;
+        _photoFailures = [NSMutableDictionary dictionary];
+        _scanStartLock = [[NSObject alloc] init];
         [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     }
     return self;
@@ -52,19 +72,80 @@
     if (self) {
         self.inAutoSync = false;
         self.inCheckPhotos = false;
+        _photoFailures = [NSMutableDictionary dictionary];
+        _scanStartLock = [[NSObject alloc] init];
     }
     return self;
 }
 
 - (void)prepareForBackup {
-    _photosArray = [[NSMutableArray alloc] init];
+    @synchronized(self) {
+        _photosArray = [[NSMutableArray alloc] init];
+    }
 }
 
 - (void)resetAll {
-    _photosArray = nil;
-    _inCheckPhotos = false;
-    _fetchResult = nil;
-    _syncDir = nil;
+    @synchronized(self.scanStartLock) { @synchronized(self) {
+        // A scan still running on photoCheckQueue belongs to the old generation: it
+        // stops at its next asset and never picks photos, so it cannot refill the
+        // array or start a second upload batch across a pause / resume.
+        _scanGeneration += 1;
+        _photosArray = nil;
+        _inCheckPhotos = false;
+        _fetchResult = nil;
+        _syncDir = nil;
+    } }
+    [self forgetPhotoFailures];
+}
+
+- (NSUInteger)currentScanGeneration {
+    @synchronized(self) {
+        return _scanGeneration;
+    }
+}
+
+#pragma mark - Failed photos
+
+- (void)forgetPhotoFailures {
+    @synchronized (self.photoFailures) {
+        [self.photoFailures removeAllObjects];
+    }
+}
+
+- (BOOL)isPhotoWaitingAfterFailure:(NSString *)localIdentifier at:(NSDate *)now {
+    @synchronized (self.photoFailures) {
+        return SeafRetryBackoffIsWaiting(self.photoFailures, localIdentifier, now);
+    }
+}
+
+- (BOOL)hasPhotosDueForUpload {
+    NSArray *photos = nil;
+    @synchronized(self) {
+        photos = [self.photosArray copy];
+    }
+    if (photos.count == 0) return NO;
+    NSDate *now = [NSDate date];
+    @synchronized (self.photoFailures) {
+        if (self.photoFailures.count == 0) return YES;
+        for (NSString *localIdentifier in photos) {
+            if (!SeafRetryBackoffIsWaiting(self.photoFailures, localIdentifier, now)) return YES;
+        }
+    }
+    return NO;
+}
+
+/// Failures of photos that are no longer queued (deleted, or uploaded by a
+/// later attempt nobody reported) would otherwise stay for good.
+- (void)prunePhotoFailures {
+    NSSet *queued = nil;
+    @synchronized(self) {
+        queued = [NSSet setWithArray:self.photosArray ?: @[]];
+    }
+    @synchronized (self.photoFailures) {
+        for (NSString *localIdentifier in self.photoFailures.allKeys) {
+            if (![queued containsObject:localIdentifier]) [self.photoFailures removeObjectForKey:localIdentifier];
+        }
+    }
 }
 
 - (void)checkPhotos:(BOOL)force {
@@ -94,10 +175,15 @@
     
     Debug("backGroundCheckPhotos: proceeding with photo check, force=%d", force);
     
+    NSUInteger generation = [self currentScanGeneration];
     //If true check phone photo gallery.
     if (force) {
-        
-        [self filterOutNeedUploadPhotos];
+        if (![self filterOutNeedUploadPhotosForGeneration:generation]) {
+            // Superseded by a pause / resume, or the same cycle is already scanning
+            // and will pick the photos itself when it finishes.
+            Debug("backGroundCheckPhotos: scan skipped or superseded, generation %lu", (unsigned long)generation);
+            return;
+        }
 
         long num = [[SeafRealmManager shared] numOfCachedPhotosWhithAccount:self.accountIdentifier];
         Debug("Filter out %ld photos, cached : %ld photos", (long)_photosArray.count, num);
@@ -109,11 +195,15 @@
     
     Debug("GroupAll Total %ld photos need to upload: %@", (long)_photosArray.count, _connection.address);
     
+    if ([self currentScanGeneration] != generation) {
+        Debug("backGroundCheckPhotos: superseded before picking, generation %lu", (unsigned long)generation);
+        return;
+    }
     _inCheckPhotos = false;
-    [self pickPhotosForUpload];
+    [self pickPhotosForUploadForGeneration:generation];
 }
 
-- (void)pickPhotosForUpload {
+- (void)pickPhotosForUploadForGeneration:(NSUInteger)generation {
     SeafDir *dir = _syncDir;
     if (!_inAutoSync || !dir || !self.photosArray || self.photosArray.count == 0) {
         SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
@@ -132,29 +222,51 @@
     @weakify(self);
     [dir loadContentSuccess:^(SeafDir *refreshedDir) {
         @strongify(self);
-        [self doPickPhotosForUploadWithDir:refreshedDir];
+        [self doPickPhotosForUploadWithDir:refreshedDir generation:generation];
     } failure:^(SeafDir *failedDir, NSError *error) {
         @strongify(self);
         Debug("Failed to refresh syncDir: %@", error);
-        [self doPickPhotosForUploadWithDir:failedDir];
+        [self doPickPhotosForUploadWithDir:failedDir generation:generation];
     }];
 }
 
-- (void)doPickPhotosForUploadWithDir:(SeafDir *)dir {
+- (void)doPickPhotosForUploadWithDir:(SeafDir *)dir generation:(NSUInteger)generation {
     if (!dir) {
         return;
     }
     
-    NSArray *photos = [self.photosArray copy];
-    
+    NSArray *photos;
+    @synchronized(self) {
+        // The folder was refreshed asynchronously; after a pause / resume in
+        // between, the array belongs to a newer scan that picks for itself.
+        if (_scanGeneration != generation) {
+            Debug("doPickPhotosForUpload: superseded, generation %lu", (unsigned long)generation);
+            return;
+        }
+        photos = [self.photosArray copy];
+    }
+
     PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:photos options:nil];
     
     NSMutableArray *uploadFilesArray = [[NSMutableArray alloc] init];
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
     BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
+    NSDate *now = [NSDate date];
+    NSUInteger waiting = 0;
+    BOOL hasFreshPhoto = NO;
     
     for (PHAsset *asset in result) {
+        // Failed a moment ago: stays queued, and gets its turn when its wait is over.
+        if (asset && [self isPhotoWaitingAfterFailure:asset.localIdentifier at:now]) {
+            waiting++;
+            continue;
+        }
         if (asset) {
+            if (!hasFreshPhoto) {
+                @synchronized (self.photoFailures) {
+                    hasFreshPhoto = SeafRetryBackoffFailures(self.photoFailures, asset.localIdentifier) == 0;
+                }
+            }
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
             NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             NSString *expectedFilename = filename;
@@ -187,7 +299,15 @@
         }
     }
     
+    if (waiting > 0) {
+        Debug("%lu photos left alone after a failed upload, %lu queued", (unsigned long)waiting, (unsigned long)uploadFilesArray.count);
+    }
     [SeafDataTaskManager.sharedObject addUploadTasksInBatch:uploadFilesArray forConnection:self.connection];
+    if (hasFreshPhoto) {
+        // The account queue may be waiting out a pause that photos the server
+        // keeps refusing caused. These have not been tried yet.
+        [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection] endErrorPauseForFreshBackupUploads];
+    }
 }
 
 - (void)uploadPhotoByIdentifier:(NSString *)localIdentifier {
@@ -244,7 +364,7 @@
             Debug("Add file %@ to upload list: %@ current %u", filename, dir.path, (unsigned)self.photosArray.count);
             [SeafDataTaskManager.sharedObject addUploadTask:file];
         } else {
-            @synchronized(self.photosArray) {
+            @synchronized(self) {
                 [self.photosArray removeObject:localIdentifier];
             }
         }
@@ -252,7 +372,7 @@
 }
 
 - (NSString *)popUploadPhotoIdentifier {
-    @synchronized(self.photosArray) {
+    @synchronized(self) {
         if (!self.photosArray || self.photosArray.count == 0) return nil;
         NSString *localIdentifier = self.photosArray.firstObject;
         [self.photosArray removeObject:localIdentifier];
@@ -278,45 +398,76 @@
         }
         
         [self setPhotoUploadedIdentifier:ufile.assetIdentifier];
-        @synchronized(self.photosArray) {
+        @synchronized(self) {
             [self.photosArray removeObject:ufile.assetIdentifier];
         }
+        @synchronized (self.photoFailures) {
+            SeafRetryBackoffNoteSuccess(self.photoFailures, ufile.assetIdentifier);
+        }
+    } else if (SeafRetryErrorCountsAgainstFile(error)) {
+        // The photo stays queued and the account queue's 30 s timer picks it
+        // up again, but not before the wait is over: the server refused it
+        // (or it could not be exported), and the next attempt would end the
+        // same way.
+        NSDate *until = nil;
+        @synchronized (self.photoFailures) {
+            until = SeafRetryBackoffNoteFailure(self.photoFailures, ufile.assetIdentifier, [NSDate date]);
+        }
+        Warning("Failed to upload photo %@, left alone until %@: %@", ufile.name, until, error);
     } else {
+        // Cancelled, or the network did not answer: nothing about this photo.
+        // It goes again with the next check.
         Warning("Failed to upload photo %@: %@", ufile.name, error);
-        //will retry by SeafAccountTaskQueue timer every 30s.
     }
 }
 
-- (void)filterOutNeedUploadPhotos {
+/// Returns NO when nothing was scanned for this generation: auto sync is off, the
+/// same generation is already scanning, or the scan was superseded by resetAll.
+- (BOOL)filterOutNeedUploadPhotosForGeneration:(NSUInteger)generation {
     PHFetchResult *result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
     
     NSPredicate *predicate = [self buildAutoSyncPredicte];
     if (!predicate) {
-        return;
+        return NO;
     }
     
-    @synchronized(self) {
-        if (_inCheckPhotos) {
-            return;
+    // One step with the generation check: a pause / resume cannot slip in between
+    // and have this scan clear the next one's candidates and tasks.
+    @synchronized(self.scanStartLock) {
+        @synchronized(self) {
+            if (_scanGeneration != generation) {
+                return NO;
+            }
+            if (_inCheckPhotos && _inCheckGeneration == generation) {
+                return NO;
+            }
+            _inCheckPhotos = true;
+            _inCheckGeneration = generation;
+            _photosArray = [[NSMutableArray alloc] init];
         }
-        _inCheckPhotos = true;
+
+        SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+        [accountQueue cancelAutoSyncTasks];
     }
-    
-    self.photosArray = [[NSMutableArray alloc] init];
-    
-    SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-    [accountQueue cancelAutoSyncTasks];
         
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;
     PHAssetCollection *collection = result.firstObject;
     
-    self.fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
+    PHFetchResult *fetch = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
+    if ([self currentScanGeneration] != generation) {
+        return NO;
+    }
+    self.fetchResult = fetch;
     
     Debug("filterOutNeedUploadPhotos: uploadLivePhotoEnabled=%d, isFirstTimeSync=%d",
           self.connection.isUploadLivePhotoEnabled, self.connection.isFirstTimeSync);
     
-    [self.fetchResult enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
+    [fetch enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([self currentScanGeneration] != generation) {
+            *stop = YES;
+            return;
+        }
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         if (photoAsset.name != nil) {
             BOOL isUploaded = NO;
@@ -334,12 +485,16 @@
             }
             
             if (!isUploaded && !isUploading) {
-                [self addUploadPhoto:photoAsset.localIdentifier];
+                if (![self addUploadPhoto:photoAsset.localIdentifier forGeneration:generation]) {
+                    *stop = YES;
+                }
             }
         }
     }];
     
+    [self prunePhotoFailures];
     Debug("filterOutNeedUploadPhotos summary: totalToUpload=%lu", (unsigned long)self.photosArray.count);
+    return [self currentScanGeneration] == generation;
 }
 
 #pragma mark - First Time Sync Helper
@@ -385,7 +540,7 @@
     if (!asset) {
         return false;
     }
-    @synchronized(self.photosArray) {
+    @synchronized(self) {
         if ([self.photosArray containsObject:asset.localIdentifier]) return true;
     }
 
@@ -395,19 +550,32 @@
 - (void)clearUploadingVideos {
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
     [accountQueue cancelAutoSyncVideoTasks];
-    @synchronized(self.photosArray) {
+    @synchronized(self) {
         [self removeVideosFromArray:_photosArray];
     }
 }
 
+/// For a scan: NO, and nothing added, once the scan is superseded, so its last
+/// asset cannot land in the array of the scan that replaced it.
+- (BOOL)addUploadPhoto:(NSString *)localIdentifier forGeneration:(NSUInteger)generation {
+    @synchronized(self) {
+        if (_scanGeneration != generation) return NO;
+        [self addUploadPhoto:localIdentifier];
+        return YES;
+    }
+}
+
 - (void)addUploadPhoto:(NSString *)localIdentifier {
-    @synchronized(self.photosArray) {
-        [self.photosArray addObject:localIdentifier];
+    @synchronized(self) {
+        // Two overlapping scans could both pass IsPhotoUploading before either adds.
+        if (![self.photosArray containsObject:localIdentifier]) {
+            [self.photosArray addObject:localIdentifier];
+        }
     }
 }
 
 - (void)removeNeedUploadPhoto:(NSString *)localIdentifier {
-    @synchronized(self.photosArray) {
+    @synchronized(self) {
         [self.photosArray removeObject:localIdentifier];
     }
 }
@@ -435,17 +603,20 @@
 
 - (void)resetUploadedPhotos
 {
-    @synchronized(self.photosArray) {
+    @synchronized(self.scanStartLock) { @synchronized(self) {
+        _scanGeneration += 1;
         _photosArray = [[NSMutableArray alloc] init];
-    }
+    } }
+    [self forgetPhotoFailures];
     [[SeafRealmManager shared] clearAllCachedPhotosInAccount:self.accountIdentifier];
 }
 
 - (void)resetUploadingArray {
-    @synchronized(self.photosArray) {
+    @synchronized(self.scanStartLock) { @synchronized(self) {
+        _scanGeneration += 1;
         self.photosArray = nil;
         self.photosArray = [[NSMutableArray alloc] init];
-    }
+    } }
 }
 
 #pragma mark- cache
@@ -529,16 +700,23 @@
 }
 
 #pragma mark - getter & setter
+// Guarded: resetAll replaces the array from the pause queue while a scan on
+// photoCheckQueue reads it; an unguarded nonatomic strong ivar can be released
+// under the reader.
 - (NSMutableArray *)photosArray {
-    if (!_photosArray) {
-        _photosArray = [[NSMutableArray alloc] init];
+    @synchronized(self) {
+        if (!_photosArray) {
+            _photosArray = [[NSMutableArray alloc] init];
+        }
+        return _photosArray;
     }
-    return _photosArray;
 }
 
 - (void)setPhotosArray:(NSMutableArray *)photosArray {
-    if (_photosArray != photosArray) {
-        _photosArray = photosArray;
+    @synchronized(self) {
+        if (_photosArray != photosArray) {
+            _photosArray = photosArray;
+        }
     }
 }
 

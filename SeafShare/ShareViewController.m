@@ -68,13 +68,6 @@ static inline UIEdgeInsets SeafAccountSeparatorInset(void) {
                                                                            action:@selector(cancel:)];
     self.title = @"Seafile";
 
-    // Widen share UI on iPad to better utilize available space
-    if (IsIpad()) {
-        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
-        CGFloat preferredWidth = MIN(ceil(screenWidth * 0.75f), 800.0f);
-        [self setPreferredContentSize:CGSizeMake(preferredWidth, 540.0f)];
-    }
-
     [self setupAccountListUI];
 
     [SeafGlobal.sharedObject loadAccounts];
@@ -155,6 +148,16 @@ static inline UIEdgeInsets SeafAccountSeparatorInset(void) {
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
+    // The host controls the share extension's width. Use its laid-out width so
+    // iPad split views and window resizing do not request a screen-sized sheet.
+    // Do not scale this width: a preferred-size update can trigger another layout.
+    CGFloat width = CGRectGetWidth(self.view.bounds);
+    if (IsIpad() && width > 0) {
+        CGSize preferredSize = CGSizeMake(width, 540.0f);
+        if (!CGSizeEqualToSize(self.preferredContentSize, preferredSize)) {
+            self.preferredContentSize = preferredSize;
+        }
+    }
     [self updateTableHeight];
 }
 

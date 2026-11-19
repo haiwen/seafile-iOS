@@ -65,6 +65,13 @@ enum {
 - (void)enterAccount:(SeafConnection *)conn;
 - (void)exitAccount;
 
+// Scene lifecycle, forwarded by SeafSceneDelegate (the app has a single scene).
+- (void)sceneDidConnectWithWindow:(UIWindow *)window options:(UISceneConnectionOptions *)options;
+- (BOOL)handleOpenURL:(NSURL *)url;
+- (void)sceneDidBecomeActive;
+- (void)sceneWillEnterForeground;
+- (void)sceneDidEnterBackground;
+
 - (UIViewController *)detailViewControllerAtIndex:(int)index;
 
 - (void)showDetailView:(UIViewController *) c;
@@ -78,14 +85,15 @@ enum {
 
 + (UIViewController *)topViewController;
 + (void)checkOpenLink:(SeafFileViewController *)c;
+/// Library of the file link still being opened, nil when there is none.
+- (NSString *)pendingLinkRepo;
+/// Drops the pending file link if it still targets `repoId`.
+- (void)endGotoForRepo:(NSString *)repoId;
 
 /// The window currently presenting UI. Use instead of -[UIApplication keyWindow].
 + (UIWindow *)activeWindow;
 
 /// Height of the status bar, or 0 while no window is attached yet.
 + (CGFloat)statusBarHeight;
-
-/// Interface orientation of the active window, portrait when none can be resolved.
-+ (UIInterfaceOrientation)activeInterfaceOrientation;
 
 @end

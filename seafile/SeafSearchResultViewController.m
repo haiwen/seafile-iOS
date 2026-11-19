@@ -17,6 +17,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafPhoto.h"
 #import "SeafConnection+Search.h"
+#import "SeafNavigationBarStyler.h"
 
 #define SEARCH_STATE_INIT NSLocalizedString(@"Click \"Search\" to start", @"Seafile")
 #define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Seafile")
@@ -53,27 +54,56 @@
     UIView *bView = [[UIView alloc] initWithFrame:CGRectZero];
     bView.backgroundColor = kPrimaryBackgroundColor;
     self.tableView.backgroundView = bView;
+    self.tableView.backgroundColor = kPrimaryBackgroundColor;
     self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
 
     self.tableView.sectionHeaderTopPadding = 0;
 
-    [self.view addSubview:self.tableView];
-    
-    // Use Auto Layout to let UISearchController manage the correct presentation area
-    self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
-    [NSLayoutConstraint activateConstraints:@[
-        [self.tableView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
-        [self.tableView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.tableView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.tableView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
-    ]];
-    
+    [SeafNavigationBarStyler applyListPageBackgroundToViewController:self];
+    [SeafNavigationBarStyler pinViewToSafeArea:self.tableView inHostView:self.view];
+    // Already inside the safe area; the top inset for the search bar is set in viewDidLayoutSubviews.
+    self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+
     self.stateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];
     self.stateLabel.textAlignment = NSTextAlignmentCenter;
     [self.tableView addSubview:self.stateLabel];
     self.stateLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.stateLabel.centerXAnchor constraintEqualToAnchor:self.tableView.centerXAnchor].active = YES;
     [self.stateLabel.centerYAnchor constraintEqualToAnchor:self.tableView.centerYAnchor constant:-100].active = YES;
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    [SeafNavigationBarStyler updateTableViewBackgroundViewFrame:self.tableView];
+    // UISearchController sets its own top content inset for the search bar on the results
+    // scroll view, and it can land either way. The table is pinned to the safe area: when the
+    // navigation bar hides (iPhone) that already ends below the bar and any inset shows as an
+    // empty band; when the navigation bar stays (iPad) it ends above the bar, which then covers
+    // the first rows. Inset by the part of the bar that actually overlaps the table.
+    CGFloat top = [self searchBarOverlapWithTable];
+    UIEdgeInsets inset = self.tableView.contentInset;
+    if (fabs(inset.top - top) >= 0.5) {
+        CGPoint offset = self.tableView.contentOffset;
+        BOOL atTop = offset.y <= -inset.top + 0.5;
+        inset.top = top;
+        self.tableView.contentInset = inset;
+        self.tableView.scrollIndicatorInsets = inset;
+        if (atTop) {
+            offset.y = -top;
+            self.tableView.contentOffset = offset;
+        }
+    }
+}
+
+- (CGFloat)searchBarOverlapWithTable {
+    UIViewController *parent = self.parentViewController;
+    if (![parent isKindOfClass:[UISearchController class]]) return 0;
+    UISearchBar *bar = ((UISearchController *)parent).searchBar;
+    if (bar.hidden || !bar.window || bar.window != self.view.window) return 0;
+    CGRect barFrame = [bar convertRect:bar.bounds toView:self.view];
+    CGFloat overlap = CGRectGetMaxY(barFrame) - CGRectGetMinY(self.tableView.frame);
+    return MIN(MAX(overlap, 0), CGRectGetHeight(barFrame));
 }
 
 // Update search results when user types in the search bar.
@@ -88,7 +118,7 @@
 // Initiates search when the search button is clicked.
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
     Debug("search %@", searchBar.text);
-    self.tableView.contentInset = UIEdgeInsetsMake(CGRectGetMaxY(searchBar.frame), 0, 0, 0);
+    // No top inset: the table is pinned to the safe area, which already ends below the search bar.
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Searching ...", @"Seafile")];
     [self updateStateLabel:SEARCH_STATE_SEARCHING];
     BOOL isRoot = [_directory isKindOfClass:[SeafRepos class]];
@@ -298,10 +328,9 @@
             [appdelegate showDetailView:self.masterVC.detailViewController];
         }
     } else if ([entry isKindOfClass:[SeafDir class]]) {
-        [(SeafDir *)entry setDelegate:self];
-        SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        [controller setDirectory:(SeafDir *)entry];
-        [self.navigationController pushViewController:controller animated:YES];
+        // This page sits inside the presented search controller and has no navigation
+        // controller; the list page closes the search and pushes the folder.
+        [self.masterVC openSearchResultDirectory:(SeafDir *)entry];
     }
 }
 

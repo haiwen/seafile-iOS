@@ -8,6 +8,7 @@
 
 #import "SeafSafariStyleToolbar.h"
 #import "SeafTheme.h"
+#import "SeafNavigationBarStyler.h"
 
 @interface SeafSafariStyleToolbar ()
 
@@ -76,9 +77,8 @@
     // Back button
     _backButton = [UIButton buttonWithType:UIButtonTypeSystem];
     _backButton.translatesAutoresizingMaskIntoConstraints = NO;
-    UIImageSymbolConfiguration *backConfig = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightSemibold];
-    [_backButton setImage:[UIImage systemImageNamed:@"chevron.left" withConfiguration:backConfig] forState:UIControlStateNormal];
-    _backButton.tintColor = [UIColor labelColor];
+    [_backButton setImage:[SeafNavigationBarStyler backArrowImage] forState:UIControlStateNormal];
+    _backButton.tintColor = [SeafTheme glassBarIconColor];
     [_backContainer.contentView addSubview:_backButton];
 
     // Title label

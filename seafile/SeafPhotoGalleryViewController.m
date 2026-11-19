@@ -10,6 +10,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafNavigationBarStyler.h"
 #import "SeafPhotoContentViewController.h"
+#import "SeafPhotoInfoView.h"
 #import "Constants.h"
 #import "SeafFile.h"
 #import "SVProgressHUD.h"
@@ -23,6 +24,7 @@
 #import "SeafPhotoThumb.h"
 #import <ImageIO/ImageIO.h>
 #import "SeafMotionPhotoExtractor.h"
+#import "SeafFPIndexer.h"
 #import "SeafLivePhotoSaver.h"
 #import "SeafPGThumbnailCell.h" // Added import
 #import "SeafPGThumbnailCellViewModel.h" // Added import
@@ -401,6 +403,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
 // UI Components
 @property (nonatomic, strong) UICollectionView         *thumbnailCollection;
+/// Surface behind the strip, aligned with its safe-area content frame.
+@property (nonatomic, strong) UIView                   *thumbnailStripBackground;
+/// Width last used to center the thumbnail strip. 0 until the first layout.
+/// Recenter only when this changes, so a normal layout pass does not yank
+/// the strip away from the user's scroll position.
+@property (nonatomic, assign) CGFloat                   thumbnailStripLayoutWidth;
 @property (nonatomic, strong) UIView                   *toolbarView;
 @property (nonatomic, assign) CGFloat                   thumbnailHeight; // Thumbnail height
 @property (nonatomic, strong) UIView                   *leftThumbnailOverlay; // Added
@@ -496,7 +504,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
 // Private method declarations
 - (void)showDownloadError:(NSString *)fileName;
-- (void)dismissGalleryAnimated:(BOOL)animated;
 - (UIWindow *)heroReferenceWindow;
 
 @end
@@ -508,6 +515,10 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                    currentItem:(id<SeafPreView>)currentItem
                         master:(UIViewController<SeafDentryDelegate> *)masterVC {
     if (self = [super init]) {
+        // Files app Recents / search: the photo the user tapped (not the ones swiped to)
+        if ([(id)currentItem isKindOfClass:[SeafFile class]]) {
+            [[SeafFPIndexer shared] noteFileOpened:(SeafFile *)currentItem];
+        }
         // Save all photo files
         _preViewItems = files;
         // Current photo being viewed
@@ -644,21 +655,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         titleText = NSLocalizedString(@"View Photos", @"Seafile");
     }
 
-    // Create custom title view using styling utility
-    UILabel *titleLabel = [SeafNavigationBarStyler createCustomTitleViewWithText:titleText
-                                                            maxWidthPercentage:0.7
-                                                                 viewController:self];
-    self.navigationItem.titleView = titleLabel;
-    
-    // Create back button matching file list page style (UIButtonTypeSystem for auto dark mode adaptation)
-    UIButton *backBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    [backBtn setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
-    backBtn.frame = CGRectMake(0, 0, 30, 44);
-    backBtn.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
-    backBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    [backBtn addTarget:self action:@selector(dismissGallery) forControlEvents:UIControlEventTouchUpInside];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:backBtn];
-    
+    self.navigationItem.title = titleText;
+    self.navigationItem.titleView = nil;
+    self.navigationItem.leftBarButtonItem = [SeafNavigationBarStyler createBackButtonWithTarget:self
+                                                                                      action:@selector(dismissGallery)
+                                                                                       color:[SeafTheme glassBarIconColor]];
+
     // Set up paging view and thumbnail strip
     [self setupPagingView];
     [self setupThumbnailStrip];
@@ -676,6 +678,46 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     [self updateActiveControllersForIndex:self.currentIndex];
 }
 
+/// Frame of the scrolling thumbnail strip. Horizontal edges follow the safe
+/// area so thumbnails stay out of the Duo outer-display camera column.
+/// Vertical position follows the shared image/info boundary while it is open,
+/// just above the toolbar otherwise.
+- (CGRect)thumbnailStripFrame {
+    CGRect bounds = self.view.bounds;
+    UIEdgeInsets safe = self.view.safeAreaInsets;
+    if (self.infoVisible) return SeafPhotoInfoLayoutMake(bounds, safe).thumbnailsFrame;
+    CGFloat stripHeight = 45;
+    CGFloat toolbarHeight = 44;
+    CGFloat y = bounds.size.height - stripHeight - toolbarHeight - safe.bottom;
+    CGFloat width = MAX(0, bounds.size.width - safe.left - safe.right);
+    return CGRectMake(safe.left, y, width, stripHeight);
+}
+
+/// Keep the strip background within the same horizontal bounds as its content.
+- (CGRect)thumbnailStripBackgroundFrameForStrip:(CGRect)stripFrame {
+    return stripFrame;
+}
+
+/// The toolbar itself follows the safe area's horizontal edges.
+- (void)layoutToolbarButtons {
+    if (!self.toolbarView) return;
+    CGFloat toolbarHeight = 44;
+    NSUInteger buttonCount = 0;
+    for (UIView *v in self.toolbarView.subviews) {
+        if ([v isKindOfClass:[UIButton class]]) buttonCount += 1;
+    }
+    if (buttonCount == 0) return;
+
+    CGFloat totalWidth = CGRectGetWidth(self.toolbarView.bounds);
+    if (totalWidth <= 0) return;
+    CGFloat itemWidth = totalWidth / buttonCount;
+    for (UIView *v in self.toolbarView.subviews) {
+        if (![v isKindOfClass:[UIButton class]]) continue;
+        UIButton *btn = (UIButton *)v;
+        btn.frame = CGRectMake(btn.tag * itemWidth, 0, itemWidth, toolbarHeight);
+    }
+}
+
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
@@ -683,7 +725,6 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 
     // Position the thumbnail collection and toolbar at the bottom of the screen
     CGRect bounds = self.view.bounds;
-    CGFloat stripHeight = 45; // Use the fixed strip height
     CGFloat toolbarHeight = 44;
     CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
     
@@ -695,12 +736,23 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
           self.isChromeHidden,
           NSStringFromCGRect(prevPagingFrame));
     
-    // Adjust the location of the thumbnail collection
-    CGRect thumbnailFrame = CGRectMake(0,
-                                      bounds.size.height - stripHeight - toolbarHeight - safeAreaBottom, // Use stripHeight
-                                      bounds.size.width,
-                                      stripHeight); // Use stripHeight
+    // Thumbnail strip scrolls inside the horizontal safe area. On iPhone
+    // Duo's outer display the right 84pt is the status/camera column;
+    // laying the strip out at the full width pushes thumbnails under it.
+    CGRect thumbnailFrame = [self thumbnailStripFrame];
+    self.thumbnailStripBackground.frame = [self thumbnailStripBackgroundFrameForStrip:thumbnailFrame];
     self.thumbnailCollection.frame = thumbnailFrame;
+
+    CGFloat stripWidth = CGRectGetWidth(thumbnailFrame);
+    if (fabs(stripWidth - self.thumbnailStripLayoutWidth) > 0.5) {
+        // Record the width before recentering. setContentOffset can re-enter
+        // layout, and a second pass must see the width as already applied.
+        self.thumbnailStripLayoutWidth = stripWidth;
+        [self applyConstantCenteringInset];
+        if (!self.thumbDriving) {
+            [self centerThumbnailForIndex:self.currentIndex animated:NO];
+        }
+    }
     
     // Position the paging view so it extends `interPageSpacing` past the
     // screen edges (shifted left by halfSpacing). With `pageWidth = stride
@@ -720,14 +772,22 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // where bounds is non-zero. Done here (NOT in viewDidLoad) so the Hero
     // present animation captures a fully laid-out paging view.
     [self.pagingView reloadPagesIfNeeded];
+    // Setting the paging view's frame from inside viewDidLayoutSubviews does
+    // not lay its page containers out in this pass. When the size actually
+    // changed (rotation, Duo fold), force that pass now so each photo VC
+    // refits against the new bounds before the frame is shown.
+    if (!CGSizeEqualToSize(prevPagingFrame.size, self.pagingView.bounds.size)) {
+        [self.pagingView layoutIfNeeded];
+    }
     [self settleInitialPageIfNeeded];
 
     // Toolbar always stays at the bottom, including safe area
-    CGRect toolbarFrame = CGRectMake(0,
+    CGRect toolbarFrame = CGRectMake(self.view.safeAreaInsets.left,
                                     bounds.size.height - toolbarHeight - safeAreaBottom,
-                                    bounds.size.width,
+                                    MAX(0, bounds.size.width - self.view.safeAreaInsets.left - self.view.safeAreaInsets.right),
                                     toolbarHeight + safeAreaBottom); // Include safe area in height
     self.toolbarView.frame = toolbarFrame;
+    [self layoutToolbarButtons];
 
     [self synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:self.thumbnailCollection.frame isAnimatingReveal:NO];
 
@@ -735,6 +795,16 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     [self.view bringSubviewToFront:self.rightThumbnailOverlay];
 
     // [self updateThumbnailOverlaysVisibility]; // This is now called by the helper method
+}
+
+- (void)viewSafeAreaInsetsDidChange {
+    [super viewSafeAreaInsetsDidChange];
+    // Hiding/restoring navigation chrome changes insets without resizing the
+    // gallery. Relayout the strip and cached pages together in that case too.
+    [self.view setNeedsLayout];
+    for (UIViewController *child in self.childViewControllers) {
+        if (child.isViewLoaded) [child.view setNeedsLayout];
+    }
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
@@ -883,9 +953,13 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     layout.expandedIndex = (NSInteger)self.currentIndex;
     layout.expansionProgress = 1.0;
 
-    // Create collection view
+    // Create collection view. The real frame (including the horizontal safe
+    // area) is applied in viewDidLayoutSubviews.
     CGFloat stripHeight = 45; // Total height is fixed at 45
     CGRect frame = CGRectMake(0, self.view.bounds.size.height - stripHeight, self.view.bounds.size.width, stripHeight);
+    self.thumbnailStripBackground = [[UIView alloc] initWithFrame:frame];
+    self.thumbnailStripBackground.backgroundColor = [SeafTheme primarySurface];
+    [self.view addSubview:self.thumbnailStripBackground];
     self.thumbnailCollection = [[UICollectionView alloc] initWithFrame:frame collectionViewLayout:layout];
     self.thumbnailCollection.backgroundColor = [SeafTheme primarySurface];
     self.thumbnailCollection.showsHorizontalScrollIndicator = NO;
@@ -894,6 +968,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     [self.thumbnailCollection registerClass:[SeafPGThumbnailCell class] forCellWithReuseIdentifier:@"ThumbnailCell"]; // Changed to SeafPGThumbnailCell
     
     // Set data source and delegate
+    self.thumbnailCollection.accessibilityIdentifier = @"gallery_thumbnails";
     self.thumbnailCollection.dataSource = self;
     self.thumbnailCollection.delegate = self;
     
@@ -1080,7 +1155,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     } else {
         titleText = NSLocalizedString(@"View Photos", @"Seafile");
     }
-    [SeafNavigationBarStyler updateTitleView:(UILabel *)self.navigationItem.titleView withText:titleText];
+    self.navigationItem.title = titleText;
     [self updateStarButtonIcon];
     [self updateThumbnailOverlaysVisibility];
 
@@ -1888,6 +1963,37 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
 }
 
 - (void)dismissGalleryAnimated:(BOOL)animated {
+    [self dismissGalleryAnimated:animated completion:nil];
+}
+
+- (void)dismissGalleryAnimated:(BOOL)animated completion:(void (^)(void))completion {
+    // UIKit drops a dismiss (and its completion) issued while the gallery is
+    // still being presented or is already being dismissed, e.g. during the
+    // drag-to-dismiss. Wait for that transition, then close whatever is left.
+    UIViewController *transitioning = self.navigationController ?: self;
+    if (transitioning.isBeingPresented || transitioning.isBeingDismissed) {
+        __weak typeof(self) weakSelf = self;
+        void (^afterTransition)(void) = ^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            UIViewController *current = strongSelf.navigationController ?: strongSelf;
+            if (current.presentingViewController) {
+                // Presentation finished, or the dismiss drag was cancelled.
+                [strongSelf dismissGalleryAnimated:animated completion:completion];
+            } else if (completion) {
+                completion();
+            }
+        };
+        id<UIViewControllerTransitionCoordinator> coordinator = transitioning.transitionCoordinator;
+        if (coordinator) {
+            [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+                dispatch_async(dispatch_get_main_queue(), afterTransition);
+            }];
+        } else {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), afterTransition);
+        }
+        return;
+    }
+
     // 1. Cancel all pending network operations and clear callbacks
     [self cancelAllPendingFileOperations];
 
@@ -1903,11 +2009,15 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // 3. Clear active controllers set
     [self.activeControllers removeAllObjects];
 
-    // 4. Dismiss the view controller
-    if (self.navigationController) {
-        [self.navigationController dismissViewControllerAnimated:animated completion:nil];
-    } else if (self.presentingViewController) {
-        [self dismissViewControllerAnimated:animated completion:nil];
+    // 4. Dismiss the view controller. Ask the presenter: sent to the gallery's
+    // own container, the call only closes whatever the gallery presents itself
+    // (share sheet, alert) and leaves the emptied gallery on screen.
+    UIViewController *container = self.navigationController ?: self;
+    UIViewController *presenter = container.presentingViewController;
+    if (presenter) {
+        [presenter dismissViewControllerAnimated:animated completion:completion];
+    } else if (completion) {
+        completion();
     }
 }
 
@@ -1946,6 +2056,11 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     }
 
     // Release thumbnail collection
+    if (self.thumbnailStripBackground) {
+        [self.thumbnailStripBackground removeFromSuperview];
+        self.thumbnailStripBackground = nil;
+    }
+    self.thumbnailStripLayoutWidth = 0;
     if (self.thumbnailCollection) {
         [self.thumbnailCollection removeFromSuperview];
         self.thumbnailCollection = nil;
@@ -2395,6 +2510,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                                 toolbarH + safeAreaBottom); // Include bottom safe area
     
     self.toolbarView = [[UIView alloc] initWithFrame:tbFrame];
+    self.toolbarView.accessibilityIdentifier = @"gallery_toolbar";
     self.toolbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin;
     self.toolbarView.backgroundColor = [SeafTheme primarySurface];
     [self.view addSubview:self.toolbarView];
@@ -2486,6 +2602,7 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
                 break;
             case 2:
                 btn.tag = SeafPhotoToolbarButtonTypeInfo;
+                btn.accessibilityIdentifier = @"gallery_info_button";
                 break;
             case 3:
                 btn.tag = SeafPhotoToolbarButtonTypeStar;
@@ -2568,17 +2685,11 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // Adjust thumbnail strip position
     [UIView animateWithDuration:0.3 animations:^{
         CGRect bounds = self.view.bounds;
-        CGFloat halfHeight = bounds.size.height / 2;
-        CGFloat safeAreaBottom = 0;
-        CGFloat stripHeight = 45; // Use fixed strip height
-        
-        safeAreaBottom = self.view.safeAreaInsets.bottom;
-        
+        CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
+
         // Calculate target frame for thumbnail collection
-        CGRect targetThumbnailFrame = CGRectMake(0,
-                                               halfHeight - stripHeight, // Use stripHeight for positioning
-                                               bounds.size.width,
-                                               stripHeight); // Use stripHeight for size
+        CGRect targetThumbnailFrame = [self thumbnailStripFrame];
+        self.thumbnailStripBackground.frame = [self thumbnailStripBackgroundFrameForStrip:targetThumbnailFrame];
         self.thumbnailCollection.frame = targetThumbnailFrame;
         
         // Synchronize overlays with the new thumbnail collection frame
@@ -2586,10 +2697,11 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         
         // Toolbar stays at the bottom
         CGFloat toolbarHeight = 44;
-        self.toolbarView.frame = CGRectMake(0,
+        self.toolbarView.frame = CGRectMake(self.view.safeAreaInsets.left,
                                           bounds.size.height - toolbarHeight - safeAreaBottom,
-                                          bounds.size.width,
-                                          toolbarHeight + safeAreaBottom); // Include safe area
+                                          MAX(0, bounds.size.width - self.view.safeAreaInsets.left - self.view.safeAreaInsets.right),
+                                          toolbarHeight + safeAreaBottom);
+        [self layoutToolbarButtons]; // Include safe area
     } completion:^(BOOL finished) {
         if (finished) {
             // Ensure the collection view is scrolled to the current item so contentOffset is correct
@@ -2624,16 +2736,12 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
     // Restore thumbnail strip position
     [UIView animateWithDuration:0.3 animations:^{
         CGRect bounds = self.view.bounds;
-        CGFloat stripHeight = 45; // Use fixed strip height
         CGFloat toolbarHeight = 44;
         CGFloat safeAreaBottom = self.view.safeAreaInsets.bottom;
-        
-        
+
         // Calculate target frame for thumbnail collection
-        CGRect targetThumbnailFrame = CGRectMake(0,
-                                               bounds.size.height - stripHeight - toolbarHeight - safeAreaBottom, // Use stripHeight
-                                               bounds.size.width,
-                                               stripHeight); // Use stripHeight
+        CGRect targetThumbnailFrame = [self thumbnailStripFrame];
+        self.thumbnailStripBackground.frame = [self thumbnailStripBackgroundFrameForStrip:targetThumbnailFrame];
         self.thumbnailCollection.frame = targetThumbnailFrame;
 
         // Synchronize overlays: positions them and ensures they are NOT hidden during this reveal animation
@@ -2644,10 +2752,11 @@ static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b
         self.rightThumbnailOverlay.alpha = 1.0;
         
         // Toolbar stays at the bottom
-        self.toolbarView.frame = CGRectMake(0,
+        self.toolbarView.frame = CGRectMake(self.view.safeAreaInsets.left,
                                           bounds.size.height - toolbarHeight - safeAreaBottom,
-                                          bounds.size.width,
-                                          toolbarHeight + safeAreaBottom); // Include safe area
+                                          MAX(0, bounds.size.width - self.view.safeAreaInsets.left - self.view.safeAreaInsets.right),
+                                          toolbarHeight + safeAreaBottom);
+        [self layoutToolbarButtons]; // Include safe area
     } completion:^(BOOL finished) {
         if (finished) {
             // Ensure the collection view is scrolled to the current item so contentOffset is correct
@@ -3131,7 +3240,7 @@ static const NSUInteger kEvictMaxDistance   = 5;  // evict VCs further than ± 5
     // the gradient overlay. Without this, programmatic settle scrolls
     // sometimes leave the overlay stuck visible at the very first / last
     // index due to rounding in `setContentOffset:`.
-    CGFloat scale = MAX([UIScreen mainScreen].scale, 1.0);
+    CGFloat scale = MAX(SeafDisplayScale(self.thumbnailCollection), 1.0);
     CGFloat Epsilon = 1.0 / scale;
 
     // Compensate for centering contentInset when comparing against the
@@ -3226,18 +3335,21 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
         return;
     }
 
-    self.isChromeHidden = hidden;
-
-    if (hidden) {
-        [self applyChromeHiddenAnimated:animated reason:reason];
+    void (^changes)(void) = ^{
+        self.isChromeHidden = hidden;
+        if (hidden) {
+            [self applyChromeHiddenAnimated:animated reason:reason];
+        } else {
+            [self applyChromeVisibleAnimated:animated reason:reason];
+        }
+        [self setNeedsStatusBarAppearanceUpdate];
+        [self.view setNeedsLayout];
+    };
+    if (self.currentContentVC) {
+        [self.currentContentVC performChromeTransitionAnimated:animated && stateChanged changes:changes];
     } else {
-        [self applyChromeVisibleAnimated:animated reason:reason];
+        changes();
     }
-
-    // The status bar style/visibility piggy-backs on the chrome state via
-    // the prefersStatusBarHidden / preferredStatusBarStyle overrides, so all
-    // we need to do is request a refresh.
-    [self setNeedsStatusBarAppearanceUpdate];
 
     Debug(@"[ZoomBug] setChromeHidden DONE reason=%ld safeArea(after)=%@",
           (long)reason,
@@ -3276,15 +3388,18 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
     void (^changes)(void) = ^{
         nav.navigationBar.alpha = 0.0;
         self.thumbnailCollection.alpha = 0.0;
+        self.thumbnailStripBackground.alpha = 0.0;
         self.toolbarView.alpha = 0.0;
         self.leftThumbnailOverlay.alpha = 0.0;
         self.rightThumbnailOverlay.alpha = 0.0;
         self.pagingView.backgroundColor = [UIColor blackColor];
     };
     void (^completion)(BOOL) = ^(BOOL finished) {
+        if (!self.isChromeHidden) return;
         // Mark thumbs / toolbar / overlays as structurally hidden so they
         // don't intercept touches while invisible.
         self.thumbnailCollection.hidden = YES;
+        self.thumbnailStripBackground.hidden = YES;
         self.toolbarView.hidden = YES;
         self.leftThumbnailOverlay.hidden = YES;
         self.rightThumbnailOverlay.hidden = YES;
@@ -3309,10 +3424,6 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
 
     [self updateCachedVCsForImmersiveMode:NO];
 
-    if ([self.currentContentVC respondsToSelector:@selector(exitImmersiveAppearanceAnimated:)]) {
-        [self.currentContentVC exitImmersiveAppearanceAnimated:animated];
-    }
-
     // The nav bar may have been structurally hidden by a tap-driven
     // immersive entry. Make it visible first, then fade alpha back in.
     BOOL navBarVisuallyHidden = nav.navigationBarHidden || nav.navigationBar.alpha < 0.01;
@@ -3321,10 +3432,16 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
         nav.navigationBar.alpha = 0.0;
     }
 
+    if ([self.currentContentVC respondsToSelector:@selector(exitImmersiveAppearanceAnimated:)]) {
+        [self.currentContentVC exitImmersiveAppearanceAnimated:animated];
+    }
+
     // Bring thumbs / toolbar / overlays back into the layout tree before
     // animating their alpha — otherwise hidden=YES short-circuits the fade.
     self.thumbnailCollection.hidden = NO;
     self.thumbnailCollection.alpha = 0.0;
+    self.thumbnailStripBackground.hidden = NO;
+    self.thumbnailStripBackground.alpha = 0.0;
     self.toolbarView.hidden = NO;
     self.toolbarView.alpha = 0.0;
     self.leftThumbnailOverlay.alpha = 0.0;
@@ -3336,11 +3453,13 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
     };
     void (^bottomAnimations)(void) = ^{
         self.thumbnailCollection.alpha = 1.0;
+        self.thumbnailStripBackground.alpha = 1.0;
         self.toolbarView.alpha = 1.0;
         self.leftThumbnailOverlay.alpha = 1.0;
         self.rightThumbnailOverlay.alpha = 1.0;
     };
     void (^bottomCompletion)(BOOL) = ^(BOOL finished) {
+        if (self.isChromeHidden) return;
         // Side overlays' .hidden state is otherwise scroll-position driven;
         // call back into the existing helper to restore the right value.
         [self updateThumbnailOverlaysVisibility];
@@ -3514,6 +3633,7 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
         if (vc != self.currentContentVC) {
             vc.view.backgroundColor = bgColor;
             vc.scrollView.backgroundColor = bgColor;
+            [vc.view setNeedsLayout];
         }
     }
 }
@@ -3582,6 +3702,7 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
     // completely out so the underlying presenter view is visible.
     CGFloat chromeAlpha = MAX(0.0, 1.0 - progress / 0.3);
     self.thumbnailCollection.alpha = chromeAlpha;
+    self.thumbnailStripBackground.alpha = chromeAlpha;
     self.toolbarView.alpha = chromeAlpha;
     self.navigationController.navigationBar.alpha = chromeAlpha;
     self.leftThumbnailOverlay.alpha = chromeAlpha;
@@ -3623,6 +3744,7 @@ static UIColor *SeafGalleryChromeVisibleBackground(void) {
     CGFloat baseline = self.chromeBaselineAlpha > 0 ? self.chromeBaselineAlpha : 1.0;
     [UIView animateWithDuration:0.2 animations:^{
         self.thumbnailCollection.alpha = baseline;
+        self.thumbnailStripBackground.alpha = baseline;
         self.toolbarView.alpha = baseline;
         self.navigationController.navigationBar.alpha = 1;
         self.leftThumbnailOverlay.alpha = baseline;

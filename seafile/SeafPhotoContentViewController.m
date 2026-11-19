@@ -29,6 +29,12 @@
 @interface SeafPhotoContentViewController ()<UIScrollViewDelegate, SeafLivePhotoPlayerViewDelegate>
 @property (nonatomic, strong, readwrite) UIScrollView  *scrollView;
 @property (nonatomic, strong) UIImageView   *imageView;
+/// Scroll-view bounds size last passed to `configureForImage:`. Used to
+/// detect a window resize (rotation, iPhone Duo fold) that autoresizing
+/// already applied to the scroll view, so Aspect Fit has to be redone.
+@property (nonatomic, assign) CGSize configuredImageBounds;
+@property (nonatomic, assign) BOOL defersPhotoViewportLayout;
+@property (nonatomic, strong) UIView *photoViewportTransitionView;
 @property (nonatomic, strong) SeafPhotoInfoView *infoView;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 @property (nonatomic, strong) UITapGestureRecognizer *doubleTapGesture;
@@ -152,7 +158,10 @@
 - (void)setupScrollView {
     // Create a scroll view that fills the entire view
     self.scrollView = [[SeafZoomableScrollView alloc] initWithFrame:self.view.bounds];
-    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    // Resize explicitly so the old viewport is still available when preserving
+    // the image's scale and focal point across a chrome change or a fold.
+    self.scrollView.autoresizingMask = UIViewAutoresizingNone;
+    self.scrollView.accessibilityIdentifier = @"gallery_photo_viewport";
     self.scrollView.delegate = self;
     self.scrollView.backgroundColor = [SeafTheme primaryBackgroundColor];
     // Initial zoom scales — will be updated by configureForImage: when image loads
@@ -171,6 +180,8 @@
 
     // Create an image view — frame will be set precisely by configureForImage:
     self.imageView = [[UIImageView alloc] initWithFrame:self.scrollView.bounds];
+    self.imageView.isAccessibilityElement = YES;
+    self.imageView.accessibilityIdentifier = @"gallery_photo";
     self.imageView.contentMode = UIViewContentModeScaleToFill; // Frame is precisely calculated, no need for AspectFit
     // No autoresizingMask — imageView frame is managed by configureForImage:
     [self.scrollView addSubview:self.imageView];
@@ -206,13 +217,7 @@
 
 - (void)setupInfoView {
     // Create the info view that will display metadata
-    CGFloat infoHeight = roundf(self.view.bounds.size.height * 0.6); // 3/5 of screen height
-    
-    // Position initially off-screen at the bottom
-    CGRect infoFrame = CGRectMake(0,
-                                  self.view.bounds.size.height,
-                                  self.view.bounds.size.width,
-                                  infoHeight);
+    CGRect infoFrame = [self hiddenInfoPanelFrame];
     
     // Create info view with a slightly translucent background
     self.infoView = [[SeafPhotoInfoView alloc] initWithFrame:infoFrame];
@@ -386,10 +391,10 @@
                 UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
                 UIView *toolbarView = specificGalleryVC.toolbarView;
                 
-                // Hide thumbnails immediately without animation
+                // Keep the strip available for switching photos while inspecting properties.
                 if (thumbnailCollection) {
-                    thumbnailCollection.hidden = YES;
-                    thumbnailCollection.alpha = 0.0;
+                    thumbnailCollection.hidden = NO;
+                    thumbnailCollection.alpha = 1.0;
                 }
                 
                 // Keep toolbar visible
@@ -399,7 +404,7 @@
                 }
             }
         }
-        // When hiding info panel, restore navigation bar and thumbnails later
+        // Restore the navigation bar when dismissing the panel.
         else {
             // Add fade transition for showing navigation bar
             [navController setNavigationBarHidden:NO animated:NO];
@@ -419,10 +424,10 @@
                     toolbarView.alpha = 1.0;
                 }
                 
-                // Keep thumbnails hidden until info panel animation completes
+                // The strip moves with the panel and stays visible during dismissal.
                 if (thumbnailCollection) {
-                    thumbnailCollection.hidden = YES;
-                    thumbnailCollection.alpha = 0.0;
+                    thumbnailCollection.hidden = NO;
+                    thumbnailCollection.alpha = 1.0;
                 }
             }
         }
@@ -469,20 +474,15 @@
         }
     }
     
-    // Get bounds for calculations - these won't change during animation
-    CGRect bounds = self.view.bounds;
-    CGFloat infoHeight = roundf(bounds.size.height * 0.6); // 3/5 of height for info view
-    CGFloat scrollHeight = roundf(bounds.size.height * 0.4); // 2/5 of height for scroll view
-    
     // For non-animated transitions
     if (!animated) {
         // Update info panel position immediately
         if (show) {
-            // Slide info panel up to show 3/5 of screen
-            self.infoView.frame = CGRectMake(0, scrollHeight, bounds.size.width, infoHeight);
+            // Place the panel between thumbnails and the bottom toolbar
+            self.infoView.frame = [self infoPanelFrame];
         } else {
             // Slide info panel down off screen
-            self.infoView.frame = CGRectMake(0, bounds.size.height, bounds.size.width, infoHeight);
+            self.infoView.frame = [self hiddenInfoPanelFrame];
         }
         
         // Update scroll view frame without animation
@@ -491,7 +491,6 @@
         // Hide the info view if we're hiding it
         if (!show) {
             self.infoView.hidden = YES;
-            [self showThumbnailCollectionAfterInfoHidden];
         }
         
         return;
@@ -503,26 +502,16 @@
     
     // Calculate target frames
     CGRect infoTargetFrame = show ?
-        CGRectMake(0, scrollHeight, bounds.size.width, infoHeight) :
-        CGRectMake(0, bounds.size.height, bounds.size.width, infoHeight);
+        [self infoPanelFrame] :
+        [self hiddenInfoPanelFrame];
         
     // Calculate scroll view target frame
-    CGRect targetScrollFrame;
-    
-    if (show) {
-        // When showing info, calculate proper scroll view position
-        CGFloat visibleAreaCenterY = scrollHeight / 2.0; // Center of top 2/5 area
-        CGFloat yOffset = visibleAreaCenterY - (bounds.size.height / 2.0);
-        targetScrollFrame = CGRectMake(0, yOffset, bounds.size.width, bounds.size.height);
-    } else {
-        // When hiding info, scroll view takes full screen
-        targetScrollFrame = bounds;
-    }
+    CGRect targetScrollFrame = [self targetScrollViewFrameForInfoVisibility:show];
     
     // Animated version
     if (show) {
         // Position info view initially off-screen
-        self.infoView.frame = CGRectMake(0, bounds.size.height, bounds.size.width, infoHeight);
+        self.infoView.frame = [self hiddenInfoPanelFrame];
         
         // Animate both the info panel and scroll view together
         [UIView animateWithDuration:0.2
@@ -584,131 +573,69 @@
             // Reconfigure imageView for the restored full-screen scrollView bounds
             [self configureForImage:self.imageView.image];
             
-            // Show thumbnails after info panel is hidden
-            [self showThumbnailCollectionAfterInfoHidden];
         }];
     }
 }
 
-// Helper method to update scroll view frame separately from info panel animation
+// Resize without changing the apparent magnification of an already zoomed photo.
+// A fitted photo instead adopts the new Aspect Fit size. Both paths preserve the
+// image point at the center of the viewport (subject to its scrollable edges).
+- (void)updatePhotoViewport {
+    if (self.defersPhotoViewportLayout || self.isZooming || self.isConfiguringLayout) return;
+    CGRect frame = [self targetScrollViewFrameForInfoVisibility:self.infoVisible];
+    if (CGRectIsEmpty(frame)) return;
+    if (CGRectEqualToRect(self.scrollView.frame, frame)
+        && CGSizeEqualToSize(self.configuredImageBounds, frame.size)) return;
+
+    BOOL zoomed = self.isZoomedIn;
+    CGFloat displayedWidth = CGRectGetWidth(self.imageView.frame);
+    CGPoint focus = [self.imageView convertPoint:CGPointMake(CGRectGetMidX(self.scrollView.bounds),
+                                                             CGRectGetMidY(self.scrollView.bounds))
+                                       fromView:self.scrollView];
+    CGSize imageBounds = self.imageView.bounds.size;
+    CGPoint normalizedFocus = CGPointMake(imageBounds.width > 0 ? focus.x / imageBounds.width : 0.5,
+                                           imageBounds.height > 0 ? focus.y / imageBounds.height : 0.5);
+
+    self.isConfiguringLayout = YES;
+    self.scrollView.frame = frame;
+    [self configureForImage:self.imageView.image];
+    if (zoomed && self.imageView.image && CGRectGetWidth(self.imageView.bounds) > 0) {
+        CGFloat scale = displayedWidth / CGRectGetWidth(self.imageView.bounds);
+        // Preserve the current magnification even if the new viewport's normal
+        // resolution-based maximum is smaller. The next image resets the limit.
+        self.scrollView.maximumZoomScale = MAX(self.scrollView.maximumZoomScale, scale);
+        self.scrollView.zoomScale = MAX(self.scrollView.minimumZoomScale, scale);
+        [self centerImageInScrollViewForReason:@"viewport-resize"];
+        CGPoint target = [self.imageView convertPoint:CGPointMake(normalizedFocus.x * self.imageView.bounds.size.width,
+                                                                   normalizedFocus.y * self.imageView.bounds.size.height)
+                                              toView:self.scrollView];
+        UIEdgeInsets inset = self.scrollView.contentInset;
+        CGFloat minX = -inset.left, minY = -inset.top;
+        CGFloat maxX = MAX(minX, self.scrollView.contentSize.width - frame.size.width + inset.right);
+        CGFloat maxY = MAX(minY, self.scrollView.contentSize.height - frame.size.height + inset.bottom);
+        self.scrollView.contentOffset = CGPointMake(MIN(MAX(target.x - frame.size.width / 2.0, minX), maxX),
+                                                     MIN(MAX(target.y - frame.size.height / 2.0, minY), maxY));
+    }
+    self.isConfiguringLayout = NO;
+    self.errorPlaceholderView.frame = frame;
+    [self repositionLoadingIndicator];
+}
+
 - (void)updateScrollViewForInfoVisibility:(BOOL)infoVisible animated:(BOOL)animated {
-    CGRect bounds = self.view.bounds;
-    CGFloat scrollHeight = roundf(bounds.size.height * 0.4); // 2/5 of height for scroll view
-    
-    // Save current state
-    CGPoint contentOffset = self.scrollView.contentOffset;
-    CGFloat zoomScale = self.scrollView.zoomScale;
-    
-    // Calculate target frame
-    CGRect targetFrame;
-    
-    if (infoVisible) {
-        // Calculate the center point of the top 2/5 area - it should be at 1/5 of screen height from top
-        CGFloat visibleAreaCenterY = scrollHeight / 2.0; // Center of top 2/5 area
-        
-        // Use negative y-offset to position the scroll view's center at the center of the visible area
-        CGFloat yOffset = visibleAreaCenterY - (bounds.size.height / 2.0);
-        targetFrame = CGRectMake(0, yOffset, bounds.size.width, bounds.size.height);
-    } else {
-        // When info is hidden, scroll view takes full screen
-        targetFrame = bounds;
-    }
-    
-    // Apply changes with or without animation
-    if (animated) {
-        [UIView animateWithDuration:0.2 animations:^{
-            self.scrollView.frame = targetFrame;
-
-            // If the error placeholder view is visible, move it along with the scroll view
-            if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
-                CGRect placeholderFrame = targetFrame;
-                if (infoVisible) {
-                    placeholderFrame.origin.y += 30.0; // Adjust position to be a bit lower
-                }
-                self.errorPlaceholderView.frame = placeholderFrame;
-            }
-            
-            // Restore offset and scale
-            self.scrollView.contentOffset = contentOffset;
-            self.scrollView.zoomScale = zoomScale;
-            
-            // Update image center with animation
-            [self scrollViewDidZoom:self.scrollView];
-        } completion:^(BOOL finished) {
-            // Reconfigure imageView for the new scrollView bounds
-            [self configureForImage:self.imageView.image];
-        }];
-    } else {
-        // Apply changes immediately
-        self.scrollView.frame = targetFrame;
-
-        // If the error placeholder view is visible, move it along with the scroll view
-        if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
-            CGRect placeholderFrame = targetFrame;
-            if (infoVisible) {
-                placeholderFrame.origin.y += 30.0; // Adjust position to be a bit lower
-            }
-            self.errorPlaceholderView.frame = placeholderFrame;
-        }
-        
-        // Restore offset and scale
-        self.scrollView.contentOffset = contentOffset;
-        self.scrollView.zoomScale = zoomScale;
-        
-        // Reconfigure imageView for the new scrollView bounds
-        [self configureForImage:self.imageView.image];
-    }
-    
-    // Force immediate layout update
-    [self.scrollView setNeedsLayout];
-    [self.scrollView layoutIfNeeded];
+    [self updatePhotoViewport];
 }
 
 // Helper method to update frames based on info visibility - separate from animation
 - (void)updateViewFramesForInfoVisibility:(BOOL)infoVisible {
-    CGRect bounds = self.view.bounds;
-    CGFloat infoHeight = roundf(bounds.size.height * 0.6); // 3/5 of height for info view
-    CGFloat scrollHeight = roundf(bounds.size.height * 0.4); // 2/5 of height for scroll view
-    
     // Update info panel position
     if (infoVisible) {
-        self.infoView.frame = CGRectMake(0, scrollHeight, bounds.size.width, infoHeight);
+        self.infoView.frame = [self infoPanelFrame];
     } else {
-        self.infoView.frame = CGRectMake(0, bounds.size.height, bounds.size.width, infoHeight);
+        self.infoView.frame = [self hiddenInfoPanelFrame];
     }
     
     // Update scroll view separately - use NO for animation to avoid unwanted animations during layout updates
     [self updateScrollViewForInfoVisibility:infoVisible animated:NO];
-}
-
-// Show thumbnails after hiding info panel
-- (void)showThumbnailCollectionAfterInfoHidden {
-    UIViewController *parentVC = self.parentViewController;
-    while (parentVC && ![parentVC isKindOfClass:[UINavigationController class]]) {
-        parentVC = parentVC.parentViewController;
-    }
-    
-    if ([parentVC isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *navController = (UINavigationController *)parentVC;
-        UIViewController *galleryVC = navController.topViewController;
-        
-        if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
-                SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
-                UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
-                if (thumbnailCollection) {
-                    // Add fade-in animation effect instead of showing immediately
-                    thumbnailCollection.hidden = NO;
-                    thumbnailCollection.alpha = 0.0;
-                    
-                    [UIView animateWithDuration:0.15
-                                          delay:0.0
-                                        options:UIViewAnimationOptionCurveEaseIn
-                                     animations:^{
-                        thumbnailCollection.alpha = 1.0;
-                    } completion:nil];
-                }
-        }
-    }
 }
 
 // Lightweight info state sync for page transitions.
@@ -731,8 +658,6 @@
     [self updateGestureRecognizersForInfoVisibility:show];
 
     CGRect bounds = self.view.bounds;
-    CGFloat infoHeight = roundf(bounds.size.height * 0.6);
-    CGFloat scrollHeight = roundf(bounds.size.height * 0.4);
 
     if (show) {
         // Background: normal (not immersive black)
@@ -744,17 +669,15 @@
             self.livePhotoPlayerView.backgroundColor = normalBgColor;
         }
 
-        // Position info view in lower 3/5
-        self.infoView.frame = CGRectMake(0, scrollHeight, bounds.size.width, infoHeight);
+        // Use the same safe-area geometry as the gallery chrome
+        self.infoView.frame = [self infoPanelFrame];
         self.infoView.hidden = NO;
 
         // Reset info scroll to top for the new photo
         [self.infoView.infoScrollView setContentOffset:CGPointZero animated:NO];
 
-        // Position scroll view so its center aligns with center of upper 2/5
-        CGFloat visibleAreaCenterY = scrollHeight / 2.0;
-        CGFloat yOffset = visibleAreaCenterY - (bounds.size.height / 2.0);
-        self.scrollView.frame = CGRectMake(0, yOffset, bounds.size.width, bounds.size.height);
+        // Fit the whole photo into the remaining image area
+        self.scrollView.frame = [self targetScrollViewFrameForInfoVisibility:YES];
 
         // Reposition error placeholder if visible
         if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
@@ -796,8 +719,8 @@
     } else {
         // Hide info and restore full-screen scroll view
         self.infoView.hidden = YES;
-        self.infoView.frame = CGRectMake(0, bounds.size.height, bounds.size.width, infoHeight);
-        self.scrollView.frame = bounds;
+        self.infoView.frame = [self hiddenInfoPanelFrame];
+        self.scrollView.frame = [self targetScrollViewFrameForInfoVisibility:NO];
 
         // Reposition error placeholder
         if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
@@ -1115,42 +1038,10 @@
           self.isZooming,
           self.scrollView.zoomScale);
 
-    // Save current focal point (normalized 0~1 coordinates relative to image content)
-    CGPoint contentOffset = self.scrollView.contentOffset;
-    CGFloat zoomScale = self.scrollView.zoomScale;
-    CGSize contentSize = self.scrollView.contentSize;
-    
-    CGFloat normalizedCenterX = 0.5, normalizedCenterY = 0.5;
-    if (contentSize.width > 0 && contentSize.height > 0) {
-        normalizedCenterX = (contentOffset.x + self.scrollView.bounds.size.width  / 2.0) / contentSize.width;
-        normalizedCenterY = (contentOffset.y + self.scrollView.bounds.size.height / 2.0) / contentSize.height;
-    }
-    
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        // Reconfigure imageView and zoom scales for the new bounds
-        [self configureForImage:self.imageView.image];
-        
-        // Restore relative zoom scale
-        CGFloat newZoomScale = MIN(zoomScale, self.scrollView.maximumZoomScale);
-        newZoomScale = MAX(newZoomScale, self.scrollView.minimumZoomScale);
-        self.scrollView.zoomScale = newZoomScale;
-        
-        // Restore focal point position
-        CGFloat maxOffsetX = self.scrollView.contentSize.width  - self.scrollView.bounds.size.width;
-        CGFloat maxOffsetY = self.scrollView.contentSize.height - self.scrollView.bounds.size.height;
-        CGFloat newOffsetX = normalizedCenterX * self.scrollView.contentSize.width  - self.scrollView.bounds.size.width  / 2.0;
-        CGFloat newOffsetY = normalizedCenterY * self.scrollView.contentSize.height - self.scrollView.bounds.size.height / 2.0;
-        self.scrollView.contentOffset = CGPointMake(
-            MAX(0, MIN(newOffsetX, maxOffsetX)),
-            MAX(0, MIN(newOffsetY, maxOffsetY))
-        );
-
-        [self centerImageInScrollViewForReason:@"viewWillTransitionToSize"];
-        
-        // Refresh profile rows to adapt to new width
-        if (self.infoVisible) {
-            [self loadProfileDataIfNeeded];
-        }
+        [self.view setNeedsLayout];
+        [self.view layoutIfNeeded];
+        if (self.infoVisible) [self loadProfileDataIfNeeded];
     } completion:nil];
 }
 
@@ -1281,6 +1172,7 @@
     
     // Skip immersive mode logic during programmatic layout resets
     if (self.isConfiguringLayout) return;
+    [self.view setNeedsLayout];
     
     BOOL isAtMinZoom = (scale <= scrollView.minimumZoomScale + 0.01);
 
@@ -1823,78 +1715,46 @@
 
     // Update frames based on current state
 
-    // CRITICAL — only run the heavy reconfigure chain (which calls
-    // configureForImage: and force-resets zoomScale) when the scrollView's
-    // frame actually needs to change. UIKit fires viewDidLayoutSubviews for
-    // many incidental reasons (e.g. when entering immersive mode the gallery
-    // animates alphas / pageVC.view.backgroundColor, which can mark the
-    // hierarchy needsLayout). If we unconditionally reconfigure here while
-    // the user is mid-pinch, configureForImage: will interrupt the gesture
-    // — and historically it could even pollute imageView.bounds. Now that
-    // configureForImage: is safe against mid-zoom calls (it pre-resets
-    // zoomScale before touching imageView.frame), the worst case is just
-    // wasted work plus a snap-out of the user's gesture, which is still
-    // user-visible. Guard with a frame-equality check so the reconfigure
-    // only fires on actual layout changes (orientation, info-panel toggle,
-    // first appearance, etc.).
-    CGRect targetScrollFrame = [self targetScrollViewFrameForInfoVisibility:self.infoVisible];
-    if (!CGRectEqualToRect(self.scrollView.frame, targetScrollFrame)) {
-        [self updateViewFramesForInfoVisibility:self.infoVisible];
-    } else if (!self.isZooming) {
-        // Frames already correct — just keep contentInset centered. This is
-        // cheap and idempotent OUTSIDE of an active pinch. During a pinch
-        // (`isZooming == YES`) `scrollViewDidZoom:` is already calling
-        // `centerImageInScrollViewForReason:@"scrollViewDidZoom"` on every
-        // zoom event, so the layout-time call here is purely redundant. It
-        // is also actively harmful: while the user is mid-pinch the gallery
-        // chrome may be animating (status bar / nav bar fade-out triggers a
-        // `safeAreaInsets` change, which UIKit fans out as a
-        // `viewDidLayoutSubviews` to every photo VC in the page strip).
-        // Doing an extra `setContentInset:` write on the active VC's scroll
-        // view in the middle of a pinch causes UIScrollView to re-run its
-        // internal clamp / dispatch chain. Combined with the chrome
-        // animation already monopolizing the main thread, that produces the
-        // "image suddenly jumps a few points" frame-skip the user reported
-        // around the moment immersive mode kicks in.
-        [self centerImageInScrollViewForReason:@"viewDidLayoutSubviews"];
-    }
+    self.infoView.frame = self.infoVisible ? [self infoPanelFrame] : [self hiddenInfoPanelFrame];
+    [self updatePhotoViewport];
 }
 
-// Compute the scrollView frame that updateScrollViewForInfoVisibility:
-// would target for the given infoVisible state, without applying it.
-// Kept in sync with the calculation in updateScrollViewForInfoVisibility:.
+// Keep the photo page aligned with the gallery strip and toolbar.
+- (SeafPhotoInfoLayout)infoLayout {
+    // Cached pages sit offscreen inside the pager, so UIKit can report different
+    // safe-area insets for them. Use the gallery's insets for every page.
+    UIView *layoutView = [self.parentViewController isKindOfClass:[SeafPhotoGalleryViewController class]]
+        ? self.parentViewController.view : self.view;
+    return SeafPhotoInfoLayoutMake(self.view.bounds, layoutView.safeAreaInsets);
+}
+
+- (CGRect)infoPanelFrame {
+    return [self infoLayout].infoFrame;
+}
+
+- (CGRect)hiddenInfoPanelFrame {
+    CGRect frame = [self infoPanelFrame];
+    frame.origin.y = CGRectGetMaxY(self.view.bounds);
+    return frame;
+}
+
 - (CGRect)targetScrollViewFrameForInfoVisibility:(BOOL)infoVisible {
-    CGRect bounds = self.view.bounds;
-    if (infoVisible) {
-        CGFloat scrollHeight = roundf(bounds.size.height * 0.4);
-        CGFloat visibleAreaCenterY = scrollHeight / 2.0;
-        CGFloat yOffset = visibleAreaCenterY - (bounds.size.height / 2.0);
-        return CGRectMake(0, yOffset, bounds.size.width, bounds.size.height);
-    }
-    return bounds;
+    if (infoVisible) return [self infoLayout].imageFrame;
+    if ([self.delegate respondsToSelector:@selector(photoContentViewControllerIsChromeHidden:)]
+        && [self.delegate photoContentViewControllerIsChromeHidden:self]) return self.view.bounds;
+    UIView *layoutView = [self.parentViewController isKindOfClass:[SeafPhotoGalleryViewController class]]
+        ? self.parentViewController.view : self.view;
+    return SeafPhotoBrowsingFrameMake(self.view.bounds, layoutView.safeAreaInsets);
 }
 
-// Anchor the loading spinner + progress label to the center of the *visible*
-// image area. When `infoVisible == NO` that's the full view; when the info
-// panel is open the visible image area is the upper 2/5 of the view (the
-// lower 3/5 is covered by `infoView`), so anchoring at `self.view.center`
-// would drop the spinner inside the info panel.
+// Anchor loading feedback to the photo's visible area in every browsing mode.
 - (void)repositionLoadingIndicator {
     if (!self.activityIndicator || !self.progressLabel) return;
-    CGRect bounds = self.view.bounds;
-    if (CGRectIsEmpty(bounds)) return;
-
-    CGFloat centerX = bounds.size.width / 2.0;
-    CGFloat centerY;
-    if (self.infoVisible) {
-        CGFloat scrollHeight = roundf(bounds.size.height * 0.4); // mirrors targetScrollViewFrameForInfoVisibility:
-        centerY = scrollHeight / 2.0;
-    } else {
-        centerY = bounds.size.height / 2.0;
-    }
-    self.activityIndicator.center = CGPointMake(centerX, centerY);
+    CGRect frame = [self targetScrollViewFrameForInfoVisibility:self.infoVisible];
+    if (CGRectIsEmpty(frame)) return;
+    self.activityIndicator.center = CGPointMake(CGRectGetMidX(frame), CGRectGetMidY(frame));
     CGFloat labelOffset = self.activityIndicator.bounds.size.height / 2.0 + 25.0;
-    self.progressLabel.center = CGPointMake(centerX, centerY + labelOffset);
+    self.progressLabel.center = CGPointMake(CGRectGetMidX(frame), CGRectGetMidY(frame) + labelOffset);
 }
 
 // New method to setup the loading indicator and progress label
@@ -2073,6 +1933,11 @@
 
 // Method to prepare the view controller for reuse (called from gallery when recycling)
 - (void)prepareForReuse {
+    if (self.photoViewportTransitionView) {
+        [self.photoViewportTransitionView removeFromSuperview];
+        self.photoViewportTransitionView = nil;
+        self.scrollView.hidden = NO;
+    }
     
     // Remove error view if it exists
     if (self.errorPlaceholderView) {
@@ -2416,6 +2281,63 @@
 
 #pragma mark - Immersive Viewing Mode (Zoom-triggered)
 
+- (void)performChromeTransitionAnimated:(BOOL)animated changes:(void (^)(void))changes {
+    UIView *previous = self.photoViewportTransitionView;
+    BOOL photoWasHidden = self.scrollView.hidden && !previous;
+    UIView *transition = nil;
+    UIImageView *photo = nil;
+    if (animated && self.imageView.image && !self.isZooming
+        && (!self.scrollView.hidden || previous) && !CGRectIsEmpty(self.scrollView.frame)) {
+        // Reuse the displayed presentation geometry if another tap interrupts
+        // the animation, so a quick reversal also starts where the photo is.
+        CALayer *viewportLayer = previous.layer.presentationLayer ?: previous.layer;
+        CGRect viewport = previous ? viewportLayer.frame : self.scrollView.frame;
+        UIView *previousPhoto = previous.subviews.firstObject;
+        CALayer *photoLayer = previousPhoto.layer.presentationLayer ?: previousPhoto.layer;
+        CGRect imageFrame = previous ? photoLayer.frame
+            : CGRectOffset([self.imageView convertRect:self.imageView.bounds toView:self.view],
+                           -viewport.origin.x, -viewport.origin.y);
+        transition = [[UIView alloc] initWithFrame:viewport];
+        transition.clipsToBounds = YES;
+        transition.userInteractionEnabled = NO;
+        photo = [[UIImageView alloc] initWithImage:self.imageView.image];
+        photo.frame = imageFrame;
+        [transition addSubview:photo];
+        [self.view insertSubview:transition aboveSubview:self.scrollView];
+    }
+    self.photoViewportTransitionView = transition;
+    [previous removeFromSuperview];
+    self.scrollView.hidden = photoWasHidden || transition != nil;
+
+    // Safe-area callbacks may arrive while the navigation/status bars change.
+    // Apply one final refit after those callbacks, underneath the visual copy.
+    self.defersPhotoViewportLayout = YES;
+    changes();
+    [self.navigationController.view layoutIfNeeded];
+    [self.view layoutIfNeeded];
+    self.defersPhotoViewportLayout = NO;
+    [UIView performWithoutAnimation:^{
+        [self updatePhotoViewport];
+    }];
+    if (!transition) return;
+
+    CGRect viewport = self.scrollView.frame;
+    CGRect imageFrame = CGRectOffset([self.imageView convertRect:self.imageView.bounds toView:self.view],
+                                    -viewport.origin.x, -viewport.origin.y);
+    [UIView animateWithDuration:0.2 delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+        transition.frame = viewport;
+        photo.frame = imageFrame;
+    } completion:^(BOOL finished) {
+        [transition removeFromSuperview];
+        if (self.photoViewportTransitionView == transition) {
+            self.photoViewportTransitionView = nil;
+            self.scrollView.hidden = NO;
+        }
+    }];
+}
+
 /// Transitions ContentVC's own appearance to immersive mode (black backgrounds, hide Live badge).
 /// Called when zoom scale first crosses into zoomed-in territory.
 - (void)enterImmersiveAppearanceAnimated:(BOOL)animated {
@@ -2472,6 +2394,7 @@
         return;
     }
     
+    self.imageView.accessibilityLabel = self.seafFile.name ?: NSLocalizedString(@"Photo", @"Seafile");
     CGSize imageSize  = image.size;  // Logical point size (e.g. 4032×3024)
     CGSize boundsSize = self.scrollView.bounds.size;
     
@@ -2506,12 +2429,12 @@
     // We also need minimumZoomScale<=1.0 BEFORE this reset, otherwise UIScrollView
     // clamps the new zoomScale into the existing min/max range. Skip the assignment
     // entirely when already at 1.0 to avoid spurious delegate work.
+    BOOL wasConfiguringLayout = self.isConfiguringLayout;
     self.isConfiguringLayout = YES;
     self.scrollView.minimumZoomScale = 1.0;
     if (fabs(self.scrollView.zoomScale - 1.0) > 0.001) {
         self.scrollView.zoomScale = 1.0;
     }
-    self.isConfiguringLayout = NO;
 
     // ④ Now that zoomScale==1.0, frame assignment is unambiguous.
     self.imageView.frame = CGRectMake(0, 0, fitWidth, fitHeight);
@@ -2531,8 +2454,19 @@
     maxScale = MIN(maxScale, 10.0); // Cap at 10x to limit memory
     self.scrollView.maximumZoomScale = maxScale;
     
-    // ⑦ Center the image using contentInset
+    // ⑦ Center the image using contentInset, then pin the offset. Setting
+    // the inset alone leaves contentOffset at 0, which scrolls the padding
+    // away and sticks the image to the top of a taller window.
+    // Record the size first: assigning contentOffset can re-enter layout,
+    // and that pass must not call configureForImage: again.
+    self.configuredImageBounds = boundsSize;
     [self centerImageInScrollViewForReason:@"configureForImage"];
+    UIEdgeInsets fittedInset = self.scrollView.contentInset;
+    CGPoint fittedOffset = CGPointMake(-fittedInset.left, -fittedInset.top);
+    if (!CGPointEqualToPoint(self.scrollView.contentOffset, fittedOffset)) {
+        self.scrollView.contentOffset = fittedOffset;
+    }
+    self.isConfiguringLayout = wasConfiguringLayout;
 }
 
 // Center the imageView within the scrollView using contentInset.

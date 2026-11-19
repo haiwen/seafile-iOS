@@ -38,8 +38,6 @@
                             <rect key="frame" x="0.0" y="133" width="315" height="44"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="44" id="H76-zI-vpV"/>
-                                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="315" id="a3N-SX-nCM"/>
-                                <constraint firstAttribute="width" constant="315" id="rcP-KQ-j7R"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                             <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="emailAddress" returnKeyType="next" textContentType="username"/>
@@ -86,8 +84,6 @@
                             <rect key="frame" x="0.0" y="177.5" width="315" height="44"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="44" id="4KI-WK-lU1"/>
-                                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="315" id="f1o-DM-mmE"/>
-                                <constraint firstAttribute="width" constant="315" id="iCy-K2-yt6"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                             <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="alphabet" returnKeyType="go" secureTextEntry="YES" textContentType="password"/>

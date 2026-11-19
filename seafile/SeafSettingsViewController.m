@@ -37,6 +37,10 @@
 #define CELL_PADDING_HORIZONTAL 10.0
 #define CELL_CORNER_RADIUS 10.0
 
+static const CGFloat kSettingsCellContentInset = 16.0;
+static const CGFloat kSettingsCellHorizontalSpacing = 12.0;
+static const CGFloat kSettingsHeaderFontSize = 14.0;
+
 enum {
     SECTION_ACCOUNT = 0,
     SECTION_CAMERA,
@@ -59,6 +63,8 @@ enum CAMERA_CELL{
     CELL_CAMERA_DESTINATION,
     /// Programmatic row; visible only when photo access is Limited.
     CELL_CAMERA_MANAGE_PHOTOS,
+    // The programmatic "Pause Auto Upload" switch row follows the manage-photos
+    // row when that row is shown; see -backupControlRow.
 };
 
 enum UPDOWNLOAD_CELL{
@@ -86,6 +92,18 @@ enum {
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 #define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
 
+/// Run card-content alignment after UIKit has laid out its standard labels/accessory.
+@interface SeafSettingsCell : UITableViewCell
+@property (nonatomic, copy) void (^layoutCardContent)(UITableViewCell *cell);
+@end
+
+@implementation SeafSettingsCell
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    if (self.layoutCardContent) self.layoutCardContent(self);
+}
+@end
+
 @interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, CLLocationManagerDelegate, SeafBackupGuideDelegate>
 // Holds the cell that displays the username.
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
@@ -110,6 +128,16 @@ enum {
 /// The data source reads this, never the live connection flag, so section row
 /// counts cannot change between two data-source queries without a reloadData.
 @property (nonatomic) BOOL wikiSectionVisible;
+/// Snapshot of whether the "Pause Auto Upload" row is shown. Refreshed only
+/// when the Camera section or the whole table reloads, like wikiSectionVisible.
+@property (nonatomic) BOOL backupControlRowVisible;
+/// Built once and reused, like the storyboard switch cells: upload progress
+/// reloads the Camera section often, and a new cell would swap the switch out
+/// from under the user's finger.
+@property (strong, nonatomic) UITableViewCell *backupPauseCell;
+@property (strong, nonatomic) UISwitch *backupPauseSwitch;
+@property (strong, nonatomic) UILabel *backupPausedLabel;
+@property (nonatomic) CGFloat lastLayoutWidth;
 
 
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -139,6 +167,9 @@ enum {
 @property int state;// Stores the current state of settings options selected.
 
 @property NSString *version;// Stores the current version of the application.
+
+/// Whether the storyboard switches/labels have been pinned with Auto Layout.
+@property (nonatomic) BOOL settingsSwitchConstraintsInstalled;
 @end
 
 @implementation SeafSettingsViewController
@@ -181,6 +212,8 @@ enum {
     _connection.autoSync = autoSync;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];
+    // Shows or hides the pause / resume backup row.
+    [self reloadSectionIfConsistent:SECTION_CAMERA];
 }
 
 - (void)setVideoSync:(BOOL)videoSync
@@ -271,7 +304,7 @@ enum {
         self.autoSync = _autoSyncSwitch.on;
         _syncRepoCell.detailTextLabel.text = @"";
         _connection.autoSyncRepo = nil;
-        [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
+        [_connection scheduleCheckAutoSync];
     }
 }
 
@@ -388,6 +421,7 @@ enum {
 {
     [super viewDidLoad];
     self.wikiSectionVisible = _connection.isServerWikiSupported;
+    self.backupControlRowVisible = [self shouldShowBackupControlRow];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _nameCell.detailTextLabel.textColor = BAR_COLOR_ORANGE;
     _nameCell.detailTextLabel.text = NSLocalizedString(@"Switch Account", @"Seafile");
@@ -452,6 +486,11 @@ enum {
     };
     
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+    if ([SeafNavigationBarStyler usesSystemBarsOnIpad]) {
+        [SeafNavigationBarStyler applyOpaqueAppearanceToNavigationItem:self.navigationItem
+                                                      backgroundColor:[SeafTheme primaryBackgroundColor]];
+        self.extendedLayoutIncludesOpaqueBars = YES;
+    }
     self.tableView.sectionHeaderTopPadding = 0;
     
     self.tableView.backgroundColor = kPrimaryBackgroundColor;
@@ -467,6 +506,30 @@ enum {
                                                  name:SeafServerInfoUpdatedNotification
                                                object:nil];
 
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    CGFloat width = CGRectGetWidth(self.tableView.bounds);
+    if (fabs(width - self.lastLayoutWidth) > 0.5) {
+        self.lastLayoutWidth = width;
+        // Row heights depend on wrapping, including when the sidebar is resized.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView beginUpdates];
+            [self.tableView endUpdates];
+        });
+    }
+    for (UITableViewCell *cell in self.tableView.visibleCells) {
+        [self layoutSettingsChromeForCell:cell];
+    }
+    NSInteger sections = [self.tableView numberOfSections];
+    for (NSInteger section = 0; section < sections; section++) {
+        UIView *header = [self.tableView headerViewForSection:section];
+        if (header) {
+            [self layoutSettingsHeader:header];
+        }
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -612,6 +675,9 @@ enum {
 /// "Invalid batch updates detected" because the Wiki row count went 1 -> 0.
 - (void)reloadSectionIfConsistent:(NSInteger)section
 {
+    if (section == SECTION_CAMERA) {
+        self.backupControlRowVisible = [self shouldShowBackupControlRow];
+    }
     if (!self.isViewLoaded) {
         return;
     }
@@ -638,6 +704,7 @@ enum {
 - (void)reloadTableData
 {
     self.wikiSectionVisible = _connection.isServerWikiSupported;
+    self.backupControlRowVisible = [self shouldShowBackupControlRow];
     [self.tableView reloadData];
 }
 
@@ -671,6 +738,25 @@ enum {
     return indexPath.section == SECTION_CAMERA
         && indexPath.row == CELL_CAMERA_MANAGE_PHOTOS
         && [self shouldShowManageSelectedPhotosRow];
+}
+
+/// The pause / resume row needs a backup target, otherwise there is nothing to pause.
+- (BOOL)shouldShowBackupControlRow
+{
+    return _connection.isAutoSync && _connection.autoSyncRepo.length > 0;
+}
+
+/// Last row of the Camera section, after the optional manage-photos row.
+- (NSInteger)backupControlRow
+{
+    return CELL_CAMERA_MANAGE_PHOTOS + ([self shouldShowManageSelectedPhotosRow] ? 1 : 0);
+}
+
+- (BOOL)isBackupControlIndexPath:(NSIndexPath *)indexPath
+{
+    return indexPath.section == SECTION_CAMERA
+        && self.backupControlRowVisible
+        && indexPath.row == [self backupControlRow];
 }
 
 /// Maps a logical section index to the corresponding storyboard section index.
@@ -711,35 +797,157 @@ enum {
         if ([self shouldShowManageSelectedPhotosRow]) {
             count += 1;
         }
+        if (self.backupControlRowVisible) {
+            count += 1;
+        }
     }
     return count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    UITableViewCell *cell;
     if ([self isAppearanceIndexPath:indexPath]) {
-        return [self appearanceCell];
+        cell = [self appearanceCell];
+    } else if ([self isManageSelectedPhotosIndexPath:indexPath]) {
+        cell = [self manageSelectedPhotosCell];
+    } else if ([self isBackupControlIndexPath:indexPath]) {
+        cell = [self backupControlCell];
+    } else {
+        cell = [super tableView:tableView cellForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
     }
-    if ([self isManageSelectedPhotosIndexPath:indexPath]) {
-        return [self manageSelectedPhotosCell];
+    [self configureSettingsAccessoryForCell:cell atIndexPath:indexPath];
+    [self configureFontsForCell:cell];
+    return cell;
+}
+
+// Configure content before measuring, including storyboard rows whose title is empty.
+- (void)configureSettingsAccessoryForCell:(UITableViewCell *)cell atIndexPath:(NSIndexPath *)indexPath
+{
+    // Appearance cell keeps its segmented-control accessoryView untouched.
+    if ([self isAppearanceIndexPath:indexPath] || [self isBackupControlIndexPath:indexPath]) {
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    } else
+    // Check if this is the logout cell, privacy policy, or manage-selected-photos cell
+    if (indexPath.section == SECTION_LOGOUT ||
+        (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY) ||
+        [self isManageSelectedPhotosIndexPath:indexPath]) {
+        // Create a custom accessory view with the chevron shifted 5px to the left
+        // Instead of using the standard accessory type
+        cell.accessoryType = UITableViewCellAccessoryNone;
+
+        // Create a custom view for the accessory
+        UIView *customAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 20)];
+
+        // Create a chevron image view
+        UIImage *chevronImage = nil;
+        chevronImage = [UIImage systemImageNamed:@"chevron.right"];
+        if (!chevronImage) {
+            chevronImage = [UIImage imageNamed:@"arrowright2"];
+        }
+        UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:chevronImage];
+
+        // Keep the chevron within its accessory bounds.
+        chevronImageView.frame = CGRectMake(0, 2, 12, 16); // Reduced size from 15x20 to 12x16
+        chevronImageView.contentMode = UIViewContentModeScaleAspectFit;
+        chevronImageView.tintColor = [SeafTheme tertiaryText];
+
+        [customAccessoryView addSubview:chevronImageView];
+        cell.accessoryView = customAccessoryView;
+
+        // Only set the specific logout styling for the logout cell
+        if (indexPath.section == SECTION_LOGOUT) {
+            // Ensure the logout text is set properly
+            cell.textLabel.text = NSLocalizedString(@"Log out", @"Seafile");
+            cell.textLabel.textAlignment = NSTextAlignmentLeft;
+            cell.textLabel.textColor = BAR_COLOR_ORANGE;
+        }
+    } else {
+        // Card padding supplies the trailing spacing.
+        cell.accessoryView = nil;
+        cell.accessoryType = UITableViewCellAccessoryNone;
     }
-    return [super tableView:tableView cellForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
+
+}
+
+static void ConfigureSettingsLabel(UILabel *label, UIFont *font)
+{
+    label.font = font;
+    label.adjustsFontForContentSizeCategory = NO;
+    label.numberOfLines = 0;
+    label.lineBreakMode = NSLineBreakByWordWrapping;
+}
+
+- (void)configureFontsForCell:(UITableViewCell *)cell
+{
+    UIFont *font = [UIFont systemFontOfSize:17.0];
+    UILabel *title = cell.textLabel;
+    UILabel *detail = cell.detailTextLabel;
+    ConfigureSettingsLabel(title, font);
+    ConfigureSettingsLabel(detail, cell == self.backupPauseCell ? [UIFont systemFontOfSize:14.0] : font);
+    for (UIView *view in cell.contentView.subviews) {
+        if (view != title && view != detail && [view isKindOfClass:UILabel.class]) {
+            ConfigureSettingsLabel((UILabel *)view, font);
+        }
+    }
+}
+
+// Measure and position the labels using the same wrapping rule.
+static CGFloat SettingsLabelFrames(UILabel *title, UILabel *detail, CGFloat width, CGRect *titleFrame, CGRect *detailFrame)
+{
+    CGSize fittingSize = CGSizeMake(width, CGFLOAT_MAX);
+    CGSize titleSize = title.text.length ? [title sizeThatFits:fittingSize] : CGSizeZero;
+    *titleFrame = CGRectMake(0, 0, width, titleSize.height);
+    *detailFrame = CGRectZero;
+    if (!detail.text.length || detail.hidden) return titleSize.height;
+
+    CGSize detailSize = [detail sizeThatFits:fittingSize];
+    CGFloat detailWidth = ceil(detailSize.width);
+    if (ceil(titleSize.width) + kSettingsCellHorizontalSpacing + detailWidth > width) {
+        *detailFrame = CGRectMake(0, titleSize.height + 4.0, width, detailSize.height);
+        return CGRectGetMaxY(*detailFrame);
+    }
+
+    CGFloat height = MAX(titleSize.height, detailSize.height);
+    *titleFrame = CGRectMake(0, (height - titleSize.height) / 2,
+                             width - detailWidth - kSettingsCellHorizontalSpacing, titleSize.height);
+    *detailFrame = CGRectMake(width - detailWidth, (height - detailSize.height) / 2, detailWidth, detailSize.height);
+    return height;
+}
+
+- (CGFloat)heightForSettingsCell:(UITableViewCell *)cell width:(CGFloat)width
+{
+    CGFloat available = MAX(1, width - 2 * (CELL_PADDING_HORIZONTAL + kSettingsCellContentInset));
+    CGFloat accessoryWidth = cell.accessoryView.bounds.size.width;
+    if (accessoryWidth > 0) available = MAX(1, available - accessoryWidth - kSettingsCellHorizontalSpacing);
+    for (UIView *view in cell.contentView.subviews) {
+        if ([view isKindOfClass:UISwitch.class]) {
+            available = MAX(1, available - view.bounds.size.width - kSettingsCellHorizontalSpacing);
+        }
+    }
+    UILabel *title = cell.textLabel;
+    UILabel *detail = cell.detailTextLabel;
+    CGRect titleFrame, detailFrame;
+    CGFloat height = SettingsLabelFrames(title, detail, available, &titleFrame, &detailFrame);
+    for (UIView *view in cell.contentView.subviews) {
+        if (![view isKindOfClass:UILabel.class] || view == title || view == detail || view.hidden) continue;
+        height = MAX(height, [view sizeThatFits:CGSizeMake(available, CGFLOAT_MAX)].height);
+    }
+    return MAX(50, ceil(height) + 20);
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == SECTION_WIKI && ![self shouldShowWikiSection]) {
-        return 0;
-    }
-    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
-        return 50;
-    }
-    return [super tableView:tableView heightForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
+    if (indexPath.section == SECTION_WIKI && ![self shouldShowWikiSection]) return 0;
+    UITableViewCell *cell = [self tableView:tableView cellForRowAtIndexPath:indexPath];
+    CGFloat width = CGRectGetWidth(tableView.bounds) - tableView.safeAreaInsets.left - tableView.safeAreaInsets.right;
+    return [self heightForSettingsCell:cell width:width];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]) {
+    if ([self isAppearanceIndexPath:indexPath] || [self isManageSelectedPhotosIndexPath:indexPath]
+        || [self isBackupControlIndexPath:indexPath]) {
         return 1;
     }
     return [super tableView:tableView indentationLevelForRowAtIndexPath:[self storyboardIndexPathForIndexPath:indexPath]];
@@ -747,9 +955,8 @@ enum {
 
 - (UITableViewCell *)appearanceCell
 {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Appearance", @"Seafile");
-    cell.textLabel.font = [UIFont systemFontOfSize:17.0];
 
     NSArray *items = @[NSLocalizedString(@"System", @"Seafile"),
                        NSLocalizedString(@"Light", @"Seafile"),
@@ -764,11 +971,42 @@ enum {
 
 - (UITableViewCell *)manageSelectedPhotosCell
 {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.text = NSLocalizedString(@"Manage Selected Photos", @"Seafile");
-    cell.textLabel.font = [UIFont systemFontOfSize:17.0];
     cell.textLabel.textColor = [SeafTheme primaryText];
     return cell;
+}
+
+/// Keep the switch aligned with the title and paused status in narrow windows.
+- (UITableViewCell *)backupControlCell
+{
+    if (!self.backupPauseCell) {
+        UITableViewCell *cell = [[SeafSettingsCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+        cell.textLabel.text = NSLocalizedString(@"Pause Auto Upload", @"Seafile");
+        cell.detailTextLabel.text = NSLocalizedString(@"Paused", @"Seafile");
+        UISwitch *pauseSwitch = [[UISwitch alloc] init];
+        pauseSwitch.accessibilityIdentifier = @"backup_pause_switch";
+        pauseSwitch.accessibilityLabel = cell.textLabel.text;
+        [pauseSwitch addTarget:self action:@selector(backupPauseSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+        cell.accessoryView = pauseSwitch;
+        self.backupPauseCell = cell;
+        self.backupPauseSwitch = pauseSwitch;
+        self.backupPausedLabel = cell.detailTextLabel;
+    }
+    BOOL paused = _connection.photoBackupPaused;
+    [self.backupPauseSwitch setOn:paused animated:NO];
+    self.backupPausedLabel.hidden = !paused;
+    return self.backupPauseCell;
+}
+
+- (void)backupPauseSwitchFlip:(UISwitch *)sender
+{
+    _connection.photoBackupPaused = sender.on;
+    self.backupPausedLabel.hidden = !sender.on;
+    // Drops the "N photos remain" header status while paused.
+    [self reloadSectionIfConsistent:SECTION_CAMERA];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkBackgroundUploadStatus];
 }
 
 - (void)appearanceSegmentedChanged:(UISegmentedControl *)sender
@@ -776,9 +1014,169 @@ enum {
     [SeafTheme setPreference:(SeafThemePreference)sender.selectedSegmentIndex];
 }
 
+#pragma mark - Duo outer-display layout
+
+// How far `view` still sticks into the table's horizontal unsafe area.
+// Measured from the table, not from the view's own safeAreaInsets. The outer
+// display keeps an ~84pt status/camera column on the right. The table insets
+// each cell's contentView into the safe area, but not the cell itself, so the
+// card / separator added directly to the cell and the custom section headers
+// still need this.
+- (UIEdgeInsets)safeInsetsOfViewInTable:(UIView *)view
+{
+    if (!view || !self.tableView) return UIEdgeInsetsZero;
+    CGFloat tableWidth = CGRectGetWidth(self.tableView.bounds);
+    CGFloat width = CGRectGetWidth(view.bounds);
+    if (tableWidth < 1 || width < 1) return UIEdgeInsetsZero;
+    UIEdgeInsets tableSafe = self.tableView.safeAreaInsets;
+    if (!view.superview) {
+        // A header just built in viewForHeader is not in the hierarchy yet.
+        // It is created at the table's width and placed at x = 0.
+        CGFloat right = tableSafe.right - (tableWidth - width);
+        return UIEdgeInsetsMake(0, tableSafe.left, 0, MAX(0, right));
+    }
+    CGRect rect = [view convertRect:view.bounds toView:self.tableView];
+    CGFloat left = tableSafe.left - CGRectGetMinX(rect);
+    CGFloat right = CGRectGetMaxX(rect) - (tableWidth - tableSafe.right);
+    return UIEdgeInsetsMake(0, MAX(0, left), 0, MAX(0, right));
+}
+
+- (void)layoutSettingsChromeForCell:(UITableViewCell *)cell
+{
+    UIEdgeInsets safe = [self safeInsetsOfViewInTable:cell];
+    UIView *card = [cell viewWithTag:999];
+    if (card) {
+        card.autoresizingMask = UIViewAutoresizingFlexibleHeight;
+        CGFloat left = CELL_PADDING_HORIZONTAL + safe.left;
+        CGFloat right = CELL_PADDING_HORIZONTAL + safe.right;
+        card.frame = CGRectMake(left,
+                                 0,
+                                 MAX(0, CGRectGetWidth(cell.bounds) - left - right),
+                                 CGRectGetHeight(cell.bounds));
+    }
+    if (card) {
+        CGRect inner = CGRectInset(card.frame, kSettingsCellContentInset, 0);
+        CGRect contentRect = [cell.contentView convertRect:inner fromView:cell];
+        cell.contentView.insetsLayoutMarginsFromSafeArea = NO;
+        cell.contentView.preservesSuperviewLayoutMargins = NO;
+        UIEdgeInsets margins = UIEdgeInsetsMake(0, MAX(0, CGRectGetMinX(contentRect)), 0,
+                                                MAX(0, CGRectGetWidth(cell.contentView.bounds) - CGRectGetMaxX(contentRect)));
+        if (!UIEdgeInsetsEqualToEdgeInsets(cell.contentView.layoutMargins, margins)) {
+            cell.contentView.layoutMargins = margins;
+        }
+        // Standard cells use UIKit's frame layout. Keep both labels and the
+        // accessory within the same card padding after that layout completes.
+        CGFloat trailing = CGRectGetMaxX(contentRect);
+        if (cell.accessoryView) {
+            CGRect accessory = cell.accessoryView.frame;
+            accessory.origin.x = CGRectGetMaxX(inner) - accessory.size.width;
+            cell.accessoryView.frame = accessory;
+            CGFloat accessoryLeading = accessory.origin.x - kSettingsCellHorizontalSpacing;
+            trailing = MIN(trailing, [cell.contentView convertPoint:CGPointMake(accessoryLeading, 0) fromView:cell].x);
+        }
+        UILabel *detail = cell.detailTextLabel;
+        UILabel *label = cell.textLabel;
+        CGFloat leading = CGRectGetMinX(contentRect);
+        CGFloat width = MAX(1, trailing - leading);
+        CGRect titleFrame, detailFrame;
+        CGFloat height = SettingsLabelFrames(label, detail, width, &titleFrame, &detailFrame);
+        CGFloat top = (contentRect.size.height - height) / 2;
+        if (label.text.length) {
+            label.frame = CGRectOffset(titleFrame, leading, top);
+        }
+        if (detail.text.length && !detail.hidden) {
+            detail.frame = CGRectOffset(detailFrame, leading, top);
+        }
+        BOOL hasSwitch = NO;
+        for (UIView *view in cell.contentView.subviews) {
+            if ([view isKindOfClass:UISwitch.class]) hasSwitch = YES;
+        }
+        if (!hasSwitch) {
+            // Storyboard-only labels, such as Privacy Policy, use frame layout.
+            for (UIView *view in cell.contentView.subviews) {
+                if (![view isKindOfClass:UILabel.class] || view == label || view == detail) continue;
+                CGFloat height = [view sizeThatFits:CGSizeMake(width, CGFLOAT_MAX)].height;
+                view.frame = CGRectMake(leading, (contentRect.size.height - height) / 2, width, height);
+            }
+        }
+    }
+    UIView *separator = [cell viewWithTag:888];
+    if (separator) {
+        CGFloat leftInset = SEAF_SEPARATOR_LEFT_INSET + safe.left;
+        CGFloat rightInset = SEAF_SEPARATOR_RIGHT_INSET + safe.right;
+        CGFloat height = SEAF_SEPARATOR_HEIGHT_IN(cell);
+        separator.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
+        separator.frame = CGRectMake(leftInset,
+                                      CGRectGetHeight(cell.bounds) - height,
+                                      MAX(0, CGRectGetWidth(cell.bounds) - leftInset - rightInset),
+                                      height);
+    }
+}
+
+- (void)pinSwitch:(UISwitch *)toggle label:(UILabel *)label
+{
+    UIView *content = toggle.superview;
+    if (!toggle || !content) return;
+    toggle.translatesAutoresizingMaskIntoConstraints = NO;
+    [toggle setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [toggle setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+    // Card-relative margins are updated after every cell layout.
+    NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray arrayWithObjects:
+        [toggle.trailingAnchor constraintEqualToAnchor:content.layoutMarginsGuide.trailingAnchor],
+        [toggle.centerYAnchor constraintEqualToAnchor:content.centerYAnchor],
+        nil];
+
+    if (label && label.superview == content) {
+        label.translatesAutoresizingMaskIntoConstraints = NO;
+        label.numberOfLines = 0;
+        label.lineBreakMode = NSLineBreakByWordWrapping;
+        [label setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
+        [constraints addObject:[label.leadingAnchor constraintEqualToAnchor:content.layoutMarginsGuide.leadingAnchor]];
+        [constraints addObject:[label.centerYAnchor constraintEqualToAnchor:content.centerYAnchor]];
+        // Multiline labels grow with the measured row height.
+        [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:toggle.leadingAnchor constant:-kSettingsCellHorizontalSpacing]];
+    }
+    [NSLayoutConstraint activateConstraints:constraints];
+}
+
+- (void)installSettingsSwitchConstraintsIfNeeded
+{
+    if (self.settingsSwitchConstraintsInstalled) return;
+    if (!_enableTouchIDSwitch.superview) return;
+    [self pinSwitch:_enableTouchIDSwitch label:_enableTouchIDLabel];
+    [self pinSwitch:_autoSyncSwitch label:_autoCameraUploadLabel];
+    [self pinSwitch:_videoSyncSwitch label:_videoSyncLabel];
+    [self pinSwitch:_wifiOnlySwitch label:_wifiOnlyLabel];
+    [self pinSwitch:_backgroundSyncSwitch label:_backgroundSyncLable];
+    [self pinSwitch:_enableUploadHeic label:_enableHeicLabel];
+    [self pinSwitch:_useJpgSwitch label:_useJpgLabel];
+    [self pinSwitch:_wikiSwitch label:_wikiSwitchLabel];
+    [self pinSwitch:_autoClearPasswdSwitch label:_autoClearPasswdLabel];
+    [self pinSwitch:_localDecrySwitch label:_localDecryLabel];
+    self.settingsSwitchConstraintsInstalled = YES;
+}
+
+- (void)layoutSettingsHeader:(UIView *)header
+{
+    UILabel *titleLabel = (UILabel *)[header viewWithTag:770];
+    if (![titleLabel isKindOfClass:[UILabel class]]) return;
+    UIEdgeInsets safe = [self safeInsetsOfViewInTable:header];
+    CGFloat leading = 30.0 + safe.left;
+    CGFloat trailing = 16.0 + safe.right;
+    CGFloat width = MAX(0, CGRectGetWidth(header.bounds) - leading - trailing);
+    titleLabel.frame = CGRectMake(leading, 5, width, [titleLabel sizeThatFits:CGSizeMake(width, CGFLOAT_MAX)].height);
+}
+
 #pragma mark - Table view delegate
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if ([cell isKindOfClass:[SeafSettingsCell class]]) {
+        __weak typeof(self) weakSelf = self;
+        ((SeafSettingsCell *)cell).layoutCardContent = ^(UITableViewCell *layoutCell) {
+            [weakSelf layoutSettingsChromeForCell:layoutCell];
+        };
+    }
     // Ensure cell and content view are clear to show the custom background
     cell.backgroundColor = [UIColor clearColor];
     cell.contentView.backgroundColor = [UIColor clearColor];
@@ -788,53 +1186,6 @@ enum {
     // For all cells, apply indentation
     cell.indentationLevel = 1;  // Each indentation level is typically 10 points
     cell.indentationWidth = 30; // Override the default width
-
-    // Appearance cell keeps its segmented-control accessoryView untouched.
-    if ([self isAppearanceIndexPath:indexPath]) {
-        cell.accessoryType = UITableViewCellAccessoryNone;
-    } else
-    // Check if this is the logout cell, privacy policy, or manage-selected-photos cell
-    if (indexPath.section == SECTION_LOGOUT ||
-        (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY) ||
-        [self isManageSelectedPhotosIndexPath:indexPath]) {
-        // Create a custom accessory view with the chevron shifted 5px to the left
-        // Instead of using the standard accessory type
-        cell.accessoryType = UITableViewCellAccessoryNone;
-        
-        // Create a custom view for the accessory
-        UIView *customAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 20)];
-        
-        // Create a chevron image view
-        UIImage *chevronImage = nil;
-        chevronImage = [UIImage systemImageNamed:@"chevron.right"];
-        if (!chevronImage) {
-            chevronImage = [UIImage imageNamed:@"arrowright2"];
-        }
-        UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:chevronImage];
-        
-        // Set the frame to position it 5px to the left with smaller dimensions
-        chevronImageView.frame = CGRectMake(-5, 2, 12, 16); // Reduced size from 15x20 to 12x16
-        chevronImageView.contentMode = UIViewContentModeScaleAspectFit;
-        chevronImageView.tintColor = [SeafTheme tertiaryText];
-        
-        [customAccessoryView addSubview:chevronImageView];
-        cell.accessoryView = customAccessoryView;
-        
-        // Only set the specific logout styling for the logout cell
-        if (indexPath.section == SECTION_LOGOUT) {
-            // Ensure the logout text is set properly
-            cell.textLabel.text = NSLocalizedString(@"Log out", @"Seafile");
-            cell.textLabel.textAlignment = NSTextAlignmentLeft;
-            cell.textLabel.textColor = BAR_COLOR_ORANGE;
-            cell.textLabel.font = [UIFont systemFontOfSize:17.0];
-        }
-    } else {
-        // For other cells, add the spacer accessory view
-        UIView *spacerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, 1)];
-        spacerView.backgroundColor = [UIColor clearColor];
-        cell.accessoryView = spacerView;
-        cell.accessoryType = UITableViewCellAccessoryNone;
-    }
 
     // Define vertical padding (minimal, just for visual separation if needed)
     CGFloat verticalPadding = 0; // Remove extra vertical padding
@@ -870,40 +1221,22 @@ enum {
         cardBackgroundView.layer.cornerRadius = 0; // No rounding for middle cells
     }
 
-    // Calculate frame relative to cell bounds with horizontal padding
-    // Make height almost full cell height
-    CGRect cardFrame = CGRectMake(CELL_PADDING_HORIZONTAL,
-                                0, // Start at the top
-                                cell.bounds.size.width - (2 * CELL_PADDING_HORIZONTAL),
-                                cell.bounds.size.height); // Fill height
-
-    cardBackgroundView.frame = cardFrame;
-    cardBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-
-    // Insert the custom background view BELOW the cell's content view
+    // Insert the custom background view BELOW the cell's content view.
+    // Frame follows the safe area; FlexibleWidth would stretch it back under
+    // the Duo camera column on the next bounds change.
+    cardBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     [cell insertSubview:cardBackgroundView belowSubview:cell.contentView];
 
     // Add separator line for all cells except the last one in each section
     if (!isLastCell) {
-        // Create a separator view
         UIView *separatorView = [[UIView alloc] init];
         separatorView.tag = 888;
         separatorView.backgroundColor = [SeafTheme separator];
-        
-        // Calculate separator frame - place it at the bottom of the cell
-        CGFloat separatorHeight = SEAF_SEPARATOR_HEIGHT;
-        CGFloat leftInset = SEAF_SEPARATOR_LEFT_INSET;
-        CGRect separatorFrame = CGRectMake(leftInset,
-                                        cell.bounds.size.height - separatorHeight,
-                                        cell.bounds.size.width - leftInset - SEAF_SEPARATOR_RIGHT_INSET,
-                                        separatorHeight);
-        
-        separatorView.frame = separatorFrame;
-        separatorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-        
-        // Add the separator on top of the card background but below content view
+        separatorView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
         [cell insertSubview:separatorView aboveSubview:cardBackgroundView];
     }
+    [self layoutSettingsChromeForCell:cell];
+    [self installSettingsSwitchConstraintsIfNeeded];
 
     // Manage Separators - hide default separators
     cell.separatorInset = UIEdgeInsetsMake(0, 0, 0, cell.bounds.size.width);
@@ -1052,7 +1385,9 @@ enum {
     };
     if (section < SECTION_ACCOUNT || section > SECTION_LOGOUT)
         return nil;
-    if (section == SECTION_CAMERA && _connection.inAutoSync) {
+    // While paused the switch row shows the state (as on Android); a leftover
+    // "N photos remain" from before the pause would be misleading.
+    if (section == SECTION_CAMERA && _connection.inAutoSync && !_connection.photoBackupPaused) {
         NSString *remainStr = @"";
         if (_connection.isCheckingPhotoLibrary) {
             remainStr = NSLocalizedString(@"Prepare for backup", @"Seafile");
@@ -1083,17 +1418,20 @@ enum {
         return nil;
     }
     
-    // Create a custom header view
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 35)];
+    // Width matches the table so safe-area math works before the header is inserted.
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 35)];
     headerView.backgroundColor = [UIColor clearColor];
-    
-    // Create a label with 30-point left indentation
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 5, tableView.frame.size.width - 40, 30)];
-    titleLabel.font = [UIFont systemFontOfSize:14];
+
+    UILabel *titleLabel = [[UILabel alloc] init];
+    titleLabel.tag = 770;
+    titleLabel.font = [UIFont systemFontOfSize:kSettingsHeaderFontSize];
+    titleLabel.numberOfLines = 0;
     titleLabel.textColor = [SeafTheme secondaryText];
     titleLabel.text = title;
+    titleLabel.lineBreakMode = NSLineBreakByWordWrapping;
     [headerView addSubview:titleLabel];
-    
+    [self layoutSettingsHeader:headerView];
+
     return headerView;
 }
 
@@ -1106,7 +1444,10 @@ enum {
     if (!title || [title isEqualToString:@""]) {
         return 12; // Small height for empty header
     }
-    return 35; // Standard height for headers with titles
+    UIFont *font = [UIFont systemFontOfSize:kSettingsHeaderFontSize];
+    CGFloat width = MAX(1, tableView.bounds.size.width - tableView.safeAreaInsets.left - tableView.safeAreaInsets.right - 46);
+    CGRect bounds = [title boundingRectWithSize:CGSizeMake(width, CGFLOAT_MAX) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:font} context:nil];
+    return MAX(35, ceil(bounds.size.height) + 10);
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
@@ -1147,9 +1488,11 @@ enum {
 {
     _connection.autoSyncRepo = repo.repoId;
     _syncRepoCell.detailTextLabel.text = repo.name;
-    [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
+    [_connection scheduleCheckAutoSync];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];
+    // Shows the pause / resume backup row once a backup target exists.
+    [self reloadSectionIfConsistent:SECTION_CAMERA];
 }
 
 - (void)setAutoSyncRepo:(SeafRepo *)repo

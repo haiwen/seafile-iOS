@@ -31,6 +31,8 @@
 - (BOOL)isVisible;
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)(void))handler;
+/// `cancelHandler` runs when the user gives up on the prompt (Cancel).
+- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)(void))handler cancelHandler:(void (^ __nullable)(void))cancelHandler;
 - (void)checkTouchId:(void (^)(bool success))handler;
 - (void)checkTouchId:(void (^)(bool success))handler cancelHandler:(void (^ __nullable)(void))cancelHandler;
 - (UIAlertController *)generateAlert:(NSArray *)arr withTitle:(NSString *)title handler:(void (^)(UIAlertAction *action))handler;

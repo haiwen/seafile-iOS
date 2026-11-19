@@ -353,6 +353,15 @@
             [self cleanup];
         }
         if (self.udir.connection) {
+            // Files app index: list the directory again rather than trusting
+            // the local name (the server renames on conflicts) and oid (the
+            // operation substitutes a random one when the reply lacks it).
+            // Photo auto-upload stays out of the index.
+            if (!self.uploadFileAutoSync && self.udir.repoId.length > 0 && self.udir.path.length > 0) {
+                [[SeafConnection activeFileProviderIndexer] fp_refreshDirectoryOfRepo:self.udir.repoId
+                                                                                 path:self.udir.path
+                                                                           connection:self.udir.connection];
+            }
             [self.udir.connection notifyFileProviderChange:SeafFileProviderSignalTypeWorkingSet repoId:self.udir.repoId];
         }
     }

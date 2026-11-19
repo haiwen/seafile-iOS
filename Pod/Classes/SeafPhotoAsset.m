@@ -80,12 +80,13 @@
 - (NSString *)assetName:(PHAsset *)asset {
     NSString *name;
     if ([asset valueForKey:@"filename"]) {
-        // Private KVC key; same value as originalFilename on supported OS versions.
+        // Private KVC key; same value as the resource filename on supported OS versions.
         name = [asset valueForKey:@"filename"];
     } else {
-        //it's very slow to get the originalFilename
+        //it's very slow to get the resource filename
         NSArray *resources = [PHAssetResource assetResourcesForAsset:asset];
-        name = ((PHAssetResource*)resources.firstObject).originalFilename;
+        PHAssetResource *resource = resources.firstObject;
+        name = resource ? [Utils filenameForAssetResource:resource] : nil;
     }
     if ([name hasPrefix:@"IMG_"]) {
         name = [self nameFormat:[name substringFromIndex:4] creationDate:asset.creationDate];

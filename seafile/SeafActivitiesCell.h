@@ -26,7 +26,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (strong, nonatomic) IBOutlet UILabel *repoNameLabel;
 
+@property (strong, nonatomic) UIView *cellBackgroundView;
+
+@property (nonatomic, assign) BOOL isLastCell;
+
 - (void)showWithImage:(NSURL *)imageURL author:(NSString *)author operation:(NSString *)operation time:(NSString *)time attributedDetail:(NSAttributedString *)attributedDetail repoName:(NSString *)repoName;
+
+- (void)updateCellStyle:(BOOL)isFirstCell isLastCell:(BOOL)isLastCell;
+- (void)updateSeparatorInset:(BOOL)isLastCell;
 
 @end
 

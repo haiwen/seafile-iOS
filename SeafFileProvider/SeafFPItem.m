@@ -128,20 +128,27 @@ static const BOOL kSeafFPWriteOperationsEnabled = YES;
 
 + (instancetype)itemForRepo:(SeafRepo *)repo
 {
+    return [self itemForRepositoryMetadata:@{@"repoId":repo.repoId, @"name":repo.name ?: repo.repoId,
+        @"mtime":@(repo.mtime), @"perm":repo.perm ?: @"", @"ooid":repo.ooid ?: @""}];
+}
+
++ (instancetype)itemForRepositoryMetadata:(NSDictionary *)info
+{
     SeafFPItem *item = [SeafFPItem new];
-    item.itemIdentifier = [SeafFPIdentifier identifierForRepo:repo.repoId];
+    item.itemIdentifier = [SeafFPIdentifier identifierForRepo:info[@"repoId"]];
     item.parentItemIdentifier = NSFileProviderRootContainerItemIdentifier;
-    item.filename = repo.name ?: repo.repoId;
+    item.filename = [info[@"name"] length] > 0 ? info[@"name"] : info[@"repoId"];
     item.contentType = UTTypeFolder;
     item.isDirectory = YES;
     // Libraries themselves cannot be renamed, moved or deleted from Files.
     // AllowsAddingSubItems is kept for read-only libraries too, see
     // baseCapabilitiesForDirectory:; createItem rejects the write.
     item.capabilities = [self baseCapabilitiesForDirectory:YES];
-    NSString *metadata = [NSString stringWithFormat:@"%lld|%@|%@", repo.mtime, repo.name ?: @"", repo.perm ?: @""];
-    item.itemVersion = [self versionWithContent:repo.ooid metadata:metadata];
-    if (repo.mtime > 0) {
-        item.contentModificationDate = [NSDate dateWithTimeIntervalSince1970:repo.mtime];
+    long long mtime = [info[@"mtime"] longLongValue];
+    NSString *metadata = [NSString stringWithFormat:@"%lld|%@|%@", mtime, info[@"name"] ?: @"", info[@"perm"] ?: @""];
+    item.itemVersion = [self versionWithContent:info[@"ooid"] metadata:metadata];
+    if (mtime > 0) {
+        item.contentModificationDate = [NSDate dateWithTimeIntervalSince1970:mtime];
     }
     return item;
 }

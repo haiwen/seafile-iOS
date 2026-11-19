@@ -64,6 +64,13 @@
 - (void)checkPhotos:(BOOL)force;
 
 /**
+ Whether a photo is queued that may be uploaded now. A photo whose upload
+ failed is left alone for a while (SeafRetryBackoff); when every queued photo
+ is in that state there is nothing for a periodic check to do.
+ */
+- (BOOL)hasPhotosDueForUpload;
+
+/**
  Prepares the tool by initializing necessary data structures for the backup process.
  */
 - (void)prepareForBackup;

@@ -94,10 +94,12 @@ static UIImage *SeafDefaultAvatarImage(void)
     self.imageView.image = SeafDefaultAvatarImage();
     NSURL *url = [NSURL URLWithString:avatarURL];
     if (!url) return;
+    // Read on the main thread: traits are not safe to access from the session queue.
+    CGFloat scale = SeafDisplayScale(self);
     __weak typeof(self) wself = self;
     self.avatarTask = [[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (error || data.length == 0) return;
-        UIImage *img = [UIImage imageWithData:data scale:[UIScreen mainScreen].scale];
+        UIImage *img = [UIImage imageWithData:data scale:scale];
         if (!img) return;
         [cache setObject:img forKey:avatarURL];
         dispatch_async(dispatch_get_main_queue(), ^{

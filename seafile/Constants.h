@@ -39,8 +39,15 @@
 #define SEAF_SEPARATOR_RIGHT_INSET    16.0
 #define SEAF_SEPARATOR_INSET UIEdgeInsetsMake(0, SEAF_SEPARATOR_LEFT_INSET, 0, SEAF_SEPARATOR_RIGHT_INSET)
 
-// Native separator height: 1 physical pixel on any screen scale
-#define SEAF_SEPARATOR_HEIGHT         (1.0 / [UIScreen mainScreen].scale)
+// Scale of the screen `env` is on. 0 until it is in a window, so fall back to
+// the main screen then.
+static inline CGFloat SeafDisplayScale(id<UITraitEnvironment> env) {
+    CGFloat scale = env.traitCollection.displayScale;
+    return scale > 0 ? scale : [UIScreen mainScreen].scale;
+}
+
+// Native separator height: 1 physical pixel on the screen `env` is on
+#define SEAF_SEPARATOR_HEIGHT_IN(env) (1.0 / SeafDisplayScale(env))
 
 #define UIColorFromRGB(rgbValue) [UIColor \
     colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \

@@ -34,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)rootItemWithName:(NSString *)name;
 + (instancetype)trashItem;
 + (instancetype)itemForRepo:(SeafRepo *)repo;
++ (instancetype)itemForRepositoryMetadata:(NSDictionary *)metadata;
 + (instancetype)itemForRecord:(SeafFPRecord *)record repoEditable:(BOOL)editable;
 
 - (void)applyDecoration:(nullable SeafFPDecoration *)decoration;

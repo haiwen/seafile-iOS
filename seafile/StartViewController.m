@@ -62,11 +62,32 @@
     // Set up welcome and message labels
     self.welcomeLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Welcome to %@", @"Seafile"), APP_NAME];
     self.msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
+    [self pinWelcomeLabelToSafeArea];
 
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     [self.tableView reloadData];
+}
+
+// Table cells keep their content out of side safe-area insets (landscape notch,
+// iPhone Duo's outer-display camera column); centre the header on the same area.
+// The message label follows through its width/centerX constraints.
+- (void)pinWelcomeLabelToSafeArea
+{
+    UIView *header = self.welcomeLabel.superview;
+    if (!header) return;
+    for (NSLayoutConstraint *c in header.constraints) {
+        BOOL involvesLabel = (c.firstItem == self.welcomeLabel || c.secondItem == self.welcomeLabel);
+        BOOL horizontalEdge = (c.firstAttribute == NSLayoutAttributeLeading || c.firstAttribute == NSLayoutAttributeTrailing);
+        if (involvesLabel && horizontalEdge) {
+            c.active = NO;
+        }
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [self.welcomeLabel.leadingAnchor constraintEqualToAnchor:header.safeAreaLayoutGuide.leadingAnchor],
+        [self.welcomeLabel.trailingAnchor constraintEqualToAnchor:header.safeAreaLayoutGuide.trailingAnchor],
+    ]];
 }
 
 // Present an action sheet for importing or removing client certificates

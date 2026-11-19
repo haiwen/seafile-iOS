@@ -14,6 +14,9 @@
 
 @interface SeafWikiWebViewController () <WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate, UIDocumentInteractionControllerDelegate>
 @property (nonatomic, strong) WKWebView *webView;
+// Re-routes of a login redirect through mobile-login (see -shouldRerouteToMobileLogin).
+@property (nonatomic, assign) NSUInteger mobileLoginReroutes;
+@property (nonatomic, strong) NSDate *mobileLoginRerouteWindowStart;
 @property (nonatomic, copy) NSString *urlString;
 @property (nonatomic, strong) SeafConnection *connection;
 @property (nonatomic, assign) BOOL showSafariToolbar;
@@ -404,6 +407,22 @@
     }
 }
 
+/// A login redirect is answered by loading mobile-login, which signs the web
+/// view in and sends it back. When the page then redirects to the login page
+/// again (the session cookie was not kept) that would go round for as long as
+/// the page is open: after a few re-routes in a short time the login page is
+/// let through instead.
+- (BOOL)shouldRerouteToMobileLogin
+{
+    NSDate *now = [NSDate date];
+    if (!self.mobileLoginRerouteWindowStart || [now timeIntervalSinceDate:self.mobileLoginRerouteWindowStart] > 30.0) {
+        self.mobileLoginRerouteWindowStart = now;
+        self.mobileLoginReroutes = 0;
+    }
+    self.mobileLoginReroutes += 1;
+    return self.mobileLoginReroutes <= 3;
+}
+
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
     NSString *abs = navigationAction.request.URL.absoluteString ?: @"";
     // Only intercept login redirects from the Seafile server's own domain.
@@ -412,7 +431,8 @@
     NSString *serverHost = [NSURL URLWithString:self.connection.address].host;
     NSString *requestHost = navigationAction.request.URL.host;
     BOOL isSameHost = (serverHost && requestHost && [requestHost isEqualToString:serverHost]);
-    if (isSameHost && [abs containsString:@"login/?next"] && ![abs containsString:@"mobile-login/?next"]) {
+    if (isSameHost && [abs containsString:@"login/?next"] && ![abs containsString:@"mobile-login/?next"]
+        && [self shouldRerouteToMobileLogin]) {
         decisionHandler(WKNavigationActionPolicyCancel);
         // Extract the original target URL from the login redirect's 'next' parameter
         NSString *targetURL = nil;

@@ -375,6 +375,11 @@
     if (![repoArray isKindOfClass:[NSArray class]]) {
         return NO; // Not a library list at all
     }
+    // A malformed member must not turn a complete list into a false removal.
+    for (id info in repoArray) {
+        if (![info isKindOfClass:[NSDictionary class]] || ![info[@"repo_id"] isKindOfClass:[NSString class]]
+            || [info[@"repo_id"] length] == 0 || ![info[@"repo_name"] isKindOfClass:[NSString class]]) return NO;
+    }
     // An empty list is a valid, complete answer (account without libraries):
     // it must reach the delegate and the callers like any other listing.
     
@@ -423,19 +428,38 @@
 // [{"password_need": false, "name": "test", "mtime": null, "owner": "pithier@163.com", "root": "e6098c7bfc18bb0221eac54988649ed3b884f901", "size": [7224782], "type": "repo", "id": "640fd90d-ef4e-490d-be1c-b34c24040da7", "desc": "dasdadwd"}]
 - (void)loadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
+    id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+    if (!indexer) {
+        [self loadContentWithIndexHandler:nil success:success failure:failure];
+        return;
+    }
+    [indexer fp_prepareRepositoryRequestForConnection:self.connection completion:^(SeafFPRepositorySnapshotHandler handler) {
+        [self loadContentWithIndexHandler:handler success:success failure:failure];
+    }];
+}
+
+- (void)loadContentWithIndexHandler:(SeafFPRepositorySnapshotHandler)indexHandler
+                            success:(void (^)(SeafDir *dir))success
+                            failure:(void (^)(SeafDir *dir, NSError *error))failure
+{
     [self.connection sendRequest:self.url
                     success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
              self.state = SEAF_DENTRY_UPTODATE;
              if ([self handleData:JSON]) {
+                 if (indexHandler) indexHandler([self fp_repositorySnapshot]);
                  NSData *data = [Utils JSONEncode:JSON];
                  [self.connection setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_REPOS entityName:ENTITY_OBJECT];
                  if (success)
                      success(self);
-             } else if (failure) {
-                 // Malformed answer: callers must not hang waiting for either block.
-                 failure(self, [Utils defaultError]);
+             } else {
+                 // Malformed answer: neither callers nor the delegate may hang
+                 // waiting for an outcome.
+                 NSError *error = [Utils defaultError];
+                 if (failure)
+                     failure(self, error);
+                 [self.delegate download:self failed:error];
              }
          }
      }
@@ -454,8 +478,28 @@
     id JSON = [self.connection getCachedJson:KEY_REPOS entityName:ENTITY_OBJECT];
     if (!JSON)
         return NO;
-    [self handleData:JSON];
+    if (![self handleData:JSON]) return NO;
+    id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+    if ([indexer respondsToSelector:@selector(fp_indexRepositorySnapshot:connection:fromCache:requestStartSeq:)]) {
+        [indexer fp_indexRepositorySnapshot:[self fp_repositorySnapshot] connection:self.connection fromCache:YES requestStartSeq:-1];
+    }
     return YES;
+}
+
+- (NSArray<NSDictionary *> *)fp_repositorySnapshot
+{
+    @synchronized (self) {
+        NSMutableArray *snapshot = [NSMutableArray array];
+        NSMutableSet *seen = [NSMutableSet set];
+        for (SeafRepo *repo in [self.items copy]) {
+            if (![repo isKindOfClass:[SeafRepo class]] || repo.repoId.length == 0 || [seen containsObject:repo.repoId]) continue;
+            [seen addObject:repo.repoId];
+            [snapshot addObject:@{@"repoId":repo.repoId, @"name":repo.name ?: repo.repoId,
+                @"perm":repo.perm ?: @"", @"editable":@(repo.editable), @"mtime":@(repo.mtime),
+                @"ooid":repo.ooid ?: @"", @"locked":@(repo.passwordRequired)}];
+        }
+        return snapshot;
+    }
 }
 
 - (BOOL)hasCache

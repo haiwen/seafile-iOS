@@ -26,6 +26,7 @@
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFileModel.h"
 #import "SeafConstants.h"
+#import "SeafRetryBackoff.h"
 
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
@@ -117,6 +118,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 @property SeafDir *syncDir;
 @property (readonly) id<SeafCacheProvider> cacheProvider;
+
+// The camera upload folder could not be resolved (library gone, folder cannot
+// be created): the periodic check asks again, each time after a longer wait
+// (SeafRetryBackoff). Guarded by @synchronized(self).
+@property (nonatomic, assign) NSUInteger syncDirCheckFailures;
+@property (nonatomic, strong, nullable) NSDate *syncDirCheckNotBefore;
+// The last round of library password refreshes a 400 response started.
+@property (nonatomic, strong, nullable) NSDate *lastBadRequestPasswordRefresh;
 
 @property (readonly) NSString *platformVersion;
 @property (readonly) NSString *tagDataKey;
@@ -481,6 +490,56 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
     if (self.isAutoSync == autoSync) return;
     [self setAttribute:[NSNumber numberWithBool:autoSync] forKey:@"autoSync"];
     [self setFirstTimeSync:true];
+    if (!autoSync) {
+        // Turning auto upload off while paused is no state change for checkAutoSync
+        // (the stop path already ran for the pause and skipped the cache cleanup),
+        // so clear the staged backup files here.
+        BOOL wasPaused = self.photoBackupPaused;
+        [SeafStorage.sharedObject removeObjectForKey:[self photoBackupPausedKey]];
+        if (wasPaused && !_inAutoSync) {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                [self clearUploadCache];
+            });
+        }
+    }
+}
+
+// Kept outside the settings dictionary: extensions save their own stale copy of
+// that dictionary, which would silently undo a pause made in the main app.
+- (NSString *)photoBackupPausedKey
+{
+    return [self.accountIdentifier stringByAppendingString:@"/photoBackupPaused"];
+}
+
+- (BOOL)photoBackupPaused
+{
+    return [[SeafStorage.sharedObject objectForKey:[self photoBackupPausedKey]] boolValue];
+}
+
+- (void)setPhotoBackupPaused:(BOOL)photoBackupPaused
+{
+    if (self.photoBackupPaused == photoBackupPaused) return;
+    [SeafStorage.sharedObject setObject:@(photoBackupPaused) forKey:[self photoBackupPausedKey]];
+    [self scheduleCheckAutoSync];
+}
+
+// One serial queue for every account: a quick pause / resume pair finishes in
+// order, and a settings change cannot run checkAutoSync concurrently with them.
++ (dispatch_queue_t)autoSyncQueue
+{
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.seafile.photoBackupPause", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
+- (void)scheduleCheckAutoSync
+{
+    dispatch_async([SeafConnection autoSyncQueue], ^{
+        [self checkAutoSync];
+    });
 }
 
 - (void)setVideoSync:(BOOL)videoSync
@@ -894,6 +953,7 @@ static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvail
 - (void)clearAccount
 {
     [SeafDataTaskManager.sharedObject removeAccountQueue:self];
+    [SeafStorage.sharedObject removeObjectForKey:[self photoBackupPausedKey]];
     [SeafStorage.sharedObject removeObjectForKey:_address];
     [SeafStorage.sharedObject removeObjectForKey:self.accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/settings", self.accountIdentifier]];
@@ -1127,7 +1187,7 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
                     [self.delegate outOfQuota:self];
                 }
             } else if (resp.statusCode == HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED) {
-                [self refreshRepoPasswords];
+                [self refreshRepoPasswordsAfterBadRequest];
             }
         } else {
             success(request, resp, responseObject);
@@ -1232,6 +1292,13 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
              [self handleStarredData:JSON];
              NSData *data = [Utils JSONEncode:JSON];
              [self setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_STARREDFILES entityName:ENTITY_OBJECT];
+             // Fresh from the server only: the cached copy read at launch
+             // (getCachedStarredFiles) may list items deleted since.
+             id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+             NSArray *starredItems = [JSON isKindOfClass:[NSDictionary class]] ? JSON[@"starred_item_list"] : nil;
+             if (indexer && [starredItems isKindOfClass:[NSArray class]]) {
+                 [indexer fp_indexStarredItems:starredItems connection:self];
+             }
              if (success)
                  success (response, JSON);
          }
@@ -1338,6 +1405,7 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
                 [results addObject:file];
             }
         }
+        [self fp_indexSearchResults:results];
         success(request, response, JSON, results);
     } failure:failure];
 }
@@ -1520,7 +1588,11 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 
 - (void)updateUploadDir:(SeafDir *)dir
 {
-    BOOL changed = !_syncDir || ![_syncDir.repoId isEqualToString:dir.repoId] || ![_syncDir.path isEqualToString:dir.path];
+    // Stopping the backup (pause, or auto sync turned off) resets the backup tool's
+    // syncDir but not ours, so comparing only against _syncDir would skip the
+    // assignment on resume and pickPhotosForUpload would bail out on a nil dir.
+    BOOL changed = !_syncDir || !_photoBackup.syncDir
+        || ![_syncDir.repoId isEqualToString:dir.repoId] || ![_syncDir.path isEqualToString:dir.path];
     if (changed) {
         _syncDir = dir;
         _photoBackup.syncDir = dir;
@@ -1533,11 +1605,33 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 
 - (void)checkPhotosUploadDir:(CompletionBlock)handler
 {
-    
+    // In flight: the periodic check (-photosDidChange:) does not start a
+    // second one until this one has reported back or a tick has passed.
+    @synchronized (self) {
+        NSDate *tick = [NSDate dateWithTimeIntervalSinceNow:SeafRetryBackoffBase];
+        if (!self.syncDirCheckNotBefore || [self.syncDirCheckNotBefore compare:tick] == NSOrderedAscending) {
+            self.syncDirCheckNotBefore = tick;
+        }
+    }
+
     CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
         if (!success) {
             self.syncDir = nil;
             self.photoBackup.syncDir = nil;
+        }
+        @synchronized (self) {
+            if (success || SeafRetryErrorIsNetworkOnly(error)) {
+                // Resolved, or the network did not answer: the latter says
+                // nothing about the folder, the next periodic check asks again.
+                self.syncDirCheckFailures = 0;
+                self.syncDirCheckNotBefore = nil;
+            } else {
+                // The library is gone or the folder cannot be created: it
+                // fails the same way next time, so the periodic check waits
+                // longer after every failure (see -photosDidChange:).
+                self.syncDirCheckFailures += 1;
+                self.syncDirCheckNotBefore = [NSDate dateWithTimeIntervalSinceNow:SeafRetryBackoffDelay(self.syncDirCheckFailures)];
+            }
         }
         if (handler) {
             handler(success, error);
@@ -1562,6 +1656,11 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     }];
 }
 
+- (BOOL)photoBackupNeedsUploadDir
+{
+    return _inAutoSync && !_syncDir;
+}
+
 - (void)photosDidChange:(NSNotification *)note
 {
     if (!_inAutoSync)
@@ -1569,6 +1668,17 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     Debug("photos changed %d for server %@, current: %u, _syncDir:%@", _inAutoSync, _address, (unsigned)self.photoBackup.photosArray.count, _syncDir);
 
     if (!_syncDir) {
+        // Reached from the account queue's 30 s timer while photos are
+        // queued. A library that was deleted or a folder that cannot be
+        // created fails the same way every time: -checkPhotosUploadDir:
+        // makes each attempt wait longer than the one before. Until this
+        // one reports back, the next tick does not start another.
+        @synchronized (self) {
+            if (self.syncDirCheckNotBefore && [self.syncDirCheckNotBefore timeIntervalSinceNow] > 0) {
+                return;
+            }
+            self.syncDirCheckNotBefore = [NSDate dateWithTimeIntervalSinceNow:SeafRetryBackoffBase];
+        }
         Warning("Sync dir not exists, create.");
         [self checkPhotosUploadDir:nil];
     } else {
@@ -1583,21 +1693,26 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 - (void)checkAutoSync
 {
     if (!self.authorized) return;
-    if (self.isAutoSync && ![Utils isPhotoLibraryAccessible:[Utils photoLibraryAuthorizationStatus]]) {
+
+    BOOL paused = self.photoBackupPaused;
+    if (!paused && self.isAutoSync && ![Utils isPhotoLibraryAccessible:[Utils photoLibraryAuthorizationStatus]]) {
         self.autoSync = false;
         return;
     }
 
-    BOOL value = self.isAutoSync && (self.autoSyncRepo != nil);
-    
+    BOOL value = self.isAutoSync && (self.autoSyncRepo != nil) && !paused;
+
     if (_inAutoSync != value) {
         if (value) {
             Debug("Start auto sync for server %@", _address);
             [self.photoBackup prepareForBackup];
         } else {
-            Debug("Stop auto Sync for server %@", _address);
+            Debug("Stop auto Sync for server %@, paused: %d", _address, paused);
             [self.photoBackup resetAll];
-            [self clearUploadCache];
+            // Manual uploads stage their files under the same directory; a pause must not touch them.
+            if (!paused) {
+                [self clearUploadCache];
+            }
         }
     }
     
@@ -1664,7 +1779,15 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     if (!repo) {
         Warning("No such repo %@, force update cache", repoId);
         [_rootFolder loadContentSuccess:^(SeafDir *dir) {
-            [self checkMakeUploadDirectoryInRepo:repo subdir:dirName completion:completionHandler];
+            // Looked up again: `repo` above is nil, and a message to nil
+            // would leave the completion handler uncalled.
+            SeafRepo *reloaded = [self getRepo:repoId];
+            if (!reloaded) {
+                Warning("Repo %@ is not in the library list", repoId);
+                completionHandler(nil, [Utils defaultError]);
+                return;
+            }
+            [self checkMakeUploadDirectoryInRepo:reloaded subdir:dirName completion:completionHandler];
         } failure:^(SeafDir *dir, NSError *error) {
             completionHandler(nil, error);
         }];
@@ -1727,6 +1850,22 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     }];
 }
 
+/// A 400 may mean the server no longer holds a library's password. The
+/// refresh posts every saved password through sendRequestAsync: again, and
+/// only an "Incorrect password" answer drops one: any other 400 to those
+/// requests would start the next round at once, and every unrelated 400 (an
+/// invalid name, say) costs a full round. One round per interval is enough
+/// for the request that needed it to succeed when it is retried.
+- (void)refreshRepoPasswordsAfterBadRequest {
+    static const NSTimeInterval kMinInterval = 30.0;
+    @synchronized (self) {
+        NSDate *last = self.lastBadRequestPasswordRefresh;
+        if (last && fabs([last timeIntervalSinceNow]) < kMinInterval) return;
+        self.lastBadRequestPasswordRefresh = [NSDate date];
+    }
+    [self refreshRepoPasswords];
+}
+
 - (void)refreshRepoPasswords {
     NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
     if (repopasswds == nil)
@@ -1757,6 +1896,9 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
     [Utils dict:_info setObject:[[NSDictionary alloc] init] forKey:@"repopassword"];
     [Utils dict:_info setObject:[[NSDictionary alloc] init] forKey:@"repoInfo"];
     [self saveAccountInfo];
+    // The encrypted libraries are locked again: the Files app must stop
+    // serving them now, not after the next library list from the server.
+    [self notifyFileProviderChange:SeafFileProviderSignalTypeRoot repoId:nil];
 }
 
 #pragma - Cache managerment
@@ -1908,6 +2050,77 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 {
     NSString *url = [NSString stringWithFormat:@"/api2/repos/%@/file/?p=%@&op=download&reuse=1", repoId, [path escapedUrl]];
     [self sendRequest:url success:success failure:failure];
+}
+
+@end
+
+#pragma mark - Files app index bridge
+
+NSString * const SeafFPIndexKeyName = @"name";
+NSString * const SeafFPIndexKeyPath = @"path";
+NSString * const SeafFPIndexKeyIsDir = @"isDir";
+NSString * const SeafFPIndexKeyOid = @"oid";
+NSString * const SeafFPIndexKeySize = @"size";
+NSString * const SeafFPIndexKeyMtime = @"mtime";
+NSString * const SeafFPIndexKeyRepoId = @"repoId";
+
+NSDictionary *SeafFPIndexEntryForBase(SeafBase *obj)
+{
+    BOOL isDir = [obj isKindOfClass:[SeafDir class]];
+    if (!isDir && ![obj isKindOfClass:[SeafFile class]]) return nil;
+    NSMutableDictionary *entry = [NSMutableDictionary dictionaryWithCapacity:7];
+    if (obj.name.length > 0) entry[SeafFPIndexKeyName] = obj.name;
+    if (obj.path.length > 0) entry[SeafFPIndexKeyPath] = obj.path;
+    if (obj.repoId.length > 0) entry[SeafFPIndexKeyRepoId] = obj.repoId;
+    if (obj.oid.length > 0) entry[SeafFPIndexKeyOid] = obj.oid;
+    entry[SeafFPIndexKeyIsDir] = @(isDir);
+    if (isDir) {
+        entry[SeafFPIndexKeySize] = @(-1);
+        entry[SeafFPIndexKeyMtime] = @(((SeafDir *)obj).mtime);
+    } else {
+        SeafFile *file = (SeafFile *)obj;
+        entry[SeafFPIndexKeySize] = @(file.filesize);
+        entry[SeafFPIndexKeyMtime] = @(file.mtime);
+    }
+    return entry;
+}
+
+static __weak id<SeafFPIndexingSink> gSeafFPIndexer = nil;
+
+@implementation SeafConnection (FileProviderIndexing)
+
++ (id<SeafFPIndexingSink>)fileProviderIndexer
+{
+    @synchronized ([SeafConnection class]) {
+        return gSeafFPIndexer;
+    }
+}
+
++ (void)setFileProviderIndexer:(id<SeafFPIndexingSink>)indexer
+{
+    @synchronized ([SeafConnection class]) {
+        gSeafFPIndexer = indexer;
+    }
+}
+
++ (id<SeafFPIndexingSink>)activeFileProviderIndexer
+{
+    id<SeafFPIndexingSink> indexer = self.fileProviderIndexer;
+    return (indexer && [Utils isMainApp]) ? indexer : nil;
+}
+
+- (void)fp_indexSearchResults:(NSArray<SeafBase *> *)results
+{
+    id<SeafFPIndexingSink> indexer = [SeafConnection activeFileProviderIndexer];
+    if (!indexer || results.count == 0) return;
+    NSMutableArray<NSDictionary *> *entries = [NSMutableArray arrayWithCapacity:results.count];
+    for (SeafBase *obj in results) {
+        NSDictionary *entry = SeafFPIndexEntryForBase(obj);
+        if (entry[SeafFPIndexKeyPath] && entry[SeafFPIndexKeyRepoId]) [entries addObject:entry];
+    }
+    if (entries.count > 0) {
+        [indexer fp_indexSparseEntries:entries connection:self allowRevive:NO];
+    }
 }
 
 @end
