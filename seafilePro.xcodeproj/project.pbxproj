@@ -18,6 +18,7 @@
 		222F65EEA24D4F34AD8E0F53 /* SeafFPIdentifier.m in Sources */ = {isa = PBXBuildFile; fileRef = AEAF14322A9ECA9761843E89 /* SeafFPIdentifier.m */; };
 		22470C94C5BF80153A4F6D20 /* SeafSdocProfileEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 43390AE2399E768C3997820A /* SeafSdocProfileEditorViewController.m */; };
 		2333431DCBE011BE3B7B58C1 /* SeafTabBarController.m in Sources */ = {isa = PBXBuildFile; fileRef = ABEC8EE5DB5C928C88CC10ED /* SeafTabBarController.m */; };
+		2333431DCBE011BE3B7B58C2 /* SeafNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = ABEC8EE5DB5C928C88CC10EE /* SeafNavigationController.m */; };
 		3474342D816C89B8B7AE59A6 /* local-image-nomal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F320B5A628F92203C751439 /* local-image-nomal@3x.png */; };
 		3CF1A2D554B54583D58ED0C7 /* SeafShareBaseListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 362172CD8635113D89225C86 /* SeafShareBaseListViewController.m */; };
 		401D4FC31615131532015921 /* SeafFileProviderLegacyMigrator.m in Sources */ = {isa = PBXBuildFile; fileRef = 60C99B730895D984C87FFA80 /* SeafFileProviderLegacyMigrator.m */; };
@@ -92,6 +93,8 @@
 		71AC72A87A85B3EFF84A135D /* SeafShareRecentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D0B6635DFA56E717BD59C5FC /* SeafShareRecentViewController.m */; };
 		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
 		78139AE17AA4FF6B02B6034D /* IPadLayoutTests.m in Sources */ = {isa = PBXBuildFile; fileRef = BB1C4D732B254AED923F64A5 /* IPadLayoutTests.m */; };
+		A618251A5F4E493EB2CB8CF0 /* ActivityPreviewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A618251A5F4E493EB2CB8CF1 /* ActivityPreviewTests.m */; };
+		A618251A5F4E493EB2CB8CF2 /* ActivityPopoverTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A618251A5F4E493EB2CB8CF3 /* ActivityPopoverTests.m */; };
 		78C48B240B53837A003B002F /* SeafFPIdentifier.m in Sources */ = {isa = PBXBuildFile; fileRef = AEAF14322A9ECA9761843E89 /* SeafFPIdentifier.m */; };
 		802DCB31045AA4739B30E9C3 /* SeafGridCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AE4155C45EE03AE3C5A516F /* SeafGridCell.m */; };
 		820A5E7542F358391F6000B6 /* SeafFileProviderDomainManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CFBA8070DCB6B96AF049A56 /* SeafFileProviderDomainManager.m */; };
@@ -1139,10 +1142,12 @@
 		AA1234560003000000000003 /* SeafSdocLongTextEditorViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafSdocLongTextEditorViewController.h; sourceTree = "<group>"; };
 		ABAEA876F9CE98320A1408ED /* SeafFPErrors.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPErrors.m; sourceTree = "<group>"; };
 		ABEC8EE5DB5C928C88CC10ED /* SeafTabBarController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafTabBarController.m; sourceTree = "<group>"; };
+		ABEC8EE5DB5C928C88CC10EE /* SeafNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafNavigationController.m; sourceTree = "<group>"; };
 		ACB60280293B649179470147 /* SeafWikiWebViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafWikiWebViewController.m; sourceTree = "<group>"; };
 		AEAF14322A9ECA9761843E89 /* SeafFPIdentifier.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPIdentifier.m; sourceTree = "<group>"; };
 		AED6DF57E11B4D8467D5C6A9 /* SeafFPCheckSchedule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPCheckSchedule.m; sourceTree = "<group>"; };
 		B3408F6E5DDE42981CBB3FB0 /* SeafTabBarController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafTabBarController.h; sourceTree = "<group>"; };
+		B3408F6E5DDE42981CBB3FB1 /* SeafNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafNavigationController.h; sourceTree = "<group>"; };
 		B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-seafileApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4170E2F903D5BFF9175106F /* SeafShareRecentViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = SeafShareRecentViewController.h; sourceTree = "<group>"; };
 		B5928E0A97017FDDEECD44D9 /* SeafFPIndexer.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SeafFPIndexer.m; path = common/Classes/SeafFPIndexer.m; sourceTree = "<group>"; };
@@ -1337,6 +1342,8 @@
 		BAFF000000000000FFFE0002 /* SeafPhotoHeroAnimator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPhotoHeroAnimator.h; sourceTree = "<group>"; };
 		BAFF000000000000FFFE0003 /* SeafPhotoHeroAnimator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoHeroAnimator.m; sourceTree = "<group>"; };
 		BB1C4D732B254AED923F64A5 /* IPadLayoutTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = IPadLayoutTests.m; sourceTree = "<group>"; };
+		A618251A5F4E493EB2CB8CF1 /* ActivityPreviewTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = ActivityPreviewTests.m; sourceTree = "<group>"; };
+		A618251A5F4E493EB2CB8CF3 /* ActivityPopoverTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = ActivityPopoverTests.m; sourceTree = "<group>"; };
 		BF76AF3BE2E771F9FCEBB153 /* SeafFPExtension.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPExtension.m; sourceTree = "<group>"; };
 		C0045184901E794C34CDAA90 /* SeafSceneDelegate.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafSceneDelegate.m; sourceTree = "<group>"; };
 		C13ECBB3BA090DCC9DE16F17 /* SeafShareDestinationViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafShareDestinationViewController.m; sourceTree = "<group>"; };
@@ -1564,6 +1571,8 @@
 			isa = PBXGroup;
 			children = (
 				BB1C4D732B254AED923F64A5 /* IPadLayoutTests.m */,
+				A618251A5F4E493EB2CB8CF1 /* ActivityPreviewTests.m */,
+				A618251A5F4E493EB2CB8CF3 /* ActivityPopoverTests.m */,
 			);
 			path = seafileTests;
 			sourceTree = "<group>";
@@ -1702,6 +1711,8 @@
 				BAC68DA92FC540CB0019D16F /* SeafTabBarStyler.m */,
 				B3408F6E5DDE42981CBB3FB0 /* SeafTabBarController.h */,
 				ABEC8EE5DB5C928C88CC10ED /* SeafTabBarController.m */,
+				B3408F6E5DDE42981CBB3FB1 /* SeafNavigationController.h */,
+				ABEC8EE5DB5C928C88CC10EE /* SeafNavigationController.m */,
 				BA11F5032D91457900F56208 /* SeafNavLeftItem.m */,
 				BA11F5052D9145A400F56208 /* SeafNavLeftItem.h */,
 				BA0E7E512D924A8D00E3E3F0 /* SeafEditNavRightItem.h */,
@@ -3625,6 +3636,7 @@
 				58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */,
 				BAC68DAA2FC540CB0019D16F /* SeafTabBarStyler.m in Sources */,
 				2333431DCBE011BE3B7B58C1 /* SeafTabBarController.m in Sources */,
+				2333431DCBE011BE3B7B58C2 /* SeafNavigationController.m in Sources */,
 				F5B209092169994000762342 /* SeafInputItemsProvider.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				BAF436B02EB304320002ECD1 /* SeadocImageUploadOperation.m in Sources */,
@@ -3732,6 +3744,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				78139AE17AA4FF6B02B6034D /* IPadLayoutTests.m in Sources */,
+				A618251A5F4E493EB2CB8CF0 /* ActivityPreviewTests.m in Sources */,
+				A618251A5F4E493EB2CB8CF2 /* ActivityPopoverTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

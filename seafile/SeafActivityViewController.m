@@ -52,6 +52,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
 
 @property (strong, nonatomic) SeafFile *pendingVideoFile;
 @property (strong, nonatomic) SeafDetailViewController *activeDetailViewController;
+@property (strong, nonatomic) NSUUID *fileOpenRequestID;
+@property (strong, nonatomic) NSUUID *eventDetailRequestID;
 
 @end
 
@@ -169,6 +171,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
 }
 
 - (void)refresh:(id)sender {
+    self.eventDetailRequestID = nil;
     // Hide accessibility elements during refresh to avoid user interaction
     self.tableView.accessibilityElementsHidden = YES;
     UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
@@ -352,6 +355,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
         [self.navigationController popToRootViewControllerAnimated:NO];
 
     if (_connection != connection) {
+        [self invalidateFileOpenRequest];
+        self.eventDetailRequestID = nil;
         _connection = connection;
         _events = nil;// Reset events
         self.eventsMore = true;// Reset loading state
@@ -447,6 +452,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
 
 - (void)viewWillDisappear:(BOOL)animated
 {
+    self.fileOpenRequestID = nil;
+    self.eventDetailRequestID = nil;
     [SVProgressHUD dismiss];
     [super viewWillDisappear:animated];
 }
@@ -601,29 +608,94 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     return alert;
 }
 
+- (UITableViewCell *)visibleCellForEvent:(NSDictionary *)event
+{
+    // Pagination can move a row, and a refresh can replace its event entirely.
+    // Keep the event identity, not the original index path or reusable cell.
+    NSUInteger row = [self.events indexOfObjectIdenticalTo:event];
+    if (row == NSNotFound) return nil;
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+    if (![self.tableView.indexPathsForVisibleRows containsObject:indexPath]) return nil;
+    return [self.tableView cellForRowAtIndexPath:indexPath];
+}
+
+- (BOOL)anchorAlert:(UIAlertController *)alert toCell:(UITableViewCell *)cell
+{
+    if (!cell || !self.view.window || cell.window != self.view.window ||
+        ![cell isDescendantOfView:self.tableView] || self.presentedViewController) return NO;
+
+    CGRect visibleRect = [self.tableView convertRect:self.tableView.bounds toView:self.view];
+    visibleRect = CGRectIntersection(visibleRect, self.view.bounds);
+    visibleRect = CGRectIntersection(visibleRect, self.view.safeAreaLayoutGuide.layoutFrame);
+    CGRect sourceRect = CGRectIntersection([cell convertRect:cell.bounds toView:self.view], visibleRect);
+    if (CGRectIsNull(sourceRect) || CGRectIsEmpty(sourceRect)) return NO;
+
+    alert.popoverPresentationController.sourceView = self.view;
+    alert.popoverPresentationController.sourceRect = sourceRect;
+    return YES;
+}
+
 - (void)showEvent:(NSString *)repoId detail:(NSDictionary *)detail fromCell:(UITableViewCell *)cell eventTime:(long long)eventTime
 {
     NSString *title = NSLocalizedString(@"Modification Details", @"Seafile");
     UIAlertController *alert = [self generateAction:repoId detail:detail withTitle:title eventTime:eventTime];
-    alert.popoverPresentationController.sourceView = self.view;
-    alert.popoverPresentationController.sourceRect = cell.frame;
+    if (![self anchorAlert:alert toCell:cell]) return;
     [self presentViewController:alert animated:true completion:nil];
 }
 
-- (void)getCommitModificationDetail:(NSString *)repoId url:(NSString *)url fromCell:(UITableViewCell *)cell eventTime:(long long)eventTime
+- (void)presentEventDetail:(NSDictionary *)detail forEvent:(NSDictionary *)event connection:(SeafConnection *)connection requestID:(NSUUID *)requestID
 {
-    [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        
-        NSDictionary *detail = (NSDictionary *)JSON;
-        [_eventDetails setObject:detail forKey:url];
-        [self showEvent:repoId detail:detail fromCell:cell eventTime:eventTime];
+    if (self.connection != connection || self.eventDetailRequestID != requestID) return;
+    UIViewController *presented = self.presentedViewController;
+    if (presented) {
+        // A decrypted library can answer before its password alert finishes
+        // dismissing. Wait for that transition, then resolve the row again.
+        id<UIViewControllerTransitionCoordinator> coordinator = presented.transitionCoordinator;
+        if (presented.isBeingDismissed && coordinator) {
+            __weak typeof(self) weakSelf = self;
+            [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [weakSelf presentEventDetail:detail forEvent:event connection:connection requestID:requestID];
+                });
+            }];
+        } else {
+            self.eventDetailRequestID = nil;
+        }
+        return;
+    }
+    self.eventDetailRequestID = nil;
+    [self showEvent:[event objectForKey:@"repo_id"] detail:detail fromCell:[self visibleCellForEvent:event]
+         eventTime:[[event objectForKey:@"time"] longLongValue]];
+}
+
+- (void)getCommitModificationDetail:(NSString *)repoId url:(NSString *)url forEvent:(NSDictionary *)event requestID:(NSUUID *)requestID
+{
+    if (self.eventDetailRequestID != requestID || ![self visibleCellForEvent:event]) return;
+    SeafConnection *connection = self.connection;
+    __weak typeof(self) weakSelf = self;
+    [connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self || self.connection != connection || self.eventDetailRequestID != requestID) return;
+        if (![JSON isKindOfClass:[NSDictionary class]]) {
+            self.eventDetailRequestID = nil;
+            if ([self visibleCellForEvent:event]) [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get modification details", @"Seafile")];
+            return;
+        }
+        [self.eventDetails setObject:JSON forKey:url];
+        [self presentEventDetail:JSON forEvent:event connection:connection requestID:requestID];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self || self.connection != connection || self.eventDetailRequestID != requestID) return;
+        self.eventDetailRequestID = nil;
+        if (![self visibleCellForEvent:event]) return;
         Warning("Failed to get commit detail.");
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get modification details", @"Seafile")];
     }];
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    [self invalidateFileOpenRequest];
+    self.eventDetailRequestID = nil;
     [tableView deselectRowAtIndexPath:indexPath animated:true];
     if (indexPath.row >= _events.count)
         return;
@@ -668,7 +740,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     NSString *url = [NSString stringWithFormat:API_URL"/repo_history_changes/%@/?commit_id=%@", repoId, commitId];
 
     
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSDictionary *detail = [_eventDetails objectForKey:url];
     
     SeafRepo *repo = [_connection getRepo:repoId];
@@ -678,24 +749,75 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
     }
     // Show event details if already fetched, or fetch them if necessary
     if (detail && !repo.passwordRequired)
-        return [self showEvent:repoId detail:detail fromCell:cell eventTime:[[event objectForKey:@"time"] longLongValue]];
+        return [self showEvent:repoId detail:detail fromCell:[self visibleCellForEvent:event] eventTime:[[event objectForKey:@"time"] longLongValue]];
 
+    NSUUID *requestID = [NSUUID UUID];
+    self.eventDetailRequestID = requestID;
     if (repo.passwordRequiredWithSyncRefresh) {
+        SeafConnection *connection = self.connection;
+        __weak typeof(self) weakSelf = self;
         [self popupSetRepoPassword:repo handler:^{
-            [self getCommitModificationDetail:repoId url:url fromCell:cell eventTime:[[event objectForKey:@"time"] longLongValue]];
+            __strong typeof(weakSelf) self = weakSelf;
+            if (!self || self.connection != connection || self.eventDetailRequestID != requestID) return;
+            [self getCommitModificationDetail:repoId url:url forEvent:event requestID:requestID];
         }];
     } else
-        [self getCommitModificationDetail:repoId url:url fromCell:cell eventTime:[[event objectForKey:@"time"] longLongValue]];
+        [self getCommitModificationDetail:repoId url:url forEvent:event requestID:requestID];
 }
 
-// Opens a file specified by path in a given repository
+- (void)invalidateFileOpenRequest
+{
+    if (self.fileOpenRequestID) {
+        self.fileOpenRequestID = nil;
+        [SVProgressHUD dismiss];
+    }
+}
+
+// Activity paths can disappear after a later rename, move or deletion. Check
+// the current server path before creating any preview, including cached files.
 - (void)openFile:(NSString *)path inRepo:(NSString *)repoId mtime:(long long)mtime
 {
+    [self invalidateFileOpenRequest];
+    if (![path isKindOfClass:[NSString class]] || path.length == 0 ||
+        ![repoId isKindOfClass:[NSString class]] || repoId.length == 0 || !self.connection) {
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to open file", @"Seafile")];
+        return;
+    }
     // Ensure path starts with "/" (repo_history_changes API returns relative paths)
-    if (path.length > 0 && ![path hasPrefix:@"/"]) {
+    if (![path hasPrefix:@"/"]) {
         path = [@"/" stringByAppendingString:path];
     }
-    
+
+    SeafConnection *connection = self.connection;
+    NSUUID *requestID = [NSUUID UUID];
+    self.fileOpenRequestID = requestID;
+    NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/file/detail/?p=%@", repoId, path.escapedUrl];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Loading...", @"Seafile")];
+
+    __weak typeof(self) weakSelf = self;
+    [connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self || self.connection != connection || self.fileOpenRequestID != requestID) return;
+        self.fileOpenRequestID = nil;
+        [SVProgressHUD dismiss];
+        if (![JSON isKindOfClass:[NSDictionary class]]) {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to open file", @"Seafile")];
+            return;
+        }
+        [self previewFile:path inRepo:repoId mtime:mtime];
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self || self.connection != connection || self.fileOpenRequestID != requestID) return;
+        self.fileOpenRequestID = nil;
+        NSString *message = response.statusCode == 404
+            ? NSLocalizedString(@"The file has been deleted", @"Seafile")
+            : NSLocalizedString(@"Failed to open file", @"Seafile");
+        [SVProgressHUD showErrorWithStatus:message];
+    }];
+}
+
+- (void)previewFile:(NSString *)path inRepo:(NSString *)repoId mtime:(long long)mtime
+{
     SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:mtime size:0];
     // Probe cache before decision
     NSString *cachePathBefore = nil;
@@ -894,14 +1016,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path, long long 
         [alert addAction:cancelAction];
     }
 
-    // iPad popover support: anchor to the tapped cell like showEvent:detail:fromCell:
-    alert.popoverPresentationController.sourceView = self.view;
-    if (cell) {
-        alert.popoverPresentationController.sourceRect = [self.tableView convertRect:cell.frame toView:self.view];
-    } else {
-        alert.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2, 0, 0);
-    }
-
+    if (![self anchorAlert:alert toCell:cell]) return;
     [self presentViewController:alert animated:YES completion:nil];
 }
 

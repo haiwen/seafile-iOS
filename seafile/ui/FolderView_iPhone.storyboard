@@ -33,7 +33,7 @@
         <!--Seafile-->
         <scene sceneID="cix-vt-Igt">
             <objects>
-                <navigationController title="Seafile" toolbarHidden="NO" id="CNF-ja-c3a" sceneMemberID="viewController">
+                <navigationController title="Seafile" toolbarHidden="NO" id="CNF-ja-c3a" customClass="SeafNavigationController" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" image="tab-home.png" id="6rl-FR-hto"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
@@ -103,7 +103,7 @@
         <!--Starred-->
         <scene sceneID="F3d-4G-2bC">
             <objects>
-                <navigationController title="Starred" definesPresentationContext="YES" id="z9c-1t-xJ2" sceneMemberID="viewController">
+                <navigationController title="Starred" definesPresentationContext="YES" id="z9c-1t-xJ2" customClass="SeafNavigationController" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" image="tab-star.png" id="VH7-iY-RiF"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="cyv-Qp-O9m">
@@ -668,7 +668,7 @@
         <!--Settings-->
         <scene sceneID="xpW-VU-zvN">
             <objects>
-                <navigationController storyboardIdentifier="SETTINGSNAV" title="Settings" definesPresentationContext="YES" id="bYI-tW-uUU" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="SETTINGSNAV" title="Settings" definesPresentationContext="YES" id="bYI-tW-uUU" customClass="SeafNavigationController" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" image="tab-settings.png" id="Jmw-Qh-gQG"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="wRf-xr-PKT">
@@ -754,7 +754,7 @@
         <!--Activity-->
         <scene sceneID="NnU-GF-PKm">
             <objects>
-                <navigationController title="Activity" definesPresentationContext="YES" id="mEX-CF-kI0" sceneMemberID="viewController">
+                <navigationController title="Activity" definesPresentationContext="YES" id="mEX-CF-kI0" customClass="SeafNavigationController" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" image="tab-modify.png" id="Lne-Be-K6O"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
@@ -796,7 +796,7 @@
         <!--Wikis-->
         <scene sceneID="Wki-Sn-AAA">
             <objects>
-                <navigationController title="Wikis" definesPresentationContext="YES" id="WkN-c0-AAA" sceneMemberID="viewController">
+                <navigationController title="Wikis" definesPresentationContext="YES" id="WkN-c0-AAA" customClass="SeafNavigationController" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" image="icon_wikis" id="WkT-bi-AAA"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="WkB-ar-AAA">

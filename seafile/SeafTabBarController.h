@@ -15,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// placement, which can change at runtime (iPhone Duo fold / unfold).
 @interface SeafTabBarController : UITabBarController
 
+/// Temporarily hides iPhone tabs for search, then restores the selected page's policy.
+- (void)setTabBarHiddenForSearch:(BOOL)hidden fromViewController:(UIViewController *)controller;
+
 @end
 
 NS_ASSUME_NONNULL_END

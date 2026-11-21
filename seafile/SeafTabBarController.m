@@ -114,9 +114,62 @@
 @property (nonatomic, strong) UIColor *unselectedIconColor;
 @property (nonatomic, strong) NSMapTable<UITabBarItem *, UIImage *> *originalTabImages;
 @property (nonatomic, strong) NSMapTable<UITabBarItem *, UIImage *> *originalSelectedTabImages;
+@property (nonatomic, weak) UIViewController *tabBarSearchOwner;
 @end
 
 @implementation SeafTabBarController
+
+- (void)setTabBarHiddenForSearch:(BOOL)hidden fromViewController:(UIViewController *)controller
+{
+    if (UIDevice.currentDevice.userInterfaceIdiom != UIUserInterfaceIdiomPhone)
+        return;
+    // A dismissal from an old search must not undo a newer page's search.
+    if (!hidden && self.tabBarSearchOwner != controller)
+        return;
+    self.tabBarSearchOwner = hidden ? controller : nil;
+    [self updateTabBarVisibilityForSearch];
+}
+
+- (void)updateTabBarVisibilityForSearch
+{
+    UIViewController *page = self.selectedViewController;
+    BOOL searchingSelectedTab = NO;
+    for (UIViewController *owner = self.tabBarSearchOwner; owner; owner = owner.parentViewController) {
+        if (owner == page) {
+            searchingSelectedTab = YES;
+            break;
+        }
+    }
+    if (@available(iOS 18.0, *)) {
+        // This is an additional search override. Clear it on dismissal so
+        // UINavigationController can keep applying hidesBottomBarWhenPushed,
+        // including restoring the bar on the subsequent pop back to a root.
+        [self setTabBarHidden:searchingSelectedTab animated:NO];
+    } else {
+        if ([page isKindOfClass:UINavigationController.class]) {
+            page = ((UINavigationController *)page).topViewController;
+        }
+        self.tabBar.hidden = searchingSelectedTab || page.hidesBottomBarWhenPushed;
+        [self.view setNeedsLayout];
+        [self.selectedViewController.view setNeedsLayout];
+    }
+}
+
+- (void)setSelectedIndex:(NSUInteger)selectedIndex
+{
+    [super setSelectedIndex:selectedIndex];
+    if (self.tabBarSearchOwner) {
+        [self updateTabBarVisibilityForSearch];
+    }
+}
+
+- (void)setSelectedViewController:(UIViewController *)selectedViewController
+{
+    [super setSelectedViewController:selectedViewController];
+    if (self.tabBarSearchOwner) {
+        [self updateTabBarVisibilityForSearch];
+    }
+}
 
 - (void)viewDidLoad
 {

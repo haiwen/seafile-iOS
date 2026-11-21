@@ -212,7 +212,7 @@ final class DuoAdaptationUITests: XCTestCase {
         }
     }
 
-    /// Selection must not cover the system rail, and must clean up on exit.
+    /// Selection stays inside the directory, with tabs hidden, and cleans up on exit.
     /// Run in either Duo pose with an authenticated, nonempty test library.
     func testSelectionToolbarStaysInsideContent() throws {
         let table = try openAdaptationLibrary()
@@ -228,12 +228,7 @@ final class DuoAdaptationUITests: XCTestCase {
         let settings = app.buttons.matching(
             NSPredicate(format: "label == 'Settings' OR label == '设置'")
         ).firstMatch
-        if settings.exists {
-            XCTAssertTrue(settings.isHittable, "Selection must leave system tabs reachable")
-            let overlap = settings.frame.intersection(panel.frame)
-            XCTAssertTrue(overlap.isNull || overlap.width * overlap.height < 1,
-                          "Selection panel overlaps the system tab")
-        }
+        XCTAssertFalse(settings.isHittable, "A pushed directory must hide the system tabs")
         let selectAll = app.buttons["directory_select_all_button"]
         XCTAssertTrue(selectAll.isHittable)
         selectAll.tap()
