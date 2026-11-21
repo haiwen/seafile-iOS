@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 #import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 
 // App-hosted, offline regressions. Exercise the real storyboard/controllers
 // without adding test accounts or launch-time fixtures to the shipping app.
@@ -16,8 +17,42 @@
 - (instancetype)initWithConnection:(id)connection andRepoId:(NSString *)repoId andRepoName:(NSString *)name;
 - (instancetype)initWithConnection:(id)connection oid:(NSString *)oid repoId:(NSString *)repoId
                               name:(NSString *)name path:(NSString *)path mtime:(long long)mtime size:(unsigned long long)size;
+- (instancetype)initWithConnection:(id)connection oid:(NSString *)oid repoId:(NSString *)repoId
+                              perm:(NSString *)perm name:(NSString *)name path:(NSString *)path mime:(NSString *)mime;
 - (void)applyViewMode;
+- (void)searchAction:(id)sender;
+- (void)customSearchDismissAction:(UIButton *)sender;
+- (void)searchCancelled:(NSNotification *)notification;
+- (void)didDismissSearchController:(UISearchController *)searchController;
+- (void)openSearchResultDirectory:(id)directory;
 @end
+
+// Runtime subclassing keeps the app-hosted fixture independent of the app's
+// private header search paths. Only the test subclass bypasses network/task data;
+// production SeafDir and the pushed SeafFileViewController remain unchanged.
+static Class LayoutOfflineSearchDirectoryClass(void) {
+    static Class fixtureClass;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class directoryClass = NSClassFromString(@"SeafDir");
+        NSCAssert(directoryClass != Nil, @"The app must provide SeafDir");
+        fixtureClass = objc_allocateClassPair(directoryClass, "LayoutOfflineSearchDirectory", 0);
+        SEL load = NSSelectorFromString(@"loadContent:");
+        class_addMethod(fixtureClass, load, imp_implementationWithBlock(^(id directory, BOOL force) {}),
+                        method_getTypeEncoding(class_getInstanceMethod(directoryClass, load)));
+        for (NSString *getter in @[@"allItems", @"items", @"uploadItems", @"uploadFiles"]) {
+            SEL selector = NSSelectorFromString(getter);
+            class_addMethod(fixtureClass, selector, imp_implementationWithBlock(^id(id directory) {
+                return [NSMutableArray array];
+            }), method_getTypeEncoding(class_getInstanceMethod(directoryClass, selector)));
+        }
+        SEL hasCache = NSSelectorFromString(@"hasCache");
+        class_addMethod(fixtureClass, hasCache, imp_implementationWithBlock(^BOOL(id directory) { return YES; }),
+                        method_getTypeEncoding(class_getInstanceMethod(directoryClass, hasCache)));
+        objc_registerClassPair(fixtureClass);
+    });
+    return fixtureClass;
+}
 
 @interface LayoutPreviewItem : NSObject
 @property (nonatomic, strong) NSURL *previewItemURL;
@@ -407,84 +442,352 @@
     [self attach:@"settings-fixed-fonts"];
 }
 
+- (void)assertTabBar:(UITabBarController *)tabs visible:(BOOL)expected context:(NSString *)context {
+    UITabBar *bar = tabs.tabBar;
+    CGRect frame = [bar convertRect:bar.bounds toView:tabs.view];
+    BOOL visible = bar.window != nil && !bar.hidden && bar.alpha > 0 &&
+        !CGRectIsEmpty(frame) && CGRectIntersectsRect(frame, tabs.view.bounds);
+    XCTAssertEqual(visible, expected, @"%@: tab bar frame=%@ hidden=%d alpha=%g", context,
+                   NSStringFromCGRect(frame), bar.hidden, bar.alpha);
+}
+
+- (void)testIPhoneTabNavigationHidesAndRestoresTabBar {
+    XCTSkipUnless(UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone,
+                  @"Requires an iPhone simulator");
+    UITabBarController *tabs = [self appTabs];
+    [self mount:tabs size:self.window.bounds.size category:UIContentSizeCategoryLarge];
+    XCTAssertEqual(tabs.viewControllers.count, 5u);
+    Class navigationClass = NSClassFromString(@"SeafNavigationController");
+    XCTAssertNotNil(navigationClass);
+
+    for (NSUInteger index = 0; index < tabs.viewControllers.count; index++) {
+        UINavigationController *navigation = (id)tabs.viewControllers[index];
+        XCTAssertTrue([navigation isKindOfClass:navigationClass], @"Tab %lu must use the shared navigation policy", (unsigned long)index);
+        tabs.selectedIndex = index;
+        [self settle];
+        [self assertTabBar:tabs visible:YES context:@"Tab root"];
+        XCTAssertFalse(navigation.viewControllers.firstObject.hidesBottomBarWhenPushed);
+
+        UIViewController *first = [UIViewController new];
+        UIViewController *second = [UIViewController new];
+        [navigation pushViewController:first animated:NO];
+        [self settle];
+        XCTAssertTrue(first.hidesBottomBarWhenPushed);
+        [self assertTabBar:tabs visible:NO context:@"First pushed page"];
+        [navigation pushViewController:second animated:NO];
+        [self settle];
+        [self assertTabBar:tabs visible:NO context:@"Second pushed page"];
+        [navigation popViewControllerAnimated:NO];
+        [self settle];
+        [self assertTabBar:tabs visible:NO context:@"Returned to first pushed page"];
+
+        // A programmatic tab change must use the selected stack's state.
+        tabs.selectedIndex = (index + 1) % tabs.viewControllers.count;
+        [self settle];
+        [self assertTabBar:tabs visible:YES context:@"Another tab's root"];
+        tabs.selectedIndex = index;
+        [self settle];
+        [self assertTabBar:tabs visible:NO context:@"Returned to a tab with a pushed page"];
+        [navigation popToRootViewControllerAnimated:NO];
+        [self settle];
+        [self assertTabBar:tabs visible:YES context:@"Popped to tab root"];
+    }
+}
+
+- (void)testIPhoneReplacedNavigationStackHidesAndRestoresTabBar {
+    XCTSkipUnless(UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone,
+                  @"Requires an iPhone simulator");
+    UITabBarController *tabs = [self appTabs];
+    tabs.selectedIndex = 0;
+    [self mount:tabs size:self.window.bounds.size category:UIContentSizeCategoryLarge];
+    UINavigationController *navigation = (id)tabs.selectedViewController;
+    UIViewController *root = navigation.viewControllers.firstObject;
+    UIViewController *library = [UIViewController new];
+    UIViewController *folder = [UIViewController new];
+    // Starred-file location builds the Files stack in one operation.
+    [navigation setViewControllers:@[root, library, folder] animated:NO];
+    [self settle];
+    XCTAssertFalse(root.hidesBottomBarWhenPushed);
+    XCTAssertTrue(library.hidesBottomBarWhenPushed);
+    XCTAssertTrue(folder.hidesBottomBarWhenPushed);
+    [self assertTabBar:tabs visible:NO context:@"Batch-created directory path"];
+    [navigation popViewControllerAnimated:NO];
+    [self settle];
+    [self assertTabBar:tabs visible:NO context:@"Parent in a batch-created path"];
+    navigation.viewControllers = @[root];
+    [self settle];
+    [self assertTabBar:tabs visible:YES context:@"Reset stack to root"];
+
+    // The property setter must apply the same policy as the animated method.
+    navigation.viewControllers = @[root, folder];
+    [self settle];
+    [self assertTabBar:tabs visible:NO context:@"Property-created directory path"];
+    [navigation popToRootViewControllerAnimated:NO];
+    [self settle];
+    [self assertTabBar:tabs visible:YES context:@"Returned from property-created path"];
+}
+
 - (void)testIPhoneFileListTabBarLayout {
     XCTSkipUnless(UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone,
                   @"Requires an iPhone simulator");
     UITabBarController *tabs = [self appTabs];
     tabs.selectedIndex = 0;
     [self mount:tabs size:self.window.bounds.size category:UIContentSizeCategoryLarge];
+    [self assertTabBar:tabs visible:YES context:@"Libraries root"];
 
     if (@available(iOS 26.0, *)) {
-        UINavigationController *navigation = (id)tabs.selectedViewController;
-        // Reuse the folder controller that the Libraries tab pushes in production.
-        UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil];
-        UIViewController *folder = [storyboard instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        folder.title = @"Offline layout fixture";
-        [navigation pushViewController:folder animated:NO];
-        [self settle];
-        UITableView *table = [folder valueForKey:@"tableView"];
-        XCTAssertNotNil(table.window, @"The pushed folder's list must be mounted before scrolling");
-        if (!table.window) return;
-
-        NSMutableArray *files = [NSMutableArray array];
-        Class fileClass = NSClassFromString(@"SeafFile");
-        for (NSUInteger i = 0; i < 48; i++) {
-            NSString *name = [NSString stringWithFormat:@"Layout file %02lu.txt", (unsigned long)(i + 1)];
-            [files addObject:[[fileClass alloc] initWithConnection:nil oid:nil repoId:@"fixture"
-                                                            name:name path:[@"/" stringByAppendingString:name]
-                                                           mtime:0 size:0]];
-        }
-        [folder setValue:files forKey:@"allItems"];
-        [folder setValue:@NO forKey:@"gridModeEnabled"];
-        [folder applyViewMode];
-        [table reloadData];
-        [self settle];
-
-        CGRect bar = [tabs.tabBar convertRect:tabs.tabBar.bounds toView:tabs.view];
-        XCTSkipIf(CGRectGetWidth(bar) < CGRectGetHeight(bar), @"Requires the bottom tab bar, not a side rail");
-        XCTAssertFalse(tabs.isTabBarHidden);
-        XCTAssertFalse(CGRectIsEmpty(bar));
-        XCTAssertEqual([table numberOfRowsInSection:0], (NSInteger)files.count);
-
-        CGFloat firstOffset = -table.adjustedContentInset.top;
-        CGFloat lastOffset = table.contentSize.height - CGRectGetHeight(table.bounds) + table.adjustedContentInset.bottom;
-        XCTAssertGreaterThan(lastOffset, firstOffset);
-        [table setContentOffset:CGPointMake(table.contentOffset.x, (firstOffset + lastOffset) / 2) animated:NO];
-        [self settle];
-
-        CGRect viewport = [table convertRect:table.bounds toView:tabs.view];
-        bar = [tabs.tabBar convertRect:tabs.tabBar.bounds toView:tabs.view];
-        NSLog(@"Directory mid-scroll: viewport=%@ bar=%@ content guide=%@ adjusted inset=%@",
-              NSStringFromCGRect(viewport), NSStringFromCGRect(bar),
-              NSStringFromCGRect(tabs.contentLayoutGuide.layoutFrame), NSStringFromUIEdgeInsets(table.adjustedContentInset));
-        [self attach:@"iphone-directory-under-tab-bar"];
-        XCTAssertTrue(tabs.tabBar.isTranslucent);
-        XCTAssertEqualWithAccuracy(CGRectGetMaxY(viewport), CGRectGetMaxY(tabs.view.bounds), 1);
-        BOOL displaysRowBehindBar = NO;
-        for (UITableViewCell *cell in table.visibleCells) {
-            CGRect row = [cell convertRect:cell.bounds toView:tabs.view];
-            if (CGRectIntersectsRect(row, bar)) {
-                displaysRowBehindBar = YES;
-                break;
-            }
-        }
-        XCTAssertTrue(displaysRowBehindBar, @"A file row should extend into the tab bar area during scrolling");
-
-        NSIndexPath *last = [NSIndexPath indexPathForRow:files.count - 1 inSection:0];
-        [table scrollToRowAtIndexPath:last atScrollPosition:UITableViewScrollPositionBottom animated:NO];
-        [self settle];
-        CGRect lastRow = [table convertRect:[table rectForRowAtIndexPath:last] toView:tabs.view];
-        bar = [tabs.tabBar convertRect:tabs.tabBar.bounds toView:tabs.view];
-        NSLog(@"Directory scroll end: row=%@ bar=%@ offset=%@ adjusted inset=%@",
-              NSStringFromCGRect(lastRow), NSStringFromCGRect(bar), NSStringFromCGPoint(table.contentOffset),
-              NSStringFromUIEdgeInsets(table.adjustedContentInset));
-        [self attach:@"iphone-directory-last-row"];
-        XCTAssertNotNil([table cellForRowAtIndexPath:last]);
-        XCTAssertLessThanOrEqual(CGRectGetMaxY(lastRow), CGRectGetMinY(bar) + 1,
-                                 @"The last file should be fully above the bar at the end of the list");
+        XCTAssertTrue(tabs.tabBar.isTranslucent, @"The iPhone root keeps its native glass tab bar");
     } else {
         XCTAssertFalse(tabs.tabBar.isTranslucent, @"The legacy iPhone tab bar remains opaque");
     }
+    UINavigationController *navigation = (id)tabs.selectedViewController;
+    // Reuse the folder controller that the Libraries tab pushes in production.
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil];
+    UIViewController *folder = [storyboard instantiateViewControllerWithIdentifier:@"MASTERVC"];
+    folder.title = @"Offline layout fixture";
+    [navigation pushViewController:folder animated:NO];
+    [self settle];
+    UITableView *table = [folder valueForKey:@"tableView"];
+    XCTAssertNotNil(table.window, @"The pushed folder's list must be mounted before scrolling");
+    if (!table.window) return;
+
+    NSMutableArray *files = [NSMutableArray array];
+    Class fileClass = NSClassFromString(@"SeafFile");
+    for (NSUInteger i = 0; i < 48; i++) {
+        NSString *name = [NSString stringWithFormat:@"Layout file %02lu.txt", (unsigned long)(i + 1)];
+        [files addObject:[[fileClass alloc] initWithConnection:nil oid:nil repoId:@"fixture"
+                                                        name:name path:[@"/" stringByAppendingString:name]
+                                                       mtime:0 size:0]];
+    }
+    [folder setValue:files forKey:@"allItems"];
+    [folder setValue:@NO forKey:@"gridModeEnabled"];
+    [folder applyViewMode];
+    [table reloadData];
+    [self settle];
+
+    [self assertTabBar:tabs visible:NO context:@"Directory list"];
+    XCTAssertEqual([table numberOfRowsInSection:0], (NSInteger)files.count);
+    XCTAssertEqualWithAccuracy(folder.view.safeAreaInsets.bottom, tabs.view.safeAreaInsets.bottom, 1,
+                               @"A hidden tab bar must not leave an extra bottom safe-area inset");
+
+    CGFloat firstOffset = -table.adjustedContentInset.top;
+    CGFloat lastOffset = table.contentSize.height - CGRectGetHeight(table.bounds) + table.adjustedContentInset.bottom;
+    XCTAssertGreaterThan(lastOffset, firstOffset);
+    [table setContentOffset:CGPointMake(table.contentOffset.x, (firstOffset + lastOffset) / 2) animated:NO];
+    [self settle];
+
+    CGRect viewport = [table convertRect:table.bounds toView:tabs.view];
+    CGRect safe = [folder.view convertRect:folder.view.safeAreaLayoutGuide.layoutFrame toView:tabs.view];
+    [self attach:@"iphone-directory-with-hidden-tab-bar"];
+    XCTAssertGreaterThanOrEqual(CGRectGetMaxY(viewport) + 1, CGRectGetMaxY(safe),
+                                @"The directory viewport must fill the space freed by the tab bar");
+    [self assertTabBar:tabs visible:NO context:@"Scrolled directory list"];
+
+    NSIndexPath *last = [NSIndexPath indexPathForRow:files.count - 1 inSection:0];
+    [table scrollToRowAtIndexPath:last atScrollPosition:UITableViewScrollPositionBottom animated:NO];
+    [self settle];
+    CGRect lastRow = [table convertRect:[table rectForRowAtIndexPath:last] toView:tabs.view];
+    [self attach:@"iphone-directory-last-row"];
+    XCTAssertNotNil([table cellForRowAtIndexPath:last]);
+    XCTAssertGreaterThanOrEqual(CGRectGetMinY(lastRow) + 1, CGRectGetMinY(safe));
+    XCTAssertLessThanOrEqual(CGRectGetMaxY(lastRow), CGRectGetMaxY(safe) + 1,
+                             @"The last file must be fully visible above the home indicator");
+    [navigation popToRootViewControllerAnimated:NO];
+    [self settle];
+    [self assertTabBar:tabs visible:YES context:@"Returned from directory to Libraries"];
+}
+
+- (void)configureOfflineSearchFixture:(UIViewController *)files library:(BOOL)library {
+    // Assign the backing ivar rather than setDirectory:, which loads a listing.
+    // These fixtures have no connection and never submit a search request.
+    id directory = library
+        ? [[NSClassFromString(@"SeafRepo") alloc] initWithConnection:nil andRepoId:@"search-fixture" andRepoName:@"Offline search library"]
+        : [[NSClassFromString(@"SeafRepos") alloc] initWithConnection:nil];
+    if (!library) {
+        [directory setValue:[NSMutableArray arrayWithObject:@[]] forKey:@"repoGroups"];
+    }
+    [files setValue:directory forKey:@"_directory"];
+    [files setValue:@[] forKey:@"allItems"];
+    [files setValue:@NO forKey:@"gridModeEnabled"];
+    [files applyViewMode];
+}
+
+- (UISearchController *)openOfflineSearchOn:(UIViewController *)files {
+    [files searchAction:nil];
+    UISearchController *search = [files valueForKey:@"searchController"];
+    XCTAssertNotNil(search);
+    XCTestExpectation *active = [self expectationForPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+        UISearchController *controller = object;
+        return controller.active && controller.presentingViewController != nil &&
+            controller.viewIfLoaded.window != nil && !controller.isBeingPresented &&
+            controller.transitionCoordinator == nil;
+    }] evaluatedWithObject:search handler:nil];
+    [self waitForExpectations:@[active] timeout:5];
+    [self settle];
+    XCTAssertTrue(search.active, @"The real search action must present an active search controller");
+    return search;
+}
+
+- (void)waitForOfflineSearchDismissal:(UISearchController *)search {
+    // active becomes NO before UIKit finishes removing its presentation. Wait
+    // for the hierarchy and coordinator before pushing or starting another search.
+    XCTestExpectation *dismissed = [self expectationForPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+        UISearchController *controller = object;
+        return !controller.active && controller.presentingViewController == nil &&
+            controller.viewIfLoaded.window == nil && controller.transitionCoordinator == nil;
+    }] evaluatedWithObject:search handler:nil];
+    [self waitForExpectations:@[dismissed] timeout:5];
+    [self settle];
+    XCTAssertNil(search.presentingViewController);
+    XCTAssertNil(search.viewIfLoaded.window);
+}
+
+- (void)testIPhoneSearchHidesTabsAndRestoresSelectedNavigationState {
+    XCTSkipUnless(UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone,
+                  @"Requires an iPhone simulator");
+    UITabBarController *tabs = [self appTabs];
+    tabs.selectedIndex = 0;
+    [self mount:tabs size:self.window.bounds.size category:UIContentSizeCategoryLarge];
+    UINavigationController *navigation = (id)tabs.selectedViewController;
+    UIViewController *root = navigation.viewControllers.firstObject;
+    [self configureOfflineSearchFixture:root library:NO];
+    [self settle];
+    [self assertTabBar:tabs visible:YES context:@"Libraries before search"];
+
+    for (NSUInteger attempt = 0; attempt < 2; attempt++) {
+        UISearchController *search = [self openOfflineSearchOn:root];
+        [self assertTabBar:tabs visible:NO context:@"Active Libraries search"];
+        if (attempt == 0) {
+            UITextField *field = search.searchBar.searchTextField;
+            XCTAssertTrue(field.isFirstResponder, @"Search must focus its field before testing keyboard dismissal");
+            [field resignFirstResponder];
+            [self settle];
+            XCTAssertFalse(field.isFirstResponder);
+            XCTAssertTrue(search.active, @"Hiding the keyboard must keep the search session active");
+            [self assertTabBar:tabs visible:NO context:@"Libraries search with keyboard dismissed"];
+            [self attach:@"iphone-search-hidden-tabs"];
+        }
+        [root customSearchDismissAction:nil];
+        [self waitForOfflineSearchDismissal:search];
+        XCTAssertFalse(search.active);
+        [self assertTabBar:tabs visible:YES context:@"Cancelled Libraries search"];
+        if (attempt == 0) [self attach:@"iphone-search-cancel-restored-tabs"];
+    }
+
+    // Programmatic/system dismissal must restore tabs without the custom button.
+    UISearchController *rootSearch = [self openOfflineSearchOn:root];
+    [self assertTabBar:tabs visible:NO context:@"Libraries search before system dismissal"];
+    rootSearch.active = NO;
+    [self waitForOfflineSearchDismissal:rootSearch];
+    XCTAssertFalse(rootSearch.active);
+    [self assertTabBar:tabs visible:YES context:@"System-dismissed Libraries search"];
+
+    UIViewController *folder = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil]
+        instantiateViewControllerWithIdentifier:@"MASTERVC"];
+    [self configureOfflineSearchFixture:folder library:YES];
+    [navigation pushViewController:folder animated:NO];
+    [self settle];
+    [self assertTabBar:tabs visible:NO context:@"Directory before search"];
+    UISearchController *folderSearch = [self openOfflineSearchOn:folder];
+    [self assertTabBar:tabs visible:NO context:@"Active directory search"];
+    [folder customSearchDismissAction:nil];
+    [self waitForOfflineSearchDismissal:folderSearch];
+    XCTAssertFalse(folderSearch.active);
+    [self assertTabBar:tabs visible:NO context:@"Cancelled directory search"];
+
+    folderSearch = [self openOfflineSearchOn:folder];
+    [self assertTabBar:tabs visible:NO context:@"Directory search before system dismissal"];
+    folderSearch.active = NO;
+    [self waitForOfflineSearchDismissal:folderSearch];
+    XCTAssertFalse(folderSearch.active);
+    [self assertTabBar:tabs visible:NO context:@"System-dismissed directory search"];
+    [navigation popToRootViewControllerAnimated:NO];
+    [self settle];
+    [self assertTabBar:tabs visible:YES context:@"Returned from searched directory to Libraries"];
+
+    // Use the production pending-result path: dismiss the actual search first,
+    // then asynchronously push its selected directory without a visible tab gap.
+    rootSearch = [self openOfflineSearchOn:root];
+    id result = [[LayoutOfflineSearchDirectoryClass() alloc] initWithConnection:nil oid:nil repoId:@"search-fixture"
+                                                                 perm:@"r" name:@"Offline search result"
+                                                                 path:@"/Offline search result" mime:@"text/directory"];
+    [root openSearchResultDirectory:result];
+    [self assertTabBar:tabs visible:NO context:@"Pending search result keeps tabs hidden"];
+    [self waitForOfflineSearchDismissal:rootSearch];
+    XCTestExpectation *pushed = [self expectationForPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+        UINavigationController *controller = object;
+        return controller.viewControllers.count == 2 && controller.transitionCoordinator == nil;
+    }] evaluatedWithObject:navigation handler:nil];
+    [self waitForExpectations:@[pushed] timeout:5];
+    [self settle];
+    XCTAssertFalse(rootSearch.active);
+    XCTAssertEqual([navigation.topViewController valueForKey:@"directory"], result);
+    XCTAssertNil([root valueForKey:@"pendingSearchResultDirectory"]);
+    [self assertTabBar:tabs visible:NO context:@"Pushed search result directory"];
+    [navigation popToRootViewControllerAnimated:NO];
+    [self settle];
+    [self assertTabBar:tabs visible:YES context:@"Returned from search result to Libraries"];
+}
+
+- (void)testIPhoneTabSwitchDuringActiveSearchRestoresSelectedTabVisibility {
+    XCTSkipUnless(UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone,
+                  @"Requires an iPhone simulator");
+    UITabBarController *tabs = [self appTabs];
+    tabs.selectedIndex = 0;
+    [self mount:tabs size:self.window.bounds.size category:UIContentSizeCategoryLarge];
+    UINavigationController *navigation = (id)tabs.selectedViewController;
+    UIViewController *root = navigation.viewControllers.firstObject;
+    [self configureOfflineSearchFixture:root library:NO];
+    UISearchController *search = [self openOfflineSearchOn:root];
+    [self assertTabBar:tabs visible:NO context:@"Libraries search before tab switch"];
+
+    tabs.selectedIndex = 1;
+    [self settle];
+    [self assertTabBar:tabs visible:YES context:@"Another tab root during Libraries search"];
+    tabs.selectedIndex = 0;
+    [self settle];
+    // UIKit may dismiss the old search when its tab becomes inactive. If it
+    // retains the session, returning to that search must hide the tabs again.
+    [self assertTabBar:tabs visible:!search.active context:@"Returned to Libraries after tab switch"];
+    [root customSearchDismissAction:nil];
+    [self waitForOfflineSearchDismissal:search];
+    XCTAssertFalse(search.active);
+    [self assertTabBar:tabs visible:YES context:@"Libraries root after cancelling switched search"];
+}
+
+- (void)testIPhoneInactiveSearchCallbacksDoNotRestoreAnotherSearchTabBar {
+    XCTSkipUnless(UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone,
+                  @"Requires an iPhone simulator");
+    UITabBarController *tabs = [self appTabs];
+    tabs.selectedIndex = 0;
+    [self mount:tabs size:self.window.bounds.size category:UIContentSizeCategoryLarge];
+    UINavigationController *navigation = (id)tabs.selectedViewController;
+    UIViewController *root = navigation.viewControllers.firstObject;
+    [self configureOfflineSearchFixture:root library:NO];
+    UIViewController *folder = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil]
+        instantiateViewControllerWithIdentifier:@"MASTERVC"];
+    [self configureOfflineSearchFixture:folder library:YES];
+    [navigation pushViewController:folder animated:NO];
+    [self settle];
+    UISearchController *oldSearch = [self openOfflineSearchOn:folder];
+    [folder customSearchDismissAction:nil];
+    [self waitForOfflineSearchDismissal:oldSearch];
+    [navigation popToRootViewControllerAnimated:NO];
+    [self settle];
+
+    UISearchController *activeSearch = [self openOfflineSearchOn:root];
+    [self assertTabBar:tabs visible:NO context:@"Current Libraries search owns hidden tabs"];
+    // Deliver only to the inactive observer. Posting globally would correctly
+    // cancel the current search too and would not exercise ownership isolation.
+    [folder searchCancelled:[NSNotification notificationWithName:@"SeafSearchCancelled" object:nil]];
+    [folder didDismissSearchController:oldSearch];
+    [self settle];
+    XCTAssertTrue(activeSearch.active, @"An inactive page's cancellation must not dismiss the current search");
+    [self assertTabBar:tabs visible:NO context:@"Inactive search callbacks preserve current hidden tabs"];
+    [root customSearchDismissAction:nil];
+    [self waitForOfflineSearchDismissal:activeSearch];
+    XCTAssertFalse(activeSearch.active);
+    [self assertTabBar:tabs visible:YES context:@"Current search releases tabs on cancellation"];
 }
 
 - (void)testIPadMenuUsesSystemAnchorAndSurvivesResize {

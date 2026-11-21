@@ -38,6 +38,7 @@
 #import "SVProgressHUD.h"
 #import "Debug.h"
 #import "SeafNavigationBarStyler.h"
+#import "SeafTabBarController.h"
 
 #import "SeafImagePickerHelper.h"
 #import <WechatOpenSDK/WXApi.h>
@@ -145,6 +146,8 @@ static BOOL SeafEntriesMatchForPreview(id entry, id previewItem)
 @property (retain) NSDateFormatter *formatter;
 
 @property (nonatomic, strong) UISearchController *searchController;
+/// Remembers the search's container even if this page is popped before dismissal.
+@property (nonatomic, weak) SeafTabBarController *searchTabBarController;
 @property (nonatomic, strong) SeafSearchResultViewController *searchResultController;
 /// Back arrow drawn inside the search bar; replaced by a rail item when a vertical bar is shown.
 @property (nonatomic, strong) UIButton *searchBarBackButton;
@@ -3993,6 +3996,7 @@ static const CGFloat kNavBarViewModeGlyphSize = 17.0;
         // Layout so it stays aligned for every search bar height, including Dynamic Type
         // large-text mode (previously iPhone pinned it to the top; only iPad was centered).
         UIButton *customBackButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        customBackButton.accessibilityIdentifier = @"search_back_button";
         UIImage *backImage = [[UIImage imageNamed:@"arrowLeft_black"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]; // Ensure it's a template image
         [customBackButton setImage:backImage forState:UIControlStateNormal];
         customBackButton.tintColor = [SeafTheme galleryOperationText];
@@ -4146,18 +4150,43 @@ static const CGFloat kNavBarViewModeGlyphSize = 17.0;
     self.navigationBackgroundView.hidden = YES;
 }
 
+- (void)updateTabBarForSearch:(BOOL)active {
+    if (active) {
+        if (![self.tabBarController isKindOfClass:SeafTabBarController.class]) return;
+        self.searchTabBarController = (SeafTabBarController *)self.tabBarController;
+        [self.searchTabBarController setTabBarHiddenForSearch:YES fromViewController:self];
+    } else {
+        [self.searchTabBarController setTabBarHiddenForSearch:NO fromViewController:self];
+        self.searchTabBarController = nil;
+    }
+}
+
+- (void)willPresentSearchController:(UISearchController *)searchController {
+    [self updateTabBarForSearch:YES];
+}
+
 - (void)didPresentSearchController:(UISearchController *)searchController {
+    [self updateTabBarForSearch:YES];
     [self collapseSearchBarSlotIfLifted];
 }
 
 - (void)didDismissSearchController:(UISearchController *)searchController {
+    if (searchController != _searchController || searchController.active) return;
+    // Also clean up when UIKit ends search directly (for example active = NO).
+    [self dismissSearchBar];
     SeafDir *dir = self.pendingSearchResultDirectory;
-    if (!dir) return;
-    self.pendingSearchResultDirectory = nil;
+    if (!dir) {
+        [self updateTabBarForSearch:NO];
+        return;
+    }
     // After the dismissal (and the chrome restore around it) has finished, so the push is
-    // not dropped as overlapping a transition.
+    // not dropped as overlapping a transition. Release the search override in the same
+    // turn, before UIKit captures the destination's hidesBottomBarWhenPushed policy.
+    // iOS 18 can otherwise keep treating the pushed page as if its tabs were visible.
     dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateTabBarForSearch:NO];
         [self pushSearchResultDirectory:dir];
+        self.pendingSearchResultDirectory = nil;
     });
 }
 
@@ -5026,6 +5055,7 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     // Popped while a vertical bar search is up: hand the presentation context back.
     if (self.isMovingFromParentViewController) {
         [self releaseSearchPresentationContext];
+        [self updateTabBarForSearch:NO];
     }
     // On iPad, the master list (SeafFileViewController) can be hidden when the user focuses on the detail view.
     // If we are in editing mode (custom bottom toolbar is visible), make sure we exit editing mode so the toolbar
