@@ -11,13 +11,16 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /// Safari iOS-style liquid glass floating toolbar.
-/// Contains: circular back button, center title capsule (with refresh button + progress bar), more button.
+/// Contains: circular back button, circular close button, center title capsule
+/// (with refresh button + progress bar), more button.
 @interface SeafSafariStyleToolbar : UIView
 
 #pragma mark - Callbacks
 
-/// Tapped back button (exit current page)
+/// Tapped back button (go back within the page's history)
 @property (nonatomic, copy, nullable) void (^onBackTapped)(void);
+/// Tapped close button (leave the whole page)
+@property (nonatomic, copy, nullable) void (^onCloseTapped)(void);
 /// Tapped refresh button
 @property (nonatomic, copy, nullable) void (^onRefreshTapped)(void);
 /// Tapped more button
@@ -38,6 +41,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Set the progress bar tint color
 - (void)setProgressTintColor:(UIColor *)color;
+
+/// Enable or grey out the back button (Safari dims it when there is nothing to go back to).
+- (void)setBackEnabled:(BOOL)enabled animated:(BOOL)animated;
 
 /// Show the toolbar with optional animation
 - (void)showAnimated:(BOOL)animated;
