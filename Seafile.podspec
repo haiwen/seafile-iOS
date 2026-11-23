@@ -11,6 +11,8 @@ Pod::Spec.new do |s|
   s.resource_bundles = { 'Seafile' => 'Pod/Resources/*' }
   s.platform         = :ios, '16.0'
   s.requires_arc     = true
+  # Resumable upload records (Pod/Classes/ResumableUpload/SeafResumableUploadStore.m)
+  s.libraries        = 'sqlite3'
   s.dependency 'AFNetworking', '~> 4.0.0'
   s.dependency 'OpenSSL-Universal', '~> 1.0.1.p'
   s.dependency 'Realm', '~> 10.45.0'

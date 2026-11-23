@@ -25,6 +25,7 @@
         _shouldShowUploadFailure = YES;
         _retryable = YES;
         _retryCount = 0;
+        _taskId = [NSUUID UUID].UUIDString;
         _lastFinishTimestamp = 0;
         _isEditedFile = NO;
         _isLivePhoto = NO;

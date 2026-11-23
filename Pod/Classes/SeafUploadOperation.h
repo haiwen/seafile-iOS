@@ -14,23 +14,15 @@
 
 /**
  * SeafUploadOperation handles the network operations for uploading files.
+ * Files larger than 10 MiB are uploaded in resumable segments when the server
+ * supports it (SeafResumableUploadSession); everything else, and every case the
+ * resumable path declines, uses a single multipart request.
  */
 @interface SeafUploadOperation : SeafBaseOperation
 
 @property (nonatomic, strong) SeafUploadFile *uploadFile;
 
 - (instancetype)initWithUploadFile:(SeafUploadFile *)uploadFile;
-
-/**
- * Properties related to chunked upload
- */
-@property (nonatomic, strong, nullable) NSArray<NSString *> *missingBlocks;
-@property (nonatomic, strong, nullable) NSArray<NSString *> *allBlocks;
-@property (nonatomic, copy, nullable) NSString *rawBlksUrl;
-@property (nonatomic, copy, nullable) NSString *commitUrl;
-@property (strong) NSString * _Nullable uploadpath;
-@property long blkidx;
-@property (nonatomic, strong) NSString * _Nullable blockDir;
 
 @property (nonatomic, assign) NSInteger retryCount;
 

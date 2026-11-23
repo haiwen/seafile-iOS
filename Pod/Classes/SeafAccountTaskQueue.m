@@ -16,6 +16,9 @@
 #import "AFNetworkReachabilityManager.h"
 #import "SeafRetryBackoff.h"
 #import "SeafPhotoBackupTool.h"
+#import "SeafUploadFile.h"
+#import "SeafUploadFileModel.h"
+#import "SeafResumableUploadStore.h"
 
 #define THUMB_MAX_COUNT 20
 #define UPLOAD_MAX_COUNT 5
@@ -527,6 +530,24 @@
 // Cancel all upload tasks
 - (void)cancelAllUploadTasks {
     [self.uploadQueue setSuspended:YES];
+
+    // "Cancel all" is a user decision: drop the resumable attempts of exactly
+    // these tasks (plan §4.3), not every record of the account.
+    NSMutableArray<NSString *> *cancelledTaskIds = [NSMutableArray array];
+    void (^markCancelled)(SeafUploadFile *) = ^(SeafUploadFile *ufile) {
+        ufile.model.userCancelled = YES;
+        if (ufile.model.taskId.length > 0) [cancelledTaskIds addObject:ufile.model.taskId];
+    };
+    for (SeafUploadOperation *op in self.uploadQueue.operations) {
+        markCancelled(op.uploadFile);
+    }
+    @synchronized (self.ongoingTasks) {
+        for (SeafUploadFile *ufile in self.ongoingTasks) markCancelled(ufile);
+    }
+    @synchronized (self.waitingTasks) {
+        for (SeafUploadFile *ufile in self.waitingTasks) markCancelled(ufile);
+    }
+    [[SeafResumableUploadStore sharedStore] abandonTaskIds:cancelledTaskIds reason:@"user-cancelled-all"];
 
     // Cancel all operations in the upload queue
     for (SeafUploadOperation *op in self.uploadQueue.operations) {

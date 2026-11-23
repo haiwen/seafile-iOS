@@ -97,6 +97,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 /// video/sdoc (see SeafCacheManager+Thumb), never as the request URL.
 @property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;
 @property (strong, nonatomic) SeafUploadFile * _Nullable ufile;
+/// Stable id for the next upload of this file (resumable uploads), e.g. the Files app item identifier.
+@property (copy, nonatomic, nullable) NSString *uploadTaskId;
 @property (assign, nonatomic) BOOL isDownloading;// Checks if the file is currently being downloaded.
 @property (assign, nonatomic) BOOL downloaded;// Checks if the file is downloaded.
 @property (strong, atomic) SeafThumb * _Nullable thumbTaskForQueue;

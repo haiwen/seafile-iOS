@@ -14,12 +14,21 @@
 #import "Utils.h"
 #import "Debug.h"
 #import "SeafRepos.h"
-#import "NSData+Encryption.h"
 #import "SeafStorage.h"
 #import "SeafUploadFileModel.h"
+#import "SeafResumableUploadSession.h"
+#import "SeafResumableUploadPolicy.h"
+#import "SeafConnection+ResumableUpload.h"
 
 // Time interval (in seconds) after which encrypted repo password should be refreshed on server
 #define REPO_PASSWORD_REFRESH_INTERVAL 300
+
+@interface SeafUploadOperation ()
+/// The resumable session of the current attempt, if this file is segmented.
+@property (nonatomic, strong) SeafResumableUploadSession *resumableSession;
+/// Set when the server refused the upload for good: the operation does not retry it.
+@property (nonatomic, assign) BOOL terminalFailure;
+@end
 
 @implementation SeafUploadOperation
 
@@ -27,7 +36,7 @@
 {
     if (self = [super init]) {
         _uploadFile = uploadFile;
-        
+
         _retryCount = 0;
         self.maxRetryCount = uploadFile.retryable ? DEFAULT_RETRYCOUNT : 0;
     }
@@ -111,13 +120,14 @@
 - (void)cancel
 {
     [super cancel];
-        
+    [self.resumableSession cancel];
+
     if (self.isExecuting && !self.operationCompleted) {
         // create cancel NSError
         NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
                                                        code:NSURLErrorCancelled
                                                    userInfo:@{NSLocalizedDescriptionKey: @"The upload task was cancelled."}];
-        
+
         [self finishUpload:NO oid:nil error:cancelError];
         [self completeOperation];
     }
@@ -147,19 +157,19 @@
         [self failBeforeTransfer:nil];
         return;
     }
-    
+
     SeafRepo *repo = [connection getRepo:repoId];
     if (!repo) {
         Warning("Repo %@ does not exist", repoId);
         [self failBeforeTransfer:nil];
         return;
     }
-    
+
     self.uploadFile.model.uploading = YES;
-    
+
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.uploadFile.lpath error:nil];
     self.uploadFile.model.filesize = attrs.fileSize;
-    
+
     // For encrypted repos, ensure server-side password cache is valid before uploading
     // This fixes the issue where uploads to encrypted libraries fail when accessed via iOS Files app
     // after the server-side password cache has expired (typically ~1 hour)
@@ -174,7 +184,7 @@
                 [repo setRepoPassword:password block:^(SeafBase *entry, int ret) {
                     __strong typeof(weakSelf) strongSelf = weakSelf;
                     if (!strongSelf) return;
-                    
+
                     if (ret == RET_SUCCESS) {
                         Debug("Password refreshed successfully, proceeding with upload");
                         [strongSelf doUpload:connection repo:repoId path:uploadpath];
@@ -187,18 +197,28 @@
             }
         }
     }
-    
+
     [self doUpload:connection repo:repoId path:uploadpath];
 }
 
 // Actual upload logic after password validation
 - (void)doUpload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
 {
-    // Force non-chunked upload path regardless of file size or local decryption setting
-    Debug("Chunked upload disabled. Uploading file %@ as single request (size=%lld)", self.uploadFile.name, self.uploadFile.filesize);
-    
+    if (self.isCancelled) return;
+    if ([self shouldUploadResumably:connection repo:repoId]) {
+        [self resumableUpload:connection repo:repoId path:uploadpath];
+        return;
+    }
+    [self singleRequestUpload:connection repo:repoId path:uploadpath];
+}
+
+/// The existing upload: the whole file in one multipart POST.
+- (void)singleRequestUpload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
+{
+    Debug("Uploading file %@ as single request (size=%lld)", self.uploadFile.name, self.uploadFile.filesize);
+
     NSString *uploadURL = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/?p=%@", repoId, uploadpath.escapedUrl];
-    
+
     __weak typeof(self) weakSelf = self;
     NSURLSessionDataTask *connectUploadLinkTask = [connection sendRequest:uploadURL success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
@@ -210,200 +230,100 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         [strongSelf finishUpload:NO oid:nil error:error];
     }];
-    
+
     @synchronized (self.taskList) {
         [self.taskList addObject:connectUploadLinkTask];
     }
 }
 
-- (void)uploadLargeFileByBlocks:(SeafRepo *)repo path:(NSString *)uploadpath
+#pragma mark - Resumable upload (docs/versions/_unreleased/features/upload-resume-plan.md)
+
+/// Plan §4.1: size, unencrypted library, server and account support, plain rw permission.
+/// Whether the target exists (for overwriting tasks) is checked by the session.
+- (BOOL)shouldUploadResumably:(SeafConnection *)connection repo:(NSString *)repoId
 {
-    NSMutableArray *blockids = [[NSMutableArray alloc] init];
-    NSMutableArray *paths = [[NSMutableArray alloc] init];
-    self.uploadpath = uploadpath;
-    if (![self chunkFile:self.uploadFile.lpath repo:repo blockids:blockids paths:paths]) {
-        Debug("Failed to chunk file");
-        [self finishUpload:NO oid:nil error:[Utils defaultError]];
-        return;
-    }
-    self.allBlocks = blockids;
-    NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-blks-link/?p=%@", repo.repoId, uploadpath.escapedUrl];
-    NSString *form = [NSString stringWithFormat: @"blklist=%@", [blockids componentsJoinedByString:@","]];
-    NSURLSessionDataTask *sendBlockInfoTask = [repo.connection sendPost:upload_url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("upload largefile by blocks, JSON: %@", JSON);
-        self.rawBlksUrl = [JSON objectForKey:@"rawblksurl"];
-        self.commitUrl = [JSON objectForKey:@"commiturl"];
-        self.missingBlocks = [JSON objectForKey:@"blklist"];
-        self.blkidx = 0;
-        [self uploadRawBlocks:repo.connection];
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        Debug("Failed to upload: %@", error);
-        [self finishUpload:NO oid:nil error:error];
-    }];
-    
-    @synchronized (self.taskList) {
-        [self.taskList addObject:sendBlockInfoTask];
-    }
+    SeafUploadFile *ufile = self.uploadFile;
+    if (![SeafResumableUploadPolicy shouldSegmentFileOfSize:ufile.filesize]) return NO;
+    if (ufile.model.taskId.length == 0) return NO;
+    if ([connection getRepo:repoId].encrypted) return NO;          // phase 1 (plan D5)
+    if (![ufile.udir.perm isEqualToString:@"rw"]) return NO;       // custom permissions may forbid renaming
+    return connection.isResumableUploadSupported;
 }
 
-- (void)uploadRawBlocks:(SeafConnection *)connection
+- (NSString *)resumableEntryName
 {
-    long count = MIN(3, (self.missingBlocks.count - self.blkidx));
-    Debug("upload idx %ld, total: %ld, %ld", self.blkidx, (long)self.missingBlocks.count, count);
-    if (count == 0) {
-        [self uploadBlocksCommit:connection];
-        return;
-    }
-    
-    NSArray *arr = [self.missingBlocks subarrayWithRange:NSMakeRange(self.blkidx, count)];
-    NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:self.rawBlksUrl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
-        for (NSString *blockid in arr) {
-            NSString *blockpath = [self blockPath:blockid];
-            [formData appendPartWithFileURL:[NSURL fileURLWithPath:blockpath] name:@"file" error:nil];
+    if (self.uploadFile.uploadFileAutoSync) return @"photo-backup";
+    if (![Utils isMainApp]) {
+        // Nothing runs a share-extension task again, so its attempts are finished by the sweeper (plan §9).
+        NSDictionary *extension = [NSBundle mainBundle].infoDictionary[@"NSExtension"];
+        if ([extension isKindOfClass:[NSDictionary class]]
+            && [extension[@"NSExtensionPointIdentifier"] isEqual:@"com.apple.share-services"]) {
+            return SeafResumableEntryShare;
         }
-    } error:nil];
-    
-    __weak __typeof__ (self) wself = self;
-    NSURLSessionDataTask *blockDataUploadTask = [connection.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
-        __strong __typeof (wself) sself = wself;
-        [sself.uploadFile uploadProgress:1.0f * self.blkidx / self.allBlocks.count];
-        
-    } downloadProgress:nil completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-        __strong __typeof (wself) sself = wself;
-        Debug("Upload blocks %@", arr);
-        NSHTTPURLResponse *resp __attribute__((unused)) = (NSHTTPURLResponse *)response;
-        if (error) {
-            Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
-            [sself showDeserializedError:error];
-            [sself finishUpload:NO oid:nil error:error];
-        } else {
-            sself.blkidx += count;
-            [sself performSelector:@selector(uploadRawBlocks:) withObject:connection afterDelay:0.0];
-        }
-    }];
-    
-    [blockDataUploadTask resume];
-    
-    @synchronized (self.taskList) {
-        [self.taskList addObject:blockDataUploadTask];
+        return self.uploadFile.isEditedFile ? @"extension-edit" : @"extension";
     }
+    return self.uploadFile.isEditedFile ? @"edit" : @"manual";
 }
 
--(void)showDeserializedError:(NSError *)error
+- (void)resumableUpload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
 {
-    if (!error)
-        return;
-    id data = [error.userInfo objectForKey:@"com.alamofire.serialization.response.error.data"];
-
-    if (data && [data isKindOfClass:[NSData class]]) {
-        NSString *str __attribute__((unused)) = [[NSString alloc] initWithData:(NSData *)data encoding:NSUTF8StringEncoding];
-        Debug("DeserializedError: %@", str);
+    SeafUploadFile *ufile = self.uploadFile;
+    // Show what is already on the server before the first request (plan §6.2).
+    long long confirmed = [SeafResumableUploadSession confirmedBytesForTaskId:ufile.model.taskId];
+    if (confirmed > 0 && ufile.filesize > 0) {
+        [ufile uploadProgress:(float)((double)confirmed / (double)ufile.filesize)];
     }
-}
 
-- (NSString *)blockPath:(NSString*)blkId
-{
-    return [self.blockDir stringByAppendingPathComponent:blkId];
-}
-
-- (NSString *)blockDir
-{
-    if (!_blockDir) {
-        _blockDir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
-        [Utils checkMakeDir:_blockDir];
-    }
-    return _blockDir;
-}
-
-- (void)uploadBlocksCommit:(SeafConnection *)connection
-{
-    NSString *url = self.commitUrl;
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
-    [formatter setLocale:[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]];
-    NSString *lastModifiedString = self.uploadFile.lastModified ? [formatter stringFromDate:self.uploadFile.lastModified] : nil;
-
-    NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:url parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
-        if (self.uploadFile.overwrite) {
-            [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
-        }
-        [formData appendPartWithFormData:[self.uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
-        [formData appendPartWithFormData:[self.uploadFileName dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
-        if (lastModifiedString) {
-            [formData appendPartWithFormData:[lastModifiedString dataUsingEncoding:NSUTF8StringEncoding] name:@"last_modify"];
-        }
-        [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.uploadFile.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
-        [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
-        [formData appendPartWithFormData:[Utils JSONEncode:self.allBlocks] name:@"blockids"];
-        Debug("url:%@ parent_dir:%@, %@", url, self.uploadpath, [[NSString alloc] initWithData:[Utils JSONEncode:self.allBlocks] encoding:NSUTF8StringEncoding]);
-    } error:nil];
-    
-    NSURLSessionDataTask *blockCompleteTask = [connection.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
-        
-    } downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
-        
-    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-        if (error) {
-            Debug("Failed to upload blocks: %@", error);
-            [self finishUpload:NO oid:nil error:error];
-        } else {
-            NSString *oid = nil;
-            if ([responseObject isKindOfClass:[NSArray class]]) {
-                oid = [[responseObject objectAtIndex:0] objectForKey:@"id"];
-            } else if ([responseObject isKindOfClass:[NSDictionary class]]) {
-                oid = [responseObject objectForKey:@"id"];
-            }
-            if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.uploadFileName, self.uploadFile.uploadFileAutoSync, oid, responseObject);
-            self.uploadFile.serverDateHeader = [response isKindOfClass:NSHTTPURLResponse.class]
-                ? [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Date"] : nil;
-            [self finishUpload:YES oid:oid error:nil];
-        }
-    }];
-    [blockCompleteTask resume];
-    
-    @synchronized (self.taskList) {
-        [self.taskList addObject:blockCompleteTask];
-    }
-}
-
-- (NSString *)uploadFileName {
-    return [self.uploadFile.lpath lastPathComponent];
-}
-
-- (BOOL)chunkFile:(NSString *)path repo:(SeafRepo *)repo blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths
-{
-    NSString *password = [repo.connection getRepoPassword:repo.repoId];
-    if (repo.encrypted && !password)
-        return false;
-    BOOL ret = YES;
-    int CHUNK_LENGTH = 2*1024*1024;
-    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:path];
-    if (!fileHandle)
-        return NO;
-    while (YES) {
-        @autoreleasepool {
-            NSData *data = [fileHandle readDataOfLength:CHUNK_LENGTH];
-            if (!data || data.length == 0) break;
-            if (password)
-                data = [data encrypt:password encKey:repo.encKey version:repo.encVersion];
-            if (!data) {
-                ret = NO;
+    SeafResumableUploadSession *session =
+        [[SeafResumableUploadSession alloc] initWithConnection:connection
+                                                        repoId:repoId
+                                                     parentDir:uploadpath
+                                                    targetName:ufile.name
+                                                     localPath:ufile.lpath
+                                                      fileSize:ufile.filesize
+                                                    lastModify:[SeafResumableUploadPolicy lastModifyStringForDate:ufile.lastModified]
+                                                     overwrite:ufile.overwrite
+                                                        taskId:ufile.model.taskId
+                                                         entry:[self resumableEntryName]];
+    __weak typeof(self) weakSelf = self;
+    session.progressHandler = ^(float progress) {
+        [weakSelf.uploadFile uploadProgress:progress];
+    };
+    session.userCancelled = ^BOOL{
+        return weakSelf.uploadFile.model.userCancelled;
+    };
+    self.resumableSession = session;
+    [session startWithCompletion:^(SeafResumableOutcome outcome, NSString *oid, NSString *serverDate, NSError *error) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        strongSelf.resumableSession = nil;
+        // A cancelled operation has already reported its outcome (-cancel).
+        if (strongSelf.isCancelled || strongSelf.operationCompleted) return;
+        switch (outcome) {
+            case SeafResumableOutcomeSuccess:
+                strongSelf.uploadFile.serverDateHeader = serverDate;
+                [strongSelf finishUpload:YES oid:oid error:nil];
                 break;
-            }
-            NSString *blockid = [data SHA1];
-            NSString *blockpath = [self blockPath:blockid];
-            Debug("Chunk file blockid=%@, path=%@, len=%lu\n", blockid, blockpath, (unsigned long)data.length);
-            [blockids addObject:blockid];
-            [paths addObject:blockpath];
-            [data writeToFile:blockpath atomically:YES];
+            case SeafResumableOutcomeFallback:
+                [strongSelf singleRequestUpload:connection repo:repoId path:uploadpath];
+                break;
+            case SeafResumableOutcomeTerminal:
+                strongSelf.terminalFailure = YES;
+                [strongSelf finishUpload:NO oid:nil error:error];
+                break;
+            case SeafResumableOutcomeCancelled:
+                // The user removed the task: no retry.
+                strongSelf.terminalFailure = YES;
+                [strongSelf finishUpload:NO oid:nil error:error];
+                break;
+            case SeafResumableOutcomeRetryable:
+                [strongSelf finishUpload:NO oid:nil error:error];
+                break;
         }
-    }
-    [fileHandle closeFile];
-    return ret;
+    }];
 }
+
+#pragma mark - Single request
 
 - (void)uploadByFile:(SeafConnection *)connection url:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
@@ -435,7 +355,7 @@
         [self finishUpload:NO oid:nil error:nil];
         return;
     }
-    
+
     __weak typeof(self) weakSelf = self;
     NSURLSessionDataTask *uploadByFileTask = [connection.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
@@ -458,9 +378,9 @@
             [strongSelf finishUpload:YES oid:oid error:nil];
         }
     }];
-    
+
     [uploadByFileTask resume];
-    
+
     @synchronized (self.taskList) {
         [self.taskList addObject:uploadByFileTask];
     }
@@ -477,7 +397,7 @@
             [self completeOperation];
             return;
         }
-        if (self.retryCount < self.maxRetryCount) {
+        if (!self.terminalFailure && self.retryCount < self.maxRetryCount) {
             self.retryCount += 1;
             Debug(@"Upload failed, retrying %ld/%ld in %.0f seconds", (long)self.retryCount, (long)self.maxRetryCount, UPLOAD_RETRY_DELAY);
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(UPLOAD_RETRY_DELAY * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -495,20 +415,8 @@
 }
 
 - (void)completeOperation {
-    [self dataCleanup];
+    self.resumableSession = nil;
     [super completeOperation];
-}
-
-- (void)dataCleanup {
-    self.rawBlksUrl = nil;
-    self.commitUrl = nil;
-    self.missingBlocks = nil;
-    self.blkidx = 0;
-    if (_blockDir) {
-        [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
-        _blockDir = nil;
-    }
-    
 }
 
 @end

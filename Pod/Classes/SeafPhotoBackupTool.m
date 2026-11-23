@@ -52,6 +52,12 @@
 @end
 
 @implementation SeafPhotoBackupTool
+
+- (NSString *)resumableTaskIdForAsset:(PHAsset *)asset dir:(SeafDir *)dir
+{
+    return [NSString stringWithFormat:@"photo|%@|%@|%@|%@", self.connection.accountIdentifier ?: @"",
+            asset.localIdentifier ?: @"", dir.repoId ?: @"", dir.path ?: @""];
+}
 @synthesize photosArray = _photosArray;
 
 - (instancetype _Nonnull )initWithConnection:(SeafConnection * _Nonnull)connection andLocalUploadDir:(NSString * _Nonnull)localUploadDir {
@@ -281,6 +287,8 @@
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
             file.retryable = false;
+            // Same asset, same backup folder: same task, so an interrupted segmented upload resumes.
+            file.model.taskId = [self resumableTaskIdForAsset:asset dir:dir];
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
             file.model.expectedFilename = expectedFilename;
@@ -348,6 +356,8 @@
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
             file.retryable = false;
+            // Same asset, same backup folder: same task, so an interrupted segmented upload resumes.
+            file.model.taskId = [self resumableTaskIdForAsset:asset dir:dir];
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
             file.model.expectedFilename = expectedFilename;

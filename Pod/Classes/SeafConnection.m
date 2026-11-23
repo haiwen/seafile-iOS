@@ -17,6 +17,7 @@
 #import "ExtentedString.h"
 #import "NSData+Encryption.h"
 #import "Debug.h"
+#import "SeafResumableUploadStore.h"
 #import "Utils.h"
 #import "Version.h"
 #import "SeafPhotoAsset.h"
@@ -365,6 +366,10 @@ static BOOL SeafServerVersionAtLeast(NSString *version, NSString *minVersion)
 
 - (BOOL)isNewActivitiesApiSupported {
     return SeafServerVersionAtLeast(self.serverVersion, @"7.0.0");
+}
+
+- (BOOL)isServerVersionAtLeast:(NSString *)version {
+    return SeafServerVersionAtLeast(self.serverVersion, version);
 }
 
 static NSString *const kSeafThumbnailServerAvailableKey = @"thumbnailServerAvailable";
@@ -2024,6 +2029,10 @@ static const int kSeafThumbnailApiSize = SEAF_THUMB_PIXEL_SIZE;
 -(void)logoutAndAccountClear {
     Debug(@"Deleting original account before editing: %@ %@", self.address, self.username);
     [[SeafDataTaskManager sharedObject] cancelAllUploadTasks:self];
+    if (self.accountIdentifier.length > 0) {
+        // Logging out drops the account's resumable upload records (plan §4.3).
+        [[SeafResumableUploadStore sharedStore] deleteAllForAccount:self.accountIdentifier];
+    }
     [[SeafDataTaskManager sharedObject] cancelAllDownloadTasks:self];
     [self clearSettings];
     [self checkAutoSync];

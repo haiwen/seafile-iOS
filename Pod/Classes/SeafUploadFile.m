@@ -21,6 +21,7 @@
 #import "SeafDataTaskManager.h"
 #import "SeafStorage.h"
 #import "SeafRealmManager.h"
+#import "SeafResumableUploadStore.h"
 
 
 
@@ -306,6 +307,8 @@
 }
 
 - (void)uploadProgress:(float)progress {
+    // Kept so a cell built later (or rebuilt) starts from here instead of 0.
+    _uProgress = progress;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate uploadProgress:self progress:progress];
         if (self.taskProgressBlock) {
@@ -427,8 +430,10 @@
 
 - (void)cancel {
     Debug("Cancel uploadFile: %@", self.model.lpath);
+    // The user removed this upload: a resumable attempt is dropped, not kept.
+    self.model.userCancelled = YES;
     if (!self.udir) return;
-    
+
     @synchronized(self) {
         [self.task cancel];
         [self cleanup];
@@ -531,6 +536,11 @@
         [self.delegate uploadComplete:!error file:self oid:oid];
         if (self.staredFileDelegate) {
             [self.staredFileDelegate uploadComplete:!error file:self oid:oid];
+        }
+        // Whoever queued the task has recorded its completion by now: the
+        // resumable receipt kept for crash recovery can go (plan §6.6).
+        if (!error) {
+            [[SeafResumableUploadStore sharedStore] acknowledgeTaskId:self.model.taskId];
         }
     });
 

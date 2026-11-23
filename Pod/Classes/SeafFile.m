@@ -546,6 +546,9 @@
         self.ufile.model.editedFileRepoId = self.repoId;
         self.ufile.model.editedFilePath = self.path;
         self.ufile.model.editedFileOid = self.oid;
+        if (self.uploadTaskId.length > 0) {
+            self.ufile.model.taskId = self.uploadTaskId;
+        }
         if (self.isFileEditedAgain) {// is edited before upload completed
             self.ufile.model.shouldShowUploadFailure = false;
             self.isFileEditedAgain = false;// reset flag
