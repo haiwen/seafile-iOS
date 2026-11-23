@@ -121,10 +121,51 @@ static NSString *SeafSanitizedFileName(NSString *name)
 {
     if (name.length == 0) return @"";
     NSMutableCharacterSet *bad = [NSMutableCharacterSet controlCharacterSet];
+    // Keep ZWNJ and ZWJ (U+200C, U+200D): Persian and Indic text and emoji
+    // sequences use them. Other format characters, e.g. bidi overrides, still go.
+    [bad removeCharactersInRange:NSMakeRange(0x200C, 2)];
     [bad addCharactersInString:@"/\\:"];
     NSArray<NSString *> *parts = [name componentsSeparatedByCharactersInSet:bad];
     NSString *joined = [parts componentsJoinedByString:@"_"];
     return [joined stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
+/// Longest name, in UTF-8 bytes, an export is saved under. Seahub names exports
+/// after the page title, which has no length limit; APFS allows 255 UTF-16 units
+/// and some Files locations count bytes. The margin leaves room for the " 2"
+/// the Files app appends when the user keeps both copies.
+static const NSUInteger SeafMaxFileNameBytes = 240;
+/// A longer "extension" is part of the name (a dot early in a long title).
+static const NSUInteger SeafMaxFileExtensionBytes = 16;
+
+/// Shortens `name` to SeafMaxFileNameBytes, keeping its extension and cutting
+/// between whole characters. Returns nil when no part of the base name fits.
+static NSString *SeafFileNameWithinLimit(NSString *name)
+{
+    if ([name lengthOfBytesUsingEncoding:NSUTF8StringEncoding] <= SeafMaxFileNameBytes) return name;
+    NSString *base = name;
+    NSString *suffix = @"";
+    NSString *extension = name.pathExtension;
+    if (extension.length > 0 && [extension lengthOfBytesUsingEncoding:NSUTF8StringEncoding] <= SeafMaxFileExtensionBytes) {
+        base = name.stringByDeletingPathExtension;
+        suffix = [@"." stringByAppendingString:extension];
+    }
+    NSUInteger budget = SeafMaxFileNameBytes - [suffix lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    __block NSUInteger used = 0;
+    __block NSUInteger end = 0;
+    [base enumerateSubstringsInRange:NSMakeRange(0, base.length)
+                             options:NSStringEnumerationByComposedCharacterSequences
+                          usingBlock:^(NSString *character, NSRange range, NSRange enclosingRange, BOOL *stop) {
+        NSUInteger bytes = [character lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+        if (used + bytes > budget) {
+            *stop = YES;
+            return;
+        }
+        used += bytes;
+        end = NSMaxRange(range);
+    }];
+    NSString *head = [[base substringToIndex:end] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return head.length > 0 ? [head stringByAppendingString:suffix] : nil;
 }
 
 /// Content types of pages and error payloads, never of an exported file.
@@ -1402,7 +1443,7 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
         }
     }
 
-    name = SeafSanitizedFileName(name);
+    name = SeafFileNameWithinLimit(SeafSanitizedFileName(name));
     if (name.length == 0 || [name isEqualToString:@"."] || [name isEqualToString:@".."]) {
         name = extension ? [@"download." stringByAppendingString:extension] : @"download";
     }
