@@ -12,6 +12,8 @@
 #import "SeafThumbOperation.h"
 #import "SeafDir.h"
 #import "Debug.h"
+#import "SeafResumableUploadStore.h"
+#import "SeafResumableUploadSweeper.h"
 #import "Utils.h"
 #import "SeafStorage.h"
 #import <AFNetworking/AFNetworking.h>
@@ -218,6 +220,10 @@
         }
         [self removeAccountDownloadTaskFromStorage:conn.accountIdentifier];
         [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];
+        // Account removed: its resumable upload records go too (plan §4.3).
+        if (conn.accountIdentifier.length > 0) {
+            [[SeafResumableUploadStore sharedStore] deleteAllForAccount:conn.accountIdentifier];
+        }
     }
 }
 
@@ -274,6 +280,7 @@
     } else if ([task isKindOfClass:[SeafUploadFile class]]) {
         SeafUploadFile *ufile = (SeafUploadFile *)task;
         [Utils dict:dict setObject:ufile.lpath forKey:@"lpath"];
+        [Utils dict:dict setObject:ufile.model.taskId forKey:@"taskId"];
         [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.overwrite] forKey:@"overwrite"];
         [Utils dict:dict setObject:ufile.udir.oid forKey:@"oid"];
         [Utils dict:dict setObject:ufile.udir.repoId forKey:@"repoId"];
@@ -335,6 +342,11 @@
             continue;
         }
         ufile.model.overwrite = [[dict objectForKey:@"overwrite"] boolValue];
+        // Keep the task id across launches so a resumable upload continues (plan §4.2).
+        NSString *taskId = [dict objectForKey:@"taskId"];
+        if ([taskId isKindOfClass:[NSString class]] && taskId.length > 0) {
+            ufile.model.taskId = taskId;
+        }
         SeafDir *udir = [[SeafDir alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] perm:[dict objectForKey:@"perm"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mime:[dict objectForKey:@"mime"] mtime:[[dict objectForKey:@"mtime"] integerValue:0]];
         ufile.udir = udir;
         
@@ -354,6 +366,10 @@
     }
     NSTimeInterval t2 = [NSDate date].timeIntervalSince1970;
     Debug("restart uplaod task time cost: %f", (t2 - t1));
+    if ([Utils isMainApp]) {
+        // Resumable upload housekeeping (plan §9), after the restored tasks were queued.
+        [SeafResumableUploadSweeper sweepForConnection:conn];
+    }
     if (toDelete.count > 0) {
         for (NSString *key in toDelete) {
             [uploadTasks removeObjectForKey:key];

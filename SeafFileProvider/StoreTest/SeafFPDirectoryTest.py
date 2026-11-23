@@ -15,6 +15,12 @@ header=r'''
 #define ENTITY_DIRECTORY @"dir"
 static id gJSON;
 @class SeafConnection, SeafRepo, SeafUploadFile;
+@interface SeafResumableUploadPolicy : NSObject
++ (BOOL)isStagingName:(NSString *)name;
+@end
+@implementation SeafResumableUploadPolicy
++ (BOOL)isStagingName:(NSString *)name { return [name hasPrefix:@".seafile-upload-"]; }
+@end
 @interface NSObject (NumberFallback)
 - (NSInteger)integerValue:(NSInteger)fallback;
 @end

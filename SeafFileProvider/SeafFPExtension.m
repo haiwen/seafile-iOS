@@ -22,6 +22,8 @@
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFile.h"
 #import "SeafStorage.h"
+#import "SeafResumableUploadStore.h"
+#import "SeafResumableUploadPolicy.h"
 #import "Utils.h"
 #import "Debug.h"
 #import <UIKit/UIKit.h>
@@ -1325,6 +1327,28 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
                 progress:(NSProgress *)progress
               completion:(void (^)(SeafFPRecord * _Nullable record, NSError * _Nullable error))completion
 {
+    [self uploadStagedFile:stagedURL repoId:repoId path:path parentUUID:parentUUID creationStartSeq:creationStartSeq
+                    taskId:nil progress:progress completion:completion];
+}
+
+/// Resumable-upload task id of a created item: stable across system re-deliveries
+/// of the same item, so an interrupted upload resumes and a lost answer is found again.
+- (NSString *)uploadTaskIdForTemplate:(NSFileProviderItem)itemTemplate
+{
+    NSString *identifier = itemTemplate.itemIdentifier;
+    if (identifier.length == 0) return nil;
+    return [NSString stringWithFormat:@"fp|%@|%@", self.domain.identifier ?: @"", identifier];
+}
+
+- (void)uploadStagedFile:(NSURL *)stagedURL
+                  repoId:(NSString *)repoId
+                    path:(NSString *)path
+              parentUUID:(NSString *)parentUUID
+        creationStartSeq:(nullable NSNumber *)creationStartSeq
+                  taskId:(nullable NSString *)taskId
+                progress:(NSProgress *)progress
+              completion:(void (^)(SeafFPRecord * _Nullable record, NSError * _Nullable error))completion
+{
     NSURL *stagedDir = stagedURL.URLByDeletingLastPathComponent;
     if (progress.isCancelled) {
         // Cancelled while the directory was being listed: already answered.
@@ -1383,6 +1407,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
         progress.completedUnitCount = progress.totalUnitCount;
         completion(record, nil);
     }];
+    file.uploadTaskId = taskId;
     if (![file uploadFromFile:stagedURL]) {
         (void)claim();
         [[NSFileManager defaultManager] removeItemAtURL:stagedDir error:nil];
@@ -1470,6 +1495,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
     NSString *repoId = parentDir.repoId;
     NSString *parentUUID = parentRecord.uuid;
     long long creationStartSeq = [self.store currentSeq];
+    NSString *uploadTaskId = isFolder ? nil : [self uploadTaskIdForTemplate:itemTemplate];
     __weak typeof(self) weakSelf = self;
     [self loadDirectory:parentDir completion:^(BOOL loaded, BOOL fromCache, NSError *loadError) {
         typeof(self) strongSelf = weakSelf;
@@ -1477,6 +1503,52 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             // Name collisions are resolved against the live listing only.
             finish(nil, loadError ?: [SeafFPErrors serverUnreachable]);
             return;
+        }
+        // Before choosing a name: an earlier delivery of this same item may have
+        // published the file already and lost its answer. Adopt that file instead
+        // of uploading a second copy under a free name (resumable plan §4.2).
+        SeafResumableUploadRecord *receipt = uploadTaskId ? [[SeafResumableUploadStore sharedStore] recordForTaskId:uploadTaskId] : nil;
+        NSString *publishedName = nil;
+        if (receipt.state == SeafResumableStateDone && receipt.finalName.length > 0 && receipt.oid.length > 0) {
+            publishedName = receipt.finalName;
+        } else if (receipt.state == SeafResumableStateRenamePending && receipt.oid.length > 0
+                   && [receipt.repoId isEqualToString:repoId]
+                   && [receipt.parentDir isEqualToString:[SeafResumableUploadPolicy normalizedName:parentDir.path]]) {
+            // The rename was sent and its answer never arrived. If it took
+            // effect, the file is in this listing under the target name (or an
+            // auto-renamed form of it) and was not there before the rename; the
+            // name chosen below would treat it as someone else's file. The
+            // attempt's record is left alone: the sweeper closes it (plan §9).
+            NSMutableArray<NSDictionary *> *listing = [NSMutableArray array];
+            for (SeafBase *obj in parentDir.items) {
+                if ([obj isKindOfClass:[SeafFile class]] && obj.name.length > 0) {
+                    [listing addObject:@{@"name": obj.name, @"id": obj.oid ?: @""}];
+                }
+            }
+            NSString *found = nil;
+            if ([SeafResumableUploadPolicy resolveRenameWithStagingExists:NO listing:listing snapshot:receipt.renameSnapshot
+                                                               targetName:receipt.targetName oid:receipt.oid
+                                                            publishedName:&found] == SeafResumableRenamePublished) {
+                publishedName = found;
+            }
+        }
+        if (publishedName) {
+            for (SeafBase *obj in parentDir.items) {
+                if (![obj isKindOfClass:[SeafFile class]] || !SeafFPNamesEqual(obj.name, publishedName)
+                    || ![obj.oid isEqualToString:receipt.oid]) continue;
+                SeafFile *published = (SeafFile *)obj;
+                SeafFPRecord *record = [strongSelf.store upsertRecordForRepo:repoId path:published.path isDir:NO parentUUID:parentUUID
+                                                                         oid:published.oid mtime:published.mtime size:(long long)published.filesize];
+                if (!record) { finish(nil, [SeafFPErrors cannotSynchronize]); return; }
+                if (receipt.state == SeafResumableStateDone) {
+                    [[SeafResumableUploadStore sharedStore] acknowledgeTaskId:uploadTaskId];
+                }
+                Info("createItem %@: adopting %@ published by an earlier delivery", requestedName, published.path);
+                SeafFPItem *item = [strongSelf itemForRecord:record];
+                [strongSelf applyTemplateDecoration:itemTemplate fields:fields toItem:item];
+                finish(item, nil);
+                return;
+            }
         }
         NSString *name = requestedName;
         NSString *existingName = [parentDir actualNameForCaseInsensitiveMatch:name];
@@ -1561,7 +1633,7 @@ static BOOL SeafFPRenameSucceeded(BOOL success, NSError *error)
             finish(nil, [SeafFPErrors cannotSynchronize]);
             return;
         }
-        [strongSelf uploadStagedFile:staged repoId:repoId path:fullPath parentUUID:parentUUID creationStartSeq:@(uploadStart) progress:progress completion:^(SeafFPRecord *record, NSError *error) {
+        [strongSelf uploadStagedFile:staged repoId:repoId path:fullPath parentUUID:parentUUID creationStartSeq:@(uploadStart) taskId:uploadTaskId progress:progress completion:^(SeafFPRecord *record, NSError *error) {
             if (!record) {
                 finish(nil, error);
                 return;

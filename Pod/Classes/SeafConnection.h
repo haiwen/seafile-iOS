@@ -129,6 +129,10 @@ extern NSNotificationName const SeafServerInfoUpdatedNotification;
 @property (readonly) BOOL isWikiEnabled;///< Whether wiki should be shown (server supported AND client switch enabled).
 @property (nonatomic) BOOL wikiSwitchEnabled;///< Client-side wiki toggle (persisted per account, default NO).
 @property (readonly) BOOL isNewActivitiesApiSupported;///< Indicates whether the new activities API is supported.
+/// YES when server-info reports a version >= `version` (NO while server-info is unknown).
+- (BOOL)isServerVersionAtLeast:(NSString * _Nonnull)version;
+/// Version from server-info, nil until it has been fetched.
+@property (readonly, nullable) NSString *serverVersion;
 @property (readonly) BOOL isNewThumbnailApiSupported;///< Use /thumbnail/{repo_id}/{size}/{path}: server >= 14.0, or a thumbnail-server answered the ping probe.
 @property (readonly) BOOL isThumbnailServerAvailable;///< Last GET /thumbnail/ping answered "pong" (persisted per account, refreshed with server-info).
 @property (readonly) NSData* _Nullable clientIdentityKey;///< Client identity key for secure communications.

@@ -29,6 +29,13 @@
 // Expected filename for post-upload rename.
 @property (nonatomic, copy) NSString *expectedFilename;
 
+// Resumable upload: persistent id of this upload task (a UUID unless the
+// creator sets a stable one, e.g. photo backup or the Files app).
+@property (nonatomic, copy) NSString *taskId;
+// Set when the user removed the task, so its resumable attempt is dropped
+// instead of kept for later (pause and system cancels keep it).
+@property (atomic) BOOL userCancelled;
+
 // File editing related
 @property (nonatomic, copy) NSString *editedFileRepoId;
 @property (nonatomic, copy) NSString *editedFilePath;

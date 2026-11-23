@@ -22,6 +22,7 @@
 #import "SeafUploadOperation.h"
 #import "SeafRealmManager.h"
 #import "SeafDateFormatter.h"
+#import "SeafResumableUploadPolicy.h"
 
 typedef NSComparisonResult (^SeafSortableCmp)(id<SeafSortable> obj1, id<SeafSortable> obj2);
 
@@ -300,6 +301,10 @@ static BOOL SeafFPResponseHasListing(id JSON);
         SeafBase *newItem = nil;
         NSString *type = [itemInfo objectForKey:@"type"];
         NSString *name = [itemInfo objectForKey:@"name"];
+        // A resumable upload's staging file exists only until it is renamed
+        // to its real name; never show it (resumable plan §3.3).
+        if ([type isEqual:@"file"] && [SeafResumableUploadPolicy isStagingName:name])
+            continue;
         NSString *path = [self.path isEqualToString:@"/"] ? [NSString stringWithFormat:@"/%@", name]:[NSString stringWithFormat:@"%@/%@", self.path, name];
 
         if ([type isEqual:@"file"]) {
