@@ -38,11 +38,19 @@ typedef NS_ENUM(NSInteger, SeafWikiDownloadOutcome) {
 // Routes relative to the server root (connection.address may carry a sub path).
 static NSString * const SeafWikiExportEntryPattern = @"^api/v2\\.1/wiki2/[-0-9a-f]{36}/page/[-0-9a-zA-Z]{4}/export/?$";
 static NSString * const SeafSdocExportTargetPattern = @"^api/v2\\.1/seadoc/export/[-0-9a-f]{36}/?$";
-static NSString * const SeafWikiRootPattern = @"^wikis/([-0-9a-f]{36})/?$";
-static NSString * const SeafWikiPagePattern = @"^wikis/([-0-9a-f]{36})/[-0-9a-zA-Z]{4}/?$";
+// wiki2 roots and pages: a wiki (`wikis/<id>`) or a published wiki
+// (`wiki/publish/<slug>`, same single-page app). Group 1 names the wiki,
+// group 2 is the page id.
+static NSString * const SeafWikiRootPattern = @"^(wikis/[-0-9a-f]{36}|wiki/publish/[-0-9a-zA-Z]+)/?$";
+static NSString * const SeafWikiPagePattern = @"^(wikis/[-0-9a-f]{36}|wiki/publish/[-0-9a-zA-Z]+)/([-0-9a-zA-Z]{4})/?$";
 
 /// Script message the history observer posts to (see -historyObserverScript).
 static NSString * const SeafWikiHistoryMessageName = @"seafWikiHistory";
+
+/// Foreground time a requested download may take to be delivered after its
+/// navigation stopped. Normally it arrives first; this only bounds the case where
+/// WebKit drops the conversion without any callback.
+static const NSTimeInterval SeafDownloadDeliveryGracePeriod = 15.0;
 
 /// One download-and-save flow: from the export tap (or a file response) until
 /// the save sheet closes, the download fails, or the wiki page is left.
@@ -64,6 +72,8 @@ static NSString * const SeafWikiHistoryMessageName = @"seafWikiHistory";
 /// The response that was turned into a download. A retry can have the same URL.
 @property (nonatomic, strong, nullable) WKNavigationResponse *downloadResponse;
 @property (nonatomic, assign) BOOL waitingForDownloadDelivery;
+/// Identifies the latest scheduled delivery check; a newer one replaces it.
+@property (nonatomic, assign) NSUInteger deliveryCheckGeneration;
 /// The WKDownload WebKit delivered for this operation (nil until then).
 @property (nonatomic, strong, nullable) WKDownload *download;
 @property (nonatomic, strong, nullable) NSURL *directoryURL;
@@ -121,10 +131,51 @@ static NSString *SeafSanitizedFileName(NSString *name)
 {
     if (name.length == 0) return @"";
     NSMutableCharacterSet *bad = [NSMutableCharacterSet controlCharacterSet];
+    // Keep ZWNJ and ZWJ (U+200C, U+200D): Persian and Indic text and emoji
+    // sequences use them. Other format characters, e.g. bidi overrides, still go.
+    [bad removeCharactersInRange:NSMakeRange(0x200C, 2)];
     [bad addCharactersInString:@"/\\:"];
     NSArray<NSString *> *parts = [name componentsSeparatedByCharactersInSet:bad];
     NSString *joined = [parts componentsJoinedByString:@"_"];
     return [joined stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
+/// Longest name, in UTF-8 bytes, an export is saved under. Seahub names exports
+/// after the page title, which has no length limit; APFS allows 255 UTF-16 units
+/// and some Files locations count bytes. The margin leaves room for the " 2"
+/// the Files app appends when the user keeps both copies.
+static const NSUInteger SeafMaxFileNameBytes = 240;
+/// A longer "extension" is part of the name (a dot early in a long title).
+static const NSUInteger SeafMaxFileExtensionBytes = 16;
+
+/// Shortens `name` to SeafMaxFileNameBytes, keeping its extension and cutting
+/// between whole characters. Returns nil when no part of the base name fits.
+static NSString *SeafFileNameWithinLimit(NSString *name)
+{
+    if ([name lengthOfBytesUsingEncoding:NSUTF8StringEncoding] <= SeafMaxFileNameBytes) return name;
+    NSString *base = name;
+    NSString *suffix = @"";
+    NSString *extension = name.pathExtension;
+    if (extension.length > 0 && [extension lengthOfBytesUsingEncoding:NSUTF8StringEncoding] <= SeafMaxFileExtensionBytes) {
+        base = name.stringByDeletingPathExtension;
+        suffix = [@"." stringByAppendingString:extension];
+    }
+    NSUInteger budget = SeafMaxFileNameBytes - [suffix lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    __block NSUInteger used = 0;
+    __block NSUInteger end = 0;
+    [base enumerateSubstringsInRange:NSMakeRange(0, base.length)
+                             options:NSStringEnumerationByComposedCharacterSequences
+                          usingBlock:^(NSString *character, NSRange range, NSRange enclosingRange, BOOL *stop) {
+        NSUInteger bytes = [character lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+        if (used + bytes > budget) {
+            *stop = YES;
+            return;
+        }
+        used += bytes;
+        end = NSMaxRange(range);
+    }];
+    NSString *head = [[base substringToIndex:end] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return head.length > 0 ? [head stringByAppendingString:suffix] : nil;
 }
 
 /// Content types of pages and error payloads, never of an exported file.
@@ -143,6 +194,16 @@ static NSInteger SeafDefaultPortForScheme(NSString *scheme)
     if ([scheme caseInsensitiveCompare:@"https"] == NSOrderedSame) return 443;
     if ([scheme caseInsensitiveCompare:@"http"] == NSOrderedSame) return 80;
     return -1;
+}
+
+/// A host in one spelling for Foundation and WebKit: NSURL.host drops the brackets
+/// of an IPv6 literal, WKSecurityOrigin.host keeps them.
+static NSString *SeafComparableHost(NSString *host)
+{
+    if (host.length > 2 && [host hasPrefix:@"["] && [host hasSuffix:@"]"]) {
+        host = [host substringWithRange:NSMakeRange(1, host.length - 2)];
+    }
+    return host.lowercaseString;
 }
 
 /// Same origin, path and query (ignores the fragment).
@@ -199,6 +260,12 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
 @property (nonatomic, strong) NSMapTable<WKNavigation *, SeafWikiDownloadOperation *> *operationsByNavigation;
 @property (nonatomic, strong) NSMapTable<WKDownload *, SeafWikiDownloadOperation *> *operationsByDownload;
 @property (nonatomic, strong, nullable) WKNavigation *provisionalNavigation;
+/// How long a requested download may take to be delivered once its navigation
+/// has stopped, counted in the foreground (see -awaitDownloadDeliveryForOperation:).
+@property (nonatomic, assign) NSTimeInterval downloadDeliveryGracePeriod;
+/// A requested download whose wait ran out: WebKit may still deliver it, and it
+/// is then taken up unless another flow has started since.
+@property (nonatomic, strong, nullable) SeafWikiDownloadOperation *lateDelivery;
 /// On older iOS, wait for a navigation callback before rerouting an ambiguous
 /// login request that arrives while an export is provisional.
 @property (nonatomic, strong, nullable) NSURL *deferredLoginURL;
@@ -228,6 +295,11 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
         _operationsByNavigation = [NSMapTable mapTableWithKeyOptions:keyOptions valueOptions:NSPointerFunctionsStrongMemory];
         _operationsByDownload = [NSMapTable mapTableWithKeyOptions:keyOptions valueOptions:NSPointerFunctionsStrongMemory];
         _placeholderHistoryItems = [NSMutableArray array];
+        _downloadDeliveryGracePeriod = SeafDownloadDeliveryGracePeriod;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:UIApplicationDidBecomeActiveNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -520,38 +592,33 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
     [_safariToolbar setBackEnabled:([self backTargetItem] != nil) animated:YES];
 }
 
-/// Origin of the server as `location.origin` writes it (default port omitted).
-- (nullable NSString *)serverOrigin {
-    NSURL *base = [NSURL URLWithString:self.connection.address];
-    if (!base.scheme || !base.host) return nil;
-    NSString *scheme = base.scheme.lowercaseString;
-    NSString *origin = [NSString stringWithFormat:@"%@://%@", scheme, base.host.lowercaseString];
-    if (base.port && base.port.integerValue != SeafDefaultPortForScheme(scheme)) {
-        origin = [origin stringByAppendingFormat:@":%@", base.port];
-    }
-    return origin;
-}
-
 /// Document-start script for pages of this server: reports pushState,
 /// replaceState and popstate after the page's own call has run, so the native
 /// side reads an already updated back/forward list. The page's History
 /// behaviour is unchanged.
 - (nullable NSString *)historyObserverScript {
-    NSString *origin = [self serverOrigin];
-    if (!origin) return nil;
-    NSData *json = [NSJSONSerialization dataWithJSONObject:@[origin] options:0 error:nil];
-    NSString *originLiteral = json ? [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] : nil;
-    if (!originLiteral) return nil;
+    NSURL *base = [NSURL URLWithString:self.connection.address];
+    if (!base.scheme || !base.host) return nil;
+    NSData *json = [NSJSONSerialization dataWithJSONObject:@[base.absoluteString] options:0 error:nil];
+    NSString *addressLiteral = json ? [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] : nil;
+    if (!addressLiteral) return nil;
+    // The page's own URL parser spells the server origin as location.origin does
+    // (IPv6 brackets, case, default port).
     return [NSString stringWithFormat:
             @"(function(){\n"
-            "  if (location.origin !== %@[0] || window.__seafWikiHistoryObserver) return;\n"
+            "  var serverOrigin;\n"
+            "  try { serverOrigin = new URL(%@[0]).origin; } catch (e) { return; }\n"
+            "  if (location.origin !== serverOrigin || window.__seafWikiHistoryObserver) return;\n"
             "  window.__seafWikiHistoryObserver = true;\n"
             "  var handlers = window.webkit && window.webkit.messageHandlers;\n"
             "  var handler = handlers && handlers.%@;\n"
             "  if (!handler) return;\n"
             "  var pushes = 0;\n"
+            "  function statePageId() {\n"
+            "    try { var s = history.state; return (s && typeof s.pageId === 'string') ? s.pageId : null; } catch (e) { return null; }\n"
+            "  }\n"
             "  function notify(kind, prevPath, prevStateNull) {\n"
-            "    try { handler.postMessage({kind: kind, path: location.pathname, prevPath: prevPath, prevStateNull: prevStateNull, pushIndex: pushes}); } catch (e) {}\n"
+            "    try { handler.postMessage({kind: kind, path: location.pathname, prevPath: prevPath, prevStateNull: prevStateNull, pushIndex: pushes, statePageId: statePageId()}); } catch (e) {}\n"
             "  }\n"
             "  ['pushState', 'replaceState'].forEach(function (name) {\n"
             "    var original = history[name];\n"
@@ -566,14 +633,14 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
             "    };\n"
             "  });\n"
             "  window.addEventListener('popstate', function () { notify('popstate', null, false); });\n"
-            "})();", originLiteral, SeafWikiHistoryMessageName];
+            "})();", addressLiteral, SeafWikiHistoryMessageName];
 }
 
 - (BOOL)isServerSecurityOrigin:(WKSecurityOrigin *)origin {
     NSURL *base = [NSURL URLWithString:self.connection.address];
     if (!origin || !base.scheme || !base.host) return NO;
     if ([origin.protocol caseInsensitiveCompare:base.scheme] != NSOrderedSame) return NO;
-    if ([origin.host caseInsensitiveCompare:base.host] != NSOrderedSame) return NO;
+    if (![SeafComparableHost(origin.host) isEqualToString:SeafComparableHost(base.host)]) return NO;
     NSInteger originPort = origin.port != 0 ? origin.port : SeafDefaultPortForScheme(origin.protocol);
     NSInteger basePort = base.port ? base.port.integerValue : SeafDefaultPortForScheme(base.scheme);
     return originPort == basePort;
@@ -584,20 +651,24 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
     NSDictionary *body = [message.body isKindOfClass:[NSDictionary class]] ? message.body : nil;
     if (!body) return;
 
-    // wiki2 opened at its root pushes its first page right after loading. The root
-    // entry it leaves behind has no state, so going back to it changes nothing.
-    // Mark it only when exactly that is confirmed; otherwise history is used as is.
+    // wiki2 opened at its root (a wiki or a published wiki) pushes its first page
+    // right after loading, with state {url, path, pageId}. The root entry it leaves
+    // behind has no state, so going back to it changes nothing. Mark it only when
+    // exactly that is confirmed; otherwise history is used as is. (Seahub's
+    // server-rendered published wiki pushes {pageid} on a click; its root entry
+    // shows a page and stays.)
     NSString *kind = [body[@"kind"] isKindOfClass:[NSString class]] ? body[@"kind"] : nil;
     NSString *path = [body[@"path"] isKindOfClass:[NSString class]] ? body[@"path"] : nil;
     NSString *prevPath = [body[@"prevPath"] isKindOfClass:[NSString class]] ? body[@"prevPath"] : nil;
+    NSString *statePageId = [body[@"statePageId"] isKindOfClass:[NSString class]] ? body[@"statePageId"] : nil;
     BOOL firstPush = [body[@"pushIndex"] isKindOfClass:[NSNumber class]] && [body[@"pushIndex"] integerValue] == 1;
     BOOL prevStateNull = [body[@"prevStateNull"] isKindOfClass:[NSNumber class]] && [body[@"prevStateNull"] boolValue];
-    if ([kind isEqualToString:@"pushState"] && firstPush && prevStateNull && path && prevPath) {
-        NSString *wikiId = [self wikiIdInURL:[self serverURLForPagePath:prevPath] pattern:SeafWikiRootPattern];
-        NSString *pageWikiId = [self wikiIdInURL:[self serverURLForPagePath:path] pattern:SeafWikiPagePattern];
-        if (wikiId && [wikiId isEqualToString:pageWikiId]) {
+    if ([kind isEqualToString:@"pushState"] && firstPush && prevStateNull && path && prevPath && statePageId) {
+        NSString *wiki = [self wikiRouteCapturesInURL:[self serverURLForPagePath:prevPath] pattern:SeafWikiRootPattern].firstObject;
+        NSArray<NSString *> *page = [self wikiRouteCapturesInURL:[self serverURLForPagePath:path] pattern:SeafWikiPagePattern];
+        if (wiki && [wiki isEqualToString:page.firstObject] && [statePageId isEqualToString:page.lastObject]) {
             WKBackForwardListItem *rootItem = self.webView.backForwardList.backItem;
-            if (rootItem && [wikiId isEqualToString:[self wikiIdInURL:rootItem.URL pattern:SeafWikiRootPattern]]
+            if (rootItem && [wiki isEqualToString:[self wikiRouteCapturesInURL:rootItem.URL pattern:SeafWikiRootPattern].firstObject]
                 && ![self.placeholderHistoryItems containsObject:rootItem]) {
                 [self.placeholderHistoryItems addObject:rootItem];
             }
@@ -613,13 +684,21 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
     return [NSURL URLWithString:pathname relativeToURL:base].absoluteURL;
 }
 
-/// The wiki id when url's path (relative to the server root) matches pattern.
-- (nullable NSString *)wikiIdInURL:(nullable NSURL *)url pattern:(NSString *)pattern {
+/// The capture groups of pattern when url's path (relative to the server root)
+/// matches it; nil otherwise.
+- (nullable NSArray<NSString *> *)wikiRouteCapturesInURL:(nullable NSURL *)url pattern:(NSString *)pattern {
     NSString *relative = url ? [self serverRelativePathForURL:url] : nil;
     if (!relative) return nil;
     NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:nil];
     NSTextCheckingResult *m = [re firstMatchInString:relative options:0 range:NSMakeRange(0, relative.length)];
-    return m ? [relative substringWithRange:[m rangeAtIndex:1]] : nil;
+    if (!m || m.numberOfRanges < 2) return nil;
+    NSMutableArray<NSString *> *captures = [NSMutableArray arrayWithCapacity:m.numberOfRanges - 1];
+    for (NSUInteger i = 1; i < m.numberOfRanges; i++) {
+        NSRange range = [m rangeAtIndex:i];
+        if (range.location == NSNotFound) return nil;
+        [captures addObject:[relative substringWithRange:range]];
+    }
+    return captures;
 }
 
 - (void)showMoreActions {
@@ -1137,6 +1216,7 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
             op.downloadRequested = YES;
             op.downloadResponse = navigationResponse;
             self.currentDownload = op;
+            self.lateDelivery = nil; // a new flow replaces an expired one
             [self bindOperation:op toNavigation:navigation];
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Downloading", @"Seafile")];
             decisionHandler(WKNavigationResponsePolicyDownload);
@@ -1150,6 +1230,17 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
 - (void)webView:(WKWebView *)webView navigationResponse:(WKNavigationResponse *)navigationResponse didBecomeDownload:(WKDownload *)download {
     // WebKit returns the selected response object with the new download.
     SeafWikiDownloadOperation *op = self.currentDownload;
+    SeafWikiDownloadOperation *late = self.lateDelivery;
+    if (late && late.downloadResponse == navigationResponse) {
+        self.lateDelivery = nil;
+        if (!op && ![self isClosingWiki]) {
+            // Delivered after the wait ran out: save the file after all.
+            Info("Wiki download delivered after its wait ran out");
+            op = late;
+            self.currentDownload = op;
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Downloading", @"Seafile")];
+        }
+    }
     if (self.leavingWiki || !op || !op.downloadRequested || op.download || op.phase != SeafWikiDownloadPhaseAwaitingResponse
         || op.downloadResponse != navigationResponse) {
         [download cancel:nil];
@@ -1261,6 +1352,7 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
     // no usable file name (see -fileNameForOperation:response:suggestedFilename:).
     op.pageTitle = self.webView.title;
     self.currentDownload = op;
+    self.lateDelivery = nil; // a new flow replaces an expired one
     [self bindOperation:op toNavigation:navigation];
     // Seahub converts the page before it answers: show progress from the tap.
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Downloading", @"Seafile")];
@@ -1283,19 +1375,57 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
 }
 
 /// Let WebKit finish delivering the download after the web navigation stops.
-/// Start this grace period only once, even if both KVO and the delegate fire.
+/// Start waiting only once, even if both KVO and the delegate fire.
 - (void)awaitDownloadDeliveryForOperation:(SeafWikiDownloadOperation *)op
 {
     if (!op.downloadResponse || op.waitingForDownloadDelivery) return;
     op.waitingForDownloadDelivery = YES;
+    [self scheduleDownloadDeliveryCheckForOperation:op];
+}
+
+/// Gives up only after a whole grace period in the foreground: while the app is
+/// inactive or suspended the clock runs on, but the delivery cannot arrive. Each
+/// activation starts the period again (-applicationDidBecomeActive:).
+- (void)scheduleDownloadDeliveryCheckForOperation:(SeafWikiDownloadOperation *)op
+{
+    NSUInteger generation = ++op.deliveryCheckGeneration;
     __weak typeof(self) wself = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.downloadDeliveryGracePeriod * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         __strong typeof(wself) sself = wself;
-        if (!sself || op != sself.currentDownload || !op.downloadResponse) return;
-        Warning("Wiki download was requested but never started");
-        [sself.operationsByNavigation removeObjectForKey:op.navigation];
-        [sself finishDownloadOperation:op outcome:SeafWikiDownloadOutcomeFailed];
+        if (!sself || op != sself.currentDownload || !op.downloadResponse || op.deliveryCheckGeneration != generation) return;
+        if (![sself isApplicationActive]) return;
+        [sself expireDownloadDeliveryForOperation:op];
     });
+}
+
+- (BOOL)isApplicationActive
+{
+    return UIApplication.sharedApplication.applicationState == UIApplicationStateActive;
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification
+{
+    SeafWikiDownloadOperation *op = self.currentDownload;
+    if (op.waitingForDownloadDelivery && op.downloadResponse) {
+        [self scheduleDownloadDeliveryCheckForOperation:op];
+    }
+}
+
+/// Ends a requested download that was not delivered in time, and keeps what is
+/// needed to take it up should WebKit deliver it after all.
+- (void)expireDownloadDeliveryForOperation:(SeafWikiDownloadOperation *)op
+{
+    Warning("Wiki download was requested but not delivered within %.0f s", self.downloadDeliveryGracePeriod);
+    SeafWikiDownloadOperation *late = [[SeafWikiDownloadOperation alloc] init];
+    late.kind = op.kind;
+    late.pageTitle = op.pageTitle;
+    late.exportURL = op.exportURL;
+    late.phase = SeafWikiDownloadPhaseAwaitingResponse;
+    late.downloadRequested = YES;
+    late.downloadResponse = op.downloadResponse;
+    if (op.navigation) [self.operationsByNavigation removeObjectForKey:op.navigation];
+    [self finishDownloadOperation:op outcome:SeafWikiDownloadOutcomeFailed];
+    self.lateDelivery = late;
 }
 
 /// Ends an operation exactly once. Only the current operation drives the HUD;
@@ -1360,6 +1490,7 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
 {
     if (self.leavingWiki) return;
     self.leavingWiki = YES;
+    self.lateDelivery = nil;
     SeafWikiDownloadOperation *op = self.currentDownload;
     if (!op) return;
     if (op.phase == SeafWikiDownloadPhaseAwaitingResponse && !op.downloadRequested) {
@@ -1402,7 +1533,7 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
         }
     }
 
-    name = SeafSanitizedFileName(name);
+    name = SeafFileNameWithinLimit(SeafSanitizedFileName(name));
     if (name.length == 0 || [name isEqualToString:@"."] || [name isEqualToString:@".."]) {
         name = extension ? [@"download." stringByAppendingString:extension] : @"download";
     }
@@ -1630,6 +1761,9 @@ static BOOL SeafIsLoginRedirectURL(NSURL *url)
         return;
     }
     if (![message.name isEqualToString:SeafBridgeMessageName]) return;
+    // The handler is visible to every frame, and links to other sites open in this
+    // web view too: only the server's own top-level page talks to the app.
+    if (!message.frameInfo.isMainFrame || ![self isServerSecurityOrigin:message.frameInfo.securityOrigin]) return;
 
     NSString *body = nil;
     if ([message.body isKindOfClass:[NSString class]]) {

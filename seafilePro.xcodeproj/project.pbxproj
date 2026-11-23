@@ -92,6 +92,7 @@
 		71AC72A87A85B3EFF84A135D /* SeafShareRecentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D0B6635DFA56E717BD59C5FC /* SeafShareRecentViewController.m */; };
 		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
 		78139AE17AA4FF6B02B6034D /* IPadLayoutTests.m in Sources */ = {isa = PBXBuildFile; fileRef = BB1C4D732B254AED923F64A5 /* IPadLayoutTests.m */; };
+		A7E1C0DE5EAF1EB0057E5701 /* WikiWebViewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A7E1C0DE5EAF1EB0057E5702 /* WikiWebViewTests.m */; };
 		78C48B240B53837A003B002F /* SeafFPIdentifier.m in Sources */ = {isa = PBXBuildFile; fileRef = AEAF14322A9ECA9761843E89 /* SeafFPIdentifier.m */; };
 		802DCB31045AA4739B30E9C3 /* SeafGridCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AE4155C45EE03AE3C5A516F /* SeafGridCell.m */; };
 		820A5E7542F358391F6000B6 /* SeafFileProviderDomainManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CFBA8070DCB6B96AF049A56 /* SeafFileProviderDomainManager.m */; };
@@ -1337,6 +1338,7 @@
 		BAFF000000000000FFFE0002 /* SeafPhotoHeroAnimator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPhotoHeroAnimator.h; sourceTree = "<group>"; };
 		BAFF000000000000FFFE0003 /* SeafPhotoHeroAnimator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoHeroAnimator.m; sourceTree = "<group>"; };
 		BB1C4D732B254AED923F64A5 /* IPadLayoutTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = IPadLayoutTests.m; sourceTree = "<group>"; };
+		A7E1C0DE5EAF1EB0057E5702 /* WikiWebViewTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WikiWebViewTests.m; sourceTree = "<group>"; };
 		BF76AF3BE2E771F9FCEBB153 /* SeafFPExtension.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafFPExtension.m; sourceTree = "<group>"; };
 		C0045184901E794C34CDAA90 /* SeafSceneDelegate.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafSceneDelegate.m; sourceTree = "<group>"; };
 		C13ECBB3BA090DCC9DE16F17 /* SeafShareDestinationViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = SeafShareDestinationViewController.m; sourceTree = "<group>"; };
@@ -1564,6 +1566,7 @@
 			isa = PBXGroup;
 			children = (
 				BB1C4D732B254AED923F64A5 /* IPadLayoutTests.m */,
+				A7E1C0DE5EAF1EB0057E5702 /* WikiWebViewTests.m */,
 			);
 			path = seafileTests;
 			sourceTree = "<group>";
@@ -3732,6 +3735,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				78139AE17AA4FF6B02B6034D /* IPadLayoutTests.m in Sources */,
+				A7E1C0DE5EAF1EB0057E5701 /* WikiWebViewTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
