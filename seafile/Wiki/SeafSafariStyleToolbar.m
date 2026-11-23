@@ -10,6 +10,9 @@
 #import "SeafTheme.h"
 #import "SeafNavigationBarStyler.h"
 
+/// Icon opacity of the back button while there is nothing to go back to.
+static const CGFloat kSeafToolbarDisabledIconAlpha = 0.35;
+
 @interface SeafSafariStyleToolbar ()
 
 // MARK: - UI Components
@@ -18,6 +21,11 @@
 @property (nonatomic, strong) UIVisualEffectView *backContainer;
 /// Back button
 @property (nonatomic, strong) UIButton *backButton;
+
+/// Close button container (circular glass button next to back)
+@property (nonatomic, strong) UIVisualEffectView *closeContainer;
+/// Close button (x)
+@property (nonatomic, strong) UIButton *closeButton;
 
 /// Center title capsule container
 @property (nonatomic, strong) UIVisualEffectView *titleContainer;
@@ -67,10 +75,12 @@
 
     // Create containers
     _backContainer = [self makeGlassContainerWithCornerRadius:22];
+    _closeContainer = [self makeGlassContainerWithCornerRadius:22];
     _titleContainer = [self makeGlassContainerWithCornerRadius:22];
     _moreContainer = [self makeGlassContainerWithCornerRadius:22];
 
     [self addSubview:_backContainer];
+    [self addSubview:_closeContainer];
     [self addSubview:_titleContainer];
     [self addSubview:_moreContainer];
 
@@ -79,7 +89,17 @@
     _backButton.translatesAutoresizingMaskIntoConstraints = NO;
     [_backButton setImage:[SeafNavigationBarStyler backArrowImage] forState:UIControlStateNormal];
     _backButton.tintColor = [SeafTheme glassBarIconColor];
+    _backButton.accessibilityLabel = NSLocalizedString(@"Back", @"Seafile");
     [_backContainer.contentView addSubview:_backButton];
+
+    // Close button
+    _closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    _closeButton.translatesAutoresizingMaskIntoConstraints = NO;
+    UIImageSymbolConfiguration *closeConfig = [UIImageSymbolConfiguration configurationWithPointSize:16 weight:UIImageSymbolWeightSemibold];
+    [_closeButton setImage:[UIImage systemImageNamed:@"xmark" withConfiguration:closeConfig] forState:UIControlStateNormal];
+    _closeButton.tintColor = [SeafTheme glassBarIconColor];
+    _closeButton.accessibilityLabel = NSLocalizedString(@"Close", @"Seafile");
+    [_closeContainer.contentView addSubview:_closeButton];
 
     // Title label
     _titleLabel = [[UILabel alloc] init];
@@ -140,8 +160,19 @@
         [_backButton.leadingAnchor constraintEqualToAnchor:_backContainer.contentView.leadingAnchor],
         [_backButton.trailingAnchor constraintEqualToAnchor:_backContainer.contentView.trailingAnchor],
 
+        // Close container - circular close button right after back
+        [_closeContainer.leadingAnchor constraintEqualToAnchor:_backContainer.trailingAnchor constant:8],
+        [_closeContainer.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
+        [_closeContainer.heightAnchor constraintEqualToConstant:44],
+        [_closeContainer.widthAnchor constraintEqualToConstant:44],
+
+        [_closeButton.topAnchor constraintEqualToAnchor:_closeContainer.contentView.topAnchor],
+        [_closeButton.bottomAnchor constraintEqualToAnchor:_closeContainer.contentView.bottomAnchor],
+        [_closeButton.leadingAnchor constraintEqualToAnchor:_closeContainer.contentView.leadingAnchor],
+        [_closeButton.trailingAnchor constraintEqualToAnchor:_closeContainer.contentView.trailingAnchor],
+
         // Title container (center) - title capsule
-        [_titleContainer.leadingAnchor constraintEqualToAnchor:_backContainer.trailingAnchor constant:8],
+        [_titleContainer.leadingAnchor constraintEqualToAnchor:_closeContainer.trailingAnchor constant:8],
         [_titleContainer.trailingAnchor constraintEqualToAnchor:_moreContainer.leadingAnchor constant:-8],
         [_titleContainer.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
         [_titleContainer.heightAnchor constraintEqualToConstant:44],
@@ -172,6 +203,7 @@
 
 - (void)setupActions {
     [_backButton addTarget:self action:@selector(handleBackTapped) forControlEvents:UIControlEventTouchUpInside];
+    [_closeButton addTarget:self action:@selector(handleCloseTapped) forControlEvents:UIControlEventTouchUpInside];
     [_refreshButton addTarget:self action:@selector(handleRefreshTapped) forControlEvents:UIControlEventTouchUpInside];
     [_moreButton addTarget:self action:@selector(handleMoreTapped) forControlEvents:UIControlEventTouchUpInside];
 }
@@ -207,6 +239,12 @@
     if (self.onBackTapped) self.onBackTapped();
 }
 
+- (void)handleCloseTapped {
+    [self generateHapticFeedbackWithStyle:UIImpactFeedbackStyleLight];
+    [self animateButtonPress:_closeButton];
+    if (self.onCloseTapped) self.onCloseTapped();
+}
+
 - (void)handleRefreshTapped {
     [self generateHapticFeedbackWithStyle:UIImpactFeedbackStyleLight];
     [self animateRefreshButton];
@@ -228,6 +266,7 @@
 
 - (void)updateTitle:(NSString *)title {
     NSString *displayTitle = (title.length > 0) ? title : NSLocalizedString(@"Loading...", @"Seafile");
+    if ([_titleLabel.text isEqualToString:displayTitle]) return;
     if (self.window) {
         // Animate only when already on screen; cross-dissolve requires a rendered snapshot.
         [UIView transitionWithView:_titleLabel
@@ -282,6 +321,20 @@
 
 - (void)setProgressTintColor:(UIColor *)color {
     _progressBar.backgroundColor = color;
+}
+
+- (void)setBackEnabled:(BOOL)enabled animated:(BOOL)animated {
+    // Only the icon dims; the glass container stays as it is.
+    CGFloat alpha = enabled ? 1.0 : kSeafToolbarDisabledIconAlpha;
+    if (_backButton.enabled == enabled && _backButton.alpha == alpha) return;
+    _backButton.enabled = enabled;
+    if (animated && self.window) {
+        [UIView animateWithDuration:0.2 animations:^{
+            self.backButton.alpha = alpha;
+        }];
+    } else {
+        _backButton.alpha = alpha;
+    }
 }
 
 - (void)showAnimated:(BOOL)animated {
@@ -362,6 +415,7 @@
     if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
         CGColorRef borderColor = [UIColor.separatorColor colorWithAlphaComponent:0.3].CGColor;
         _backContainer.layer.borderColor = borderColor;
+        _closeContainer.layer.borderColor = borderColor;
         _titleContainer.layer.borderColor = borderColor;
         _moreContainer.layer.borderColor = borderColor;
     }
